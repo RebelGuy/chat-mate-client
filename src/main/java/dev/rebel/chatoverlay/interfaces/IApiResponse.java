@@ -1,5 +1,6 @@
 package dev.rebel.chatoverlay.interfaces;
 
 public interface IApiResponse {
-  Number GetSchema();
+  // returns the expected schema of this response (hardcoded in Java)
+  Number GetExpectedSchema();
 }

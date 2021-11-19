@@ -1,6 +1,7 @@
 package dev.rebel.chatoverlay.models.chat;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 public class ChatItem {
   public Long internalId;
@@ -9,7 +10,7 @@ public class ChatItem {
   // unix timestamp (in milliseconds)
   public Long timestamp;
   public Author author;
-  public PartialChatMessage[] messageParts;
+  public List<PartialChatMessage> messageParts;
 
   // the message conversion to pure text
   public String renderedText;

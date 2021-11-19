@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Minecraft Client" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="$PROJECT_DIR$/../../../../../Program Files/Eclipse Adoptium/jdk-8.0.312.7-hotspot" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="GradleStart" />
+    <module name="ChatOverlay.main" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+    <RunnerSettings RunnerId="Run" />
+    <ConfigurationWrapper RunnerId="Run" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

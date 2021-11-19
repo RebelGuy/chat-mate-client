@@ -1,9 +1,11 @@
 package dev.rebel.chatoverlay.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import dev.rebel.chatoverlay.models.chat.GetChatResponse;
 import dev.rebel.chatoverlay.proxy.ChatProxy;
 import jline.internal.Nullable;
 
+import java.net.ConnectException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -32,16 +34,28 @@ public class ChatService {
     }
     this.requestInProgress = true;
 
-    GetChatResponse response;
+    GetChatResponse response = null;
     try {
       response = this.chatProxy.GetChat(this.lastTimestamp, null);
-      this.lastTimestamp = response.lastTimestamp;
-      this.chatListenerService.onNewChat(response.chat);
+    } catch (ConnectException e) {
+      System.out.println("[ChatService] Failed to connect to server - is it running?");
+    } catch (JsonProcessingException e) {
+      System.out.println("[ChatService] Failed to process JSON response - has the schema changed? " + e.getMessage());
     } catch (Exception e) {
-      // todo: add logging/display message in MC chat
-    } finally {
-      this.requestInProgress = false;
+      System.out.println("[ChatService] Failed to get chat: " + e.getMessage());
     }
+
+    if (response != null) {
+      this.lastTimestamp = response.lastTimestamp;
+
+      try {
+        this.chatListenerService.onNewChat(response.chat);
+      } catch (Exception e) {
+        System.out.println("[ChatService] Failed to notify listeners of new chat items: " + e.getMessage());
+      }
+    }
+
+    this.requestInProgress = false;
   }
 
   class ChatServiceWorker extends TimerTask {

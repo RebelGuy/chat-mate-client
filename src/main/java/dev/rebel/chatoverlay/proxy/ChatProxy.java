@@ -1,17 +1,17 @@
 package dev.rebel.chatoverlay.proxy;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.rebel.chatoverlay.models.chat.GetChatResponse;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Date;
 
 public class ChatProxy {
   private final String basePath;
@@ -22,7 +22,7 @@ public class ChatProxy {
     this.objectMapper = new ObjectMapper();
   }
 
-  public GetChatResponse GetChat(@Nullable Long since, @Nullable Integer limit) throws Exception {
+  public GetChatResponse GetChat(@Nullable Long since, @Nullable Integer limit) throws ConnectException, JsonProcessingException, Exception {
     URL url = this.constructGetUrl(since, limit);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod("GET");
@@ -36,6 +36,11 @@ public class ChatProxy {
     }
     String response = result.toString();
     GetChatResponse parsed = this.objectMapper.readValue(response, GetChatResponse.class);
+
+    if (!parsed.schema.equals(parsed.GetExpectedSchema())) {
+      throw new Exception("Schema mismatch - expected " + parsed.GetExpectedSchema().toString() + " but received " + parsed.schema.toString());
+    }
+
     return parsed;
   }
 

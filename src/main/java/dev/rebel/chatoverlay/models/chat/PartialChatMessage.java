@@ -1,17 +1,17 @@
 package dev.rebel.chatoverlay.models.chat;
 
 public class PartialChatMessage {
-  private PartialChatMessageType messageType;
+  public PartialChatMessageType type;
 
   // for text type
-  private String text;
-  private Boolean isBold;
-  private Boolean isItalics;
+  public String text;
+  public Boolean isBold;
+  public Boolean isItalics;
 
   // for emoji type
   // the hover-over name
-  private String name;
+  public String name;
   // short emoji label (e.g. shortcut text/search term)
-  private String label;
-  private ChatImage image;
+  public String label;
+  public ChatImage image;
 }
