@@ -1,8 +1,8 @@
 [
   {
-    "modid": "forgetemplate",
-    "name": "ForgeTemplate",
-    "description": "An example template",
+    "modid": "chatoverlay",
+    "name": "Chat Overlay",
+    "description": "Display YouTube Live chat in Minecraft",
     "version": "${version}",
     "mcversion": "${mcversion}",
     "url": "",
