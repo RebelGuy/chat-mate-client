@@ -5,10 +5,10 @@ plugins {
 }
 
 version = "1.0"
-group = "dev.asbyth"
+group = "dev.rebel"
 archivesBaseName = "ChatOverlay"
 
-sourceCompatibility = targetCompatibility = 1.8
+targetCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
 
 minecraft {
