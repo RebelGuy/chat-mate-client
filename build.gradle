@@ -25,6 +25,8 @@ configurations {
 }
 
 dependencies {
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.0'
+
     // How to normally add a dependency (If you don't want it to be added to the jar)
     // implementation "com.example:example:1.0.0"
     // If you would like to include it (have the library inside your jar) instead use
@@ -71,6 +73,10 @@ shadowJar {
     archiveClassifier.set('')
     configurations = [project.configurations.include]
     duplicatesStrategy DuplicatesStrategy.EXCLUDE
+}
+
+repositories {
+    mavenCentral()
 }
 
 jar.dependsOn shadowJar
