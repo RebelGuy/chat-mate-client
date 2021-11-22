@@ -1,8 +1,8 @@
 package dev.rebel.chatoverlay.models.chat;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
 public enum PartialChatMessageType {
-  @JsonProperty("text") text,
-  @JsonProperty("emoji") emoji
+  @SerializedName("text") text,
+  @SerializedName("emoji") emoji
 }

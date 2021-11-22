@@ -1,6 +1,6 @@
 package dev.rebel.chatoverlay.services;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatoverlay.models.chat.GetChatResponse;
 import dev.rebel.chatoverlay.proxy.ChatProxy;
 import jline.internal.Nullable;
@@ -39,7 +39,7 @@ public class ChatService {
       response = this.chatProxy.GetChat(this.lastTimestamp, null);
     } catch (ConnectException e) {
       System.out.println("[ChatService] Failed to connect to server - is it running?");
-    } catch (JsonProcessingException e) {
+    } catch (JsonSyntaxException e) {
       System.out.println("[ChatService] Failed to process JSON response - has the schema changed? " + e.getMessage());
     } catch (Exception e) {
       System.out.println("[ChatService] Failed to get chat: " + e.getMessage());
