@@ -1,25 +1,26 @@
 package dev.rebel.chatoverlay;
 
 import dev.rebel.chatoverlay.models.chat.ChatItem;
-import dev.rebel.chatoverlay.proxy.ChatProxy;
-import dev.rebel.chatoverlay.services.ChatListenerService;
-import dev.rebel.chatoverlay.services.ChatService;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.ChatComponentText;
+import dev.rebel.chatoverlay.proxy.YtChatProxy;
+import dev.rebel.chatoverlay.services.McChatService;
+import dev.rebel.chatoverlay.services.YtChatListenerService;
+import dev.rebel.chatoverlay.services.YtChatService;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
 @Mod(modid = "chatoverlay", name = "Chat Overlay", version = "1.0")
 public class ChatOverlay {
-  private final ChatService chatService;
-  private final ChatListenerService chatListenerService;
+  private final YtChatService ytChatService;
+  private final YtChatListenerService ytChatListenerService;
+  private final McChatService mcChatService;
 
   public ChatOverlay() {
     String apiPath = "http://localhost:3010/api/";
-    ChatProxy chatProxy = new ChatProxy(apiPath);
-    this.chatListenerService = new ChatListenerService();
-    this.chatService = new ChatService(chatProxy, chatListenerService);
+    YtChatProxy ytChatProxy = new YtChatProxy(apiPath);
+    this.ytChatListenerService = new YtChatListenerService();
+    this.ytChatService = new YtChatService(ytChatProxy, ytChatListenerService);
+    this.mcChatService = new McChatService();
   }
 
   @Mod.EventHandler
@@ -27,28 +28,13 @@ public class ChatOverlay {
     // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
     MinecraftForge.EVENT_BUS.register((Object) new EventHandler());
 
-    chatListenerService.listen(this::onNewYtChat);
-    chatService.start();
+    ytChatListenerService.listen(this::onNewYtChat);
+    ytChatService.start();
   }
 
   private void onNewYtChat(ChatItem[] newChat) {
     for (ChatItem chat: newChat) {
-      this.addToMcChat((chat));
-    }
-  }
-
-  private void addToMcChat(ChatItem item) {
-    if (Minecraft.getMinecraft().ingameGUI != null) {
-      // todo: colouring/formatting
-      // todo: ensure special characters (e.g. normal emojis) don't break this, as well as very long chat (might need to break up string)
-      try {
-        String raw = String.format("[%s]: %s", item.author.name, item.renderedText);
-        ChatComponentText text = new ChatComponentText(raw);
-        Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(text);
-      } catch (Exception e) {
-        // ignore error because it's not critical
-        // todo: log error
-      }
+      this.mcChatService.addToMcChat(chat);
     }
   }
 }

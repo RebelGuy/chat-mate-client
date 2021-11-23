@@ -2,25 +2,25 @@ package dev.rebel.chatoverlay.services;
 
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatoverlay.models.chat.GetChatResponse;
-import dev.rebel.chatoverlay.proxy.ChatProxy;
+import dev.rebel.chatoverlay.proxy.YtChatProxy;
 import jline.internal.Nullable;
 
 import java.net.ConnectException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class ChatService {
-  private final ChatProxy chatProxy;
-  private final ChatListenerService chatListenerService;
+public class YtChatService {
+  private final YtChatProxy ytChatProxy;
+  private final YtChatListenerService ytChatListenerService;
   private final Timer timer;
 
   private @Nullable
   Long lastTimestamp = null;
   Boolean requestInProgress = false;
 
-  public ChatService(ChatProxy chatProxy, ChatListenerService chatListenerService) {
-    this.chatProxy = chatProxy;
-    this.chatListenerService = chatListenerService;
+  public YtChatService(YtChatProxy ytChatProxy, YtChatListenerService ytChatListenerService) {
+    this.ytChatProxy = ytChatProxy;
+    this.ytChatListenerService = ytChatListenerService;
     this.timer = new Timer();
   }
 
@@ -36,7 +36,7 @@ public class ChatService {
 
     GetChatResponse response = null;
     try {
-      response = this.chatProxy.GetChat(this.lastTimestamp, null);
+      response = this.ytChatProxy.GetChat(this.lastTimestamp, null);
     } catch (ConnectException e) {
       System.out.println("[ChatService] Failed to connect to server - is it running?");
     } catch (JsonSyntaxException e) {
@@ -49,7 +49,7 @@ public class ChatService {
       this.lastTimestamp = response.lastTimestamp;
 
       try {
-        this.chatListenerService.onNewChat(response.chat);
+        this.ytChatListenerService.onNewChat(response.chat);
       } catch (Exception e) {
         System.out.println("[ChatService] Failed to notify listeners of new chat items: " + e.getMessage());
       }

@@ -13,11 +13,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class ChatProxy {
+public class YtChatProxy {
   private final String basePath;
   private final Gson gson;
 
-  public ChatProxy(String basePath) {
+  public YtChatProxy(String basePath) {
     this.basePath = basePath;
     this.gson = new Gson();
   }

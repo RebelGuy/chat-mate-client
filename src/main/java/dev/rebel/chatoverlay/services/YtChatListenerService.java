@@ -5,10 +5,10 @@ import dev.rebel.chatoverlay.models.chat.ChatItem;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
-public class ChatListenerService {
+public class YtChatListenerService {
   private final ArrayList<Consumer<ChatItem[]>> _listeners;
 
-  public ChatListenerService() {
+  public YtChatListenerService() {
     this._listeners = new ArrayList<>();
   }
 
