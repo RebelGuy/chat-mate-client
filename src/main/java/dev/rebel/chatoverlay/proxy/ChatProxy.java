@@ -1,8 +1,8 @@
 package dev.rebel.chatoverlay.proxy;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatoverlay.models.chat.GetChatResponse;
 
 import javax.annotation.Nullable;
@@ -15,14 +15,14 @@ import java.net.URL;
 
 public class ChatProxy {
   private final String basePath;
-  private final ObjectMapper objectMapper;
+  private final Gson gson;
 
   public ChatProxy(String basePath) {
     this.basePath = basePath;
-    this.objectMapper = new ObjectMapper();
+    this.gson = new Gson();
   }
 
-  public GetChatResponse GetChat(@Nullable Long since, @Nullable Integer limit) throws ConnectException, JsonProcessingException, Exception {
+  public GetChatResponse GetChat(@Nullable Long since, @Nullable Integer limit) throws ConnectException, JsonSyntaxException, Exception {
     URL url = this.constructGetUrl(since, limit);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod("GET");
@@ -35,9 +35,9 @@ public class ChatProxy {
       }
     }
     String response = result.toString();
-    GetChatResponse parsed = this.objectMapper.readValue(response, GetChatResponse.class);
+    GetChatResponse parsed = this.gson.fromJson(response, GetChatResponse.class);
 
-    if (!parsed.schema.equals(parsed.GetExpectedSchema())) {
+    if (parsed.schema.intValue() != parsed.GetExpectedSchema().intValue()) {
       throw new Exception("Schema mismatch - expected " + parsed.GetExpectedSchema().toString() + " but received " + parsed.schema.toString());
     }
 
