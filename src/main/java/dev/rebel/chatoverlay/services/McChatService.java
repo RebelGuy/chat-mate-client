@@ -4,6 +4,9 @@ import dev.rebel.chatoverlay.models.chat.ChatItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public class McChatService {
   private static final ChatStyle viewerRankStyle = new ChatStyle().setColor(EnumChatFormatting.DARK_PURPLE).setBold(true);
   private static final ChatStyle viewerNameStyle = new ChatStyle().setColor(EnumChatFormatting.YELLOW).setBold(false);
@@ -37,7 +40,27 @@ public class McChatService {
 
   private String getMessageText(ChatItem item) {
     String rendered = item.renderedText;
+    rendered = fixUnicode_Hack(rendered);
     return this.filterService.filterNaughtyWords(rendered);
+  }
+
+  private static String fixUnicode_Hack(String text) {
+    StringBuilder builder = new StringBuilder();
+
+    // have to find a way to replace multi-character things, e.g. 🙂 is '\uD83D\uDE42'
+    text = text.replaceAll("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+", ":)");
+
+    // replace the weird apostrophe character
+    text = text.replaceAll("‘", "'");
+
+    // remove everything else after code 127
+    for (char c: text.toCharArray()) {
+      if (c <= 127) {
+        builder.append(c);
+      }
+    }
+
+    return builder.toString();
   }
 
   private static IChatComponent styledText(String text, ChatStyle styles) {
