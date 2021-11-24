@@ -2,6 +2,7 @@ package dev.rebel.chatoverlay;
 
 import dev.rebel.chatoverlay.models.chat.ChatItem;
 import dev.rebel.chatoverlay.proxy.YtChatProxy;
+import dev.rebel.chatoverlay.services.FilterService;
 import dev.rebel.chatoverlay.services.McChatService;
 import dev.rebel.chatoverlay.services.YtChatListenerService;
 import dev.rebel.chatoverlay.services.YtChatService;
@@ -15,12 +16,18 @@ public class ChatOverlay {
   private final YtChatListenerService ytChatListenerService;
   private final McChatService mcChatService;
 
-  public ChatOverlay() {
+  public ChatOverlay() throws Exception {
     String apiPath = "http://localhost:3010/api/";
     YtChatProxy ytChatProxy = new YtChatProxy(apiPath);
+
+    // filtered list copied from https://docs.google.com/document/d/1DiY_JeKsjIxVB42s0fTJ11X1zsP-vL_QutIUkZ722Fk/edit
+    // (some generalisation phrases were removed manually)
+    String filterPath = "/assets/chatoverlay/filter.txt";
+    FilterService filterService = new FilterService('*', filterPath);
+
     this.ytChatListenerService = new YtChatListenerService();
     this.ytChatService = new YtChatService(ytChatProxy, ytChatListenerService);
-    this.mcChatService = new McChatService();
+    this.mcChatService = new McChatService(filterService);
   }
 
   @Mod.EventHandler

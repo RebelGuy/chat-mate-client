@@ -9,8 +9,11 @@ public class McChatService {
   private static final ChatStyle viewerNameStyle = new ChatStyle().setColor(EnumChatFormatting.YELLOW).setBold(false);
   private static final ChatStyle ytChatMessageStyle = new ChatStyle().setColor(EnumChatFormatting.WHITE);
 
+  private final FilterService filterService;
 
-  public McChatService() {
+
+  public McChatService(FilterService filterService) {
+    this.filterService = filterService;
   }
 
   public void addToMcChat(ChatItem item) {
@@ -19,7 +22,9 @@ public class McChatService {
       try {
         IChatComponent rank = styledText("VIEWER", viewerRankStyle);
         IChatComponent player = styledText(item.author.name, viewerNameStyle);
-        IChatComponent message = styledText(item.renderedText, ytChatMessageStyle);
+
+        String messageText = this.getMessageText(item);
+        IChatComponent message = styledText(messageText, ytChatMessageStyle);
         IChatComponent result = join(" ", rank, player, message);
 
         Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(result);
@@ -28,6 +33,11 @@ public class McChatService {
         // todo: log error
       }
     }
+  }
+
+  private String getMessageText(ChatItem item) {
+    String rendered = item.renderedText;
+    return this.filterService.filterNaughtyWords(rendered);
   }
 
   private static IChatComponent styledText(String text, ChatStyle styles) {
