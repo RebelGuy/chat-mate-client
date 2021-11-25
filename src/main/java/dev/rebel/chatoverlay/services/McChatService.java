@@ -4,6 +4,8 @@ import dev.rebel.chatoverlay.models.chat.ChatItem;
 import dev.rebel.chatoverlay.models.chat.PartialChatMessage;
 import dev.rebel.chatoverlay.models.chat.PartialChatMessageType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.util.*;
 
 import javax.annotation.Nullable;
@@ -26,12 +28,14 @@ public class McChatService {
   }
 
   public void addToMcChat(ChatItem item) {
-    if (Minecraft.getMinecraft().ingameGUI != null) {
+    GuiIngame gui = Minecraft.getMinecraft().ingameGUI;
+
+    if (gui != null) {
       // todo: ensure special characters (e.g. normal emojis) don't break this, as well as very long chat (might need to break up string)
       try {
         IChatComponent rank = styledText("VIEWER", viewerRankStyle);
         IChatComponent player = styledText(item.author.name, viewerNameStyle);
-        List<IChatComponent> msgComponents = this.ytChatToMcChat(item);
+        List<IChatComponent> msgComponents = this.ytChatToMcChat(item, gui.getFontRenderer());
 
         ArrayList<IChatComponent> components = new ArrayList<>();
         components.add(rank);
@@ -39,7 +43,7 @@ public class McChatService {
         components.add(join("", msgComponents));
         IChatComponent result = join(" ", components);
 
-        Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(result);
+        gui.getChatGUI().printChatMessage(result);
       } catch (Exception e) {
         // ignore error because it's not critical
         // todo: log error
@@ -47,7 +51,7 @@ public class McChatService {
     }
   }
 
-  private List<IChatComponent> ytChatToMcChat(ChatItem item) throws Exception {
+  private List<IChatComponent> ytChatToMcChat(ChatItem item, FontRenderer fontRenderer) throws Exception {
     ArrayList<IChatComponent> components = new ArrayList<>();
 
     @Nullable PartialChatMessageType prevType = null;
@@ -60,9 +64,18 @@ public class McChatService {
         style = ytChatMessageTextStyle.setBold(msg.isBold).setItalic(msg.isItalics);
 
       } else if (msg.type == PartialChatMessageType.emoji) {
-        String label = msg.label;
-        text = label.startsWith(":") && label.endsWith(":") ? label : msg.name;
-        style = ytChatMessageEmojiStyle;
+        String name = msg.name;
+        char[] nameChars = name.toCharArray();
+
+        // the name could be the literal emoji unicode character
+        // check if the resource pack supports it - if so, use it!
+        if (nameChars.length == 1 && fontRenderer.getCharWidth(nameChars[0]) > 0) {
+          text = name;
+          style = ytChatMessageTextStyle;
+        } else {
+          text = msg.label; // e.g. :slightly_smiling:
+          style = ytChatMessageEmojiStyle;
+        }
 
       } else throw new Exception("Invalid partial message type " + msg.type);
 
