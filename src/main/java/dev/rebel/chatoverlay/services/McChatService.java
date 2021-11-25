@@ -1,21 +1,27 @@
 package dev.rebel.chatoverlay.services;
 
 import dev.rebel.chatoverlay.models.chat.ChatItem;
+import dev.rebel.chatoverlay.models.chat.PartialChatMessage;
+import dev.rebel.chatoverlay.models.chat.PartialChatMessageType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.*;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
 public class McChatService {
   private static final ChatStyle viewerRankStyle = new ChatStyle().setColor(EnumChatFormatting.DARK_PURPLE).setBold(true);
   private static final ChatStyle viewerNameStyle = new ChatStyle().setColor(EnumChatFormatting.YELLOW).setBold(false);
-  private static final ChatStyle ytChatMessageStyle = new ChatStyle().setColor(EnumChatFormatting.WHITE);
+  private static final ChatStyle ytChatMessageTextStyle = new ChatStyle().setColor(EnumChatFormatting.WHITE);
+  private static final ChatStyle ytChatMessageEmojiStyle = new ChatStyle().setColor(EnumChatFormatting.GRAY);
 
+  private final LoggingService loggingService;
   private final FilterService filterService;
 
 
-  public McChatService(FilterService filterService) {
+  public McChatService(LoggingService loggingService, FilterService filterService) {
+    this.loggingService = loggingService;
     this.filterService = filterService;
   }
 
@@ -25,10 +31,13 @@ public class McChatService {
       try {
         IChatComponent rank = styledText("VIEWER", viewerRankStyle);
         IChatComponent player = styledText(item.author.name, viewerNameStyle);
+        List<IChatComponent> msgComponents = this.ytChatToMcChat(item);
 
-        String messageText = this.getMessageText(item);
-        IChatComponent message = styledText(messageText, ytChatMessageStyle);
-        IChatComponent result = join(" ", rank, player, message);
+        ArrayList<IChatComponent> components = new ArrayList<>();
+        components.add(rank);
+        components.add(player);
+        components.add(join("", msgComponents));
+        IChatComponent result = join(" ", components);
 
         Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(result);
       } catch (Exception e) {
@@ -38,29 +47,40 @@ public class McChatService {
     }
   }
 
-  private String getMessageText(ChatItem item) {
-    String rendered = item.renderedText;
-    rendered = fixUnicode_Hack(rendered);
-    return this.filterService.filterNaughtyWords(rendered);
-  }
+  private List<IChatComponent> ytChatToMcChat(ChatItem item) throws Exception {
+    ArrayList<IChatComponent> components = new ArrayList<>();
 
-  private static String fixUnicode_Hack(String text) {
-    StringBuilder builder = new StringBuilder();
+    @Nullable PartialChatMessageType prevType = null;
+    @Nullable String prevText = null;
+    for (PartialChatMessage msg: item.messageParts) {
+      String text;
+      ChatStyle style;
+      if (msg.type == PartialChatMessageType.text) {
+        text = this.filterService.filterNaughtyWords(msg.text);
+        style = ytChatMessageTextStyle.setBold(msg.isBold).setItalic(msg.isItalics);
 
-    // have to find a way to replace multi-character things, e.g. 🙂 is '\uD83D\uDE42'
-    text = text.replaceAll("[\\uD83C-\\uDBFF\\uDC00-\\uDFFF]+", ":)");
+      } else if (msg.type == PartialChatMessageType.emoji) {
+        String label = msg.label;
+        text = label.startsWith(":") && label.endsWith(":") ? label : msg.name;
+        style = ytChatMessageEmojiStyle;
 
-    // replace the weird apostrophe character
-    text = text.replaceAll("‘", "'");
+      } else throw new Exception("Invalid partial message type " + msg.type);
 
-    // remove everything else after code 127
-    for (char c: text.toCharArray()) {
-      if (c <= 127) {
-        builder.append(c);
+      // add space between components except when we have two text types after one another.
+      if (prevType != null && !(msg.type == PartialChatMessageType.text && prevType == PartialChatMessageType.text)) {
+        if (text.startsWith(" ") || (prevText != null && prevText.endsWith(" "))) {
+          // already spaced out
+        } else {
+          text = " " + text;
+        }
       }
+      components.add(styledText(text, style));
+
+      prevType = msg.type;
+      prevText = text;
     }
 
-    return builder.toString();
+    return components;
   }
 
   private static IChatComponent styledText(String text, ChatStyle styles) {
@@ -69,7 +89,7 @@ public class McChatService {
     return component;
   }
 
-  private static IChatComponent join(String joinText, IChatComponent... components) {
+  private static IChatComponent join(String joinText, List<IChatComponent> components) {
     IChatComponent result = new ChatComponentText("");
 
     for (IChatComponent comp: components) {

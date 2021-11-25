@@ -2,10 +2,7 @@ package dev.rebel.chatoverlay;
 
 import dev.rebel.chatoverlay.models.chat.ChatItem;
 import dev.rebel.chatoverlay.proxy.YtChatProxy;
-import dev.rebel.chatoverlay.services.FilterService;
-import dev.rebel.chatoverlay.services.McChatService;
-import dev.rebel.chatoverlay.services.YtChatListenerService;
-import dev.rebel.chatoverlay.services.YtChatService;
+import dev.rebel.chatoverlay.services.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -17,6 +14,8 @@ public class ChatOverlay {
   private final McChatService mcChatService;
 
   public ChatOverlay() throws Exception {
+    LoggingService loggingService = new LoggingService("log.log", false);
+
     String apiPath = "http://localhost:3010/api/";
     YtChatProxy ytChatProxy = new YtChatProxy(apiPath);
 
@@ -27,7 +26,7 @@ public class ChatOverlay {
 
     this.ytChatListenerService = new YtChatListenerService();
     this.ytChatService = new YtChatService(ytChatProxy, ytChatListenerService);
-    this.mcChatService = new McChatService(filterService);
+    this.mcChatService = new McChatService(loggingService, filterService);
   }
 
   @Mod.EventHandler
