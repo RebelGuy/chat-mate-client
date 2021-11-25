@@ -12,6 +12,7 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class YtChatProxy {
   private final String basePath;
@@ -26,7 +27,9 @@ public class YtChatProxy {
     URL url = this.constructGetUrl(since, limit);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod("GET");
-    InputStreamReader streamReader = new InputStreamReader(conn.getInputStream());
+    // https://stackoverflow.com/a/1826995
+    // turns out default encoding is system/environment dependent if not set explicitly.
+    InputStreamReader streamReader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
 
     StringBuilder result = new StringBuilder();
     try (BufferedReader reader = new BufferedReader(streamReader)) {
