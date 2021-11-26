@@ -42,7 +42,7 @@ public class YtChatProxy {
     GetChatResponse parsed = this.gson.fromJson(response, GetChatResponse.class);
 
     if (parsed.schema == null) {
-      throw new Exception("Schema is null - is the JSON conversion is implemented correctly?");
+      throw new Exception("Schema is null - is the JSON conversion implemented correctly?");
     } else if (parsed.schema.intValue() != parsed.GetExpectedSchema().intValue()) {
       throw new Exception("Schema mismatch - expected " + parsed.GetExpectedSchema().toString() + " but received " + parsed.schema.toString());
     }

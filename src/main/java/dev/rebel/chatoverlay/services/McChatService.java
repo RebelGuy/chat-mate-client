@@ -31,7 +31,6 @@ public class McChatService {
     GuiIngame gui = Minecraft.getMinecraft().ingameGUI;
 
     if (gui != null) {
-      // todo: ensure special characters (e.g. normal emojis) don't break this, as well as very long chat (might need to break up string)
       try {
         IChatComponent rank = styledText("VIEWER", viewerRankStyle);
         IChatComponent player = styledText(item.author.name, viewerNameStyle);
