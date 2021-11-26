@@ -13,6 +13,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 
 public class YtChatProxy {
   private final String basePath;
@@ -50,11 +51,7 @@ public class YtChatProxy {
   }
 
   private URL constructGetUrl(@Nullable Long since, @Nullable Integer limit) throws MalformedURLException {
-    long sinceTimestamp = 0;
-    if (since != null) {
-      sinceTimestamp = since;
-    }
-
+    long sinceTimestamp = since != null ? since : new Date().getTime();
     String limitParam = limit == null ? "" : String.format("&limit=%s", limit.toString());
     String url = String.format("%schat?since=%d%s", this.basePath, sinceTimestamp, limitParam);
 
