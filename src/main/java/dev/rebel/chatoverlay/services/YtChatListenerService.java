@@ -16,6 +16,10 @@ public class YtChatListenerService {
     this._listeners.add(newChatCallback);
   }
 
+  public void clear() {
+    this._listeners.clear();
+  }
+
   public void onNewChat(ChatItem[] newChat) {
     this._listeners.forEach(l -> l.accept(newChat));
   }

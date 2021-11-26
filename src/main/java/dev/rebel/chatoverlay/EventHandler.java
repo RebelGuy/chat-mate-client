@@ -1,27 +1,32 @@
 package dev.rebel.chatoverlay;
 
-import net.minecraftforge.event.world.WorldEvent;
+import dev.rebel.chatoverlay.gui.CustomGuiModList;
+import dev.rebel.chatoverlay.gui.CustomGuiPause;
+import net.minecraft.client.gui.*;
+import net.minecraftforge.client.event.GuiOpenEvent;
+import net.minecraftforge.fml.client.GuiModList;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelHandler;
-import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.IChatComponent;
-import net.minecraft.util.ChatComponentText;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class EventHandler {
-  @SubscribeEvent
-  public void connect(final FMLNetworkEvent.ClientConnectedToServerEvent event) {
-//    ChatComponentText text = new ChatComponentText("Connected");
-//     Minecraft.getMinecraft().thePlayer.addChatMessage(text);
-//    System.out.println("Connected");
+  private final ChatOverlay chatOverlay;
+
+  public EventHandler(ChatOverlay chatOverlay) {
+    this.chatOverlay = chatOverlay;
   }
 
-  @SubscribeEvent
-  public void loadWorld(WorldEvent.Load event) {
-//    ChatComponentText text = new ChatComponentText("World loaded " + event.world.getWorldInfo().getWorldName());
-//    Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(text);
+  @SideOnly(Side.CLIENT)
+  @SubscribeEvent(priority= EventPriority.NORMAL, receiveCanceled=true)
+  public void onEvent(GuiOpenEvent event)
+  {
+    // override some GUIs :)
+    if (event.gui instanceof GuiModList) {
+      event.gui = new CustomGuiModList(null, this.chatOverlay);
+    } else if (event.gui instanceof GuiIngameMenu) {
+      event.gui = new CustomGuiPause(this.chatOverlay);
+    }
   }
 }

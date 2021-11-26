@@ -3,7 +3,7 @@
     "modid": "chatoverlay",
     "name": "Chat Overlay",
     "description": "Display YouTube Live chat in Minecraft",
-    "version": "${version}",
+    "version": "1.1",
     "mcversion": "${mcversion}",
     "url": "",
     "updateUrl": "",
@@ -13,6 +13,7 @@
     "credits": "",
     "logoFile": "",
     "screenshots": [],
-    "dependencies": []
+    "dependencies": [],
+    "canBeDeactivated": true
   }
 ]

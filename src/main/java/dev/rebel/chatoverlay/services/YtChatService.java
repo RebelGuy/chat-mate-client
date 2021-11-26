@@ -6,13 +6,14 @@ import dev.rebel.chatoverlay.proxy.YtChatProxy;
 import jline.internal.Nullable;
 
 import java.net.ConnectException;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class YtChatService {
   private final YtChatProxy ytChatProxy;
   private final YtChatListenerService ytChatListenerService;
-  private final Timer timer;
+  private Timer timer;
 
   private @Nullable
   Long lastTimestamp = null;
@@ -21,11 +22,24 @@ public class YtChatService {
   public YtChatService(YtChatProxy ytChatProxy, YtChatListenerService ytChatListenerService) {
     this.ytChatProxy = ytChatProxy;
     this.ytChatListenerService = ytChatListenerService;
-    this.timer = new Timer();
   }
 
   public void start() {
+    if (this.timer != null) {
+      return;
+    }
+
+    this.timer = new Timer();
     this.timer.scheduleAtFixedRate(new ChatServiceWorker(this::makeRequest), 0, 500);
+  }
+
+  public void stop() {
+    if (this.timer == null) {
+      return;
+    }
+
+    this.timer.cancel();
+    this.timer = null;
   }
 
   private void makeRequest() {
