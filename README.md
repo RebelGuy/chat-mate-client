@@ -2,7 +2,9 @@ The ChatOverlay mod uses the locally run `chat-overlay-server` as an interface t
 
 # Project Details
 
-This project was initialised using the `ForgeTemplate` repository for 1.8.9. Once IntelliJ had set up the project workspace, the command `gradlew genIIntellijRRuns` was run for generating the Gradle tasks.
+This project was initialised using the `ForgeTemplate` repository for 1.8.9. Once IntelliJ had set up the project workspace, the command `gradlew genIntellijRuns` was run for generating the Gradle tasks.
+
+Ensure the IntelliJ Java version is Java 8 (File -> Project Structure -> Project Settings -> Project SDK -> Choose 1.8/Java 8).
 
 To build the project, use `gradlew build`.
 
