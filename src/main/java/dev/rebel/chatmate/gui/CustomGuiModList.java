@@ -1,17 +1,17 @@
-package dev.rebel.chatoverlay.gui;
+package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatoverlay.ChatOverlay;
+import dev.rebel.chatmate.ChatMate;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiMainMenu;
 import net.minecraftforge.fml.client.GuiModList;
 
 public class CustomGuiModList extends GuiModList {
-  private final ChatOverlay chatOverlay;
+  private final ChatMate chatMate;
 
-  public CustomGuiModList(GuiMainMenu mainMenu, ChatOverlay chatOverlay)
+  public CustomGuiModList(GuiMainMenu mainMenu, ChatMate chatMate)
   {
     super(mainMenu);
-    this.chatOverlay = chatOverlay;
+    this.chatMate = chatMate;
   }
 
   @Override
@@ -20,7 +20,7 @@ public class CustomGuiModList extends GuiModList {
     super.initGui();
 
     // todo: the button is literally useless. in the future we can override the on-click event to implement
-    // deactivation for the ChatOverlay mod.
+    // deactivation for the ChatMate mod.
     GuiButton disableModButton = this.buttonList.stream().filter(b -> b.id == 21).findFirst().get();
     this.buttonList.remove(disableModButton);
   }

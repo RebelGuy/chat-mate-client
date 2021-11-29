@@ -1,4 +1,4 @@
-package dev.rebel.chatoverlay.services;
+package dev.rebel.chatmate.services;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -17,7 +17,7 @@ public class LoggingService {
     } else {
       String currentdir = System.getProperty("user.dir");
       currentdir = currentdir.replace("\\", "/");
-      String dataDir = currentdir + "/mods/ChatOverlay";
+      String dataDir = currentdir + "/mods/ChatMate";
       File dataDirFile = new File(dataDir);
 
       if (!fileName.startsWith("/")) fileName = "/" + fileName;

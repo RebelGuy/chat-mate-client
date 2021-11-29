@@ -1,9 +1,9 @@
-package dev.rebel.chatoverlay.proxy;
+package dev.rebel.chatmate.proxy;
 
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import dev.rebel.chatoverlay.models.chat.GetChatResponse;
+import dev.rebel.chatmate.models.chat.GetChatResponse;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;

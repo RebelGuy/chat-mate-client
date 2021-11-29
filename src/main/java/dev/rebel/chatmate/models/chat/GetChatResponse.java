@@ -1,6 +1,6 @@
-package dev.rebel.chatoverlay.models.chat;
+package dev.rebel.chatmate.models.chat;
 
-import dev.rebel.chatoverlay.interfaces.IApiResponse;
+import dev.rebel.chatmate.interfaces.IApiResponse;
 
 public class GetChatResponse implements IApiResponse {
   public Number schema;

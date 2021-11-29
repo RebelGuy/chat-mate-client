@@ -6,7 +6,7 @@ plugins {
 
 version = "1.1"
 group = "dev.rebel"
-archivesBaseName = "ChatOverlay"
+archivesBaseName = "ChatMate"
 
 targetCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'

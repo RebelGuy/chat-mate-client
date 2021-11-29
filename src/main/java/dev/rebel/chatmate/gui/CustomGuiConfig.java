@@ -1,6 +1,6 @@
-package dev.rebel.chatoverlay.gui;
+package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatoverlay.ChatOverlay;
+import dev.rebel.chatmate.ChatMate;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
 import net.minecraft.client.gui.GuiScreen;
@@ -9,7 +9,7 @@ import net.minecraftforge.fml.client.config.GuiConfig;
 import java.util.ArrayList;
 
 public class CustomGuiConfig extends GuiConfig {
-  private final ChatOverlay modInstance;
+  private final ChatMate modInstance;
   private GuiButton activateButton;
   private GuiLabel activateLabel;
 
@@ -19,9 +19,9 @@ public class CustomGuiConfig extends GuiConfig {
   // Todo: In the future, we could add a button-click handler in the CustomGuiModList that does this properly
   public CustomGuiConfig(GuiScreen parent)
   {
-    super(parent, new ArrayList<>(), "chatoverlay", false, false, "Configure ChatOverlay");
+    super(parent, new ArrayList<>(), "chatmate", false, false, "Configure ChatMate");
       titleLine2 = "Mod Settings";
-      this.modInstance = ChatOverlay.instance_hack;
+      this.modInstance = ChatMate.instance_hack;
   }
 
   // great tutorial: https://medium.com/@andreshj87/drawing-a-gui-screen-on-minecraft-forge-7e0059015596

@@ -1,6 +1,6 @@
-package dev.rebel.chatoverlay.services;
+package dev.rebel.chatmate.services;
 
-import dev.rebel.chatoverlay.models.chat.ChatItem;
+import dev.rebel.chatmate.models.chat.ChatItem;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;

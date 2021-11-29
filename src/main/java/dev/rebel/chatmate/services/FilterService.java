@@ -1,6 +1,6 @@
-package dev.rebel.chatoverlay.services;
+package dev.rebel.chatmate.services;
 
-import dev.rebel.chatoverlay.ChatOverlay;
+import dev.rebel.chatmate.ChatMate;
 
 import javax.annotation.Nonnull;
 import java.io.BufferedReader;
@@ -19,7 +19,7 @@ public class FilterService
     this.censorChar = censorChar;
 
     try {
-      InputStream stream = ChatOverlay.class.getResourceAsStream(filterFile);
+      InputStream stream = ChatMate.class.getResourceAsStream(filterFile);
       // this is so dumb...
       BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 

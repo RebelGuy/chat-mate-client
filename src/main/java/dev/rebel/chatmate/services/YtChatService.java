@@ -1,8 +1,8 @@
-package dev.rebel.chatoverlay.services;
+package dev.rebel.chatmate.services;
 
 import com.google.gson.JsonSyntaxException;
-import dev.rebel.chatoverlay.models.chat.GetChatResponse;
-import dev.rebel.chatoverlay.proxy.YtChatProxy;
+import dev.rebel.chatmate.models.chat.GetChatResponse;
+import dev.rebel.chatmate.proxy.YtChatProxy;
 import jline.internal.Nullable;
 
 import java.net.ConnectException;

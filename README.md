@@ -1,4 +1,4 @@
-The ChatOverlay mod uses the locally run `chat-overlay-server` as an interface to get near real-time YouTube livestream chat messages. Messages are displayed in Minecraft chat.
+The ChatMate mod uses the locally run `chat-mate-server` as an interface to get near real-time YouTube livestream chat messages. Messages are displayed in Minecraft chat.
 
 # Project Details
 
@@ -8,9 +8,9 @@ Ensure the IntelliJ Java version is Java 8 (File -> Project Structure -> Project
 
 To build the project, use `gradlew build`.
 
-Build output: `chat-overlay-client/build/libs/*.jar`.
+Build output: `chat-mate-client/build/libs/*.jar`.
 
-Debug partial .minecraft folder: `chat-overlay-client/run/` 
+Debug partial .minecraft folder: `chat-mate-client/run/` 
 
 # Change Log
 

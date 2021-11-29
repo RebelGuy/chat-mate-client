@@ -1,21 +1,21 @@
-package dev.rebel.chatoverlay.gui;
+package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatoverlay.ChatOverlay;
+import dev.rebel.chatmate.ChatMate;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiIngameMenu;
 
 import java.io.IOException;
 
 public class CustomGuiPause extends GuiIngameMenu {
-  private final ChatOverlay chatOverlay;
+  private final ChatMate chatMate;
   private GuiButton ytButton;
 
   // fantastic tutorial here: http://jabelarminecraft.blogspot.com/p/minecraft-modding-configuration-guis.html
   // (use the above when we have config files one day)
-  public CustomGuiPause(ChatOverlay chatOverlay)
+  public CustomGuiPause(ChatMate chatMate)
   {
     super();
-    this.chatOverlay = chatOverlay;
+    this.chatMate = chatMate;
   }
 
   // great tutorial: https://medium.com/@andreshj87/drawing-a-gui-screen-on-minecraft-forge-7e0059015596
@@ -51,7 +51,7 @@ public class CustomGuiPause extends GuiIngameMenu {
   protected void actionPerformed(GuiButton button) throws IOException
   {
     if (button == this.ytButton) {
-      this.setEnabled(!this.chatOverlay.isEnabled());
+      this.setEnabled(!this.chatMate.isEnabled());
     } else {
       super.actionPerformed(button);
     }
@@ -59,16 +59,16 @@ public class CustomGuiPause extends GuiIngameMenu {
 
   private void setEnabled(boolean enabled) {
     if (enabled) {
-      this.chatOverlay.enable();
+      this.chatMate.enable();
     } else {
-      this.chatOverlay.disable();
+      this.chatMate.disable();
     }
 
     this.ytButton.displayString = this.getButtonText();
   }
 
   private String getButtonText() {
-    return this.getButtonText(chatOverlay.isEnabled());
+    return this.getButtonText(chatMate.isEnabled());
   }
 
   private String getButtonText(boolean enabled) {

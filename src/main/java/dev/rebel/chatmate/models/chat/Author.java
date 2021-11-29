@@ -1,4 +1,4 @@
-package dev.rebel.chatoverlay.models.chat;
+package dev.rebel.chatmate.models.chat;
 
 public class Author {
   public Long internalId;

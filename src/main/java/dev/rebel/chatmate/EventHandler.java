@@ -1,7 +1,7 @@
-package dev.rebel.chatoverlay;
+package dev.rebel.chatmate;
 
-import dev.rebel.chatoverlay.gui.CustomGuiModList;
-import dev.rebel.chatoverlay.gui.CustomGuiPause;
+import dev.rebel.chatmate.gui.CustomGuiModList;
+import dev.rebel.chatmate.gui.CustomGuiPause;
 import net.minecraft.client.gui.*;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.fml.client.GuiModList;
@@ -12,10 +12,10 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 public class EventHandler {
-  private final ChatOverlay chatOverlay;
+  private final ChatMate chatMate;
 
-  public EventHandler(ChatOverlay chatOverlay) {
-    this.chatOverlay = chatOverlay;
+  public EventHandler(ChatMate chatMate) {
+    this.chatMate = chatMate;
   }
 
   @SideOnly(Side.CLIENT)
@@ -24,9 +24,9 @@ public class EventHandler {
   {
     // override some GUIs :)
     if (event.gui instanceof GuiModList) {
-      event.gui = new CustomGuiModList(null, this.chatOverlay);
+      event.gui = new CustomGuiModList(null, this.chatMate);
     } else if (event.gui instanceof GuiIngameMenu) {
-      event.gui = new CustomGuiPause(this.chatOverlay);
+      event.gui = new CustomGuiPause(this.chatMate);
     }
   }
 }

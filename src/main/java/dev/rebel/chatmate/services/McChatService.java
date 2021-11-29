@@ -1,8 +1,8 @@
-package dev.rebel.chatoverlay.services;
+package dev.rebel.chatmate.services;
 
-import dev.rebel.chatoverlay.models.chat.ChatItem;
-import dev.rebel.chatoverlay.models.chat.PartialChatMessage;
-import dev.rebel.chatoverlay.models.chat.PartialChatMessageType;
+import dev.rebel.chatmate.models.chat.ChatItem;
+import dev.rebel.chatmate.models.chat.PartialChatMessage;
+import dev.rebel.chatmate.models.chat.PartialChatMessageType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiIngame;

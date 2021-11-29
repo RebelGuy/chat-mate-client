@@ -1,4 +1,4 @@
-package dev.rebel.chatoverlay.gui;
+package dev.rebel.chatmate.gui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
