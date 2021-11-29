@@ -6,6 +6,8 @@ This project was initialised using the `ForgeTemplate` repository for 1.8.9. Onc
 
 Ensure the IntelliJ Java version is Java 8 (File -> Project Structure -> Project Settings -> Project SDK -> Choose 1.8/Java 8).
 
+If developing in VSCode, may need to first open the project in IntelliJ to generate all required files. Install the `Extension Pack for Java` and `Gradle for Java` extensions and make sure the 1.8/Java 8 folder is set in the `org.eclipse.buildship.core.prefs` file under `java.home`.
+
 To build the project, use `gradlew build`.
 
 Build output: `chat-mate-client/build/libs/*.jar`.

@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // {
+    //   // this was generating using CTRL+SHIFT+P and selecting "Configure default build task"
+    //   "type": "gradle",
+    //   "id": "c:\\Users\\User\\Documents\\Dev\\chat-mate-clientbuildChatMate",
+    //   "script": "build",
+    //   "description": "Assembles and tests this project.",
+    //   "group": {
+    //     "kind": "build",
+    //     "isDefault": true
+    //   },
+    //   "project": "ChatMate",
+    //   "buildFile": "C:\\Users\\User\\Documents\\Dev\\chat-mate-client\\build.gradle",
+    //   "rootProject": "ChatMate",
+    //   "projectFolder": "c:\\Users\\User\\Documents\\Dev\\chat-mate-client",
+    //   "workspaceFolder": "c:\\Users\\User\\Documents\\Dev\\chat-mate-client",
+    //   "args": "",
+    //   "javaDebug": false,
+    //   "problemMatcher": [
+    //     "$gradle"
+    //   ],
+    //   "label": "gradle: build"
+    // }
+  ]
+}
