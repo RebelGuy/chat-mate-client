@@ -33,8 +33,6 @@ public class ChatMate {
     String apiPath = "http://localhost:3010/api/";
     YtChatProxy ytChatProxy = new YtChatProxy(apiPath);
 
-    // filtered list copied from https://docs.google.com/document/d/1DiY_JeKsjIxVB42s0fTJ11X1zsP-vL_QutIUkZ722Fk/edit
-    // (some generalisation phrases were removed manually)
     String filterPath = "/assets/chatmate/filter.txt";
     FilterService filterService = new FilterService('*', filterPath);
 

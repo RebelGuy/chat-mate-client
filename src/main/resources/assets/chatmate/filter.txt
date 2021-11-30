@@ -1,9 +1,19 @@
+# could be extended using https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/blob/master/en
+#
+# - split on lines, `,`, and `/`
+# - use `*` for wildcard matches
+# - prefix a line with `+` to make a word whitelisted (will never be censored)
+# - prefix a line with `#` to make it a comment-line (obviously)
+# todo: use `<` and `>` in the filter definition to extend the censor for the rest of the word in either direction, if a match is found. e.g. `<shit>`
+# todo: allow escaping special characters using `\` in the filter definition, e.g. `Hel\*o` will NOT match "Hello" but WILL match "Hel*o"
+
+# Filtered list copied from https://docs.google.com/document/d/1DiY_JeKsjIxVB42s0fTJ11X1zsP-vL_QutIUkZ722Fk/edit
+# (some generalisation phrases were removed manually)
 smd
 stfu
 mofo
 gfys
 gtfo
-pos
 soab
 Kys
 acab
@@ -61,3 +71,11 @@ Porn, Hentai
 Rape, Rapist
 Condom, Sex Toys
 
+# Custom bad words
+Toeballs
+Balls
+
+# Whitelist
++assist
++analy*e
++assassin

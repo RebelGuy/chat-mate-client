@@ -8,12 +8,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class FilterService
 {
   private final char censorChar;
   private final String[] filteredStrings;
+  private final String[] whitelistedStrings;
 
   public FilterService(char censorChar, String filterFile) throws Exception {
     this.censorChar = censorChar;
@@ -22,16 +24,26 @@ public class FilterService
       InputStream stream = ChatMate.class.getResourceAsStream(filterFile);
       // this is so dumb...
       BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-
-      this.filteredStrings = reader.lines().flatMap(FilterService::parseLine).toArray(String[]::new);
+      String[] lines = reader.lines()
+        .flatMap(FilterService::parseLine)
+        .filter(str -> !str.startsWith("#"))
+        .toArray(String[]::new);
+      this.filteredStrings = Arrays.stream(lines)
+        .filter(str -> !str.startsWith("+"))
+        .toArray(String[]::new);
+      this.whitelistedStrings = Arrays.stream(lines)
+        .filter(str -> str.startsWith("+"))
+        .map(str -> str.substring(1))
+        .toArray(String[]::new);
     } catch (Exception e) {
-      throw new Exception("Could not instantiate filter FilterService: " + e.getMessage());
+      throw new Exception("Could not instantiate FilterService: " + e.getMessage());
     }
   }
 
   public String filterNaughtyWords(@Nonnull String text) {
-    // this is a very naive implementation, and does not allow for wildcard characters,
-    // special treatment of spaces or punctuation, etc - it's trivial to bypass.
+    // this is a somewhat naive implementation that is easy to bypass.
+    // spaces and punctuation are not treated specially, and it does 
+    // allow for wildcard characters and whitelisted words.
 
     // might have multiple matches, so instead create a mask of censored characters.
     // initialise to all 0 (yuck!)
@@ -40,7 +52,12 @@ public class FilterService
 
     for (String word: this.filteredStrings) {
       ArrayList<Integer> occurrences = getAllOccurrences(_text, word);
-      occurrences.forEach(occ -> addToMask(mask, occ, word.length()));
+      occurrences.forEach(occ -> bulkMaskUpdate(mask, occ, word.length(), x -> x + 1));
+    }
+
+    for (String word: this.whitelistedStrings) {
+      ArrayList<Integer> occurrences = getAllOccurrences(_text, word);
+      occurrences.forEach(occ -> bulkMaskUpdate(mask, occ, word.length(), x -> 0));
     }
 
     String result = applyMask(mask, text, this.censorChar);
@@ -52,7 +69,7 @@ public class FilterService
     ArrayList<Integer> occurrences = new ArrayList<>();
 
     do {
-      int nextIndex = text.indexOf(word, startAt);
+      int nextIndex = indexOf(text, word, startAt);
       if (nextIndex == -1) {
         break;
       } else {
@@ -65,9 +82,36 @@ public class FilterService
     return occurrences;
   }
 
-  private static void addToMask(Integer[] mask, Integer start, Integer count) {
+  // custom implementation of String.indexOf that allows for wildcard matches
+  private static int indexOf(String text, String word, int startAt) {
+    if (text.length() - startAt < word.length()) {
+      return -1;
+    }
+
+    char[] wordChars = word.toCharArray();
+    char[] textChars = text.toCharArray();
+
+    int charIndex = 0;
+    for (int i = startAt; i < text.length(); i++) {
+      if (textChars[i] == wordChars[charIndex] || textChars[i] == '*') {
+        if (charIndex == wordChars.length - 1) {
+          return i - charIndex;
+        }
+        
+        charIndex++;
+      } else {
+        // reset search
+        charIndex = 0;
+      }
+    }
+
+    return -1;
+  }
+
+  // applies the updater function to the mask for a consecutive number of elements
+  private static void bulkMaskUpdate(Integer[] mask, Integer start, Integer count, Function<Integer, Integer> updater) {
     for (int i = start; i < start + count; i++) {
-      mask[i]++;
+      mask[i] = updater.apply(mask[i]);
     }
   }
 
