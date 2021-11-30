@@ -46,6 +46,7 @@ public class McChatService {
       } catch (Exception e) {
         // ignore error because it's not critical
         // todo: log error
+        System.out.println("[McChatService] Could not print chat message: " + e.getMessage());
       }
     }
   }

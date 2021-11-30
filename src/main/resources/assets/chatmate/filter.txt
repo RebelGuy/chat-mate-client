@@ -4,6 +4,7 @@
 # - use `*` for wildcard matches
 # - prefix a line with `+` to make a word whitelisted (will never be censored)
 # - prefix a line with `#` to make it a comment-line (obviously)
+# - use `[` and `]` to match only the beginning/end of words
 # todo: use `<` and `>` in the filter definition to extend the censor for the rest of the word in either direction, if a match is found. e.g. `<shit>`
 # todo: allow escaping special characters using `\` in the filter definition, e.g. `Hel\*o` will NOT match "Hello" but WILL match "Hel*o"
 
@@ -55,10 +56,12 @@ Stripper
 Circumcise
 Piss
 Fetish
-Ass
+# allows things like "class"
+[Ass
 Ballsack, Nutsack
 Blowjob, Handjob
-Cum
+# allows things like "cumulate" and "accumulate"
+Cum]
 Boner
 Castrate
 Fuck

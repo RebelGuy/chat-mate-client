@@ -14,8 +14,8 @@ import java.util.stream.Stream;
 public class FilterService
 {
   private final char censorChar;
-  private final String[] filteredStrings;
-  private final String[] whitelistedStrings;
+  private final FilteredWord[] filtered;
+  private final FilteredWord[] whitelisted;
 
   public FilterService(char censorChar, String filterFile) throws Exception {
     this.censorChar = censorChar;
@@ -28,13 +28,15 @@ public class FilterService
         .flatMap(FilterService::parseLine)
         .filter(str -> !str.startsWith("#"))
         .toArray(String[]::new);
-      this.filteredStrings = Arrays.stream(lines)
+      this.filtered = Arrays.stream(lines)
         .filter(str -> !str.startsWith("+"))
-        .toArray(String[]::new);
-      this.whitelistedStrings = Arrays.stream(lines)
+        .map(FilteredWord::new)
+        .toArray(FilteredWord[]::new);
+      this.whitelisted = Arrays.stream(lines)
         .filter(str -> str.startsWith("+"))
         .map(str -> str.substring(1))
-        .toArray(String[]::new);
+        .map(FilteredWord::new)
+        .toArray(FilteredWord[]::new);
     } catch (Exception e) {
       throw new Exception("Could not instantiate FilterService: " + e.getMessage());
     }
@@ -50,21 +52,21 @@ public class FilterService
     Integer[] mask = Arrays.stream(new Integer[text.length()]).map(b -> 0).toArray(Integer[]::new);
     String _text = text.toLowerCase();
 
-    for (String word: this.filteredStrings) {
+    for (FilteredWord word: this.filtered) {
       ArrayList<Integer> occurrences = getAllOccurrences(_text, word);
-      occurrences.forEach(occ -> bulkMaskUpdate(mask, occ, word.length(), x -> x + 1));
+      occurrences.forEach(occ -> bulkMaskUpdate(mask, occ, word.length, x -> x + 1));
     }
 
-    for (String word: this.whitelistedStrings) {
+    for (FilteredWord word: this.whitelisted) {
       ArrayList<Integer> occurrences = getAllOccurrences(_text, word);
-      occurrences.forEach(occ -> bulkMaskUpdate(mask, occ, word.length(), x -> 0));
+      occurrences.forEach(occ -> bulkMaskUpdate(mask, occ, word.length, x -> 0));
     }
 
     String result = applyMask(mask, text, this.censorChar);
     return result;
   }
 
-  private static ArrayList<Integer> getAllOccurrences(String text, String word) {
+  private static ArrayList<Integer> getAllOccurrences(String text, FilteredWord word) {
     int startAt = 0;
     ArrayList<Integer> occurrences = new ArrayList<>();
 
@@ -74,8 +76,8 @@ public class FilterService
         break;
       } else {
         occurrences.add(nextIndex);
-        // there could be overlap so start looking at the next character
-        startAt++;
+        // there could be overlap so start looking at the very next character
+        startAt = nextIndex + 1;
       }
     } while (true);
 
@@ -83,22 +85,32 @@ public class FilterService
   }
 
   // custom implementation of String.indexOf that allows for wildcard matches
-  private static int indexOf(String text, String word, int startAt) {
-    if (text.length() - startAt < word.length()) {
+  private static int indexOf(String text, FilteredWord word, int startAt) {
+    if (text.length() - startAt < word.length) {
       return -1;
     }
 
-    char[] wordChars = word.toCharArray();
+    char[] wordChars = word.word.toCharArray();
     char[] textChars = text.toCharArray();
 
     int charIndex = 0;
+    boolean startOfWord = true;
+    boolean endOfWord = true;
     for (int i = startAt; i < text.length(); i++) {
-      if (textChars[i] == wordChars[charIndex] || textChars[i] == '*') {
-        if (charIndex == wordChars.length - 1) {
-          return i - charIndex;
+      if ((textChars[i] == wordChars[charIndex] || textChars[i] == '*')) {
+        // found the next character
+
+        if (word.startOnly && charIndex == 0 && !isStartOfWord(textChars, startAt, i)
+          || word.endOnly && charIndex == wordChars.length - 1 && !isEndOfWord(textChars, i)) {
+          // we found a match, but it's at an invalid location
+          charIndex = 0;
+        } else {
+          if (charIndex == wordChars.length - 1) {
+            return i - charIndex;
+          } else {
+            charIndex++;
+          }
         }
-        
-        charIndex++;
       } else {
         // reset search
         charIndex = 0;
@@ -106,6 +118,18 @@ public class FilterService
     }
 
     return -1;
+  }
+
+  private static boolean isEndOfWord(char[] text, int i) {
+    return i == text.length - 1 || !isSpaceOrPunctuation(text[i]) && isSpaceOrPunctuation(text[i + 1]);
+  }
+
+  private static boolean isStartOfWord(char[] text, int startAt, int i) {
+    return i == startAt || isSpaceOrPunctuation(text[i - 1]) && !isSpaceOrPunctuation(text[i]);
+  }
+
+  private static boolean isSpaceOrPunctuation(char c) {
+    return c == ' ' || c == '.' || c == ',' || c == '-';
   }
 
   // applies the updater function to the mask for a consecutive number of elements
@@ -131,5 +155,30 @@ public class FilterService
     // match '/' or ',' (note that the regex doesn't work when including the starting and ending '/'. thanks java)
     String[] split = line == null ? new String[0] : line.split("[,/]");
     return Arrays.stream(split).map(String::trim).map(String::toLowerCase).filter(s -> !s.isEmpty());
+  }
+
+  private class FilteredWord {
+    public final int length;
+    public final boolean startOnly;
+    public final boolean endOnly;
+    public final String word;
+
+    FilteredWord (String word) {
+      boolean startOnly = false;
+      boolean endOnly = false;
+      if (word.startsWith("[")) {
+        startOnly = true;
+        word = word.substring(1);
+      }
+      if (word.endsWith("]")) {
+        endOnly = true;
+        word = word.substring(0, word.length() - 1);
+      }
+
+      this.length = word.length();
+      this.startOnly = startOnly;
+      this.endOnly = endOnly;
+      this.word = word;
+    }
   }
 }
