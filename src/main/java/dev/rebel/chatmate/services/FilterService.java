@@ -25,8 +25,8 @@ public class FilterService
       // this is so dumb...
       BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
       String[] lines = reader.lines()
-        .flatMap(FilterService::parseLine)
         .filter(str -> !str.startsWith("#"))
+        .flatMap(FilterService::parseLine)
         .toArray(String[]::new);
       this.filtered = Arrays.stream(lines)
         .filter(str -> !str.startsWith("+"))
