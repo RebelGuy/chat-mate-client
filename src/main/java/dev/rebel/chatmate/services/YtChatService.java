@@ -12,16 +12,17 @@ import java.util.TimerTask;
 
 public class YtChatService {
   private final YtChatProxy ytChatProxy;
-  private final YtChatListenerService ytChatListenerService;
-  private Timer timer;
+  private final YtChatEventService ytChatEventService;
 
-  private @Nullable
-  Long lastTimestamp = null;
-  Boolean requestInProgress = false;
+  private final long TIMEOUT_WAIT = 20 * 1000;
+  private @Nullable Timer timer = null;
+  private @Nullable Long lastTimestamp = null;
+  private @Nullable Long pauseUntil = null;
+  private Boolean requestInProgress = false;
 
-  public YtChatService(YtChatProxy ytChatProxy, YtChatListenerService ytChatListenerService) {
+  public YtChatService(YtChatProxy ytChatProxy, YtChatEventService ytChatEventService) {
     this.ytChatProxy = ytChatProxy;
-    this.ytChatListenerService = ytChatListenerService;
+    this.ytChatEventService = ytChatEventService;
   }
 
   public void start() {
@@ -43,7 +44,7 @@ public class YtChatService {
   }
 
   private void makeRequest() {
-    if (this.requestInProgress) {
+    if (!this.canMakeRequest()) {
       return;
     }
     this.requestInProgress = true;
@@ -53,6 +54,7 @@ public class YtChatService {
       response = this.ytChatProxy.GetChat(this.lastTimestamp, null);
     } catch (ConnectException e) {
       System.out.println("[ChatService] Failed to connect to server - is it running?");
+      this.pauseUntil = new Date().getTime() + this.TIMEOUT_WAIT;
     } catch (JsonSyntaxException e) {
       System.out.println("[ChatService] Failed to process JSON response - has the schema changed? " + e.getMessage());
     } catch (Exception e) {
@@ -63,13 +65,18 @@ public class YtChatService {
       this.lastTimestamp = response.lastTimestamp;
 
       try {
-        this.ytChatListenerService.onNewChat(response.chat);
+        this.ytChatEventService.dispatchChat(response.chat);
       } catch (Exception e) {
         System.out.println("[ChatService] Failed to notify listeners of new chat items: " + e.getMessage());
       }
     }
 
     this.requestInProgress = false;
+  }
+
+  private boolean canMakeRequest() {
+    boolean skipRequest = this.requestInProgress || this.pauseUntil != null && this.pauseUntil > new Date().getTime();
+    return !skipRequest;
   }
 
   class ChatServiceWorker extends TimerTask {

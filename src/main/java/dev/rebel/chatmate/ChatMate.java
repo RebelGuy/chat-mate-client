@@ -13,7 +13,7 @@ import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true, guiFactory = "dev.rebel.chatmate.gui.GuiFactory")
 public class ChatMate {
   private final YtChatService ytChatService;
-  private final YtChatListenerService ytChatListenerService;
+  private final YtChatEventService ytChatEventService;
   private final McChatService mcChatService;
 
   // hack until I figure out how to dependency inject into GUI screens
@@ -36,8 +36,8 @@ public class ChatMate {
     String filterPath = "/assets/chatmate/filter.txt";
     FilterService filterService = new FilterService('*', filterPath);
 
-    this.ytChatListenerService = new YtChatListenerService();
-    this.ytChatService = new YtChatService(ytChatProxy, ytChatListenerService);
+    this.ytChatEventService = new YtChatEventService();
+    this.ytChatService = new YtChatService(ytChatProxy, ytChatEventService);
     this.mcChatService = new McChatService(loggingService, filterService);
   }
 
@@ -63,7 +63,7 @@ public class ChatMate {
       return;
     }
 
-    ytChatListenerService.listen(this::onNewYtChat);
+    ytChatEventService.onChat(this::onNewYtChat);
     ytChatService.start();
     this._enabled = true;
   }
@@ -73,7 +73,7 @@ public class ChatMate {
       return;
     }
 
-    ytChatListenerService.clear();
+    ytChatEventService.clear();
     ytChatService.stop();
     this._enabled = false;
   }
