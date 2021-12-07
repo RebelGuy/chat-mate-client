@@ -27,7 +27,15 @@ Debug partial .minecraft folder: `chat-mate-client/run/`
 
 # Change Log
 
-## v1.1
+## v1.2 - The Development Update
+- Added chat-mention colour highlight and sound effect, hardcoded for now for only `Rebel_Guy` and some variants
+- Improved filter algorithm to allow for special selectors:
+  - `#` to comment out a line
+  - `+` to whitelist a word
+  - `*` to match any character
+  - `[` and `]` (for use at the start/beginning of the filtered word) to match the word only if its start/end corresponds to `[`/`]`
+
+## v1.1 - The Encoding Update
 - Added colour formatting to Minecraft chat messages
 - Added button in main menu to enable/disable the mod
 - Added simple message filter
