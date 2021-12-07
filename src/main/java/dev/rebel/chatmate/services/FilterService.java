@@ -66,7 +66,7 @@ public class FilterService
     text = text.toLowerCase();
 
     for (WordFilter word: words) {
-      ArrayList<Integer> occurrences = getAllOccurrences(text, word);
+      ArrayList<Integer> occurrences = getAllOccurrences(text, word, false);
       occurrences.forEach(occ -> mask.updateRange(occ, word.length, true));
     }
 

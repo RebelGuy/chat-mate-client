@@ -48,7 +48,7 @@ public class ChatMate {
   @Mod.EventHandler
   public void onFMLInitialization(FMLInitializationEvent event) {
     // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
-    MinecraftForge.EVENT_BUS.register((Object) new EventHandler(this));
+    MinecraftForge.EVENT_BUS.register(new EventHandler(this));
 
     // to make our life easier, auto enable when in a dev environment
     if (this.isDev) {

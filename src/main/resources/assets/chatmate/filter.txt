@@ -1,5 +1,6 @@
 # could be extended using https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/blob/master/en
 #
+# - not case-sensitive
 # - split on lines, `,`, and `/`
 # - use `*` for wildcard matches
 # - prefix a line with `+` to make a word whitelisted (will never be censored)
@@ -76,7 +77,7 @@ Condom, Sex Toys
 
 # Custom bad words
 Toeballs
-Balls
+[Balls
 
 # Whitelist
 +assist

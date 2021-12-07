@@ -18,6 +18,8 @@ public class TextUtilityService {
 
     int charIndex = 0;
     for (int i = startAt; i < text.length(); i++) {
+      int initialCharIndex = charIndex;
+
       if ((textChars[i] == wordChars[charIndex] || textChars[i] == '*')) {
         // found the next character
 
@@ -37,12 +39,20 @@ public class TextUtilityService {
         // reset search
         charIndex = 0;
       }
+
+      if (initialCharIndex > 0 && charIndex == 0) {
+        // if we stopped searching for a word, we essentially disregarded any of the last `charIndex` characters
+        // as possible candidates for the beginning of the actual match, so we have to rewind the index.
+        // e.g. this will come up when finding the word 'abaa' in the text 'ababaa'
+        i -= initialCharIndex; // resume search from the very character after the previous word snippet started
+      }
     }
 
     return -1;
   }
 
-  public static ArrayList<Integer> getAllOccurrences(String text, WordFilter word) {
+  // if findOverlaps is true, searching 'aa' in 'aaa' returns two matches (0, 1), otherwise it returns one match (0).
+  public static ArrayList<Integer> getAllOccurrences(String text, WordFilter word, boolean findOverlaps) {
     int startAt = 0;
     ArrayList<Integer> occurrences = new ArrayList<>();
 
@@ -52,8 +62,11 @@ public class TextUtilityService {
         break;
       } else {
         occurrences.add(nextIndex);
-        // there could be overlap so start looking at the very next character
-        startAt = nextIndex + 1;
+        if (findOverlaps) {
+          startAt++;
+        } else {
+          startAt = nextIndex + 1;
+        }
       }
     }
 
