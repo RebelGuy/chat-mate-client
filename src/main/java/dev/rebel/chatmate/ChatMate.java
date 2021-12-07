@@ -3,6 +3,7 @@ package dev.rebel.chatmate;
 import dev.rebel.chatmate.models.chat.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
 import dev.rebel.chatmate.services.*;
+import dev.rebel.chatmate.services.util.TextUtilityService;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -29,16 +30,19 @@ public class ChatMate {
     instance_hack = this;
 
     LoggingService loggingService = new LoggingService("log.log", false);
+    TextUtilityService textUtilityService = new TextUtilityService();
 
     String apiPath = "http://localhost:3010/api/";
     YtChatProxy ytChatProxy = new YtChatProxy(apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
-    FilterService filterService = new FilterService('*', filterPath);
+    FilterService filterService = new FilterService(textUtilityService, '*', filterPath);
+
+    SoundService soundService = new SoundService();
 
     this.ytChatEventService = new YtChatEventService();
     this.ytChatService = new YtChatService(ytChatProxy, ytChatEventService);
-    this.mcChatService = new McChatService(loggingService, filterService);
+    this.mcChatService = new McChatService(loggingService, filterService, soundService, textUtilityService);
   }
 
   @Mod.EventHandler
