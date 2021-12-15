@@ -1,6 +1,6 @@
 package dev.rebel.chatmate;
 
-import dev.rebel.chatmate.models.chat.ChatItem;
+import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.util.TextUtilityService;

@@ -26,6 +26,8 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 Debug partial .minecraft folder: `chat-mate-client/run/` 
 
 # Change Log
+## v1.3 - The Database Update
+- Improved API response class structure
 
 ## v1.2 - The Development Update
 - Added chat-mention colour highlight and sound effect, hardcoded for now for only `Rebel_Guy` and some variants

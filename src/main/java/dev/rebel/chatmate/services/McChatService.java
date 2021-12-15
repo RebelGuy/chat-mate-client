@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.models.chat.ChatItem;
-import dev.rebel.chatmate.models.chat.PartialChatMessage;
+import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
+import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
 import dev.rebel.chatmate.models.chat.PartialChatMessageType;
 import dev.rebel.chatmate.services.util.TextUtilityService;
 import dev.rebel.chatmate.services.util.TextUtilityService.StringMask;

@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.models.chat.ChatItem;
+import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
