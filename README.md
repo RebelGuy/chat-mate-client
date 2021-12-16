@@ -27,6 +27,7 @@ Debug partial .minecraft folder: `chat-mate-client/run/`
 
 # Change Log
 ## v1.3 - The Database Update
+- Added Config option to disable mod sounds
 - Improved API response class structure
 
 ## v1.2 - The Development Update
