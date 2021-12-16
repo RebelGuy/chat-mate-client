@@ -12,7 +12,7 @@ public class GetChatResponse implements IApiResponse {
 
   @Override
   public Number GetExpectedSchema() {
-    return 2;
+    return 3;
   }
 
   public static class ChatItem {
@@ -22,7 +22,7 @@ public class GetChatResponse implements IApiResponse {
     // unix timestamp (in milliseconds)
     public Long timestamp;
     public Author author;
-    public List<PartialChatMessage> messageParts;
+    public PartialChatMessage[] messageParts;
   }
 
   public static class Author {
@@ -45,7 +45,8 @@ public class GetChatResponse implements IApiResponse {
     public Boolean isItalics;
 
     // for emoji type
-    // the hover-over name
+    public String emojiId;
+    // the hover-over name, e.g. :slightly_smiling:
     public String name;
     // short emoji label (e.g. shortcut text/search term)
     public String label;
