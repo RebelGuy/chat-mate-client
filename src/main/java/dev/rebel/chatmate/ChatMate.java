@@ -1,5 +1,6 @@
 package dev.rebel.chatmate;
 
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
 import dev.rebel.chatmate.services.*;
@@ -20,14 +21,16 @@ public class ChatMate {
   // hack until I figure out how to dependency inject into GUI screens
   public static ChatMate instance_hack;
 
-  private boolean _enabled;
-  public boolean isEnabled() { return this._enabled; }
+  private Config _config;
+  public boolean isApiEnabled() { return this._config.isApiEnabled; }
+  public boolean isSoundEnabled() { return this._config.isSoundEnabled; }
 
   // from https://forums.minecraftforge.net/topic/68571-1122-check-if-environment-is-deobfuscated/
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
   public ChatMate() throws Exception {
     instance_hack = this;
+    this._config = new Config();
 
     LoggingService loggingService = new LoggingService("log.log", false);
     TextUtilityService textUtilityService = new TextUtilityService();
@@ -38,7 +41,7 @@ public class ChatMate {
     String filterPath = "/assets/chatmate/filter.txt";
     FilterService filterService = new FilterService(textUtilityService, '*', filterPath);
 
-    SoundService soundService = new SoundService();
+    SoundService soundService = new SoundService(this._config);
 
     this.ytChatEventService = new YtChatEventService();
     this.ytChatService = new YtChatService(ytChatProxy, ytChatEventService);
@@ -63,24 +66,27 @@ public class ChatMate {
   }
 
   public void enable() {
-    if (this._enabled) {
+    if (this.isApiEnabled()) {
       return;
     }
 
     ytChatEventService.onChat(this::onNewYtChat);
     ytChatService.start();
-    this._enabled = true;
+    this._config.isApiEnabled = true;
   }
 
   public void disable() {
-    if (!this._enabled) {
+    if (!this.isApiEnabled()) {
       return;
     }
 
     ytChatEventService.clear();
     ytChatService.stop();
-    this._enabled = false;
+    this._config.isApiEnabled = false;
   }
+
+  public void enableSound() { this._config.isSoundEnabled = true; }
+  public void disableSound() { this._config.isSoundEnabled = false; }
 
   private void onNewYtChat(ChatItem[] newChat) {
     for (ChatItem chat: newChat) {

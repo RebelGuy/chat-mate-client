@@ -51,7 +51,7 @@ public class CustomGuiPause extends GuiIngameMenu {
   protected void actionPerformed(GuiButton button) throws IOException
   {
     if (button == this.ytButton) {
-      this.setEnabled(!this.chatMate.isEnabled());
+      this.setEnabled(!this.chatMate.isApiEnabled());
     } else {
       super.actionPerformed(button);
     }
@@ -68,7 +68,7 @@ public class CustomGuiPause extends GuiIngameMenu {
   }
 
   private String getButtonText() {
-    return this.getButtonText(chatMate.isEnabled());
+    return this.getButtonText(chatMate.isApiEnabled());
   }
 
   private String getButtonText(boolean enabled) {

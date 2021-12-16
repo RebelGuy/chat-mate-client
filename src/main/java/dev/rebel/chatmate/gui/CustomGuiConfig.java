@@ -10,8 +10,8 @@ import java.util.ArrayList;
 
 public class CustomGuiConfig extends GuiConfig {
   private final ChatMate modInstance;
-  private GuiButton activateButton;
-  private GuiLabel activateLabel;
+  private GuiButton apiButton;
+  private GuiButton soundButton;
 
   // fantastic tutorial here: http://jabelarminecraft.blogspot.com/p/minecraft-modding-configuration-guis.html
   // (use the above when we have config files one day)
@@ -33,13 +33,22 @@ public class CustomGuiConfig extends GuiConfig {
     // draws a single enabled/disabled button at the top of the screen.
     // it's made redundant by the "YT" toggle in the main menu, but leaving
     // these here for future reference.
-    int buttonWidth = 100;
+    int apiButtonWidth = 100;
     int buttonHeight = 20;
-    this.activateButton = new GuiButton(0, this.width / 2 - buttonWidth / 2, 40, buttonWidth, buttonHeight, this.getButtonText());
-    this.buttonList.add(this.activateButton);
+    int top = 40;
+    String apiText = this.getButtonText("API", this.modInstance.isApiEnabled());
+    this.apiButton = new GuiButton(0, this.width / 2 - apiButtonWidth / 2, top, apiButtonWidth, buttonHeight, apiText);
+    this.buttonList.add(this.apiButton);
 
-    this.activateLabel = new GuiLabel(fontRendererObj, 1, this.width / 2 - 20, this.height / 2 + 40, 300, 20, 0xFFFFFF);
-    this.labelList.add(this.activateLabel);
+    GuiLabel activateLabel = new GuiLabel(fontRendererObj, 1, this.width / 2 - 20, this.height / 2 + 40, 300, 20, 0xFFFFFF);
+    this.labelList.add(activateLabel);
+
+    // sound enabled/disabled
+    int soundButtonWidth = 100;
+    int padding = 10;
+    String soundText = this.getButtonText("Sound", this.modInstance.isSoundEnabled());
+    this.soundButton = new GuiButton(0, this.width / 2 - soundButtonWidth / 2, top + buttonHeight + padding, soundButtonWidth, buttonHeight, soundText);
+    this.buttonList.add(this.soundButton);
   }
 
 
@@ -55,26 +64,34 @@ public class CustomGuiConfig extends GuiConfig {
   {
     super.actionPerformed(button);
 
-    if (button == this.activateButton) {
-      this.setEnabled(!this.modInstance.isEnabled());
+    if (button == this.apiButton) {
+      this.setApiEnabled(!this.modInstance.isApiEnabled());
+    } else if (button == this.soundButton) {
+      this.setSoundEnabled(!this.modInstance.isSoundEnabled());
     }
   }
 
-  private void setEnabled(boolean enabled) {
+  private void setApiEnabled(boolean enabled) {
     if (enabled) {
       this.modInstance.enable();
     } else {
       this.modInstance.disable();
     }
 
-    this.activateButton.displayString = this.getButtonText();
+    this.apiButton.displayString = this.getButtonText("API", this.modInstance.isApiEnabled());
   }
 
-  private String getButtonText() {
-    return this.getButtonText(modInstance.isEnabled());
+  private void setSoundEnabled(boolean enabled) {
+    if (enabled) {
+      this.modInstance.enableSound();
+    } else {
+      this.modInstance.disableSound();
+    }
+
+    this.soundButton.displayString = this.getButtonText("Sound", this.modInstance.isSoundEnabled());
   }
 
-  private String getButtonText(boolean enabled) {
-    return enabled ? "Enabled" : "Disabled";
+  private String getButtonText(String type, boolean isEnabled) {
+    return type + ": " + (isEnabled ? "Enabled" : "Disabled");
   }
 }
