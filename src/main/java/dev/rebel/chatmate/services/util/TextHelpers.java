@@ -20,7 +20,7 @@ public class TextHelpers {
     for (int i = startAt; i < text.length(); i++) {
       int initialCharIndex = charIndex;
 
-      if ((textChars[i] == wordChars[charIndex] || textChars[i] == '*')) {
+      if ((textChars[i] == wordChars[charIndex] || wordChars[charIndex] == '*')) {
         // found the next character
 
         if (word.startOnly && charIndex == 0 && !isStartOfWord(textChars, startAt, i)
@@ -98,6 +98,8 @@ public class TextHelpers {
     public final String word;
 
     public WordFilter (String word) {
+      word = word.toLowerCase();
+
       boolean startOnly = false;
       boolean endOnly = false;
       if (word.startsWith("[")) {

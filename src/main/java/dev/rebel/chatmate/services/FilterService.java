@@ -27,8 +27,7 @@ public class FilterService
     // spaces and punctuation are not treated specially, and it does 
     // allow for wildcard characters and whitelisted words.
 
-    // might have multiple matches, so instead create a mask of censored characters.
-    // initialise to all 0 (yuck!)
+    // the advantage of using masks is that we can perform boolean operations
     StringMask profanityMask = filterWords(text, this.filtered);
     StringMask whitelistMask = filterWords(text, this.whitelisted);
     return applyMask(profanityMask.subtract(whitelistMask), text, '*');
@@ -48,17 +47,19 @@ public class FilterService
   }
 
   public static FilterFileParseResult parseFilterFile(Stream<String> lines) {
-    String[] parsedLines = lines
+    String[] relevantLines = lines
+        .map(String::trim)
         .filter(str -> !str.startsWith("#"))
-        .flatMap(FilterService::parseLine)
         .toArray(String[]::new);
-    WordFilter[] filtered = Arrays.stream(parsedLines)
+    WordFilter[] filtered = Arrays.stream(relevantLines)
         .filter(str -> !str.startsWith("+"))
+        .flatMap(FilterService::parseLine)
         .map(WordFilter::new)
         .toArray(WordFilter[]::new);
-    WordFilter[] whitelisted = Arrays.stream(parsedLines)
+    WordFilter[] whitelisted = Arrays.stream(relevantLines)
         .filter(str -> str.startsWith("+"))
         .map(str -> str.substring(1))
+        .flatMap(FilterService::parseLine)
         .map(WordFilter::new)
         .toArray(WordFilter[]::new);
 
