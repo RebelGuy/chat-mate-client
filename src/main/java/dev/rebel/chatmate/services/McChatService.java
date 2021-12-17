@@ -3,9 +3,9 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
 import dev.rebel.chatmate.models.chat.PartialChatMessageType;
-import dev.rebel.chatmate.services.util.TextUtilityService;
-import dev.rebel.chatmate.services.util.TextUtilityService.StringMask;
-import dev.rebel.chatmate.services.util.TextUtilityService.WordFilter;
+import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
+import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiIngame;
@@ -26,13 +26,11 @@ public class McChatService {
   private final LoggingService loggingService;
   private final FilterService filterService;
   private final SoundService soundService;
-  private final TextUtilityService textUtilityService;
 
-  public McChatService(LoggingService loggingService, FilterService filterService, SoundService soundService, TextUtilityService textUtilityService) {
+  public McChatService(LoggingService loggingService, FilterService filterService, SoundService soundService) {
     this.loggingService = loggingService;
     this.filterService = filterService;
     this.soundService = soundService;
-    this.textUtilityService = textUtilityService;
   }
 
   public void addToMcChat(ChatItem item) {
@@ -102,7 +100,7 @@ public class McChatService {
       }
 
       if (msg.type == PartialChatMessageType.text) {
-        WordFilter[] mentionFilter = this.textUtilityService.makeWordFilters("[rebel_guy]", "[rebel guy]", "[rebel]");
+        WordFilter[] mentionFilter = TextHelpers.makeWordFilters("[rebel_guy]", "[rebel guy]", "[rebel]");
         StringMask mentionMask = this.filterService.filterWords(text, mentionFilter);
         components.addAll(styledTextWithMask(text, style, mentionMask, mentionTextStyle));
 

@@ -1,51 +1,25 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.ChatMate;
-import dev.rebel.chatmate.services.util.TextUtilityService;
-import dev.rebel.chatmate.services.util.TextUtilityService.WordFilter;
-import dev.rebel.chatmate.services.util.TextUtilityService.StringMask;
+import dev.rebel.chatmate.services.util.FileHelpers;
+import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
+import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 
 import javax.annotation.Nonnull;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import static dev.rebel.chatmate.services.util.TextUtilityService.getAllOccurrences;
+import static dev.rebel.chatmate.services.util.TextHelpers.getAllOccurrences;
 
 public class FilterService
 {
-  private final TextUtilityService textUtilityService;
-  private final char censorChar;
   private final WordFilter[] filtered;
   private final WordFilter[] whitelisted;
 
-  public FilterService(TextUtilityService textUtilityService, char censorChar, String filterFile) throws Exception {
-    this.textUtilityService = textUtilityService;
-    this.censorChar = censorChar;
-
-    try {
-      InputStream stream = ChatMate.class.getResourceAsStream(filterFile);
-      // this is so dumb...
-      BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-      String[] lines = reader.lines()
-        .filter(str -> !str.startsWith("#"))
-        .flatMap(FilterService::parseLine)
-        .toArray(String[]::new);
-      this.filtered = Arrays.stream(lines)
-        .filter(str -> !str.startsWith("+"))
-        .map(l -> this.textUtilityService.new WordFilter(l))
-        .toArray(WordFilter[]::new);
-      this.whitelisted = Arrays.stream(lines)
-        .filter(str -> str.startsWith("+"))
-        .map(str -> str.substring(1))
-          .map(l -> this.textUtilityService.new WordFilter(l))
-          .toArray(WordFilter[]::new);
-    } catch (Exception e) {
-      throw new Exception("Could not instantiate FilterService: " + e.getMessage());
-    }
+  public FilterService(WordFilter[] filtered, WordFilter[] whitelisted) {
+    this.filtered = filtered;
+    this.whitelisted = whitelisted;
   }
 
   public String censorNaughtyWords(@Nonnull String text) {
@@ -55,14 +29,14 @@ public class FilterService
 
     // might have multiple matches, so instead create a mask of censored characters.
     // initialise to all 0 (yuck!)
-    StringMask profanityMask = this.filterWords(text, this.filtered);
-    StringMask whitelistMask = this.filterWords(text, this.whitelisted);
-    return applyMask(profanityMask.subtract(whitelistMask), text, this.censorChar);
+    StringMask profanityMask = filterWords(text, this.filtered);
+    StringMask whitelistMask = filterWords(text, this.whitelisted);
+    return applyMask(profanityMask.subtract(whitelistMask), text, '*');
   }
 
   // returns the mask matching the given words (not case sensitive).
-  public StringMask filterWords(@Nonnull String text, WordFilter... words) {
-    StringMask mask = this.textUtilityService.new StringMask(text.length());
+  public static StringMask filterWords(@Nonnull String text, WordFilter... words) {
+    StringMask mask = new TextHelpers.StringMask(text.length());
     text = text.toLowerCase();
 
     for (WordFilter word: words) {
@@ -71,6 +45,24 @@ public class FilterService
     }
 
     return mask;
+  }
+
+  public static FilterFileParseResult parseFilterFile(Stream<String> lines) {
+    String[] parsedLines = lines
+        .filter(str -> !str.startsWith("#"))
+        .flatMap(FilterService::parseLine)
+        .toArray(String[]::new);
+    WordFilter[] filtered = Arrays.stream(parsedLines)
+        .filter(str -> !str.startsWith("+"))
+        .map(WordFilter::new)
+        .toArray(WordFilter[]::new);
+    WordFilter[] whitelisted = Arrays.stream(parsedLines)
+        .filter(str -> str.startsWith("+"))
+        .map(str -> str.substring(1))
+        .map(WordFilter::new)
+        .toArray(WordFilter[]::new);
+
+    return new FilterFileParseResult(filtered, whitelisted);
   }
 
   private static String applyMask(StringMask mask, String text, char censorChar) {
@@ -83,5 +75,15 @@ public class FilterService
     // match '/' or ',' (note that the regex doesn't work when including the starting and ending '/'. thanks java)
     String[] split = line == null ? new String[0] : line.split("[,/]");
     return Arrays.stream(split).map(String::trim).map(String::toLowerCase).filter(s -> !s.isEmpty());
+  }
+
+  public static class FilterFileParseResult {
+    public WordFilter[] filtered;
+    public WordFilter[] whitelisted;
+
+    public FilterFileParseResult(WordFilter[] filtered, WordFilter[] whitelisted) {
+      this.filtered = filtered;
+      this.whitelisted = whitelisted;
+    }
   }
 }

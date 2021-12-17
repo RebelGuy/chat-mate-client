@@ -6,7 +6,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class TextUtilityService {
+public class TextHelpers {
   // custom implementation of String.indexOf that allows for wildcard matches
   public static int indexOf(String text, WordFilter word, int startAt) {
     if (text.length() - startAt < word.length) {
@@ -73,7 +73,7 @@ public class TextUtilityService {
     return occurrences;
   }
 
-  public WordFilter[] makeWordFilters(String... words) {
+  public static WordFilter[] makeWordFilters(String... words) {
     return Arrays.stream(words).map(WordFilter::new).toArray(WordFilter[]::new);
   }
 
@@ -89,7 +89,9 @@ public class TextUtilityService {
     return c == ' ' || c == '.' || c == ',' || c == '!' || c == '?' || c == '’' || c == '\'' || c == '-' || c == '/' || c == ':' || c == ';';
   }
 
-  public class WordFilter {
+  // note: a static nested class does NOT mean that the nested class itself is static (lol), it just
+  // means that it does not require an instance of the outer class in order to be instantiated.
+  public static class WordFilter {
     public final int length;
     public final boolean startOnly;
     public final boolean endOnly;
@@ -114,7 +116,7 @@ public class TextUtilityService {
     }
   }
 
-  public class StringMask {
+  public static class StringMask {
     public final boolean[] mask;
     public final int length;
 
