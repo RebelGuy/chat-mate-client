@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
-import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting.Format;
 
 public class TextHelpersTests {
   @Test

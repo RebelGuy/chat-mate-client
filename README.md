@@ -19,6 +19,12 @@ https://adoptium.net/archive.html?variant=openjdk8&jvmVariant=hotspot
 
 If developing in VSCode, may need to first open the project in IntelliJ to generate all required files. Install the `Extension Pack for Java` and `Gradle for Java` extensions and make sure the 1.8/Java 8 folder is set in the `org.eclipse.buildship.core.prefs` file under `java.home`.
 
+## File Encoding
+In order to allow characters such as `'§'`, Java files must be encoding using UTF8, and the Java VM must be told of this.
+- In the IntelliJ settings, set global and project encodings to UTF8
+- In the system environment variables, add `JAVA_TOOL_OPTIONS` with value `-Dfile.encoding=UTF8` (see [explanation](https://stackoverflow.com/questions/361975/setting-the-default-java-character-encoding))
+
+## Building
 To build the project, use `gradlew build`.
 
 Build output: `chat-mate-client/build/libs/*.jar`.
@@ -29,6 +35,7 @@ Debug partial .minecraft folder: `chat-mate-client/run/`
 ## v1.3 - The Database Update
 - Added Config option to disable mod sounds
 - Improved API response class structure
+- Fixed chat filter exploit using Minecraft formatting
 
 ## v1.2 - The Development Update
 - Added chat-mention colour highlight and sound effect, hardcoded for now for only `Rebel_Guy` and some variants
