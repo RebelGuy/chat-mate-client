@@ -1,8 +1,9 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.services.util.FileHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
+import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting.Format;
+import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 
 import javax.annotation.Nonnull;
@@ -33,17 +34,28 @@ public class FilterService
     return applyMask(profanityMask.subtract(whitelistMask), text, '*');
   }
 
-  // returns the mask matching the given words (not case sensitive).
+  // returns the mask matching the given words (not case sensitive, valid and invalid chat format codes are ignored).
   public static StringMask filterWords(@Nonnull String text, WordFilter... words) {
+    ExtractedFormatting formatting = TextHelpers.extractFormatting(text);
+
+    // apply the filter on the unformatted text
+    text = formatting.unformattedText.toLowerCase();
     StringMask mask = new TextHelpers.StringMask(text.length());
-    text = text.toLowerCase();
 
     for (WordFilter word: words) {
-      ArrayList<Integer> occurrences = getAllOccurrences(text, word, false);
+      ArrayList<Integer> occurrences = getAllOccurrences(text, word, true);
       occurrences.forEach(occ -> mask.updateRange(occ, word.length, true));
     }
 
-    return mask;
+    // re-apply formatting to the mask. formatting is never matched by the filter.
+    // can't use `mask` because we get an error (thanks Java)
+    // `Local variable mask defined in an enclosing scope must be final or effectively final`
+    StringMask maskWithFormatting = mask;
+    for (Format format: formatting.extracted) {
+      maskWithFormatting = maskWithFormatting.insert(format.index, 2, false);
+    }
+
+    return maskWithFormatting;
   }
 
   public static FilterFileParseResult parseFilterFile(Stream<String> lines) {

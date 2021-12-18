@@ -6,8 +6,10 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting.Format;
+
 public class TextHelpers {
-  // custom implementation of String.indexOf that allows for wildcard matches
+  // custom implementation of String.indexOf that allows for a custom matching filter
   public static int indexOf(String text, WordFilter word, int startAt) {
     if (text.length() - startAt < word.length) {
       return -1;
@@ -63,9 +65,9 @@ public class TextHelpers {
       } else {
         occurrences.add(nextIndex);
         if (findOverlaps) {
-          startAt++;
-        } else {
           startAt = nextIndex + 1;
+        } else {
+          startAt = nextIndex + word.length;
         }
       }
     }
@@ -77,6 +79,30 @@ public class TextHelpers {
     return Arrays.stream(words).map(WordFilter::new).toArray(WordFilter[]::new);
   }
 
+  public static ExtractedFormatting extractFormatting(String text) {
+    WordFilter filter = new WordFilter("§*");
+    Format[] formats = getAllOccurrences(text, filter, false)
+      .stream()
+      .map(i -> new Format(i, text.charAt(i + 1)))
+      .toArray(Format[]::new);
+
+    // append the sections between formats
+    StringBuilder unformattedString = new StringBuilder();
+    int from = 0;
+    for (int i = 0; i < formats.length; i++) {
+      int to = formats[i].index;
+      unformattedString.append(text.substring(from, to));
+      from = to + 2;
+    }
+
+    // append the rest
+    if (from < text.length()) {
+      unformattedString.append(text.substring(from));
+    }
+
+    return new ExtractedFormatting(unformattedString.toString(), formats);
+  }
+
   private static boolean isEndOfWord(char[] text, int i) {
     return i == text.length - 1 || !isSpaceOrPunctuation(text[i]) && isSpaceOrPunctuation(text[i + 1]);
   }
@@ -86,7 +112,8 @@ public class TextHelpers {
   }
 
   private static boolean isSpaceOrPunctuation(char c) {
-    return c == ' ' || c == '.' || c == ',' || c == '!' || c == '?' || c == '’' || c == '\'' || c == '-' || c == '/' || c == ':' || c == ';';
+    return c == ' ' || c == '.' || c == ',' || c == '!' || c == '?' || c == '’' || c == '\''
+        || c == '-' || c == '/' || c == ':' || c == ';' || c == '§'; // § only comes up when there is a single § at the end of the message
   }
 
   // note: a static nested class does NOT mean that the nested class itself is static (lol), it just
@@ -134,7 +161,7 @@ public class TextHelpers {
     }
 
     public StringMask copy() {
-      return new StringMask (this.mask.clone());
+      return new StringMask(this.mask.clone());
     }
 
     public boolean any() {
@@ -155,6 +182,24 @@ public class TextHelpers {
 
     public StringMask add(StringMask mask) {
       return this.map((v, i) -> mask.mask[i] ? true : v);
+    }
+
+    public StringMask insert(int from, int length, boolean value) {
+      int N = this.length + length;
+      int to = from + length;
+      boolean[] mask = new boolean[N];
+
+      for (int i = 0; i < N; i++) {
+        if (i < from) {
+          mask[i] = this.mask[i];
+        } else if (i >= from && i < to) {
+          mask[i] = value;
+        } else {
+          mask[i] = this.mask[i - length];
+        }
+      }
+
+      return new StringMask(mask);
     }
 
     public void updateRange(int from, int length, boolean value) {
@@ -197,6 +242,26 @@ public class TextHelpers {
         }
       }
       return -1;
+    }
+  }
+
+  public static class ExtractedFormatting {
+    public final String unformattedText;
+    public final Format[] extracted;
+
+    public ExtractedFormatting (String unformattedText, Format[] extracted) {
+      this.unformattedText = unformattedText;
+      this.extracted = extracted;
+    }
+
+    public static class Format {
+      public final int index;
+      public final char formatChar;
+
+      public Format(int index, char formatChar) {
+        this.index = index;
+        this.formatChar = formatChar;
+      }
     }
   }
 }

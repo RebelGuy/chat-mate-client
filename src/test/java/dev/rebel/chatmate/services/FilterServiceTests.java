@@ -78,6 +78,15 @@ public class FilterServiceTests {
   }
 
   @Test
+  public void filter_findsMultipleOverlappingInstances() {
+    // without considering overlapping, there would only be a single match here
+    // however, with overlapping, there are three matches.
+    StringMask mask = FilterService.filterWords("aaaaa", new WordFilter("aaa"));
+
+    assertMatch("*****", mask);
+  }
+
+  @Test
   public void filter_findsMultipleSeparateWords() {
     StringMask mask = FilterService.filterWords("Hello there, world!", TextHelpers.makeWordFilters("world", "hello"));
 
@@ -139,6 +148,37 @@ public class FilterServiceTests {
 
     assertMatch("Hello **** ohello ohell", mask);
   }
+
+  @Test
+  public void filter_clientSideWildcard_IsIgnored() {
+    StringMask mask = FilterService.filterWords("F*ck", TextHelpers.makeWordFilters("Fuck"));
+
+    assertMatch("F*ck", mask, '^');
+  }
+
+  @Test
+  public void filter_skipsFormatting() {
+    // as seen in https://www.youtube.com/watch?v=Ya7Wgwf3J6c :)
+    StringMask mask = FilterService.filterWords("CCC please ban this fu§rck", TextHelpers.makeWordFilters("fuck"));
+
+    assertMatch("CCC please ban this **§r**", mask);
+  }
+
+  @Test
+  public void filter_skipsFormatting_DoubleSectionSign() {
+    // the extracted text should not be interpreted as three letters, but four!
+    StringMask mask = FilterService.filterWords("Te§§st", TextHelpers.makeWordFilters("test"));
+
+    assertMatch("**§§**", mask);
+  }
+
+  @Test
+  public void filter_skipsFormatting_SingleTrailingSectionSign() {
+    // the extracted text should not be interpreted as three letters, but four!
+    StringMask mask = FilterService.filterWords("§", TextHelpers.makeWordFilters("test"));
+
+    assertMatch("§", mask);
+  }
   //endregion
 
 
@@ -168,15 +208,18 @@ public class FilterServiceTests {
   }
 
   private static void assertMatch(String expectedMaskSelection, StringMask mask) {
+    assertMatch(expectedMaskSelection, mask, '*');
+  }
+  private static void assertMatch(String expectedMaskSelection, StringMask mask, char matchChar) {
     Assert.assertEquals(expectedMaskSelection.length(), mask.length);
 
     char[] chars = expectedMaskSelection.toCharArray();
     StringBuilder builder = new StringBuilder();
 
     for (int i = 0; i < chars.length; i++) {
-      if (mask.mask[i] && chars[i] != '*') {
+      if (mask.mask[i] && chars[i] != matchChar) {
         builder.append("Expected match at index " + i + "\n");
-      } else if (!mask.mask[i] && chars[i] == '*') {
+      } else if (!mask.mask[i] && chars[i] == matchChar) {
         builder.append("Did not expect match at index " + i + "\n");
       }
     }
