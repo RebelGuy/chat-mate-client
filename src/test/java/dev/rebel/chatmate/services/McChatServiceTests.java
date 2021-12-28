@@ -30,11 +30,11 @@ public class McChatServiceTests {
   @Mock GuiIngame mockGuiIngame;
   @Mock FontRenderer mockFontRenderer;
   @Mock GuiNewChat mockChatGui;
-  ArgumentCaptor<GuiNewChat> chatGuiCaptor = ArgumentCaptor.forClass(GuiNewChat.class);
 
   Author author1 = new Author() {{ name = "Author 1"; }};
   PartialChatMessage text1 = createText("Text 1");
   PartialChatMessage text2 = createText("Text 2");
+  PartialChatMessage textRebel = createText("Rebel");
   PartialChatMessage emoji1 = createEmoji("☺", ":smiling:");
   PartialChatMessage emoji2 = createEmoji("slightly smiling", ":slightly_smiling:");
 
@@ -102,6 +102,22 @@ public class McChatServiceTests {
     verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
+  @Test
+  public void addChat_chatMention_playsDing() {
+    // so it *should* be possible to mock static methods using PowerMock by adding
+    // @PrepareForTest(FilterService.class) to the method, and @RunWith(PowerMockRunner) to the class
+    // but for some reason it causes everything JUnit related to break.
+    // so for now just rely on the static method's implementation to work correctly (and it is tested in FilterServiceTests anyway).
+
+    // note: if this test breaks it's probably because chat mentions are no longer hardcoded
+    ChatItem item = createItem(author1, textRebel);
+    McChatService service = this.setupService();
+
+    service.addToMcChat(item);
+
+    verify(this.mockSoundService).playDing();
+  }
+
   private static String getExpectedChatText(Author author, String text) {
     return "VIEWER " + author.name + " " + text;
   }
@@ -112,7 +128,7 @@ public class McChatServiceTests {
     when(this.mockGuiIngame.getChatGUI()).thenReturn(this.mockChatGui);
 
     // just return the input
-    when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArguments()[0]);
+    when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArgument(0));
 
     return new McChatService(this.mockMinecraft, this.mockLoggingService, this.mockFilterService, this.mockSoundService);
   }

@@ -41,6 +41,6 @@ public class YtChatServiceTests {
 
     // YtChatService calls `scheduleAtFixedRate`, which executes on a separate thread even with zero delay.
     // so wait some time until we are sure that the other thread has finished its work.
-    verify(mockCallback, timeout(10)).accept(ArgumentMatchers.argThat(arg -> arg == chatItems));
+    verify(mockCallback, timeout(100)).accept(ArgumentMatchers.argThat(arg -> arg == chatItems));
   }
 }
