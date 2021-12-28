@@ -81,7 +81,20 @@ repositories {
 
 dependencies {
     // use JUnit 4 because idk if JUnit 5 is supported by Java 8
-    testImplementation "junit:junit:4.11"
+    testImplementation 'junit:junit:4.13.2'
+
+    testCompile "org.mockito:mockito-core:2.7.5"
+
+    // must use this version for Mockito 2.7.5: https://github.com/powermock/powermock/wiki/Mockito#supported-versions
+    testCompile "org.powermock:powermock-core:1.7.0RC4"
+
+    // why mockito2? because otherwise the mocking objects can't be instantiated
+    // see https://stackoverflow.com/a/47294653
+    testImplementation 'org.powermock:powermock-api-mockito2:1.7.0RC4'
+
+    // e.g. allows @Mock annotations
+    testImplementation 'org.powermock:powermock-module-junit4:1.7.0RC4'
+
 }
 
 jar.dependsOn shadowJar

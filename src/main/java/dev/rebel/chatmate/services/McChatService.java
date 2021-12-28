@@ -23,18 +23,20 @@ public class McChatService {
   private static final ChatStyle ytChatMessageEmojiStyle = new ChatStyle().setColor(EnumChatFormatting.GRAY);
   private static final ChatStyle mentionTextStyle = new ChatStyle().setColor(EnumChatFormatting.GOLD);
 
+  private final Minecraft minecraft;
   private final LoggingService loggingService;
   private final FilterService filterService;
   private final SoundService soundService;
 
-  public McChatService(LoggingService loggingService, FilterService filterService, SoundService soundService) {
+  public McChatService(Minecraft minecraft, LoggingService loggingService, FilterService filterService, SoundService soundService) {
+    this.minecraft = minecraft;
     this.loggingService = loggingService;
     this.filterService = filterService;
     this.soundService = soundService;
   }
 
   public void addToMcChat(ChatItem item) {
-    GuiIngame gui = Minecraft.getMinecraft().ingameGUI;
+    GuiIngame gui = this.minecraft.ingameGUI;
 
     if (gui != null) {
       try {
@@ -101,7 +103,7 @@ public class McChatService {
 
       if (msg.type == PartialChatMessageType.text) {
         WordFilter[] mentionFilter = TextHelpers.makeWordFilters("[rebel_guy]", "[rebel guy]", "[rebel]");
-        StringMask mentionMask = this.filterService.filterWords(text, mentionFilter);
+        StringMask mentionMask = FilterService.filterWords(text, mentionFilter);
         components.addAll(styledTextWithMask(text, style, mentionMask, mentionTextStyle));
 
         if (mentionMask.any()) {
@@ -158,12 +160,17 @@ public class McChatService {
   private static IChatComponent join(String joinText, List<IChatComponent> components) {
     IChatComponent result = new ChatComponentText("");
 
+    boolean isFirst = true;
     for (IChatComponent comp: components) {
-      result = result.appendSibling(comp);
-
-      if (joinText.length() > 0) {
-        result = result.appendText(joinText);
+      if (!isFirst) {
+        if (joinText.length() > 0) {
+          result = result.appendText(joinText);
+        }
+      } else {
+        isFirst = false;
       }
+
+      result = result.appendSibling(comp);
     }
 
     return result;

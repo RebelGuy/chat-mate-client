@@ -6,6 +6,7 @@ import dev.rebel.chatmate.proxy.YtChatProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.util.FileHelpers;
+import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -46,7 +47,9 @@ public class ChatMate {
 
     this.ytChatEventService = new YtChatEventService();
     this.ytChatService = new YtChatService(ytChatProxy, ytChatEventService);
-    this.mcChatService = new McChatService(loggingService, filterService, soundService);
+
+    Minecraft minecraft = Minecraft.getMinecraft();
+    this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
   }
 
   @Mod.EventHandler
