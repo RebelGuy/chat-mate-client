@@ -90,6 +90,18 @@ public class McChatServiceTests {
     verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
+  @Test
+  public void addChat_textEmoji_spacingBetween() {
+    ChatItem item = createItem(author1, text1, emoji2, emoji1, text2);
+    when(this.mockFontRenderer.getCharWidth(emoji1.name.charAt(0))).thenReturn(1);
+    McChatService service = this.setupService();
+
+    service.addToMcChat(item);
+
+    String expected = getExpectedChatText(author1, text1.text + " " + emoji2.label + " " + emoji1.name + " " + text2.text);
+    verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+  }
+
   private static String getExpectedChatText(Author author, String text) {
     return "VIEWER " + author.name + " " + text;
   }
@@ -108,20 +120,20 @@ public class McChatServiceTests {
   // The below methods should be used for mock data creation. It sets all
   // currently unused properties to null.
   //region mock data
-  private static ChatItem createItem(Author msgAuthor, PartialChatMessage... messages) {
+  public static ChatItem createItem(Author msgAuthor, PartialChatMessage... messages) {
     return new ChatItem() {{
       author = msgAuthor;
       messageParts = messages;
     }};
   }
 
-  private static Author createAuthor(String authorName) {
+  public static Author createAuthor(String authorName) {
     return new Author() {{
       name = authorName;
     }};
   }
 
-  private static PartialChatMessage createText(String messageText) {
+  public static PartialChatMessage createText(String messageText) {
     return new PartialChatMessage() {{
       type = PartialChatMessageType.text;
       text = messageText;
@@ -130,7 +142,7 @@ public class McChatServiceTests {
     }};
   }
 
-  private static PartialChatMessage createEmoji(String emojiName, String emojiLabel) {
+  public static PartialChatMessage createEmoji(String emojiName, String emojiLabel) {
     return new PartialChatMessage() {{
       type = PartialChatMessageType.emoji;
       name = emojiName;

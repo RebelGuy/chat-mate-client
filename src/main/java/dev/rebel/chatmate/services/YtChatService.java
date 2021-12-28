@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services;
 
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.models.chat.GetChatResponse;
+import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
 import jline.internal.Nullable;
 
@@ -10,9 +11,8 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class YtChatService {
+public class YtChatService extends EventEmitterService<ChatItem[]> {
   private final YtChatProxy ytChatProxy;
-  private final YtChatEventService ytChatEventService;
 
   private final long TIMEOUT_WAIT = 20 * 1000;
   private @Nullable Timer timer = null;
@@ -20,9 +20,10 @@ public class YtChatService {
   private @Nullable Long pauseUntil = null;
   private Boolean requestInProgress = false;
 
-  public YtChatService(YtChatProxy ytChatProxy, YtChatEventService ytChatEventService) {
+  public YtChatService(YtChatProxy ytChatProxy) {
+    super();
+
     this.ytChatProxy = ytChatProxy;
-    this.ytChatEventService = ytChatEventService;
   }
 
   public void start() {
@@ -35,6 +36,8 @@ public class YtChatService {
   }
 
   public void stop() {
+    super.clear();
+
     if (this.timer == null) {
       return;
     }
@@ -63,12 +66,7 @@ public class YtChatService {
 
     if (response != null) {
       this.lastTimestamp = response.lastTimestamp;
-
-      try {
-        this.ytChatEventService.dispatchChat(response.chat);
-      } catch (Exception e) {
-        System.out.println("[ChatService] Failed to notify listeners of new chat items: " + e.getMessage());
-      }
+      super.dispatch(response.chat);
     }
 
     this.requestInProgress = false;
@@ -79,7 +77,7 @@ public class YtChatService {
     return !skipRequest;
   }
 
-  class ChatServiceWorker extends TimerTask {
+  static class ChatServiceWorker extends TimerTask {
     private final Runnable runnable;
 
     ChatServiceWorker(Runnable runnable) {
