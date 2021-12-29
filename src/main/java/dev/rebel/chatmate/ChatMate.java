@@ -1,5 +1,8 @@
 package dev.rebel.chatmate;
 
+import dev.rebel.chatmate.commands.ChatMateCommand;
+import dev.rebel.chatmate.commands.CountdownCommand;
+import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
@@ -8,6 +11,7 @@ import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.util.FileHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -47,6 +51,11 @@ public class ChatMate {
     Minecraft minecraft = Minecraft.getMinecraft();
     SoundService soundService = new SoundService(this._config);
     this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
+
+    ChatMateCommand chatMateCommand = new ChatMateCommand(
+      new CountdownCommand(new CountdownHandler(minecraft))
+    );
+    ClientCommandHandler.instance.registerCommand(chatMateCommand);
   }
 
   @Mod.EventHandler

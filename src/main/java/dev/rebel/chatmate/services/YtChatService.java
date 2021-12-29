@@ -4,12 +4,12 @@ import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.models.chat.GetChatResponse;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
+import dev.rebel.chatmate.services.util.TaskWrapper;
 import jline.internal.Nullable;
 
 import java.net.ConnectException;
 import java.util.Date;
 import java.util.Timer;
-import java.util.TimerTask;
 
 public class YtChatService extends EventEmitterService<ChatItem[]> {
   private final YtChatProxy ytChatProxy;
@@ -32,7 +32,7 @@ public class YtChatService extends EventEmitterService<ChatItem[]> {
     }
 
     this.timer = new Timer();
-    this.timer.scheduleAtFixedRate(new ChatServiceWorker(this::makeRequest), 0, 500);
+    this.timer.scheduleAtFixedRate(new TaskWrapper(this::makeRequest), 0, 500);
   }
 
   public void stop() {
@@ -75,17 +75,5 @@ public class YtChatService extends EventEmitterService<ChatItem[]> {
   private boolean canMakeRequest() {
     boolean skipRequest = this.requestInProgress || this.pauseUntil != null && this.pauseUntil > new Date().getTime();
     return !skipRequest;
-  }
-
-  static class ChatServiceWorker extends TimerTask {
-    private final Runnable runnable;
-
-    ChatServiceWorker(Runnable runnable) {
-      this.runnable = runnable;
-    }
-
-    public void run() {
-      this.runnable.run();
-    }
   }
 }
