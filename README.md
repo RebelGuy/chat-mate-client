@@ -32,6 +32,11 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 Debug partial .minecraft folder: `chat-mate-client/run/` 
 
 # Change Log
+## v1.4 - The Test Update
+- Added `/cm countdown` command
+- Added unit tests
+- Fixed chat filter exploits involving Minecraft chat formatting
+
 ## v1.3 - The Database Update
 - Added Config option to disable mod sounds
 - Improved API response class structure

@@ -15,7 +15,8 @@ public class ChatMateSubCommandTests {
 
     List<String> completions = getBestTabCompletionFromOptions(options, "test");
 
-    Assert.assertNull(completions);
+    Assert.assertEquals(completions.size(), 1);
+    Assert.assertEquals(completions.get(0), "abcdef");
   }
 
   @Test
