@@ -8,6 +8,7 @@ import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
+import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.util.FileHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
@@ -20,8 +21,11 @@ import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 // refer to mcmod.info for more settings.
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true, guiFactory = "dev.rebel.chatmate.gui.GuiFactory")
 public class ChatMate {
+  private final ForgeEventService forgeEventService;
   private final YtChatService ytChatService;
   private final McChatService mcChatService;
+  private final GuiService guiService;
+  private final RenderService renderService;
 
   // hack until I figure out how to dependency inject into GUI screens
   public static ChatMate instance_hack;
@@ -35,7 +39,9 @@ public class ChatMate {
 
   public ChatMate() throws Exception {
     instance_hack = this;
+    Minecraft minecraft = Minecraft.getMinecraft();
     this._config = new Config();
+    this.forgeEventService = new ForgeEventService(minecraft);
 
     LoggingService loggingService = new LoggingService("log.log", false);
 
@@ -48,7 +54,6 @@ public class ChatMate {
 
     this.ytChatService = new YtChatService(ytChatProxy);
 
-    Minecraft minecraft = Minecraft.getMinecraft();
     SoundService soundService = new SoundService(this._config);
     this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
 
@@ -56,12 +61,15 @@ public class ChatMate {
       new CountdownCommand(new CountdownHandler(minecraft))
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
+
+    this.guiService = new GuiService(this, this.forgeEventService);
+    this.renderService = new RenderService(minecraft, this.forgeEventService);
   }
 
   @Mod.EventHandler
   public void onFMLInitialization(FMLInitializationEvent event) {
     // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
-    MinecraftForge.EVENT_BUS.register(new EventHandler(this));
+    MinecraftForge.EVENT_BUS.register(this.forgeEventService);
 
     // to make our life easier, auto enable when in a dev environment
     if (this.isDev) {
