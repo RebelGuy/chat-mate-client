@@ -4,8 +4,10 @@ import dev.rebel.chatmate.ChatMate;
 import dev.rebel.chatmate.services.events.models.Base;
 import dev.rebel.chatmate.services.events.models.OpenGui;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
+import dev.rebel.chatmate.services.events.models.Tick;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -13,10 +15,14 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.fml.client.GuiModList;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import net.minecraftforge.fml.common.gameevent.InputEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,6 +38,8 @@ public class ForgeEventService {
   private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openGuiModListHandlers;
   private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openGuiIngameMenuHandlers;
   private final ArrayList<EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options>> renderGameOverlayHandlers;
+  private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> renderTickHandlers;
+  private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> clientTickHandlers;
 
   public ForgeEventService(Minecraft minecraft) {
     this.minecraft = minecraft;
@@ -39,6 +47,8 @@ public class ForgeEventService {
     this.openGuiModListHandlers = new ArrayList<>();
     this.openGuiIngameMenuHandlers = new ArrayList<>();
     this.renderGameOverlayHandlers = new ArrayList<>();
+    this.renderTickHandlers = new ArrayList<>();
+    this.clientTickHandlers = new ArrayList<>();
   }
 
   public void onOpenGuiModList(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
@@ -51,6 +61,14 @@ public class ForgeEventService {
 
   public void onRenderGameOverlay(Function<RenderGameOverlay.In, RenderGameOverlay.Out> handler, @Nonnull RenderGameOverlay.Options options) {
     this.renderGameOverlayHandlers.add(new EventHandler<>(handler, options));
+  }
+
+  public void onRenderTick(Function<Tick.In, Tick.Out> handler, @Nullable Tick.Options options) {
+    this.renderTickHandlers.add(new EventHandler<>(handler, options));
+  }
+
+  public void onClientTick(Function<Tick.In, Tick.Out> handler, @Nullable Tick.Options options) {
+    this.clientTickHandlers.add(new EventHandler<>(handler, options));
   }
 
   @SideOnly(Side.CLIENT)
@@ -100,6 +118,8 @@ public class ForgeEventService {
   // the Pre(TYPE) event is fired first, and default rendering is excluded if that function call returns true.
   // Once all default rendering has been completed, Post(TYPE) is fired.
   // ElementType.ALL refers to the "main render". Every main render may additionally render any of the other ElementTypes.
+  //
+  // writing text to the screen will place it only on top of the in-game GUI (underneath e.g. menu overlays)
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(RenderGameOverlayEvent event)
@@ -115,6 +135,26 @@ public class ForgeEventService {
         RenderGameOverlay.In eventIn = new RenderGameOverlay.In(event.type);
         RenderGameOverlay.Out eventOut = handler.callback.apply(eventIn);
       }
+    }
+  }
+
+  // similar to RenderGameOverlayEvent.ALL, except fires even in menus
+  // writing text to the screen will put the text on TOP of everything.
+  @SideOnly(Side.CLIENT)
+  @SubscribeEvent
+  public void forgeEventSubscriber(TickEvent.RenderTickEvent event) {
+    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.renderTickHandlers) {
+      Tick.In eventIn = new Tick.In();
+      Tick.Out eventOut = handler.callback.apply(eventIn);
+    }
+  }
+
+  @SideOnly(Side.CLIENT)
+  @SubscribeEvent
+  public void forgeEventSubscriber(TickEvent.ClientTickEvent event) {
+    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.clientTickHandlers) {
+      Tick.In eventIn = new Tick.In();
+      Tick.Out eventOut = handler.callback.apply(eventIn);
     }
   }
 

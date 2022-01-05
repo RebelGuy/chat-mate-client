@@ -9,7 +9,6 @@ import net.minecraft.util.BlockPos;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CountdownCommand extends ChatMateSubCommand {
   private static final String usage = "<start[> <countdownLength> <countdownTitle>]|stop>";

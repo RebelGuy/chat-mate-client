@@ -2,7 +2,9 @@ package dev.rebel.chatmate;
 
 import dev.rebel.chatmate.commands.ChatMateCommand;
 import dev.rebel.chatmate.commands.CountdownCommand;
+import dev.rebel.chatmate.commands.CounterCommand;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
+import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
@@ -26,6 +28,7 @@ public class ChatMate {
   private final McChatService mcChatService;
   private final GuiService guiService;
   private final RenderService renderService;
+  private final KeyBindingService keyBindingService;
 
   // hack until I figure out how to dependency inject into GUI screens
   public static ChatMate instance_hack;
@@ -57,13 +60,15 @@ public class ChatMate {
     SoundService soundService = new SoundService(this._config);
     this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
 
-    ChatMateCommand chatMateCommand = new ChatMateCommand(
-      new CountdownCommand(new CountdownHandler(minecraft))
-    );
-    ClientCommandHandler.instance.registerCommand(chatMateCommand);
-
     this.guiService = new GuiService(this, this.forgeEventService);
     this.renderService = new RenderService(minecraft, this.forgeEventService);
+    this.keyBindingService = new KeyBindingService(this.forgeEventService);
+
+    ChatMateCommand chatMateCommand = new ChatMateCommand(
+      new CountdownCommand(new CountdownHandler(minecraft)),
+      new CounterCommand(new CounterHandler(this.keyBindingService, this.renderService))
+    );
+    ClientCommandHandler.instance.registerCommand(chatMateCommand);
   }
 
   @Mod.EventHandler

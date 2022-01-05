@@ -4,8 +4,14 @@ import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay.Options;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
+import org.lwjgl.opengl.GL11;
 
+import java.lang.ref.WeakReference;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class RenderService {
@@ -13,9 +19,18 @@ public class RenderService {
   // e.g. boxes will be anchored to preset points of the screen (corners, centres, etc), and reposition automatically
   // if more boxes are added or the screen size changes.
   // use fontRenderer.getStringWidth() for aligning text
+  //
+  // we can use GL11 (OpenGL) directly if we want
+  // e.g. https://relativity.net.au/gaming/java/Transparency.html
+  // e.g. https://forums.minecraftforge.net/topic/33464-18solved-drawing-a-simple-line/
+
+  private static int VERTICAL_PADDING = 2;
 
   private final Minecraft minecraft;
   private final ForgeEventService forgeEventService;
+
+  // until adding custom layouts, we only allow drawing one text object at a time
+  private WeakReference<DrawnText> drawnText; // (fancy weak reference!)
 
   public RenderService(Minecraft minecraft, ForgeEventService forgeEventService) {
     this.minecraft = minecraft;
@@ -24,15 +39,10 @@ public class RenderService {
     this.registerHandlers();
   }
 
-  public DrawnText drawText(int x, int y, String... lines) {
-    DrawnText text = new DrawnText(this::updateText, lines);
-
-    // we can use GL11 (OpenGL) directly if we want
-    // e.g. https://relativity.net.au/gaming/java/Transparency.html
-//    this.minecraft.ingameGUI.drawString();
-    this.minecraft.fontRendererObj.drawString("test", 2, 2, 0xFFFFFFFF, false);
-//    this.minecraft.fontRendererObj.drawStringWithShadow("Test! THIS IS A TEST!!!! LOLOLOLOLOLOL", 100, 100, 0xFF0000);
-    return text;
+  public DrawnText drawText(int x, int y, float scale, String... lines) {
+    DrawnText drawnText = new DrawnText(x, y, scale, Arrays.stream(lines).filter(Objects::nonNull).toArray(String[]::new));
+    this.drawnText = new WeakReference<>(drawnText);
+    return drawnText;
   }
 
   private void registerHandlers() {
@@ -40,51 +50,50 @@ public class RenderService {
   }
 
   private RenderGameOverlay.Out onRenderGameOverlay(RenderGameOverlay.In eventIn) {
-    this.minecraft.fontRendererObj.drawString("test", 2, 2, 0xFFFFFFFF, false);
+    if (this.drawnText == null) {
+      return null;
+    } else if (this.drawnText.get() == null) {
+      this.drawnText = null;
+      return null;
+    }
+
+    DrawnText drawnText = this.drawnText.get();
+    if (drawnText.isVisible) {
+      int fontHeight = this.minecraft.fontRendererObj.FONT_HEIGHT;
+      int color = 0xFFFFFFFF; // todo
+
+      // we scale in the "push-pop" block only.
+      // see https://forums.minecraftforge.net/topic/44188-111-is-it-possible-to-change-the-font-size-of-a-string/
+      // note that this scales the screen, so we can just draw the text as we normally would
+      GL11.glPushMatrix();
+      GlStateManager.scale(drawnText.scale, drawnText.scale, drawnText.scale);
+
+      for (int i = 0; i < drawnText.lines.length; i++) {
+        String text = drawnText.lines[i];
+        int lineY = drawnText.y + (fontHeight + VERTICAL_PADDING) * i;
+        this.minecraft.fontRendererObj.drawStringWithShadow(text, drawnText.x, lineY, color);
+      }
+
+      GL11.glPopMatrix();
+    }
+
     return null;
   }
 
-  private void updateText(DrawnText text) {
-
-  }
-
+  // Modifying these properties will be reflected in the rendering immediately.
   public static class DrawnText {
-    private final Consumer<DrawnText> onUpdateCallback;
+    public int x;
+    public int y;
+    public float scale;
+    public String[] lines;
+    public boolean isVisible;
 
-    private String[] lines;
-    private boolean isVisible;
-
-    public DrawnText(Consumer<DrawnText> onUpdate, String... lines) {
-      this.onUpdateCallback = onUpdate;
-
+    public DrawnText(int x, int y, float scale, String... lines) {
+      this.x = x;
+      this.y = y;
+      this.scale = scale;
       this.lines = lines;
       this.isVisible = true;
-    }
-
-    public void updateLine(int lineNumber, String newText) {
-      this.lines[lineNumber] = newText;
-      this.onUpdate();
-    }
-
-    public void hide() {
-      this.isVisible = false;
-      this.onUpdate();
-    }
-
-    public void show() {
-      this.isVisible = true;
-      this.onUpdate();
-    }
-
-    // pure read-only properties are "not possible in Java"
-    // https://stackoverflow.com/questions/20623184/can-i-create-read-only-properties-in-java/20623213
-    // I quit
-    public boolean isVisible() {
-      return this.isVisible;
-    }
-
-    private void onUpdate() {
-      this.onUpdateCallback.accept(this);
     }
   }
 }
