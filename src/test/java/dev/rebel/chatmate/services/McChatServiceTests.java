@@ -31,7 +31,7 @@ public class McChatServiceTests {
   @Mock FontRenderer mockFontRenderer;
   @Mock GuiNewChat mockChatGui;
 
-  Author author1 = new Author() {{ name = "Author 1"; }};
+  Author author1 = createAuthor("Author 1");
   PartialChatMessage text1 = createText("Text 1");
   PartialChatMessage text2 = createText("Text 2");
   PartialChatMessage textRebel = createText("Rebel");
@@ -119,7 +119,7 @@ public class McChatServiceTests {
   }
 
   private static String getExpectedChatText(Author author, String text) {
-    return "VIEWER " + author.name + " " + text;
+    return author.level + " VIEWER " + author.name + " " + text;
   }
 
   private McChatService setupService() {
@@ -146,6 +146,8 @@ public class McChatServiceTests {
   public static Author createAuthor(String authorName) {
     return new Author() {{
       name = authorName;
+      level = 0;
+      levelProgress = 0.0;
     }};
   }
 
