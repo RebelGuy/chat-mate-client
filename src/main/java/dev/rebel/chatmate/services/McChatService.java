@@ -23,6 +23,13 @@ public class McChatService {
   private static final ChatStyle ytChatMessageEmojiStyle = new ChatStyle().setColor(EnumChatFormatting.GRAY);
   private static final ChatStyle mentionTextStyle = new ChatStyle().setColor(EnumChatFormatting.GOLD);
 
+  private static final ChatStyle level0to19 = new ChatStyle().setColor(EnumChatFormatting.GRAY);
+  private static final ChatStyle level20to39 = new ChatStyle().setColor(EnumChatFormatting.BLUE);
+  private static final ChatStyle level40to59 = new ChatStyle().setColor(EnumChatFormatting.DARK_GREEN);
+  private static final ChatStyle level60to79 = new ChatStyle().setColor(EnumChatFormatting.GOLD);
+  private static final ChatStyle level80to99 = new ChatStyle().setColor(EnumChatFormatting.RED);
+  private static final ChatStyle level100upwards = new ChatStyle().setColor(EnumChatFormatting.BLACK);
+
   private final Minecraft minecraft;
   private final LoggingService loggingService;
   private final FilterService filterService;
@@ -40,11 +47,14 @@ public class McChatService {
 
     if (gui != null) {
       try {
+        Integer lvl = item.author.level;
+        IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
         IChatComponent rank = styledText("VIEWER", viewerRankStyle);
         IChatComponent player = styledText(item.author.name, viewerNameStyle);
         McChatResult mcChatResult = this.ytChatToMcChat(item, gui.getFontRenderer());
 
         ArrayList<IChatComponent> components = new ArrayList<>();
+        components.add(level);
         components.add(rank);
         components.add(player);
         components.add(join("", mcChatResult.chatComponents));
@@ -118,6 +128,22 @@ public class McChatService {
     }
 
     return new McChatResult(components, includesMention);
+  }
+
+  private static ChatStyle getLevelStyle(Integer level) {
+    if (level < 20) {
+      return level0to19;
+    } else if (level < 40) {
+      return level20to39;
+    } else if (level < 60) {
+      return level40to59;
+    } else if (level < 80) {
+      return level60to79;
+    } else if (level < 100) {
+      return level80to99;
+    } else {
+      return level100upwards;
+    }
   }
 
   // overwrites the style in one or more parts of the text

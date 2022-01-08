@@ -12,7 +12,7 @@ public class GetChatResponse implements IApiResponse {
 
   @Override
   public Number GetExpectedSchema() {
-    return 3;
+    return 4;
   }
 
   public static class ChatItem {
@@ -34,6 +34,8 @@ public class GetChatResponse implements IApiResponse {
     public Boolean isModerator;
     public Boolean isVerified;
     public Long lastUpdate;
+    public Integer level;
+    public Double levelProgress;
   }
 
   public static class PartialChatMessage {
