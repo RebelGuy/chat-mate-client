@@ -32,17 +32,22 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 Debug partial .minecraft folder: `chat-mate-client/run/` 
 
 # Change Log
-## v1.4 - The Test Update
+## v1.5 - The Experience Update [8/1/2022]
+- Levels are displayed next to the author's name in the same style as Mineplex levels
+- Added `/cm counter` command for the charity livestream
+- Lots of refactoring
+
+## v1.4 - The Test Update [30/12/2021]
 - Added `/cm countdown` command
 - Added unit tests
 - Fixed chat filter exploits involving Minecraft chat formatting
 
-## v1.3 - The Database Update
+## v1.3 - The Database Update [16/12/2021]
 - Added Config option to disable mod sounds
 - Improved API response class structure
 - Fixed chat filter exploit using Minecraft formatting
 
-## v1.2 - The Development Update
+## v1.2 - The Development Update [8/12/2021]
 - Added chat-mention colour highlight and sound effect, hardcoded for now for only `Rebel_Guy` and some variants
 - Improved filter algorithm to allow for special selectors:
   - `#` to comment out a line
@@ -50,13 +55,13 @@ Debug partial .minecraft folder: `chat-mate-client/run/`
   - `*` to match any character
   - `[` and `]` (for use at the start/beginning of the filtered word) to match the word only if its start/end corresponds to `[`/`]`
 
-## v1.1 - The Encoding Update
+## v1.1 - The Encoding Update [26/11/2021]
 - Added colour formatting to Minecraft chat messages
 - Added button in main menu to enable/disable the mod
 - Added simple message filter
 - Emojis and other special unicode characters are now displayed directly if the resource pack supports it
 - Fixed encoding issues
 
-## v1.0
+## v1.0 [20/11/2021]
 - Initial release
 - Simple fetching and displaying of chat messages
