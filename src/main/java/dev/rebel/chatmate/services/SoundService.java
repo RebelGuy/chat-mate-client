@@ -6,7 +6,7 @@ import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.util.ResourceLocation;
 
 public class SoundService {
-    private Config _config;
+    private Config config;
 
     public SoundService(Config config) {
         // see https://minecraft.fandom.com/wiki/Sounds.json for all possible ResourceLocations
@@ -14,7 +14,7 @@ public class SoundService {
         // /tp 0 0 0
         // /playsound <resource.location> @a 0 0 0 <volume> <pitch>
 
-        this._config = config;
+        this.config = config;
     }
 
     public void playDing() {
@@ -25,7 +25,7 @@ public class SoundService {
         this.playSound(resourceLocation, 1);
     }
     private void playSound(String resourceLocation, float pitch) {
-        if (!this._config.isSoundEnabled) {
+        if (!this.config.soundEnabled.get()) {
             return;
         }
 

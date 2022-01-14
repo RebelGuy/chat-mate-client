@@ -1,21 +1,21 @@
 package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatmate.ChatMate;
+import dev.rebel.chatmate.models.Config;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiIngameMenu;
 
 import java.io.IOException;
 
 public class CustomGuiPause extends GuiIngameMenu {
-  private final ChatMate chatMate;
+  private final Config config;
   private GuiButton ytButton;
 
   // fantastic tutorial here: http://jabelarminecraft.blogspot.com/p/minecraft-modding-configuration-guis.html
   // (use the above when we have config files one day)
-  public CustomGuiPause(ChatMate chatMate)
+  public CustomGuiPause(Config config)
   {
     super();
-    this.chatMate = chatMate;
+    this.config = config;
   }
 
   // great tutorial: https://medium.com/@andreshj87/drawing-a-gui-screen-on-minecraft-forge-7e0059015596
@@ -51,24 +51,19 @@ public class CustomGuiPause extends GuiIngameMenu {
   protected void actionPerformed(GuiButton button) throws IOException
   {
     if (button == this.ytButton) {
-      this.setEnabled(!this.chatMate.isApiEnabled());
+      this.setEnabled(!this.config.apiEnabled.get());
     } else {
       super.actionPerformed(button);
     }
   }
 
   private void setEnabled(boolean enabled) {
-    if (enabled) {
-      this.chatMate.enable();
-    } else {
-      this.chatMate.disable();
-    }
-
+    this.config.apiEnabled.set(enabled);
     this.ytButton.displayString = this.getButtonText();
   }
 
   private String getButtonText() {
-    return this.getButtonText(chatMate.isApiEnabled());
+    return this.getButtonText(this.config.apiEnabled.get());
   }
 
   private String getButtonText(boolean enabled) {

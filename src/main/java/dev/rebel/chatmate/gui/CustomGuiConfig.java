@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.ChatMate;
+import dev.rebel.chatmate.models.Config;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
 import net.minecraft.client.gui.GuiScreen;
@@ -9,7 +10,7 @@ import net.minecraftforge.fml.client.config.GuiConfig;
 import java.util.ArrayList;
 
 public class CustomGuiConfig extends GuiConfig {
-  private final ChatMate modInstance;
+  private final Config config;
   private GuiButton apiButton;
   private GuiButton soundButton;
 
@@ -21,7 +22,7 @@ public class CustomGuiConfig extends GuiConfig {
   {
     super(parent, new ArrayList<>(), "chatmate", false, false, "Configure ChatMate");
       titleLine2 = "Mod Settings";
-      this.modInstance = ChatMate.instance_hack;
+      this.config = ChatMate.instance_hack.config;
   }
 
   // great tutorial: https://medium.com/@andreshj87/drawing-a-gui-screen-on-minecraft-forge-7e0059015596
@@ -36,7 +37,7 @@ public class CustomGuiConfig extends GuiConfig {
     int apiButtonWidth = 100;
     int buttonHeight = 20;
     int top = 40;
-    String apiText = this.getButtonText("API", this.modInstance.isApiEnabled());
+    String apiText = this.getButtonText("API", this.config.apiEnabled.get());
     this.apiButton = new GuiButton(0, this.width / 2 - apiButtonWidth / 2, top, apiButtonWidth, buttonHeight, apiText);
     this.buttonList.add(this.apiButton);
 
@@ -46,7 +47,7 @@ public class CustomGuiConfig extends GuiConfig {
     // sound enabled/disabled
     int soundButtonWidth = 100;
     int padding = 10;
-    String soundText = this.getButtonText("Sound", this.modInstance.isSoundEnabled());
+    String soundText = this.getButtonText("Sound", this.config.soundEnabled.get());
     this.soundButton = new GuiButton(0, this.width / 2 - soundButtonWidth / 2, top + buttonHeight + padding, soundButtonWidth, buttonHeight, soundText);
     this.buttonList.add(this.soundButton);
   }
@@ -65,30 +66,20 @@ public class CustomGuiConfig extends GuiConfig {
     super.actionPerformed(button);
 
     if (button == this.apiButton) {
-      this.setApiEnabled(!this.modInstance.isApiEnabled());
+      this.setApiEnabled(!this.config.apiEnabled.get());
     } else if (button == this.soundButton) {
-      this.setSoundEnabled(!this.modInstance.isSoundEnabled());
+      this.setSoundEnabled(!this.config.soundEnabled.get());
     }
   }
 
   private void setApiEnabled(boolean enabled) {
-    if (enabled) {
-      this.modInstance.enable();
-    } else {
-      this.modInstance.disable();
-    }
-
-    this.apiButton.displayString = this.getButtonText("API", this.modInstance.isApiEnabled());
+    this.config.apiEnabled.set(enabled);
+    this.apiButton.displayString = this.getButtonText("API", this.config.apiEnabled.get());
   }
 
   private void setSoundEnabled(boolean enabled) {
-    if (enabled) {
-      this.modInstance.enableSound();
-    } else {
-      this.modInstance.disableSound();
-    }
-
-    this.soundButton.displayString = this.getButtonText("Sound", this.modInstance.isSoundEnabled());
+    this.config.soundEnabled.set(enabled);
+    this.soundButton.displayString = this.getButtonText("Sound", this.config.soundEnabled.get());
   }
 
   private String getButtonText(String type, boolean isEnabled) {

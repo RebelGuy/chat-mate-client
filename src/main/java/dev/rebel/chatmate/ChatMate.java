@@ -29,13 +29,11 @@ public class ChatMate {
   private final GuiService guiService;
   private final RenderService renderService;
   private final KeyBindingService keyBindingService;
+  public final Config config;
 
   // hack until I figure out how to dependency inject into GUI screens
   public static ChatMate instance_hack;
 
-  private Config _config;
-  public boolean isApiEnabled() { return this._config.isApiEnabled; }
-  public boolean isSoundEnabled() { return this._config.isSoundEnabled; }
 
   // from https://forums.minecraftforge.net/topic/68571-1122-check-if-environment-is-deobfuscated/
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
@@ -43,7 +41,7 @@ public class ChatMate {
   public ChatMate() throws Exception {
     instance_hack = this;
     Minecraft minecraft = Minecraft.getMinecraft();
-    this._config = new Config();
+    this.config = new Config();
     this.forgeEventService = new ForgeEventService(minecraft);
 
     LoggingService loggingService = new LoggingService("log.log", false);
@@ -57,10 +55,10 @@ public class ChatMate {
 
     this.ytChatService = new YtChatService(ytChatProxy);
 
-    SoundService soundService = new SoundService(this._config);
+    SoundService soundService = new SoundService(this.config);
     this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
 
-    this.guiService = new GuiService(this, this.forgeEventService);
+    this.guiService = new GuiService(this, this.config, this.forgeEventService);
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
 
@@ -69,6 +67,14 @@ public class ChatMate {
       new CounterCommand(new CounterHandler(this.keyBindingService, this.renderService))
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
+
+    this.config.apiEnabled.listen(apiEnabled -> {
+      if (apiEnabled) {
+        this.enable();
+      } else {
+        this.disable();
+      }
+    });
   }
 
   @Mod.EventHandler
@@ -78,37 +84,24 @@ public class ChatMate {
 
     // to make our life easier, auto enable when in a dev environment
     if (this.isDev) {
-      this.enable();
+      this.config.apiEnabled.set(true);
     }
   }
 
   // this doesn't do anything!
   @Mod.EventHandler
   public void onFMLDeactivation(FMLModDisabledEvent event) {
-    this.disable();
+    this.config.apiEnabled.set(false);
   }
 
-  public void enable() {
-    if (this.isApiEnabled()) {
-      return;
-    }
-
+  private void enable() {
     ytChatService.listen(this::onNewYtChat);
     ytChatService.start();
-    this._config.isApiEnabled = true;
   }
 
-  public void disable() {
-    if (!this.isApiEnabled()) {
-      return;
-    }
-
+  private void disable() {
     ytChatService.stop();
-    this._config.isApiEnabled = false;
   }
-
-  public void enableSound() { this._config.isSoundEnabled = true; }
-  public void disableSound() { this._config.isSoundEnabled = false; }
 
   private void onNewYtChat(ChatItem[] newChat) {
     for (ChatItem chat: newChat) {

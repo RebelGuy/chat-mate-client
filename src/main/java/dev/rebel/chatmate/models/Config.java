@@ -1,11 +1,36 @@
 package dev.rebel.chatmate.models;
 
-public class Config {
-    public boolean isApiEnabled;
-    public boolean isSoundEnabled;
+import dev.rebel.chatmate.services.EventEmitterService;
 
-    public Config() {
-        this.isApiEnabled = false;
-        this.isSoundEnabled = true;
+public class Config {
+  public final StatefulEmitter<Boolean> apiEnabled;
+  public final StatefulEmitter<Boolean> soundEnabled;
+
+
+  public Config() {
+    this.apiEnabled = new StatefulEmitter<>(false);
+    this.soundEnabled = new StatefulEmitter<>(true);
+  }
+
+  public static class StatefulEmitter<T> extends EventEmitterService<T> {
+    private T state;
+
+    public StatefulEmitter (T initialState) {
+      this.state = initialState;
     }
+
+    public void set(T newValue) {
+      if (this.state == newValue) {
+        return;
+      } else {
+        this.state = newValue;
+      }
+
+      super.dispatch(newValue);
+    }
+
+    public T get() {
+      return this.state;
+    }
+  }
 }

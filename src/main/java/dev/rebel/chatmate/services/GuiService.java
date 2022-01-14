@@ -3,16 +3,19 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.ChatMate;
 import dev.rebel.chatmate.gui.CustomGuiModList;
 import dev.rebel.chatmate.gui.CustomGuiPause;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.OpenGui;
 import net.minecraft.client.gui.GuiScreen;
 
 public class GuiService {
   private final ChatMate chatMate;
+  private final Config config;
   private final ForgeEventService forgeEventService;
 
-  public GuiService(ChatMate chatMate, ForgeEventService forgeEventService) {
+  public GuiService(ChatMate chatMate, Config config, ForgeEventService forgeEventService) {
     this.chatMate = chatMate;
+    this.config = config;
     this.forgeEventService = forgeEventService;
 
     this.addEventHandlers();
@@ -29,7 +32,7 @@ public class GuiService {
   }
 
   private OpenGui.Out onOpenIngameMenu(OpenGui.In eventIn) {
-    GuiScreen replaceWithGui = new CustomGuiPause(this.chatMate);
+    GuiScreen replaceWithGui = new CustomGuiPause(this.config);
     return new OpenGui.Out(replaceWithGui);
   }
 }
