@@ -1,5 +1,8 @@
 package dev.rebel.chatmate.gui;
 
+import dev.rebel.chatmate.gui.builder.ButtonLayout;
+import dev.rebel.chatmate.gui.builder.ContentLayout;
+import dev.rebel.chatmate.gui.builder.TableLayout;
 import dev.rebel.chatmate.models.Config;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiIngameMenu;
@@ -8,17 +11,17 @@ import java.io.IOException;
 
 public class CustomGuiPause extends GuiIngameMenu {
   private final Config config;
-  private GuiButton ytButton;
+  private TableLayout tableLayout;
 
-  // fantastic tutorial here: http://jabelarminecraft.blogspot.com/p/minecraft-modding-configuration-guis.html
-  // (use the above when we have config files one day)
   public CustomGuiPause(Config config)
   {
     super();
     this.config = config;
+    this.config.listenAny(this::onConfigUpdate);
+
+    this.tableLayout = null;
   }
 
-  // great tutorial: https://medium.com/@andreshj87/drawing-a-gui-screen-on-minecraft-forge-7e0059015596
   @Override
   public void initGui()
   {
@@ -27,46 +30,41 @@ public class CustomGuiPause extends GuiIngameMenu {
     GuiButton optionsButton = this.buttonList.stream().filter(b -> b.id == 0).findFirst().get();
     GuiButton modOptionsButton = this.buttonList.stream().filter(b -> b.id == 12).findFirst().get();
 
+    // todo: get horizontal default padding, and vertical default padding
     int padding = modOptionsButton.xPosition - (optionsButton.xPosition + optionsButton.width);
     int height = optionsButton.height;
     int left = optionsButton.xPosition;
+    int top = optionsButton.yPosition;
     int right = modOptionsButton.xPosition + modOptionsButton.width;
     int width = right - left;
 
-    // add a square button for "YT"
-    int ytWidth = height;
-    int ytPosition = right - ytWidth;
-    this.ytButton = new GuiButton(727, ytPosition, optionsButton.yPosition, ytWidth, height, this.getButtonText());
-    this.buttonList.add(this.ytButton);
-
-    int newWidth = width - ytWidth - padding;
-    int newButtonWidths = (newWidth - padding) / 2;
-    optionsButton.width = newButtonWidths;
-    modOptionsButton.xPosition = left + newButtonWidths + padding;
-    modOptionsButton.width = newButtonWidths;
-
-  }
+    ButtonLayout optionsLayout = new ButtonLayout(optionsButton, new String[]{"10px", "50%"}, null, null);
+    ButtonLayout modOptionsLayout = new ButtonLayout(modOptionsButton, new String[]{"10px", "50%"}, null, null);
+    ButtonLayout ytLayout = new ButtonLayout(new String[] {"20px"}, this::onRenderYtButtonText, this::onClickYtButton);
+    this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 3, height, 0, padding)
+        .withRow(optionsLayout, modOptionsLayout, ytLayout)
+        .instantiate();
+    }
 
   @Override
   protected void actionPerformed(GuiButton button) throws IOException
   {
-    if (button == this.ytButton) {
-      this.setEnabled(!this.config.apiEnabled.get());
-    } else {
+    if (this.tableLayout == null || !this.tableLayout.onActionPerformed(button)) {
       super.actionPerformed(button);
     }
   }
 
-  private void setEnabled(boolean enabled) {
-    this.config.apiEnabled.set(enabled);
-    this.ytButton.displayString = this.getButtonText();
+  private void onConfigUpdate() {
+    if (this.tableLayout != null) {
+      this.tableLayout.refreshContents();
+    }
   }
 
-  private String getButtonText() {
-    return this.getButtonText(this.config.apiEnabled.get());
+  private void onClickYtButton(ButtonLayout.ButtonAction.ButtonActionClickData data) {
+    this.config.apiEnabled.set(!this.config.apiEnabled.get());
   }
 
-  private String getButtonText(boolean enabled) {
-    return (enabled ? "§2" : "§4") + "YT";
+  private String onRenderYtButtonText() {
+    return (this.config.apiEnabled.get() ? "§2" : "§4") + "YT";
   }
 }

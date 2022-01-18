@@ -1,22 +1,43 @@
 package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.services.EventEmitterService;
+import dev.rebel.chatmate.services.util.Callback;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class Config {
+  /** Listeners are notified whenever any change has been made to the config. */
+  public final List<Callback> updateListeners;
   public final StatefulEmitter<Boolean> apiEnabled;
   public final StatefulEmitter<Boolean> soundEnabled;
 
-
   public Config() {
-    this.apiEnabled = new StatefulEmitter<>(false);
-    this.soundEnabled = new StatefulEmitter<>(true);
+    this.apiEnabled = new StatefulEmitter<>(false, this::onUpdate);
+    this.soundEnabled = new StatefulEmitter<>(true, this::onUpdate);
+
+    this.updateListeners = new ArrayList<>();
   }
 
+  public void listenAny(Callback callback) {
+    this.updateListeners.add(callback);
+  }
+
+  public <T> void onUpdate(T _unused) {
+    this.updateListeners.forEach(Callback::call);
+  }
+
+  /** Represents a state that emits an event when modified */
   public static class StatefulEmitter<T> extends EventEmitterService<T> {
     private T state;
 
-    public StatefulEmitter (T initialState) {
+    @SafeVarargs
+    public StatefulEmitter (T initialState, Consumer<T>... initialListeners) {
+      super();
       this.state = initialState;
+      Arrays.asList(initialListeners).forEach(super::listen);
     }
 
     public void set(T newValue) {
