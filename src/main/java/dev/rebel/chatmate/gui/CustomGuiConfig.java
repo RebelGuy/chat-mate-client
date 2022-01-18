@@ -1,6 +1,12 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.ChatMate;
+import dev.rebel.chatmate.gui.builder.CheckBoxLayout;
+import dev.rebel.chatmate.gui.builder.CheckBoxLayout.CheckBoxAction.CheckBoxActionCheckedData;
+import dev.rebel.chatmate.gui.builder.Constants.Color;
+import dev.rebel.chatmate.gui.builder.Constants.Layout;
+import dev.rebel.chatmate.gui.builder.LabelLayout;
+import dev.rebel.chatmate.gui.builder.TableLayout;
 import dev.rebel.chatmate.models.Config;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
@@ -11,8 +17,7 @@ import java.util.ArrayList;
 
 public class CustomGuiConfig extends GuiConfig {
   private final Config config;
-  private GuiButton apiButton;
-  private GuiButton soundButton;
+  private TableLayout tableLayout;
 
   // fantastic tutorial here: http://jabelarminecraft.blogspot.com/p/minecraft-modding-configuration-guis.html
   // (use the above when we have config files one day)
@@ -21,8 +26,9 @@ public class CustomGuiConfig extends GuiConfig {
   public CustomGuiConfig(GuiScreen parent)
   {
     super(parent, new ArrayList<>(), "chatmate", false, false, "Configure ChatMate");
-      titleLine2 = "Mod Settings";
-      this.config = ChatMate.instance_hack.config;
+    titleLine2 = "Mod Settings";
+    this.config = ChatMate.instance_hack.config;
+    this.config.listenAny(this::onConfigUpdate);
   }
 
   // great tutorial: https://medium.com/@andreshj87/drawing-a-gui-screen-on-minecraft-forge-7e0059015596
@@ -31,27 +37,21 @@ public class CustomGuiConfig extends GuiConfig {
   {
     super.initGui();
 
-    // draws a single enabled/disabled button at the top of the screen.
-    // it's made redundant by the "YT" toggle in the main menu, but leaving
-    // these here for future reference.
-    int apiButtonWidth = 100;
-    int buttonHeight = 20;
     int top = 40;
-    String apiText = this.getButtonText("API", this.config.apiEnabled.get());
-    this.apiButton = new GuiButton(0, this.width / 2 - apiButtonWidth / 2, top, apiButtonWidth, buttonHeight, apiText);
-    this.buttonList.add(this.apiButton);
+    int width = Math.min(300, this.width - 50); // shrink with screen, but only expand so much
+    int left = this.width / 2 - width / 2; // centre table horizontally
 
-    GuiLabel activateLabel = new GuiLabel(fontRendererObj, 1, this.width / 2 - 20, this.height / 2 + 40, 300, 20, 0xFFFFFF);
-    this.labelList.add(activateLabel);
+    LabelLayout apiLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%"}, () -> "Enable API", Color.WHITE);
+    CheckBoxLayout apiCheckbox = new CheckBoxLayout(this::onToggleApi, config.apiEnabled::get);
 
-    // sound enabled/disabled
-    int soundButtonWidth = 100;
-    int padding = 10;
-    String soundText = this.getButtonText("Sound", this.config.soundEnabled.get());
-    this.soundButton = new GuiButton(0, this.width / 2 - soundButtonWidth / 2, top + buttonHeight + padding, soundButtonWidth, buttonHeight, soundText);
-    this.buttonList.add(this.soundButton);
+    LabelLayout soundLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%"}, () -> "Enable Sound", Color.WHITE);
+    CheckBoxLayout soundCheckbox = new CheckBoxLayout(this::onToggleSound, config.soundEnabled::get);
+
+    this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 2, Layout.HEIGHT, Layout.VERTICAL_PADDING, Layout.HORIZONTAL_PADDING)
+        .withRow(apiLabel, apiCheckbox)
+        .withRow(soundLabel, soundCheckbox)
+        .instantiate();
   }
-
 
   @Override
   public void drawScreen(int mouseX, int mouseY, float partialTicks)
@@ -63,26 +63,22 @@ public class CustomGuiConfig extends GuiConfig {
   @Override
   protected void actionPerformed(GuiButton button)
   {
-    super.actionPerformed(button);
-
-    if (button == this.apiButton) {
-      this.setApiEnabled(!this.config.apiEnabled.get());
-    } else if (button == this.soundButton) {
-      this.setSoundEnabled(!this.config.soundEnabled.get());
+    if (this.tableLayout == null || !this.tableLayout.onActionPerformed(button)) {
+      super.actionPerformed(button);
     }
   }
 
-  private void setApiEnabled(boolean enabled) {
-    this.config.apiEnabled.set(enabled);
-    this.apiButton.displayString = this.getButtonText("API", this.config.apiEnabled.get());
+  private void onConfigUpdate() {
+    if (this.tableLayout != null) {
+      this.tableLayout.refreshContents();
+    }
   }
 
-  private void setSoundEnabled(boolean enabled) {
-    this.config.soundEnabled.set(enabled);
-    this.soundButton.displayString = this.getButtonText("Sound", this.config.soundEnabled.get());
+  private void onToggleApi(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.apiEnabled.set(checkBoxActionCheckedData.checked);
   }
 
-  private String getButtonText(String type, boolean isEnabled) {
-    return type + ": " + (isEnabled ? "Enabled" : "Disabled");
+  private void onToggleSound(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.soundEnabled.set(checkBoxActionCheckedData.checked);
   }
 }

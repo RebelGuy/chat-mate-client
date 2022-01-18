@@ -3,6 +3,9 @@ package dev.rebel.chatmate.gui.builder;
 import dev.rebel.chatmate.gui.builder.ButtonLayout.ButtonAction;
 import dev.rebel.chatmate.gui.builder.ButtonLayout.ButtonAction.ButtonActionClickData;
 import dev.rebel.chatmate.gui.builder.ButtonLayout.ButtonAction.ButtonActionType;
+import dev.rebel.chatmate.gui.builder.CheckBoxLayout.CheckBoxAction;
+import dev.rebel.chatmate.gui.builder.CheckBoxLayout.CheckBoxAction.CheckBoxActionClickData;
+import dev.rebel.chatmate.gui.builder.CheckBoxLayout.CheckBoxAction.CheckBoxActionType;
 import dev.rebel.chatmate.gui.builder.LayoutEngine.Layout;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
@@ -13,8 +16,6 @@ import java.util.List;
 import java.util.function.Function;
 
 public class TableLayout extends ManagedLayout {
-  public static int BUTTON_HEIGHT; // todo add constants.button class
-
   private final int rowHeight;
   private final List<List<ContentLayout<?, ?>>> rows;
 
@@ -97,13 +98,13 @@ public class TableLayout extends ManagedLayout {
 
     // add all items to the GUI item lists that were passed at instantiation, so things actually get rendered
     this.rows.forEach(r -> r.forEach(c -> {
-      if (c instanceof ButtonLayout) {
-        GuiButton button = ((ButtonLayout)c).tryGetGui();
+      if (c instanceof ButtonLayout || c instanceof CheckBoxLayout) {
+        GuiButton button = (GuiButton)c.tryGetGui();
         if (!this.buttonList.contains(button)) {
           this.buttonList.add(button);
         }
       } else if (c instanceof LabelLayout) {
-        GuiLabel label = ((LabelLayout)c).tryGetGui();
+        GuiLabel label = (GuiLabel)c.tryGetGui();
         if (!this.labelList.contains(label)) {
           this.labelList.add(label);
         }
@@ -117,12 +118,17 @@ public class TableLayout extends ManagedLayout {
 
   /** Returns true if the event was handled by a button */
   public boolean onActionPerformed(GuiButton button) {
-    ButtonLayout layout = this.getLayoutForObject(ButtonLayout.class, button);
-    if (layout != null) {
-      return layout.dispatchAction(new ButtonAction(ButtonActionType.CLICK, new ButtonActionClickData()));
-    } else {
-      return false;
+    ButtonLayout buttonLayout = this.getLayoutForObject(ButtonLayout.class, button);
+    if (buttonLayout != null) {
+      return buttonLayout.dispatchAction(new ButtonAction(ButtonActionType.CLICK, new ButtonActionClickData()));
     }
+
+    CheckBoxLayout checkBoxLayout = this.getLayoutForObject(CheckBoxLayout.class, button);
+    if (checkBoxLayout != null) {
+      return checkBoxLayout.dispatchAction(new CheckBoxAction(CheckBoxActionType.CLICK, new CheckBoxActionClickData()));
+    }
+
+    return false;
   }
 
   public void refreshContents() {

@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.builder.ButtonLayout;
-import dev.rebel.chatmate.gui.builder.ContentLayout;
+import dev.rebel.chatmate.gui.builder.Constants.Layout;
 import dev.rebel.chatmate.gui.builder.TableLayout;
 import dev.rebel.chatmate.models.Config;
 import net.minecraft.client.gui.GuiButton;
@@ -30,9 +30,6 @@ public class CustomGuiPause extends GuiIngameMenu {
     GuiButton optionsButton = this.buttonList.stream().filter(b -> b.id == 0).findFirst().get();
     GuiButton modOptionsButton = this.buttonList.stream().filter(b -> b.id == 12).findFirst().get();
 
-    // todo: get horizontal default padding, and vertical default padding
-    int padding = modOptionsButton.xPosition - (optionsButton.xPosition + optionsButton.width);
-    int height = optionsButton.height;
     int left = optionsButton.xPosition;
     int top = optionsButton.yPosition;
     int right = modOptionsButton.xPosition + modOptionsButton.width;
@@ -41,7 +38,8 @@ public class CustomGuiPause extends GuiIngameMenu {
     ButtonLayout optionsLayout = new ButtonLayout(optionsButton, new String[]{"10px", "50%"}, null, null);
     ButtonLayout modOptionsLayout = new ButtonLayout(modOptionsButton, new String[]{"10px", "50%"}, null, null);
     ButtonLayout ytLayout = new ButtonLayout(new String[] {"20px"}, this::onRenderYtButtonText, this::onClickYtButton);
-    this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 3, height, 0, padding)
+
+    this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 3, Layout.HEIGHT, 0, Layout.HORIZONTAL_PADDING)
         .withRow(optionsLayout, modOptionsLayout, ytLayout)
         .instantiate();
     }
