@@ -7,43 +7,46 @@ import net.minecraftforge.fml.client.registry.ClientRegistry;
 import org.lwjgl.input.Keyboard;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
-// Events here will only fire on the initial key-press, NOT when holding down the key.
+/** Events here will only fire on the initial key-press, NOT when holding down the key. */
 public class KeyBindingService {
   private final ForgeEventService forgeEventService;
 
-  // do NOT add more of these here - refactor instead of copy-pasting everything!
-  private final KeyBinding decrementCounterKeybinding;
-  private final KeyBinding incrementCounterKeybinding;
-
-  private final ArrayList<Supplier<Boolean>> decrementCounterListeners;
-  private final ArrayList<Supplier<Boolean>> incrementCounterListeners;
+  private final Map<ChatMateKeyEvent, KeyBinding> keyBindings;
+  private final Map<ChatMateKeyEvent, ArrayList<Supplier<Boolean>>> listeners;
 
   public KeyBindingService(ForgeEventService eventService) {
     this.forgeEventService = eventService;
 
-    this.decrementCounterKeybinding = new KeyBinding("Decrement Counter", Keyboard.KEY_LBRACKET, "ChatMate");
-    this.incrementCounterKeybinding = new KeyBinding("Increment Counter", Keyboard.KEY_RBRACKET, "ChatMate");
+    this.keyBindings = new HashMap<>();
+    this.keyBindings.put(ChatMateKeyEvent.DECREMENT_COUNTER, new KeyBinding("Decrement Counter", Keyboard.KEY_LBRACKET, "ChatMate"));
+    this.keyBindings.put(ChatMateKeyEvent.INCREMENT_COUNTER, new KeyBinding("Increment Counter", Keyboard.KEY_RBRACKET, "ChatMate"));
+    this.keyBindings.put(ChatMateKeyEvent.TOGGLE_CHAT_MATE_HUD, new KeyBinding("Open ChatMate HUD", Keyboard.KEY_Y, "ChatMate"));
 
-    this.decrementCounterListeners = new ArrayList<>();
-    this.incrementCounterListeners = new ArrayList<>();
+    this.listeners = new HashMap<>();
+    for (ChatMateKeyEvent event : ChatMateKeyEvent.values()) {
+      this.listeners.put(event, new ArrayList<>());
+    }
 
+    this.verifyInitialisation();
     this.registerKeybindings();
     this.registerHandlers();
   }
 
-  public void onDecrementCounterPressed(Supplier<Boolean> callback) {
-    this.decrementCounterListeners.add(callback);
-  }
-
-  public void onIncrementCounterPressed(Supplier<Boolean> callback) {
-    this.incrementCounterListeners.add(callback);
+  /** Listen to a keypress event. Return `true` to prevent the event from propagating further.
+   * Listeners are called in the same order in which they registered.
+   */
+  public void on(ChatMateKeyEvent event, Supplier<Boolean> callback) {
+    this.listeners.get(event).add(callback);
   }
 
   private void registerKeybindings() {
-    ClientRegistry.registerKeyBinding(this.decrementCounterKeybinding);
-    ClientRegistry.registerKeyBinding(this.incrementCounterKeybinding);
+    for (ChatMateKeyEvent event : ChatMateKeyEvent.values()) {
+      ClientRegistry.registerKeyBinding(this.keyBindings.get(event));
+    }
   }
 
   private void registerHandlers() {
@@ -51,15 +54,12 @@ public class KeyBindingService {
   }
 
   private Tick.Out onClientTick(Tick.In eventIn) {
-    if (this.decrementCounterKeybinding.isPressed()) {
-      this.notifyListeners(this.decrementCounterListeners);
+    for (ChatMateKeyEvent event : ChatMateKeyEvent.values()) {
+      ArrayList<Supplier<Boolean>> listeners = this.listeners.get(event);
+      this.notifyListeners(listeners);
     }
 
-    if (this.incrementCounterKeybinding.isPressed()) {
-      this.notifyListeners(this.incrementCounterListeners);
-    }
-
-    return null;
+    return new Tick.Out();
   }
 
   private void notifyListeners(ArrayList<Supplier<Boolean>> listeners) {
@@ -68,5 +68,22 @@ public class KeyBindingService {
         return;
       }
     }
+  }
+
+  private void verifyInitialisation() {
+    for (ChatMateKeyEvent event : ChatMateKeyEvent.values()) {
+      if (this.keyBindings.get(event) == null) {
+        throw new RuntimeException("No KeyBinding has been registered for event " + event.name());
+      }
+      if (this.listeners.get(event) == null) {
+        throw new RuntimeException("Listener list has not been initialised for event " + event.name());
+      }
+    }
+  }
+
+  public enum ChatMateKeyEvent {
+    INCREMENT_COUNTER,
+    DECREMENT_COUNTER,
+    TOGGLE_CHAT_MATE_HUD
   }
 }

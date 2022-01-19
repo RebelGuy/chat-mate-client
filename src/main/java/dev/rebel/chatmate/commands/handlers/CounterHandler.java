@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.commands.handlers;
 
 import dev.rebel.chatmate.services.KeyBindingService;
+import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.RenderService;
 import dev.rebel.chatmate.services.RenderService.DrawnText;
 
@@ -16,8 +17,8 @@ public class CounterHandler {
     this.keyBindingService = keyBindingService;
     this.renderService = renderService;
 
-    this.keyBindingService.onDecrementCounterPressed(this::decrementCounter);
-    this.keyBindingService.onIncrementCounterPressed(this::incrementCounter);
+    this.keyBindingService.on(ChatMateKeyEvent.DECREMENT_COUNTER, this::decrementCounter);
+    this.keyBindingService.on(ChatMateKeyEvent.INCREMENT_COUNTER, this::incrementCounter);
   }
 
   public void createCounter(int startValue, int incrementValue, float scale, @Nullable String title) {
