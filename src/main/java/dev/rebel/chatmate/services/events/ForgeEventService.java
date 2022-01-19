@@ -1,10 +1,7 @@
 package dev.rebel.chatmate.services.events;
 
 import dev.rebel.chatmate.ChatMate;
-import dev.rebel.chatmate.services.events.models.Base;
-import dev.rebel.chatmate.services.events.models.OpenGui;
-import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
-import dev.rebel.chatmate.services.events.models.Tick;
+import dev.rebel.chatmate.services.events.models.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.settings.KeyBinding;
@@ -38,6 +35,7 @@ public class ForgeEventService {
   private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openGuiModListHandlers;
   private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openGuiIngameMenuHandlers;
   private final ArrayList<EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options>> renderGameOverlayHandlers;
+  private final ArrayList<EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options>> renderChatGameOverlayHandlers;
   private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> renderTickHandlers;
   private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> clientTickHandlers;
 
@@ -47,6 +45,7 @@ public class ForgeEventService {
     this.openGuiModListHandlers = new ArrayList<>();
     this.openGuiIngameMenuHandlers = new ArrayList<>();
     this.renderGameOverlayHandlers = new ArrayList<>();
+    this.renderChatGameOverlayHandlers = new ArrayList<>();
     this.renderTickHandlers = new ArrayList<>();
     this.clientTickHandlers = new ArrayList<>();
   }
@@ -61,6 +60,11 @@ public class ForgeEventService {
 
   public void onRenderGameOverlay(Function<RenderGameOverlay.In, RenderGameOverlay.Out> handler, @Nonnull RenderGameOverlay.Options options) {
     this.renderGameOverlayHandlers.add(new EventHandler<>(handler, options));
+  }
+
+  /** Fires when the main chat box GUI component is rendered. */
+  public void onRenderChatGameOverlay(Function<RenderChatGameOverlay.In, RenderChatGameOverlay.Out> handler, RenderChatGameOverlay.Options options) {
+    this.renderChatGameOverlayHandlers.add(new EventHandler<>(handler, options));
   }
 
   public void onRenderTick(Function<Tick.In, Tick.Out> handler, @Nullable Tick.Options options) {
@@ -136,6 +140,28 @@ public class ForgeEventService {
         RenderGameOverlay.Out eventOut = handler.callback.apply(eventIn);
       }
     }
+  }
+
+  @SideOnly(Side.CLIENT)
+  @SubscribeEvent
+  public void forgeEventSubscriber(RenderGameOverlayEvent.Chat event) {
+    int posX = event.posX;
+    int posY = event.posY;
+
+    for (EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options> handler : this.renderChatGameOverlayHandlers) {
+      RenderChatGameOverlay.In eventIn = new RenderChatGameOverlay.In(posX, posY);
+      RenderChatGameOverlay.Out eventOut = handler.callback.apply(eventIn);
+
+      if (eventOut.newPosX != null) {
+        posX = eventOut.newPosX;
+      }
+      if (eventOut.newPosY != null) {
+        posY = eventOut.newPosY;
+      }
+    }
+
+    event.posX = posX;
+    event.posY = posY;
   }
 
   // similar to RenderGameOverlayEvent.ALL, except fires even in menus

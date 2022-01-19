@@ -7,6 +7,10 @@ import dev.rebel.chatmate.gui.builder.CheckBoxLayout.CheckBoxAction;
 import dev.rebel.chatmate.gui.builder.CheckBoxLayout.CheckBoxAction.CheckBoxActionClickData;
 import dev.rebel.chatmate.gui.builder.CheckBoxLayout.CheckBoxAction.CheckBoxActionType;
 import dev.rebel.chatmate.gui.builder.LayoutEngine.Layout;
+import dev.rebel.chatmate.gui.builder.SliderLayout.SliderAction;
+import dev.rebel.chatmate.gui.builder.SliderLayout.SliderAction.SliderActionMouseEventData;
+import dev.rebel.chatmate.gui.builder.SliderLayout.SliderAction.SliderActionMouseEventData.MouseEventState;
+import dev.rebel.chatmate.gui.builder.SliderLayout.SliderAction.SliderActionType;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
 
@@ -62,11 +66,14 @@ public class TableLayout extends ManagedLayout {
   }
 
   public <TGui, TActionData, L extends ContentLayout<TGui, TActionData>> L getLayoutForObject(Class<L> layoutClass, TGui object) {
-    // a bunch of nonsense if you ask me
     return this.filterCells(layoutClass, c -> c.tryGetGui() == object)
         .stream()
         .findFirst()
         .orElse(null);
+  }
+
+  public <TGui, TActionData, L extends ContentLayout<TGui, TActionData>> List<L> getAllLayoutsOfType(Class<L> layoutClass) {
+    return this.filterCells(layoutClass, c -> true);
   }
 
   public TableLayout withRow(ContentLayout<?, ?> ...content) {
@@ -98,7 +105,7 @@ public class TableLayout extends ManagedLayout {
 
     // add all items to the GUI item lists that were passed at instantiation, so things actually get rendered
     this.rows.forEach(r -> r.forEach(c -> {
-      if (c instanceof ButtonLayout || c instanceof CheckBoxLayout) {
+      if (c instanceof ButtonLayout || c instanceof CheckBoxLayout || c instanceof SliderLayout) {
         GuiButton button = (GuiButton)c.tryGetGui();
         if (!this.buttonList.contains(button)) {
           this.buttonList.add(button);
@@ -130,6 +137,40 @@ public class TableLayout extends ManagedLayout {
 
     return false;
   }
+
+
+  public boolean onPostMousePressed(int posX, int posY) {
+    SliderActionMouseEventData data = new SliderActionMouseEventData(MouseEventState.DOWN, posX, posY);
+    SliderAction action = new SliderAction(SliderActionType.MOUSE_EVENT, data);
+    for (SliderLayout sliderLayout : this.getAllLayoutsOfType(SliderLayout.class)) {
+      if (sliderLayout.dispatchAction(action)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public boolean onPostMouseDragged(int posX, int posY) {
+    SliderActionMouseEventData data = new SliderActionMouseEventData(MouseEventState.MOVE, posX, posY);
+    SliderAction action = new SliderAction(SliderActionType.MOUSE_EVENT, data);
+    for (SliderLayout sliderLayout : this.getAllLayoutsOfType(SliderLayout.class)) {
+      if (sliderLayout.dispatchAction(action)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public void onPostMouseReleased(int posX, int posY) {
+    SliderActionMouseEventData data = new SliderActionMouseEventData(MouseEventState.UP, posX, posY);
+    SliderAction action = new SliderAction(SliderActionType.MOUSE_EVENT, data);
+    for (SliderLayout sliderLayout : this.getAllLayoutsOfType(SliderLayout.class)) {
+      sliderLayout.dispatchAction(action);
+    }
+  }
+
 
   public void refreshContents() {
     this.rows.forEach(r -> r.forEach(ContentLayout::refreshContents));

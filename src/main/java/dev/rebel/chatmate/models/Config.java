@@ -10,13 +10,15 @@ import java.util.function.Consumer;
 
 public class Config {
   /** Listeners are notified whenever any change has been made to the config. */
-  public final List<Callback> updateListeners;
+  private final List<Callback> updateListeners;
   public final StatefulEmitter<Boolean> apiEnabled;
   public final StatefulEmitter<Boolean> soundEnabled;
+  public final StatefulEmitter<Integer> chatVerticalDisplacement;
 
   public Config() {
     this.apiEnabled = new StatefulEmitter<>(false, this::onUpdate);
     this.soundEnabled = new StatefulEmitter<>(true, this::onUpdate);
+    this.chatVerticalDisplacement = new StatefulEmitter<>(15, this::onUpdate);
 
     this.updateListeners = new ArrayList<>();
   }
@@ -25,7 +27,7 @@ public class Config {
     this.updateListeners.add(callback);
   }
 
-  public <T> void onUpdate(T _unused) {
+  private <T> void onUpdate(T _unused) {
     this.updateListeners.forEach(Callback::call);
   }
 

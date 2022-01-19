@@ -19,5 +19,9 @@ public abstract class ManagedLayout {
   /** Returns true if the event was handled by a button */
   public abstract boolean onActionPerformed(GuiButton button);
 
+  public abstract boolean onPostMousePressed(int posX, int posY);
+  public abstract boolean onPostMouseDragged(int posX, int posY);
+  public abstract void onPostMouseReleased(int posX, int posY);
+
   public abstract void refreshContents();
 }

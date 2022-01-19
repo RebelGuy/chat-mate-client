@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.CustomGuiPause;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.OpenGui;
+import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.gui.GuiScreen;
 
 public class GuiService {
@@ -24,6 +25,7 @@ public class GuiService {
   private void addEventHandlers() {
     this.forgeEventService.onOpenGuiModList(this::onOpenGuiModList, null);
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
+    this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
   }
 
   private OpenGui.Out onOpenGuiModList(OpenGui.In eventIn) {
@@ -34,5 +36,11 @@ public class GuiService {
   private OpenGui.Out onOpenIngameMenu(OpenGui.In eventIn) {
     GuiScreen replaceWithGui = new CustomGuiPause(this.config);
     return new OpenGui.Out(replaceWithGui);
+  }
+
+  /** Moves up the chat a bit so that it doesn't cover the bottom GUI. */
+  private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
+    int newPosY = eventIn.posY - this.config.chatVerticalDisplacement.get();
+    return new RenderChatGameOverlay.Out(eventIn.posX, newPosY);
   }
 }

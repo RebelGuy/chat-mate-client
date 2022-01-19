@@ -23,6 +23,8 @@ public class RenderService {
   // we can use GL11 (OpenGL) directly if we want
   // e.g. https://relativity.net.au/gaming/java/Transparency.html
   // e.g. https://forums.minecraftforge.net/topic/33464-18solved-drawing-a-simple-line/
+  //
+  // OpenGL reference: https://learnopengl.com/
 
   private static int VERTICAL_PADDING = 2;
 
