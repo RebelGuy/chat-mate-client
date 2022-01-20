@@ -17,12 +17,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 
 // refer to mcmod.info for more settings.
-@Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true, guiFactory = "dev.rebel.chatmate.gui.GuiFactory")
+@Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
 public class ChatMate {
   private final ForgeEventService forgeEventService;
   private final YtChatService ytChatService;
@@ -30,17 +31,12 @@ public class ChatMate {
   private final GuiService guiService;
   private final RenderService renderService;
   private final KeyBindingService keyBindingService;
-  public final Config config;
-
-  // hack until I figure out how to dependency inject into GUI screens
-  public static ChatMate instance_hack;
-
+  private final Config config;
 
   // from https://forums.minecraftforge.net/topic/68571-1122-check-if-environment-is-deobfuscated/
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
   public ChatMate() throws Exception {
-    instance_hack = this;
     Minecraft minecraft = Minecraft.getMinecraft();
     this.config = new Config();
     this.forgeEventService = new ForgeEventService(minecraft);
@@ -62,7 +58,7 @@ public class ChatMate {
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, this.forgeEventService);
-    this.guiService = new GuiService(this, this.config, this.forgeEventService, this.keyBindingService, minecraft, guiChatMateHud);
+    this.guiService = new GuiService(this.config, this.forgeEventService, this.keyBindingService, minecraft, guiChatMateHud);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(minecraft)),

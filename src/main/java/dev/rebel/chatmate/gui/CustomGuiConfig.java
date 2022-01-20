@@ -1,6 +1,5 @@
 package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatmate.ChatMate;
 import dev.rebel.chatmate.gui.builder.CheckBoxLayout;
 import dev.rebel.chatmate.gui.builder.CheckBoxLayout.CheckBoxAction.CheckBoxActionCheckedData;
 import dev.rebel.chatmate.gui.builder.Constants.Color;
@@ -23,13 +22,11 @@ public class CustomGuiConfig extends GuiConfig {
 
   // fantastic tutorial here: http://jabelarminecraft.blogspot.com/p/minecraft-modding-configuration-guis.html
   // (use the above when we have config files one day)
-  // Note: do NOT change this constructor, as the GuiFactory that instantiates this class is registered with the mod.
-  // Todo: In the future, we could add a button-click handler in the CustomGuiModList that does this properly
-  public CustomGuiConfig(GuiScreen parent)
+  public CustomGuiConfig(GuiScreen parent, Config config)
   {
     super(parent, new ArrayList<>(), "chatmate", false, false, "Configure ChatMate");
     titleLine2 = "Mod Settings";
-    this.config = ChatMate.instance_hack.config;
+    this.config = config;
     this.config.listenAny(this::onConfigUpdate);
   }
 

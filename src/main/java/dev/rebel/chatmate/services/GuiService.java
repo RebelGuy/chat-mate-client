@@ -16,15 +16,13 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 
 public class GuiService {
-  private final ChatMate chatMate;
   private final Config config;
   private final ForgeEventService forgeEventService;
   private final KeyBindingService keyBindingService;
   private final Minecraft minecraft;
   private final GuiChatMateHud guiChatMateHud;
 
-  public GuiService(ChatMate chatMate, Config config, ForgeEventService forgeEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud) {
-    this.chatMate = chatMate;
+  public GuiService(Config config, ForgeEventService forgeEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud) {
     this.config = config;
     this.forgeEventService = forgeEventService;
     this.keyBindingService = keyBindingService;
@@ -44,7 +42,7 @@ public class GuiService {
   }
 
   private OpenGui.Out onOpenGuiModList(OpenGui.In eventIn) {
-    GuiScreen replaceWithGui = new CustomGuiModList(null, this.chatMate);
+    GuiScreen replaceWithGui = new CustomGuiModList(null, this.minecraft, this.config);
     return new OpenGui.Out(replaceWithGui);
   }
 
