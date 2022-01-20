@@ -14,11 +14,13 @@ public class Config {
   public final StatefulEmitter<Boolean> apiEnabled;
   public final StatefulEmitter<Boolean> soundEnabled;
   public final StatefulEmitter<Integer> chatVerticalDisplacement;
+  public final StatefulEmitter<Boolean> hudEnabled; // todo: add more hud options, preferrably in its own menu
 
   public Config() {
     this.apiEnabled = new StatefulEmitter<>(false, this::onUpdate);
     this.soundEnabled = new StatefulEmitter<>(true, this::onUpdate);
     this.chatVerticalDisplacement = new StatefulEmitter<>(15, this::onUpdate);
+    this.hudEnabled = new StatefulEmitter<>(true, this::onUpdate);
 
     this.updateListeners = new ArrayList<>();
   }

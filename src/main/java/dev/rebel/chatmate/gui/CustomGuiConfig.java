@@ -49,12 +49,16 @@ public class CustomGuiConfig extends GuiConfig {
     LabelLayout soundLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable Sound", Color.WHITE);
     CheckBoxLayout soundCheckbox = new CheckBoxLayout(this::onToggleSound, config.soundEnabled::get);
 
+    LabelLayout hudLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable ChatMate HUD", Color.WHITE);
+    CheckBoxLayout hudCheckbox = new CheckBoxLayout(this::onToggleHud, config.hudEnabled::get);
+
     LabelLayout chatOffsetLabel = new LabelLayout(this.fontRendererObj, new String[] { "0%", "100%" }, () -> "Chat Height Offset", Color.WHITE);
     SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.chatVerticalDisplacement::get);
 
     this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 2, Layout.HEIGHT, Layout.VERTICAL_PADDING, Layout.HORIZONTAL_PADDING)
         .withRow(apiLabel, apiCheckbox)
         .withRow(soundLabel, soundCheckbox)
+        .withRow(hudLabel, hudCheckbox)
         .withRow(chatOffsetLabel, chatOffsetSlider)
         .instantiate();
   }
@@ -110,6 +114,10 @@ public class CustomGuiConfig extends GuiConfig {
 
   private void onToggleSound(CheckBoxActionCheckedData checkBoxActionCheckedData) {
     this.config.soundEnabled.set(checkBoxActionCheckedData.checked);
+  }
+
+  private void onToggleHud(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.hudEnabled.set(checkBoxActionCheckedData.checked);
   }
 
   private void onChangeChatOffset(SliderActionValueChangedData sliderActionChangeData) {

@@ -5,6 +5,7 @@ import dev.rebel.chatmate.commands.CountdownCommand;
 import dev.rebel.chatmate.commands.CounterCommand;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
+import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.YtChatProxy;
@@ -58,9 +59,10 @@ public class ChatMate {
     SoundService soundService = new SoundService(this.config);
     this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
 
-    this.guiService = new GuiService(this, this.config, this.forgeEventService);
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
+    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, this.forgeEventService);
+    this.guiService = new GuiService(this, this.config, this.forgeEventService, this.keyBindingService, minecraft, guiChatMateHud);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(minecraft)),

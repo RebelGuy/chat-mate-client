@@ -1,28 +1,21 @@
 package dev.rebel.chatmate.services.events;
 
-import dev.rebel.chatmate.ChatMate;
 import dev.rebel.chatmate.services.events.models.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraftforge.client.event.ClientChatReceivedEvent;
-import net.minecraftforge.client.event.GuiOpenEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
+import net.minecraftforge.client.event.*;
 import net.minecraftforge.fml.client.GuiModList;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.text.Format;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.function.Function;
 
 // why? because I would like to keep Forge event subscriptions centralised for an easier overview and for easier debugging.
@@ -38,6 +31,7 @@ public class ForgeEventService {
   private final ArrayList<EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options>> renderChatGameOverlayHandlers;
   private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> renderTickHandlers;
   private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> clientTickHandlers;
+  private final ArrayList<EventHandler<GuiScreenMouse.In, GuiScreenMouse.Out, GuiScreenMouse.Options>> guiScreenMouseHandlers;
 
   public ForgeEventService(Minecraft minecraft) {
     this.minecraft = minecraft;
@@ -48,6 +42,7 @@ public class ForgeEventService {
     this.renderChatGameOverlayHandlers = new ArrayList<>();
     this.renderTickHandlers = new ArrayList<>();
     this.clientTickHandlers = new ArrayList<>();
+    this.guiScreenMouseHandlers = new ArrayList<>();
   }
 
   public void onOpenGuiModList(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
@@ -73,6 +68,16 @@ public class ForgeEventService {
 
   public void onClientTick(Function<Tick.In, Tick.Out> handler, @Nullable Tick.Options options) {
     this.clientTickHandlers.add(new EventHandler<>(handler, options));
+  }
+
+  /** Fires for left-click mouse events within a GUI screen. */
+  public void onGuiScreenMouse(Object key, Function<GuiScreenMouse.In, GuiScreenMouse.Out> handler, @Nonnull GuiScreenMouse.Options options) {
+    this.guiScreenMouseHandlers.add(new EventHandler<>(handler, options, key));
+    System.out.println(this.guiScreenMouseHandlers.size());
+  }
+
+  public boolean offGuiScreenMouse(Object key) {
+    return this.removeListener(this.guiScreenMouseHandlers, key);
   }
 
   @SideOnly(Side.CLIENT)
@@ -184,13 +189,62 @@ public class ForgeEventService {
     }
   }
 
+  @SideOnly(Side.CLIENT)
+  @SubscribeEvent
+  public void forgeEventSubscriber(GuiScreenEvent.MouseInputEvent.Post event) {
+    // todo: create a proper mouse handler that can track the whole drag sequence + multiple buttons
+    // http://legacy.lwjgl.org/javadoc/org/lwjgl/input/Mouse.html
+
+    GuiScreenMouse.In eventIn;
+    if (Mouse.getEventButton() != 0) {
+      // move/drag
+      boolean isDragging = Mouse.isButtonDown(0);
+      eventIn = new GuiScreenMouse.In(Mouse.getX(), Mouse.getY(), Mouse.getEventDX(), Mouse.getEventDY(), isDragging);
+    } else {
+      // click
+      boolean isMouseDownEvent = Mouse.getEventButtonState();
+      eventIn = new GuiScreenMouse.In(isMouseDownEvent, Mouse.getX(), Mouse.getY());
+    }
+
+    for (EventHandler<GuiScreenMouse.In, GuiScreenMouse.Out, GuiScreenMouse.Options> handler : this.guiScreenMouseHandlers) {
+      if (handler.options.guiScreenClass.isInstance(event.gui)) {
+        GuiScreenMouse.Out eventOut = handler.callback.apply(eventIn);
+      }
+    }
+  }
+
+  // happy scrolling
+  private <In extends Base.EventIn, Out extends Base.EventOut, Options extends Base.EventOptions> boolean removeListener(ArrayList<EventHandler<In, Out, Options>> handlers, Object key) {
+    Optional<EventHandler<In, Out, Options>> handler = handlers.stream().filter(h -> h.isHandlerForKey(key)).findFirst();
+
+    if (handler.isPresent()) {
+      handlers.remove(handler.get());
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   private static class EventHandler<In extends Base.EventIn, Out extends Base.EventOut, Options extends Base.EventOptions> {
     private final Function<In, Out> callback;
     private final Options options;
+    private final Object key;
 
     public EventHandler(Function<In, Out> callback, Options options) {
       this.callback = callback;
       this.options = options;
+      this.key = new Object();
+    }
+
+    public EventHandler(Function<In, Out> callback, Options options, Object key) {
+      this.callback = callback;
+      this.options = options;
+      this.key = key;
+    }
+
+    // we can't compare by callback because lambdas cannot be expected to follow reference equality.
+    public boolean isHandlerForKey(Object key) {
+      return this.key == key;
     }
   }
 }
