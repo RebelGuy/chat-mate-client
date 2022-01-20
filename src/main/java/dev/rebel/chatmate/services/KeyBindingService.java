@@ -24,7 +24,7 @@ public class KeyBindingService {
     this.keyBindings = new HashMap<>();
     this.keyBindings.put(ChatMateKeyEvent.DECREMENT_COUNTER, new KeyBinding("Decrement Counter", Keyboard.KEY_LBRACKET, "ChatMate"));
     this.keyBindings.put(ChatMateKeyEvent.INCREMENT_COUNTER, new KeyBinding("Increment Counter", Keyboard.KEY_RBRACKET, "ChatMate"));
-    this.keyBindings.put(ChatMateKeyEvent.TOGGLE_CHAT_MATE_HUD, new KeyBinding("Open ChatMate HUD", Keyboard.KEY_Y, "ChatMate"));
+    this.keyBindings.put(ChatMateKeyEvent.OPEN_CHAT_MATE_HUD, new KeyBinding("Open ChatMate HUD", Keyboard.KEY_Y, "ChatMate"));
 
     this.listeners = new HashMap<>();
     for (ChatMateKeyEvent event : ChatMateKeyEvent.values()) {
@@ -55,8 +55,12 @@ public class KeyBindingService {
 
   private Tick.Out onClientTick(Tick.In eventIn) {
     for (ChatMateKeyEvent event : ChatMateKeyEvent.values()) {
-      ArrayList<Supplier<Boolean>> listeners = this.listeners.get(event);
-      this.notifyListeners(listeners);
+      KeyBinding keyBinding = this.keyBindings.get(event);
+
+      if (keyBinding.isPressed()) {
+        ArrayList<Supplier<Boolean>> listeners = this.listeners.get(event);
+        this.notifyListeners(listeners);
+      }
     }
 
     return new Tick.Out();
@@ -84,6 +88,6 @@ public class KeyBindingService {
   public enum ChatMateKeyEvent {
     INCREMENT_COUNTER,
     DECREMENT_COUNTER,
-    TOGGLE_CHAT_MATE_HUD
+    OPEN_CHAT_MATE_HUD
   }
 }
