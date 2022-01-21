@@ -4,15 +4,12 @@ import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay.Options;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
-import org.lwjgl.opengl.GL11;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 public class RenderService {
   // todo: can add proper laying out of boxed components with text alignments, padding, automatic wrapping (Using fontRenderer), etc.
@@ -67,7 +64,7 @@ public class RenderService {
       // we scale in the "push-pop" block only.
       // see https://forums.minecraftforge.net/topic/44188-111-is-it-possible-to-change-the-font-size-of-a-string/
       // note that this scales the screen, so we can just draw the text as we normally would
-      GL11.glPushMatrix();
+      GlStateManager.pushMatrix();
       GlStateManager.scale(drawnText.scale, drawnText.scale, drawnText.scale);
 
       for (int i = 0; i < drawnText.lines.length; i++) {
@@ -76,7 +73,7 @@ public class RenderService {
         this.minecraft.fontRendererObj.drawStringWithShadow(text, drawnText.x, lineY, color);
       }
 
-      GL11.glPopMatrix();
+      GlStateManager.popMatrix();
     }
 
     return null;

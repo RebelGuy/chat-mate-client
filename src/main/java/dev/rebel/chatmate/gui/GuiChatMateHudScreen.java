@@ -36,6 +36,11 @@ public class GuiChatMateHudScreen extends GuiScreen {
   }
 
   @Override
+  public void updateScreen() {
+    super.updateScreen();
+  }
+
+  @Override
   public boolean doesGuiPauseGame() {
     return false;
   }

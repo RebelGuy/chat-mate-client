@@ -1,9 +1,8 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.hud.IHudComponent;
+import dev.rebel.chatmate.gui.hud.StatusIndicatorComponent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.models.GuiScreenMouse;
-import dev.rebel.chatmate.services.events.models.GuiScreenMouse.Options;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 
@@ -15,6 +14,8 @@ public class GuiChatMateHud extends Gui {
   private final Minecraft minecraft;
   private final ForgeEventService forgeEventService;
 
+  private final StatusIndicatorComponent statusIndicatorComponent;
+
   public final List<IHudComponent> hudComponents;
 
   public GuiChatMateHud(Minecraft minecraft, ForgeEventService forgeEventService) {
@@ -22,14 +23,19 @@ public class GuiChatMateHud extends Gui {
     this.minecraft = minecraft;
     this.forgeEventService = forgeEventService;
 
-    this.hudComponents = new ArrayList<>();
+    this.statusIndicatorComponent = new StatusIndicatorComponent();
 
+    this.hudComponents = new ArrayList<>();
+    this.hudComponents.add(this.statusIndicatorComponent);
   }
 
+  // render indicators here, etc.
+  // will need to check config to see if an indicator should be rendered or not, as well as its transform and content
   public void renderGameOverlay() {
+    RenderContext context = new RenderContext(this.minecraft.renderEngine);
 
-
-    // render indicators here, etc.
-    // will need to check config to see if an indicator should be rendered or not, as well as its transform and content
+    for (IHudComponent component : this.hudComponents) {
+      component.render(context);
+    }
   }
 }

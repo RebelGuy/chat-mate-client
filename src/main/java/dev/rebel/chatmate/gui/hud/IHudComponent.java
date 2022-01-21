@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.RenderContext;
+
 /** Should be implemented by the component that is drawn to the HUD */
 public interface IHudComponent {
   public int getX();
@@ -9,9 +11,13 @@ public interface IHudComponent {
   public float getContentScale();
 
   public boolean canResizeBox();
-  public boolean canScaleContents();
-  public boolean canTranslate();
+  public void onResize(int newWidth, int newHeight);
 
-  public void transform(int newX, int newY, int newWidth, int newHeight);
-  public void setContentScale(float newScale);
+  public boolean canRescaleContent();
+  public void onRescaleContent(float newScale);
+
+  public boolean canTranslate();
+  public void onTranslate(int newX, int newY);
+
+  public void render(RenderContext context);
 }

@@ -58,7 +58,7 @@ public class GuiService {
   }
 
   private RenderGameOverlay.Out onRenderGameOverlay(RenderGameOverlay.In in) {
-    if (this.config.hudEnabled.get()) {
+    if (this.config.apiEnabled.get() && this.config.hudEnabled.get()) {
       this.guiChatMateHud.renderGameOverlay();
     }
 
