@@ -10,32 +10,33 @@ import javax.annotation.Nullable;
 public class GuiScreenMouse {
   public static class In extends EventIn {
     public final Type type;
-    public final Integer x;
-    public final Integer y;
+    public final int startX;
+    public final int startY;
 
-    public final @Nullable Integer dx;
-    public final @Nullable Integer dy;
-    public final @Nullable Boolean isDragging;
+    public final boolean isDragging;
+    public final int currentX;
+    public final int currentY;
 
     /** Click event. */
-    public In(boolean isMouseDownType, int x, int y) {
+    public In(boolean isMouseDownType, int startX, int startY, int currentX, int currentY) {
       this.type = isMouseDownType ? Type.DOWN : Type.UP;
-      this.x = x;
-      this.y = y;
+      this.startX = startX;
+      this.startY = startY;
 
-      this.dx = null;
-      this.dy = null;
       this.isDragging = false;
+      this.currentX = currentX;
+      this.currentY = currentY;
     }
 
     /** Mouse move event. */
-    public In(int x, int y, int dx, int dy, boolean isDragging) {
+    public In(int startX, int startY, int currentX, int currentY, boolean isDragging) {
       this.type = Type.MOVE;
-      this.x = x;
-      this.y = y;
-      this.dx = dx;
-      this.dy = dy;
+      this.startX = startX;
+      this.startY = startY;
+
       this.isDragging = isDragging;
+      this.currentX = currentX;
+      this.currentY = currentY;
     }
   }
 

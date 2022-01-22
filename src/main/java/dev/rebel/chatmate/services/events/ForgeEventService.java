@@ -33,6 +33,9 @@ public class ForgeEventService {
   private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> clientTickHandlers;
   private final ArrayList<EventHandler<GuiScreenMouse.In, GuiScreenMouse.Out, GuiScreenMouse.Options>> guiScreenMouseHandlers;
 
+  private Integer mouseStartX = null;
+  private Integer mouseStartY = null;
+
   public ForgeEventService(Minecraft minecraft) {
     this.minecraft = minecraft;
 
@@ -195,15 +198,33 @@ public class ForgeEventService {
     // todo: create a proper mouse handler that can track the whole drag sequence + multiple buttons
     // http://legacy.lwjgl.org/javadoc/org/lwjgl/input/Mouse.html
 
+    // turns out the the `Mouse` object measures pixels from the bottom left corner. We have to apply the correct GUI
+    // scaling and invert the y position.
+    // see https://www.tabnine.com/web/assistant/code/rs/5c779284df79be0001d363ba#L100 for an example.
+    // due to integer rounding, we can't use the `dx` and `dy` values. Instead, keep track of the starting and current
+    // position of a mouse sequence (drag).
+    int currentX = Mouse.getEventX() * event.gui.width / this.minecraft.displayWidth;
+    int currentY = event.gui.height - Mouse.getEventY() * event.gui.height / this.minecraft.displayHeight - 1;
+    int startX = this.mouseStartX == null ? currentX : this.mouseStartX;
+    int startY = this.mouseStartY == null ? currentY : this.mouseStartY;
+
     GuiScreenMouse.In eventIn;
     if (Mouse.getEventButton() != 0) {
       // move/drag
       boolean isDragging = Mouse.isButtonDown(0);
-      eventIn = new GuiScreenMouse.In(Mouse.getX(), Mouse.getY(), Mouse.getEventDX(), Mouse.getEventDY(), isDragging);
+      eventIn = new GuiScreenMouse.In(startX, startY, currentX, currentY, isDragging);
     } else {
       // click
       boolean isMouseDownEvent = Mouse.getEventButtonState();
-      eventIn = new GuiScreenMouse.In(isMouseDownEvent, Mouse.getX(), Mouse.getY());
+      eventIn = new GuiScreenMouse.In(isMouseDownEvent, startX, startY, currentX, currentY);
+
+      if (!isMouseDownEvent) {
+        this.mouseStartX = null;
+        this.mouseStartY = null;
+      } else {
+        this.mouseStartX = startX;
+        this.mouseStartY = startY;
+      }
     }
 
     for (EventHandler<GuiScreenMouse.In, GuiScreenMouse.Out, GuiScreenMouse.Options> handler : this.guiScreenMouseHandlers) {
