@@ -43,7 +43,7 @@ public class ChatMate {
 
     LoggingService loggingService = new LoggingService("log.log", false);
 
-    String apiPath = "http://localhost:3010/api/";
+    String apiPath = "http://localhost:3010/api";
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(loggingService, apiPath);
     ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(loggingService, apiPath);
 

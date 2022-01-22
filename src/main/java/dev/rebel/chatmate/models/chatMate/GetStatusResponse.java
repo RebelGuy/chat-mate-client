@@ -32,7 +32,7 @@ public class GetStatusResponse extends ApiResponseBase {
   public static class ApiStatus {
     public @Nullable Status status;
     public @Nullable Long lastOk;
-    public @Nullable Long avgRoundtrip;
+    public @Nullable Double avgRoundtrip;
 
     public enum Status {
       @SerializedName("ok") OK,

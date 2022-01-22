@@ -18,7 +18,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.statusService = statusService;
 
     int x = 0, y = 0;
-    float scale = 1;
+    float scale = 0.5f;
     boolean canRescale = false, canTranslate = true;
 
     this.statusIndicators = new HashMap<>();

@@ -7,10 +7,10 @@ import java.net.ConnectException;
 
 public class ChatMateEndpointProxy extends EndpointProxy {
   public ChatMateEndpointProxy(LoggingService loggingService, String basePath) {
-    super(loggingService, basePath);
+    super(loggingService, basePath + "/chatMate");
   }
 
   public GetStatusResponse getStatus() throws ConnectException, Exception {
-    return this.makeRequest(Method.GET, "status", GetStatusResponse.class);
+    return this.makeRequest(Method.GET, "/status", GetStatusResponse.class);
   }
 }
