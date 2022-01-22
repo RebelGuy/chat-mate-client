@@ -41,16 +41,16 @@ public class CustomGuiConfig extends GuiConfig {
     int left = this.width / 2 - width / 2; // centre table horizontally
 
     LabelLayout apiLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable API", Color.WHITE);
-    CheckBoxLayout apiCheckbox = new CheckBoxLayout(this::onToggleApi, config.apiEnabled::get);
+    CheckBoxLayout apiCheckbox = new CheckBoxLayout(this::onToggleApi, config.getApiEnabled()::get);
 
     LabelLayout soundLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable Sound", Color.WHITE);
-    CheckBoxLayout soundCheckbox = new CheckBoxLayout(this::onToggleSound, config.soundEnabled::get);
+    CheckBoxLayout soundCheckbox = new CheckBoxLayout(this::onToggleSound, config.getSoundEnabled()::get);
 
     LabelLayout hudLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable ChatMate HUD", Color.WHITE);
-    CheckBoxLayout hudCheckbox = new CheckBoxLayout(this::onToggleHud, config.hudEnabled::get);
+    CheckBoxLayout hudCheckbox = new CheckBoxLayout(this::onToggleHud, config.getHudEnabled()::get);
 
     LabelLayout chatOffsetLabel = new LabelLayout(this.fontRendererObj, new String[] { "0%", "100%" }, () -> "Chat Height Offset", Color.WHITE);
-    SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.chatVerticalDisplacement::get);
+    SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacement()::get);
 
     this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 2, Layout.HEIGHT, Layout.VERTICAL_PADDING, Layout.HORIZONTAL_PADDING)
         .withRow(apiLabel, apiCheckbox)
@@ -106,18 +106,18 @@ public class CustomGuiConfig extends GuiConfig {
   }
 
   private void onToggleApi(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.apiEnabled.set(checkBoxActionCheckedData.checked);
+    this.config.getApiEnabled().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleSound(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.soundEnabled.set(checkBoxActionCheckedData.checked);
+    this.config.getSoundEnabled().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleHud(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.hudEnabled.set(checkBoxActionCheckedData.checked);
+    this.config.getHudEnabled().set(checkBoxActionCheckedData.checked);
   }
 
   private void onChangeChatOffset(SliderActionValueChangedData sliderActionChangeData) {
-    this.config.chatVerticalDisplacement.set(sliderActionChangeData.newValue);
+    this.config.getChatVerticalDisplacement().set(sliderActionChangeData.newValue);
   }
 }

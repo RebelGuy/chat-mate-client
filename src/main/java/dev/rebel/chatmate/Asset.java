@@ -3,7 +3,10 @@ package dev.rebel.chatmate;
 import net.minecraft.util.ResourceLocation;
 
 public class Asset {
-  public static Texture STATUS_INDICATOR = new Texture(32, 32, "textures/status_indicator_black.png");
+  public static Texture STATUS_INDICATOR_RED = new Texture(32, 32, "textures/status_indicator_red.png");
+  public static Texture STATUS_INDICATOR_ORANGE = new Texture(32, 32, "textures/status_indicator_orange.png");
+  public static Texture STATUS_INDICATOR_CYAN = new Texture(32, 32, "textures/status_indicator_cyan.png");
+  public static Texture STATUS_INDICATOR_GREEN = new Texture(32, 32, "textures/status_indicator_green.png");
 
   public static class Texture {
     public final int width;

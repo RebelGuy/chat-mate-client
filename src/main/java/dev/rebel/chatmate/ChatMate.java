@@ -55,10 +55,11 @@ public class ChatMate {
 
     SoundService soundService = new SoundService(this.config);
     this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
+    StatusService statusService = new StatusService(this.config, chatMateEndpointProxy);
 
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
-    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, this.forgeEventService);
+    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, this.forgeEventService, statusService);
     this.guiService = new GuiService(this.config, this.forgeEventService, this.keyBindingService, minecraft, guiChatMateHud);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
@@ -77,14 +78,14 @@ public class ChatMate {
 
     // to make our life easier, auto enable when in a dev environment
     if (this.isDev) {
-      this.config.apiEnabled.set(true);
+      this.config.getApiEnabled().set(true);
     }
   }
 
   // this doesn't do anything!
   @Mod.EventHandler
   public void onFMLDeactivation(FMLModDisabledEvent event) {
-    this.config.apiEnabled.set(false);
+    this.config.getApiEnabled().set(false);
   }
 
   private void onNewYtChat(ChatItem[] newChat) {

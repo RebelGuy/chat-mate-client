@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.hud.IHudComponent;
 import dev.rebel.chatmate.gui.hud.StatusIndicatorComponent;
+import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
@@ -13,17 +14,19 @@ import java.util.List;
 public class GuiChatMateHud extends Gui {
   private final Minecraft minecraft;
   private final ForgeEventService forgeEventService;
+  private final StatusService statusService;
 
   private final StatusIndicatorComponent statusIndicatorComponent;
 
   public final List<IHudComponent> hudComponents;
 
-  public GuiChatMateHud(Minecraft minecraft, ForgeEventService forgeEventService) {
+  public GuiChatMateHud(Minecraft minecraft, ForgeEventService forgeEventService, StatusService statusService) {
     super();
     this.minecraft = minecraft;
     this.forgeEventService = forgeEventService;
+    this.statusService = statusService;
 
-    this.statusIndicatorComponent = new StatusIndicatorComponent();
+    this.statusIndicatorComponent = new StatusIndicatorComponent(statusService);
 
     this.hudComponents = new ArrayList<>();
     this.hudComponents.add(this.statusIndicatorComponent);

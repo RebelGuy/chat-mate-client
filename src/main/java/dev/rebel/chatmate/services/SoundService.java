@@ -25,7 +25,7 @@ public class SoundService {
         this.playSound(resourceLocation, 1);
     }
     private void playSound(String resourceLocation, float pitch) {
-        if (!this.config.soundEnabled.get()) {
+        if (!this.config.getSoundEnabled().get()) {
             return;
         }
 

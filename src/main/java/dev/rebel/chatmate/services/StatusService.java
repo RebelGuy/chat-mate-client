@@ -27,7 +27,7 @@ public class StatusService {
     this.lastSuccessfulStatusResponse = null;
     this.lastStatusResponse = null;
 
-    this.config.apiEnabled.listen(apiEnabled -> {
+    this.config.getApiEnabled().listen(apiEnabled -> {
       if (apiEnabled) {
         this.start();
       } else {
@@ -38,7 +38,7 @@ public class StatusService {
 
   public SimpleStatus getSimpleStatus() {
     GetStatusResponse status = this.lastStatusResponse;
-    
+
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
     } else if (status.apiStatus.status == ApiStatus.Status.Error) {

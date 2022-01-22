@@ -53,12 +53,12 @@ public class GuiService {
 
   /** Moves up the chat a bit so that it doesn't cover the bottom GUI. */
   private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
-    int newPosY = eventIn.posY - this.config.chatVerticalDisplacement.get();
+    int newPosY = eventIn.posY - this.config.getChatVerticalDisplacement().get();
     return new RenderChatGameOverlay.Out(eventIn.posX, newPosY);
   }
 
   private RenderGameOverlay.Out onRenderGameOverlay(RenderGameOverlay.In in) {
-    if (this.config.apiEnabled.get() && this.config.hudEnabled.get()) {
+    if (this.config.getApiEnabled().get() && this.config.getHudEnabled().get()) {
       this.guiChatMateHud.renderGameOverlay();
     }
 
@@ -66,7 +66,7 @@ public class GuiService {
   }
 
   private Boolean onOpenChatMateHud() {
-    if (this.config.hudEnabled.get()) {
+    if (this.config.getHudEnabled().get()) {
       // key events don't fire when we are in a menu, so don't need to worry about closing this GUI when the key is pressed again
       GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.guiChatMateHud, this.forgeEventService);
       this.minecraft.displayGuiScreen(hudScreen);

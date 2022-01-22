@@ -11,10 +11,17 @@ import java.util.function.Consumer;
 public class Config {
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
-  public final StatefulEmitter<Boolean> apiEnabled;
-  public final StatefulEmitter<Boolean> soundEnabled;
-  public final StatefulEmitter<Integer> chatVerticalDisplacement;
-  public final StatefulEmitter<Boolean> hudEnabled; // todo: add more hud options, preferrably in its own menu
+  private final StatefulEmitter<Boolean> apiEnabled;
+  public StatefulEmitter<Boolean> getApiEnabled() { return this.apiEnabled; }
+
+  private final StatefulEmitter<Boolean> soundEnabled;
+  public StatefulEmitter<Boolean> getSoundEnabled() { return this.soundEnabled; }
+
+  private final StatefulEmitter<Integer> chatVerticalDisplacement;
+  public StatefulEmitter<Integer> getChatVerticalDisplacement() { return this.chatVerticalDisplacement; }
+
+  private final StatefulEmitter<Boolean> hudEnabled; // todo: add more hud options, preferrably in its own menu
+  public StatefulEmitter<Boolean> getHudEnabled() { return this.hudEnabled; }
 
   public Config() {
     this.apiEnabled = new StatefulEmitter<>(false, this::onUpdate);
