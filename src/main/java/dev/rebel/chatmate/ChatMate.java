@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
+import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -44,12 +45,13 @@ public class ChatMate {
 
     String apiPath = "http://localhost:3010/api/";
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(loggingService, apiPath);
+    ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(loggingService, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
-    this.ytChatService = new YtChatService(chatEndpointProxy);
+    this.ytChatService = new YtChatService(this.config, chatEndpointProxy);
 
     SoundService soundService = new SoundService(this.config);
     this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
@@ -65,13 +67,7 @@ public class ChatMate {
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 
-    this.config.apiEnabled.listen(apiEnabled -> {
-      if (apiEnabled) {
-        this.enable();
-      } else {
-        this.disable();
-      }
-    });
+    ytChatService.listen(this::onNewYtChat);
   }
 
   @Mod.EventHandler
@@ -89,15 +85,6 @@ public class ChatMate {
   @Mod.EventHandler
   public void onFMLDeactivation(FMLModDisabledEvent event) {
     this.config.apiEnabled.set(false);
-  }
-
-  private void enable() {
-    ytChatService.listen(this::onNewYtChat);
-    ytChatService.start();
-  }
-
-  private void disable() {
-    ytChatService.stop();
   }
 
   private void onNewYtChat(ChatItem[] newChat) {

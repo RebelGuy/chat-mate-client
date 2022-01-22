@@ -30,7 +30,7 @@ public class YtChatServiceTests {
       chat = chatItems;
     }};
 
-    when(this.mockChatEndpointProxy.GetChat(any(), any())).thenReturn(chatResponse);
+    when(this.mockChatEndpointProxy.getChat(any(), any())).thenReturn(chatResponse);
     YtChatService chatService = new YtChatService(this.mockChatEndpointProxy);
     Consumer<ChatItem[]> mockCallback = mock(Consumer.class);
     chatService.listen(mockCallback);

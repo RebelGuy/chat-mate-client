@@ -12,7 +12,7 @@ public class ChatEndpointProxy extends EndpointProxy {
     super(loggingService, basePath);
   }
 
-  public GetChatResponse GetChat(@Nullable Long since, @Nullable Integer limit) throws ConnectException, Exception {
+  public GetChatResponse getChat(@Nullable Long since, @Nullable Integer limit) throws ConnectException, Exception {
     long sinceTimestamp = since != null ? since : new Date().getTime();
     String limitParam = limit == null ? "" : String.format("&limit=%s", limit.toString());
     String url = String.format("chat?since=%d%s", sinceTimestamp, limitParam);
