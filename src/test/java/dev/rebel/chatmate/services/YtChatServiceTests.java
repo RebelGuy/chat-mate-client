@@ -2,12 +2,10 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.models.chat.GetChatResponse;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
-import dev.rebel.chatmate.proxy.YtChatProxy;
+import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -19,7 +17,7 @@ import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class YtChatServiceTests {
-  @Mock YtChatProxy mockYtChatProxy;
+  @Mock ChatEndpointProxy mockChatEndpointProxy;
 
   @Test
   public void newChatItem_dispatched() throws Exception {
@@ -32,8 +30,8 @@ public class YtChatServiceTests {
       chat = chatItems;
     }};
 
-    when(this.mockYtChatProxy.GetChat(any(), any())).thenReturn(chatResponse);
-    YtChatService chatService = new YtChatService(this.mockYtChatProxy);
+    when(this.mockChatEndpointProxy.GetChat(any(), any())).thenReturn(chatResponse);
+    YtChatService chatService = new YtChatService(this.mockChatEndpointProxy);
     Consumer<ChatItem[]> mockCallback = mock(Consumer.class);
     chatService.listen(mockCallback);
 

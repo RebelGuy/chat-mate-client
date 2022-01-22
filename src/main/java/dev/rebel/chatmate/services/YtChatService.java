@@ -1,9 +1,8 @@
 package dev.rebel.chatmate.services;
 
-import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.models.chat.GetChatResponse;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
-import dev.rebel.chatmate.proxy.YtChatProxy;
+import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 import jline.internal.Nullable;
 
@@ -12,7 +11,7 @@ import java.util.Date;
 import java.util.Timer;
 
 public class YtChatService extends EventEmitterService<ChatItem[]> {
-  private final YtChatProxy ytChatProxy;
+  private final ChatEndpointProxy chatEndpointProxy;
 
   private final long TIMEOUT_WAIT = 20 * 1000;
   private @Nullable Timer timer = null;
@@ -20,10 +19,10 @@ public class YtChatService extends EventEmitterService<ChatItem[]> {
   private @Nullable Long pauseUntil = null;
   private Boolean requestInProgress = false;
 
-  public YtChatService(YtChatProxy ytChatProxy) {
+  public YtChatService(ChatEndpointProxy chatEndpointProxy) {
     super();
 
-    this.ytChatProxy = ytChatProxy;
+    this.chatEndpointProxy = chatEndpointProxy;
   }
 
   public void start() {
@@ -54,15 +53,10 @@ public class YtChatService extends EventEmitterService<ChatItem[]> {
 
     GetChatResponse response = null;
     try {
-      response = this.ytChatProxy.GetChat(this.lastTimestamp, null);
+      response = this.chatEndpointProxy.GetChat(this.lastTimestamp, null);
     } catch (ConnectException e) {
-      System.out.println("[ChatService] Failed to connect to server - is it running?");
       this.pauseUntil = new Date().getTime() + this.TIMEOUT_WAIT;
-    } catch (JsonSyntaxException e) {
-      System.out.println("[ChatService] Failed to process JSON response - has the schema changed? " + e.getMessage());
-    } catch (Exception e) {
-      System.out.println("[ChatService] Failed to get chat: " + e.getMessage());
-    }
+    } catch (Exception ignored) { }
 
     if (response != null) {
       this.lastTimestamp = response.lastTimestamp;

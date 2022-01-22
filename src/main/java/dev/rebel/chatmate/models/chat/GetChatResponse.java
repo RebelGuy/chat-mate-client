@@ -1,11 +1,8 @@
 package dev.rebel.chatmate.models.chat;
 
-import dev.rebel.chatmate.interfaces.IApiResponse;
+import dev.rebel.chatmate.proxy.ApiResponseBase;
 
-import java.util.List;
-
-public class GetChatResponse implements IApiResponse {
-  public Number schema;
+public class GetChatResponse extends ApiResponseBase {
   public String liveId;
   public Long lastTimestamp;
   public ChatItem[] chat;

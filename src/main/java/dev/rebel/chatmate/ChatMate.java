@@ -8,7 +8,7 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
-import dev.rebel.chatmate.proxy.YtChatProxy;
+import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -17,7 +17,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
@@ -44,13 +43,13 @@ public class ChatMate {
     LoggingService loggingService = new LoggingService("log.log", false);
 
     String apiPath = "http://localhost:3010/api/";
-    YtChatProxy ytChatProxy = new YtChatProxy(apiPath);
+    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(loggingService, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
-    this.ytChatService = new YtChatService(ytChatProxy);
+    this.ytChatService = new YtChatService(chatEndpointProxy);
 
     SoundService soundService = new SoundService(this.config);
     this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);

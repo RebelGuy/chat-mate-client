@@ -5,7 +5,6 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 
 public class LoggingService {
@@ -29,7 +28,7 @@ public class LoggingService {
     }
   }
 
-  public void Log(Object... items) {
+  public void log(Object... items) {
     DateFormat format = new SimpleDateFormat("HH:mm:ss.SSS");
     String timestamp = format.format(new Date());
     StringBuilder builder = new StringBuilder("[" + timestamp + "] ");
