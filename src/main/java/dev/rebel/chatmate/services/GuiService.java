@@ -1,10 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.ChatMate;
-import dev.rebel.chatmate.gui.CustomGuiModList;
-import dev.rebel.chatmate.gui.CustomGuiPause;
-import dev.rebel.chatmate.gui.GuiChatMateHud;
-import dev.rebel.chatmate.gui.GuiChatMateHudScreen;
+import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -32,6 +29,10 @@ public class GuiService {
     this.addEventHandlers();
   }
 
+  public void onDisplayDashboard() {
+    this.minecraft.displayGuiScreen(new GuiDashboardScreen(this.minecraft));
+  }
+
   private void addEventHandlers() {
     this.forgeEventService.onOpenGuiModList(this::onOpenGuiModList, null);
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
@@ -47,7 +48,7 @@ public class GuiService {
   }
 
   private OpenGui.Out onOpenIngameMenu(OpenGui.In eventIn) {
-    GuiScreen replaceWithGui = new CustomGuiPause(this.config);
+    GuiScreen replaceWithGui = new CustomGuiPause(this, this.config);
     return new OpenGui.Out(replaceWithGui);
   }
 
