@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class View<TProps extends Data<TProps>, TState extends Data<TState>> {
+  @Nonnull
+  private final ComponentManager componentManager;
   /** Null only for the first render. */
   private TProps prevProps;
   /** Never null. */
@@ -13,13 +15,15 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
   private @Nonnull TState state;
   private @Nullable TState nextState = null;
   /** Never null. */
-  private List<Connected> prevOutput;
+  private List<ComponentManager.ReadyComponent> prevOutput;
+  private List<ComponentManager.ReadyComponent> output;
   private boolean renderInProgress = false;
   private boolean propsUpdated = false;
 
   public final @Nonnull ViewLifeCycle lifeCycle;
 
-  protected View(@Nonnull TState initialState) {
+  protected View(@Nonnull ComponentManager componentManager, @Nonnull TState initialState) {
+    this.componentManager = componentManager;
     this.lifeCycle = new ViewLifeCycle();
     this.state = initialState.copy();
   }
@@ -37,6 +41,11 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
 
   protected final @Nonnull TProps getProps() { return this.props.copy(); }
 
+  protected final void add(ComponentManager.StaticComponent component) {
+    ComponentManager.ReadyComponent instance = this.componentManager.getOrCreate(component);
+    this.output.add(instance);
+  }
+
   // note: the following protected methods are deliberately abstract so there is never confusion about when/whether to call super().
 
   /** Called before the first render() call. */
@@ -52,10 +61,17 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
   // maybe some kind of "initial render" flag, and instantiate only if true, otherwise use existing instance based on key.
   // this should work because children can only exist if the parent exists.
 
-  // if this list does not contain a component that was previously contained, the component should be disposed.
-  // if the list contains a new connected compoennt, instantiate it. yes that's a good idea.
-  // the only thing is - how would we compare the connected components? some kind of key?
-  protected abstract List<Connected> onRenderComponents();
+  // todo: the issue right now is that we need to specify Connected components, with the props, and
+  // allow them to be instantiated if they are not already, as well as refer to the same reference over several render cycles.
+  // it's possible that, as well as the ControllerProps, we might also have to pass in a key - probably a string (name) for readability.
+  // this means the instance will be cached by the key. if, after render, they key is not present, but an instance exists, the instance should be `disposed`.
+  // might need a big static class of all mappings to get it to work properly.
+
+  // todo: are render props possible? the prop of the controller is a function that, given an input, returns an output.
+
+  // todo: regarding positioning, can use the Transfor object we are inheriting from to either use a relative coordinate system, or an absolute one relative to the screen coords.
+  // will also need to handle how to deal with overflow (drawing out of bounds of the parent). option should be either 'hide' or 'overflow' [or, for an advanced challenge, 'scroll']
+  protected abstract void onRenderComponents(); // use the
 
   protected abstract void onRenderScreen(); // always called
 
@@ -82,22 +98,26 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
     this.onDispose();
   }
 
-  private @Nonnull List<Connected> render() {
+  private @Nonnull List<ComponentManager.ReadyComponent> render() {
     boolean needsRender = this.prevProps == null // initial render
         || this.nextState != null && !this.nextState.compareTo(this.state) // state changed
         || this.propsUpdated && !this.props.compareTo(this.prevProps); // props changed
 
     renderStart();
-    List<Connected> result = needsRender ? this.onRenderComponents() : this.prevOutput;
+    if (needsRender) {
+      this.onRenderComponents();
+    }
     this.onRenderScreen();
     this.renderEnd();
 
+    List<ComponentManager.ReadyComponent> result = needsRender ? this.output : this.prevOutput;
     this.prevOutput = result;
     return result == null ? new ArrayList<>() : result;
   }
 
   private void renderStart() {
     this.renderInProgress = true;
+    this.output = new ArrayList<>();
 
     // shift back the state
     this.state = this.nextState == null ? this.state : this.nextState;
@@ -105,10 +125,12 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
   }
 
   private void renderEnd() {
+    this.output = null;
     this.renderInProgress = false;
     this.propsUpdated = false;
   }
 
+  /** Wrapper class for triggering the View's lifecycle methods. ONLY call methods within this class. */
   public final class ViewLifeCycle {
     public ViewLifeCycle() { }
 
@@ -123,7 +145,7 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
       View.this.dispose();
     }
 
-    public @Nonnull List<Connected> render() {
+    public @Nonnull List<ComponentManager.ReadyComponent> render() {
       return View.this.render();
     }
   }

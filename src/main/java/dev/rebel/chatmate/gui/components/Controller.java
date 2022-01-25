@@ -19,6 +19,9 @@ public abstract class Controller<TControllerProps extends Data<TControllerProps>
   protected abstract void onDispose();
 
   private TViewProps selectProps(TControllerProps props) {
+    // todo: this caching is too agressive - we also have to re-calculate view props if the context changes.
+    // perhaps we will have to make controllers "subscribe" to stores, and if a store changes between renders we know we can't use caching?
+    // also stores will need to provide a getState() function that returns a data object.
     if (this.prevProps == null || !props.compareTo(this.prevProps)) {
       // can't use cached version - recalculate
       this.prevProps = props;
@@ -32,6 +35,7 @@ public abstract class Controller<TControllerProps extends Data<TControllerProps>
     this.onDispose();
   }
 
+  /** Wrapper class for triggering the Controller's's lifecycle methods. ONLY call methods within this class. */
   public final class ControllerLifeCycle {
     public ControllerLifeCycle() { }
 
