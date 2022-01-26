@@ -1,17 +1,20 @@
 package dev.rebel.chatmate.gui.components;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 // connected instances should be held on to by the parent until they get disposed.
 // this means we ourselves will hold on to any child connected instances (whether they are rendered or not).
 // i.e. rendering, then hiding, then rendering at button will use the same instance, but the instance will have
 // disposed called on it once in the sequence. note that instantiation happens automatically.
 public final class Component<
-    TControllerProps extends Data<TControllerProps>,
-    TViewProps extends Data<TViewProps>,
-    TViewState extends Data<TViewState>,
+    TControllerProps extends ComponentData.ControllerProps<TControllerProps>,
+    TViewProps extends ComponentData.ViewProps<TViewProps>,
+    TViewState extends ComponentData.ViewState<TViewState>,
     TController extends Controller<TControllerProps, TViewProps>,
     TView extends View<TViewProps, TViewState>> {
   // for debugging
@@ -20,24 +23,25 @@ public final class Component<
   private final ComponentManager componentManager;
 
   private GuiContext context;
-  private LazyFactory<TControllerProps, TViewProps, TViewState, TController, TView> lazyFactory;
+  private ComponentFactory<TControllerProps, TViewProps, TViewState, TController, TView> componentFactory;
   private List<Component> allComponents;
-  private List<ComponentManager.ReadyComponent> prevComponents;
-  private List<ComponentManager.ReadyComponent> components;
+  private List<ReadyComponent> prevComponents;
+  private List<ReadyComponent> components;
 
   private TViewProps nextViewProps;
 
-  public Component(GuiContext context, LazyFactory<TControllerProps, TViewProps, TViewState, TController, TView> lazyFactory) {
+  public Component(GuiContext context, ComponentFactory<TControllerProps, TViewProps, TViewState, TController, TView> componentFactory) {
     this.instanceId = COUNTER++;
     this.componentManager = new ComponentManager();
     this.context = context;
-    this.lazyFactory = lazyFactory;
+    this.componentFactory = componentFactory;
     this.prevComponents = new ArrayList<>();
     this.components = new ArrayList<>();
+    this.allComponents = new ArrayList<>();
   }
 
   public void setProps(TControllerProps props) {
-    TController controller = this.lazyFactory.getOrCreateController(this.context);
+    TController controller = this.componentFactory.getOrCreateController(this.context);
     this.nextViewProps = controller.lifeCycle.selectProps(props);
   }
 
@@ -46,33 +50,35 @@ public final class Component<
       throw new RuntimeException("Cannot render the connected component before calling Component::setProps()");
     }
 
-    TView view = this.lazyFactory.getOrCreateView(this.componentManager);
+    TView view = this.componentFactory.getOrCreateView(this.componentManager);
     view.lifeCycle.updateProps(this.nextViewProps);
   }
 
   public void render() {
-    TView view = this.lazyFactory.getOrCreateView(this.componentManager);
+    TView view = this.componentFactory.getOrCreateView(this.componentManager);
     this.components = view.lifeCycle.render();
 
-    List<Component> newComponents = this.components.stream()
-        .flatMap(comp -> comp.getOrderedComponents().stream())
+    List<Component> newComponents = extractComponents(this.components)
         .filter(comp -> !this.allComponents.contains(comp))
         .collect(Collectors.toList());
     this.allComponents.addAll(newComponents);
 
     // now we want to render the other components.
     // we don't have to do any special treatment for new components, since
-    // everything is handled by the new component's class class :)
-    this.components.forEach(Component::setProps); // todo: how to get props set by this view's render method? will need to pass them in here
-    this.components.forEach(Component::preRender);
-    this.components.forEach(Component::render);
-    this.components.forEach(Component::postRender);
+    // everything is handled by the new component's class :)
+    this.components.forEach(comp -> comp.getOrderedComponents().forEach(c -> c.setProps(comp.props)));
+    extractComponents(this.components).forEach(Component::preRender);
+    extractComponents(this.components).forEach(Component::render);
+    extractComponents(this.components).forEach(Component::postRender);
   }
 
   public void postRender() {
     if (this.prevComponents != null) {
       // dispose of any components that are no longer being rendered. This gives them a chance to e.g. unsubscribe from events.
-      this.prevComponents.stream().filter(con -> !this.components.contains(con)).forEach(Component::dispose);
+      Stream<Component> prevComponents = extractComponents(this.prevComponents);
+      Stream<Component> currentComponents = extractComponents(this.components);
+      prevComponents.filter(c -> !currentComponents.collect(Collectors.toList()).contains(c))
+          .forEach(Component::dispose);
     }
 
     this.prevComponents = this.components;
@@ -80,8 +86,8 @@ public final class Component<
   }
 
   public void dispose() {
-    this.components.forEach(Component::dispose);
-    this.lazyFactory.dispose();
+    extractComponents(this.components, true).forEach(Component::dispose);
+    this.componentFactory.dispose();
     this.prevComponents = new ArrayList<>();
     this.components = new ArrayList<>();
     this.nextViewProps = null;
@@ -89,10 +95,22 @@ public final class Component<
     // do NOT reset this.allComponents - we want to hold on to the instances.
   }
 
-  public static abstract class LazyFactory<
-      TControllerProps extends Data<TControllerProps>,
-      TViewProps extends Data<TViewProps>,
-      TViewState extends Data<TViewState>,
+  private static Stream<Component> extractComponents(List<ReadyComponent> readyComponents) {
+    return readyComponents.stream().flatMap(comp -> comp.getOrderedComponents().stream());
+  }
+
+  private static Stream<Component> extractComponents(List<ReadyComponent> readyComponents, boolean invertChildren) {
+    if (invertChildren) {
+      return readyComponents.stream().flatMap(comp -> comp.getInverseOrderedComponents().stream());
+    } else {
+      return extractComponents(readyComponents);
+    }
+  }
+
+  public static abstract class ComponentFactory<
+      TControllerProps extends ComponentData.ControllerProps<TControllerProps>,
+      TViewProps extends ComponentData.ViewProps<TViewProps>,
+      TViewState extends ComponentData.ViewState<TViewState>,
       TController extends Controller<TControllerProps, TViewProps>,
       TView extends View<TViewProps, TViewState>> {
 
@@ -126,6 +144,49 @@ public final class Component<
 
     public abstract TController createController(GuiContext context);
     public abstract TView createView(ComponentManager componentManager);
+  }
+
+  public static class StaticComponent<Props extends ComponentData.ControllerProps<?>> {
+    public final String id;
+    public final Props nextProps;
+    public final Class<? extends ComponentFactory> factory;
+    public final StaticComponent[] children;
+
+    public StaticComponent(String id, Props nextProps, Class<? extends ComponentFactory> factory, StaticComponent[] children) {
+      this.id = id;
+      this.nextProps = nextProps;
+      this.factory = factory;
+      this.children = children;
+    }
+  }
+
+  public static class ReadyComponent {
+    public final Component component;
+    public final ComponentData.ControllerProps props;
+    public final ReadyComponent[] children;
+
+    public ReadyComponent(Component component, ComponentData.ControllerProps props, ReadyComponent[] children) {
+      this.component = component;
+      this.props = props;
+      this.children = children;
+    }
+
+    /** The ordering ensures that parents are always listed before children. */
+    public List<Component> getOrderedComponents() {
+      List<Component> list = new ArrayList<>();
+      list.add(this.component);
+
+      List<Component> children = Arrays.stream(this.children).flatMap(child -> child.getOrderedComponents().stream()).collect(Collectors.toList());
+      list.addAll(children);
+
+      return list;
+    }
+
+    public List<Component> getInverseOrderedComponents() {
+      List<Component> list = this.getOrderedComponents();
+      Collections.reverse(list);
+      return list;
+    }
   }
 }
 

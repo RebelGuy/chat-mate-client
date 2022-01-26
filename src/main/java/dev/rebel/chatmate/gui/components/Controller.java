@@ -2,7 +2,7 @@ package dev.rebel.chatmate.gui.components;
 
 import javax.annotation.Nonnull;
 
-public abstract class Controller<TControllerProps extends Data<TControllerProps>, TViewProps extends Data<TViewProps>> {
+public abstract class Controller<TControllerProps extends ComponentData.ControllerProps<TControllerProps>, TViewProps extends ComponentData.ViewProps<TViewProps>> {
   private TControllerProps prevProps;
   private TViewProps prevViewProps;
 

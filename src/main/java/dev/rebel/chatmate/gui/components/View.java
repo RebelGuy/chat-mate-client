@@ -5,7 +5,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class View<TProps extends Data<TProps>, TState extends Data<TState>> {
+public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TState extends ComponentData.ViewState<TState>> {
   @Nonnull
   private final ComponentManager componentManager;
   /** Null only for the first render. */
@@ -15,8 +15,8 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
   private @Nonnull TState state;
   private @Nullable TState nextState = null;
   /** Never null. */
-  private List<ComponentManager.ReadyComponent> prevOutput;
-  private List<ComponentManager.ReadyComponent> output;
+  private List<Component.ReadyComponent> prevOutput;
+  private List<Component.ReadyComponent> output;
   private boolean renderInProgress = false;
   private boolean propsUpdated = false;
 
@@ -41,8 +41,8 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
 
   protected final @Nonnull TProps getProps() { return this.props.copy(); }
 
-  protected final void add(ComponentManager.StaticComponent component) {
-    ComponentManager.ReadyComponent instance = this.componentManager.getOrCreate(component);
+  protected final void add(Component.StaticComponent component) {
+    Component.ReadyComponent instance = this.componentManager.getOrCreate(component);
     this.output.add(instance);
   }
 
@@ -98,7 +98,7 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
     this.onDispose();
   }
 
-  private @Nonnull List<ComponentManager.ReadyComponent> render() {
+  private @Nonnull List<Component.ReadyComponent> render() {
     boolean needsRender = this.prevProps == null // initial render
         || this.nextState != null && !this.nextState.compareTo(this.state) // state changed
         || this.propsUpdated && !this.props.compareTo(this.prevProps); // props changed
@@ -110,7 +110,7 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
     this.onRenderScreen();
     this.renderEnd();
 
-    List<ComponentManager.ReadyComponent> result = needsRender ? this.output : this.prevOutput;
+    List<Component.ReadyComponent> result = needsRender ? this.output : this.prevOutput;
     this.prevOutput = result;
     return result == null ? new ArrayList<>() : result;
   }
@@ -145,7 +145,7 @@ public abstract class View<TProps extends Data<TProps>, TState extends Data<TSta
       View.this.dispose();
     }
 
-    public @Nonnull List<ComponentManager.ReadyComponent> render() {
+    public @Nonnull List<Component.ReadyComponent> render() {
       return View.this.render();
     }
   }
