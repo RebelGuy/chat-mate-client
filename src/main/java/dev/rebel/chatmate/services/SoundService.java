@@ -21,6 +21,8 @@ public class SoundService {
         this.playSound("random.successful_hit", 0.5F);
     }
 
+    public void playButtonSound() { this.playSound("gui.button.press"); }
+
     private void playSound(String resourceLocation) {
         this.playSound(resourceLocation, 1);
     }

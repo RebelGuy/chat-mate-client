@@ -5,11 +5,16 @@ import java.util.*;
 // each component instance has a component manager which ensures that child components over multiple frames refer to
 // the same component instance, even if they were disposed at any point.
 // note that IDs only have to be unique among a given component type within a component.
-public final class ComponentManager {
-  public static GuiContext guiContext;
+public final class ComponentManager<TContext extends GuiContext> {
+  private final TContext guiContext;
 
   // holds a map of component types to multiple instances of that component
-  private Map<Class<? extends Component.ComponentFactory>, Map<String, Component>> componentMap = new HashMap<>();
+  private final Map<Class<? extends Component.ComponentFactory>, Map<String, Component>> componentMap;
+
+  public ComponentManager(TContext context) {
+    this.guiContext = context;
+    this.componentMap = new HashMap<>();
+  }
 
   public Component.ReadyComponent getOrCreate(Component.StaticComponent staticComponent) {
     Class<? extends Component.ComponentFactory> factory = staticComponent.factory;

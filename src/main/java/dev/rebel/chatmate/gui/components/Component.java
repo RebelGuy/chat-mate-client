@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.components;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,28 +12,32 @@ import java.util.stream.Stream;
 // this means we ourselves will hold on to any child connected instances (whether they are rendered or not).
 // i.e. rendering, then hiding, then rendering at button will use the same instance, but the instance will have
 // disposed called on it once in the sequence. note that instantiation happens automatically.
+
+// to aid in readability and maintainability, generic type parameters are usually omitted except in public-facing object creation APIs.
+// this should be enough to ensure, at compile time, that all required type relationships are respected.
 public final class Component<
+    TContext extends GuiContext,
     TControllerProps extends ComponentData.ControllerProps<TControllerProps>,
     TViewProps extends ComponentData.ViewProps<TViewProps>,
     TViewState extends ComponentData.ViewState<TViewState>,
-    TController extends Controller<TControllerProps, TViewProps>,
+    TController extends Controller<TContext, TControllerProps, TViewProps>,
     TView extends View<TViewProps, TViewState>> {
   // for debugging
   private static long COUNTER = 0;
   private final long instanceId;
-  private final ComponentManager componentManager;
+  private final TContext context;
+  private final ComponentManager<TContext> componentManager;
 
-  private GuiContext context;
-  private ComponentFactory<TControllerProps, TViewProps, TViewState, TController, TView> componentFactory;
+  private ComponentFactory<TContext, TControllerProps, TViewProps, TViewState, TController, TView> componentFactory;
   private List<Component> allComponents;
   private List<ReadyComponent> prevComponents;
   private List<ReadyComponent> components;
 
   private TViewProps nextViewProps;
 
-  public Component(GuiContext context, ComponentFactory<TControllerProps, TViewProps, TViewState, TController, TView> componentFactory) {
+  public Component(TContext context, ComponentFactory<TContext, TControllerProps, TViewProps, TViewState, TController, TView> componentFactory) {
     this.instanceId = COUNTER++;
-    this.componentManager = new ComponentManager();
+    this.componentManager = new ComponentManager(context);
     this.context = context;
     this.componentFactory = componentFactory;
     this.prevComponents = new ArrayList<>();
@@ -108,23 +113,24 @@ public final class Component<
   }
 
   public static abstract class ComponentFactory<
+      TContext extends GuiContext,
       TControllerProps extends ComponentData.ControllerProps<TControllerProps>,
       TViewProps extends ComponentData.ViewProps<TViewProps>,
       TViewState extends ComponentData.ViewState<TViewState>,
-      TController extends Controller<TControllerProps, TViewProps>,
+      TController extends Controller<TContext, TControllerProps, TViewProps>,
       TView extends View<TViewProps, TViewState>> {
 
     private TController controller;
     private TView view;
 
-    public final TController getOrCreateController(GuiContext context) {
+    public final TController getOrCreateController(TContext context) {
       if (this.controller == null) {
         this.controller = this.createController(context);
       }
       return this.controller;
     }
 
-    public final TView getOrCreateView(ComponentManager componentManager) {
+    public final TView getOrCreateView(ComponentManager<TContext> componentManager) {
       if (this.view == null) {
         this.view = this.createView(componentManager);
       }
@@ -142,8 +148,8 @@ public final class Component<
       }
     }
 
-    public abstract TController createController(GuiContext context);
-    public abstract TView createView(ComponentManager componentManager);
+    public abstract @Nonnull TController createController(TContext context);
+    public abstract @Nonnull TView createView(ComponentManager<TContext> componentManager);
   }
 
   public static class StaticComponent<Props extends ComponentData.ControllerProps<?>> {
@@ -153,6 +159,10 @@ public final class Component<
     public final StaticComponent[] children;
 
     public StaticComponent(String id, Props nextProps, Class<? extends ComponentFactory> factory, StaticComponent[] children) {
+      if (Arrays.stream(children).anyMatch(c -> c.factory == factory)) {
+        throw new RuntimeException(factory.getSimpleName() + " components cannot render instances of themselves as their children.");
+      }
+
       this.id = id;
       this.nextProps = nextProps;
       this.factory = factory;
@@ -233,4 +243,24 @@ GuiScreen methods to be called externally:
 - drawDefaultBackground/drawWorldBackground
 	if in options, draws the `optionsBackground` texture, if in world, draws background with a vertical gradient
 - openWebLink
+
+
+
+
+How mouse events should be handled:
+- Mouse events are created in the event service, similar to how it's already done. Make sure to also include the exact (scaled, but using float) positions.
+  - Honestly, we should be dealing with deltas here at all - just report the current position and type of event
+- Mouse and keyboard events should return a "handled" and "consumed" property - if handled, simple switch a boolean so other components know. if swallowed, stop immediately.
+- Let's say we have a ButtonComponent:
+  - A property of the GuiContext.Input should be a onMouseDown, onMouseUp, etc (or something similar)
+  - One of the controller's props is onClick
+  - The Controller passes the GuiContext.Input class and onClick callback to the View
+  - The View, on initialisation, hooks up the onMouseDown to a local function
+  - In this function, if the mouse is clicked, checks coords
+  - If the button is clicked, returns this.props.onClick
+  - Remember that the view, onDispose, must unsubscribe from the event
+- Similar story for keyboard events
+- We can create a MouseSequence component that uses internal state to track the mouse event sequence, e.g. starting point and ending point of a drag, etc.
+
+
  */

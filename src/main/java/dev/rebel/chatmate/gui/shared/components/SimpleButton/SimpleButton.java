@@ -1,15 +1,17 @@
-package dev.rebel.chatmate.gui.components.interactive.SimpleButton;
+package dev.rebel.chatmate.gui.shared.components.SimpleButton;
 
 import dev.rebel.chatmate.gui.components.*;
 
+import javax.annotation.Nonnull;
+
 public class SimpleButton extends Component.ComponentFactory {
   @Override
-  public Controller createController(GuiContext context) {
+  public @Nonnull Controller createController(GuiContext context) {
     return new SimpleButtonController(context);
   }
 
   @Override
-  public View createView(ComponentManager componentManager) {
+  public @Nonnull View createView(ComponentManager componentManager) {
     return new SimpleButtonView(componentManager);
   }
 

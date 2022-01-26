@@ -1,12 +1,12 @@
-package dev.rebel.chatmate.gui.components.interactive.SimpleButton;
+package dev.rebel.chatmate.gui.shared.components.SimpleButton;
 
 import dev.rebel.chatmate.gui.components.Controller;
-import dev.rebel.chatmate.gui.components.interactive.SimpleButton.SimpleButton.*;
+import dev.rebel.chatmate.gui.shared.components.SimpleButton.SimpleButton.*;
 import dev.rebel.chatmate.gui.components.GuiContext;
 
 import javax.annotation.Nonnull;
 
-public class SimpleButtonController extends Controller<Props, VProps> {
+public class SimpleButtonController extends Controller<GuiContext, Props, VProps> {
   public SimpleButtonController(GuiContext context) {
     super(context);
   }

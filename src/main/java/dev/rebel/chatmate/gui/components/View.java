@@ -6,8 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TState extends ComponentData.ViewState<TState>> {
-  @Nonnull
-  private final ComponentManager componentManager;
+  // for debugging
+  private static long COUNTER = 0;
+  private final long instanceId;
+
+  private final @Nonnull ComponentManager componentManager;
   /** Null only for the first render. */
   private TProps prevProps;
   /** Never null. */
@@ -18,11 +21,13 @@ public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TStat
   private List<Component.ReadyComponent> prevOutput;
   private List<Component.ReadyComponent> output;
   private boolean renderInProgress = false;
+  private boolean allowAddingComponents = false;
   private boolean propsUpdated = false;
 
   public final @Nonnull ViewLifeCycle lifeCycle;
 
   protected View(@Nonnull ComponentManager componentManager, @Nonnull TState initialState) {
+    this.instanceId = COUNTER++;
     this.componentManager = componentManager;
     this.lifeCycle = new ViewLifeCycle();
     this.state = initialState.copy();
@@ -42,6 +47,9 @@ public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TStat
   protected final @Nonnull TProps getProps() { return this.props.copy(); }
 
   protected final void add(Component.StaticComponent component) {
+    if (!this.allowAddingComponents) {
+      throw  new RuntimeException("Components can only be added within onRenderComponents.");
+    }
     Component.ReadyComponent instance = this.componentManager.getOrCreate(component);
     this.output.add(instance);
   }
@@ -105,7 +113,9 @@ public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TStat
 
     renderStart();
     if (needsRender) {
+      this.allowAddingComponents = true;
       this.onRenderComponents();
+      this.allowAddingComponents = false;
     }
     this.onRenderScreen();
     this.renderEnd();

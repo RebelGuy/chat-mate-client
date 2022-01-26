@@ -1,24 +1,25 @@
-package dev.rebel.chatmate.gui.components.interactive.SimpleButton;
+package dev.rebel.chatmate.gui.shared.components.SimpleButton;
 
 import dev.rebel.chatmate.gui.components.ComponentManager;
 import dev.rebel.chatmate.gui.components.View;
+import dev.rebel.chatmate.gui.shared.components.SimpleButton.SimpleButton.*;
 
 import javax.annotation.Nonnull;
 
-public class SimpleButtonView extends View<SimpleButton.VProps, SimpleButton.State> {
-  private final static SimpleButton.State initialState = new SimpleButton.State();
+public class SimpleButtonView extends View<VProps, State> {
+  private final static State initialState = new State();
 
   public SimpleButtonView(ComponentManager manager) {
     super(manager, initialState);
   }
 
   @Override
-  protected void onInitialise(@Nonnull SimpleButton.VProps initialProps) {
+  protected void onInitialise(@Nonnull VProps initialProps) {
 
   }
 
   @Override
-  protected void onUpdate(@Nonnull SimpleButton.VProps prevProps, @Nonnull SimpleButton.VProps props) {
+  protected void onUpdate(@Nonnull VProps prevProps, @Nonnull VProps props) {
 
   }
 

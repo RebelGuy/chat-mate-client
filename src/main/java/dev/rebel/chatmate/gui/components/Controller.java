@@ -2,14 +2,22 @@ package dev.rebel.chatmate.gui.components;
 
 import javax.annotation.Nonnull;
 
-public abstract class Controller<TControllerProps extends ComponentData.ControllerProps<TControllerProps>, TViewProps extends ComponentData.ViewProps<TViewProps>> {
+public abstract class Controller<
+    TContext extends GuiContext,
+    TControllerProps extends ComponentData.ControllerProps<TControllerProps>,
+    TViewProps extends ComponentData.ViewProps<TViewProps>> {
+  // for debugging
+  private static long COUNTER = 0;
+  private final long instanceId;
+
   private TControllerProps prevProps;
   private TViewProps prevViewProps;
 
-  protected final GuiContext context;
+  protected final TContext context;
   public final ControllerLifeCycle lifeCycle;
 
-  public Controller(GuiContext context) {
+  public Controller(TContext context) {
+    this.instanceId = COUNTER++;
     this.context = context;
     this.lifeCycle = new ControllerLifeCycle();
   }

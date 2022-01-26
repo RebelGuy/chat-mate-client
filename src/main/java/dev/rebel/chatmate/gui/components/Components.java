@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.components;
 
-import dev.rebel.chatmate.gui.components.interactive.SimpleButton.SimpleButton;
+import dev.rebel.chatmate.gui.shared.components.SimpleButton.SimpleButton;
 
 public class Components {
   public static class Interactive {
