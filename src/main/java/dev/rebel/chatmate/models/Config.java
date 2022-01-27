@@ -26,7 +26,7 @@ public class Config {
   public Config() {
     this.apiEnabled = new StatefulEmitter<>(false, this::onUpdate);
     this.soundEnabled = new StatefulEmitter<>(true, this::onUpdate);
-    this.chatVerticalDisplacement = new StatefulEmitter<>(15, this::onUpdate);
+    this.chatVerticalDisplacement = new StatefulEmitter<>(10, this::onUpdate);
     this.hudEnabled = new StatefulEmitter<>(true, this::onUpdate);
 
     this.updateListeners = new ArrayList<>();

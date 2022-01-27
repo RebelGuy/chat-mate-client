@@ -14,7 +14,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
   private final Map<SimpleStatus, ImageComponent> statusIndicators;
 
   public StatusIndicatorComponent(StatusService statusService) {
-    super(10, 10, 32, 32, true, false);
+    super(5, 5, 32, 32, true, false);
     this.statusService = statusService;
 
     int x = 0, y = 0;
