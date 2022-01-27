@@ -1,8 +1,11 @@
 package dev.rebel.chatmate.gui.shared.components.SimpleButton;
 
 import dev.rebel.chatmate.gui.components.*;
+import dev.rebel.chatmate.services.events.models.GuiScreenMouse;
 
 import javax.annotation.Nonnull;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class SimpleButton extends Component.ComponentFactory {
   @Override
@@ -16,13 +19,15 @@ public class SimpleButton extends Component.ComponentFactory {
   }
 
   public static class Props extends ComponentData.ControllerProps<Props> {
-    public Props() {
+    public Runnable onClick;
 
+    public Props(Runnable onClick) {
+      this.onClick = onClick;
     }
 
     @Override
     public Props copy() {
-      return new Props();
+      return new Props(this.onClick);
     }
 
     @Override
@@ -32,13 +37,17 @@ public class SimpleButton extends Component.ComponentFactory {
   }
 
   public static class VProps extends ComponentData.ViewProps<VProps> {
-    public VProps() {
+    public Consumer<Function<GuiScreenMouse.In, GuiScreenMouse.Out>> mouseHandler;
+    public Runnable onClick;
 
+    public VProps(Consumer<Function<GuiScreenMouse.In, GuiScreenMouse.Out>> mouseHandler, Runnable onClick) {
+      this.mouseHandler = mouseHandler;
+      this.onClick = onClick;
     }
 
     @Override
     public VProps copy() {
-      return new VProps();
+      return new VProps(this.mouseHandler, this.onClick);
     }
 
     @Override
@@ -48,13 +57,15 @@ public class SimpleButton extends Component.ComponentFactory {
   }
 
   public static class State extends ComponentData.ViewState<State> {
-    public State() {
+    boolean isHovering;
 
+    public State(boolean isHovering) {
+      this.isHovering = false;
     }
 
     @Override
     public State copy() {
-      return new State();
+      return new State(this.isHovering);
     }
 
     @Override

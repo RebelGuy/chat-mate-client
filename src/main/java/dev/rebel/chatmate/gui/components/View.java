@@ -63,6 +63,11 @@ public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TStat
 
   protected abstract void onDispose();
 
+  // it is important we call this before rendering children so we have a chance to draw a background.
+  // note that rendering components is a way of **deferring** rendering which, ultimately, is ALWAYS done in onRenderScreen() (if we go deep enough).
+  /** Always called BEFORE rendering any components. */
+  protected abstract void onRenderScreen();
+
   // todo: add api so props can be passed into the connected component
   // how to deal with dependencies? perhaps pass in a factory with only a create(controllerProps) interface.
   // but we don't want to instantiate a new instance every single time - how can we deal with that?
@@ -80,8 +85,6 @@ public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TStat
   // todo: regarding positioning, can use the Transfor object we are inheriting from to either use a relative coordinate system, or an absolute one relative to the screen coords.
   // will also need to handle how to deal with overflow (drawing out of bounds of the parent). option should be either 'hide' or 'overflow' [or, for an advanced challenge, 'scroll']
   protected abstract void onRenderComponents(); // use the
-
-  protected abstract void onRenderScreen(); // always called
 
   //////////////////
   //// PRIVATE /////
@@ -112,15 +115,15 @@ public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TStat
         || this.propsUpdated && !this.props.compareTo(this.prevProps); // props changed
 
     renderStart();
+    this.onRenderScreen();
     if (needsRender) {
       this.allowAddingComponents = true;
       this.onRenderComponents();
       this.allowAddingComponents = false;
     }
-    this.onRenderScreen();
+    List<Component.ReadyComponent> result = needsRender ? this.output : this.prevOutput;
     this.renderEnd();
 
-    List<Component.ReadyComponent> result = needsRender ? this.output : this.prevOutput;
     this.prevOutput = result;
     return result == null ? new ArrayList<>() : result;
   }

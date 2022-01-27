@@ -23,19 +23,25 @@ public class DashboardScreen extends Screen {
     }
 
     this.dashboardComponent = new Component(this.context, new DashboardMainView());
-    this.dashboardComponent.setProps(new Props(this.width, this.height, this::closeScreen));
+    this.dashboardComponent.setProps(new Props(this.width, this.height, this.context.minecraft, this::closeScreen));
   }
 
   @Override
   protected void onScreenSizeUpdated() {
-    this.dashboardComponent.setProps(new Props(this.width, this.height, this::closeScreen));
+    this.dashboardComponent.setProps(new Props(this.width, this.height, this.context.minecraft, this::closeScreen));
   }
 
   @Override
-  public void updateScreen() {
-    this.dashboardComponent.preRender();
-    this.dashboardComponent.render();
-    this.dashboardComponent.postRender();
+  public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+    try {
+      this.dashboardComponent.preRender();
+      this.dashboardComponent.render();
+      this.dashboardComponent.postRender();
+    } catch (Exception e) {
+      System.out.println("ERROR while updating DashboardScreen:" + e.getMessage());
+      e.printStackTrace();
+      this.closeScreen();
+    }
   }
 
   @Override

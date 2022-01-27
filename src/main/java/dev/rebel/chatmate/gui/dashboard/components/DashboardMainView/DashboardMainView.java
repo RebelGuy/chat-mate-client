@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.dashboard.components.DashboardMainView;
 import dev.rebel.chatmate.gui.components.*;
 import dev.rebel.chatmate.gui.dashboard.DashboardContext;
 import dev.rebel.chatmate.gui.dashboard.components.DashboardMainView.DashboardMainView.*;
+import net.minecraft.client.Minecraft;
 
 import javax.annotation.Nonnull;
 
@@ -18,19 +19,21 @@ public class DashboardMainView extends Component.ComponentFactory<DashboardConte
   }
 
   public static class Props extends ComponentData.ControllerProps<Props> {
-    private final int width;
-    private final int height;
-    private final Runnable onCloseScreen;
+    public int width;
+    public int height;
+    public Minecraft minecraft;
+    public Runnable onCloseScreen;
 
-    public Props(int width, int height, Runnable onCloseScreen) {
+    public Props(int width, int height, Minecraft minecraft, Runnable onCloseScreen) {
       this.width = width;
       this.height = height;
+      this.minecraft = minecraft;
       this.onCloseScreen = onCloseScreen;
     }
 
     @Override
     public Props copy() {
-      return new Props(this.width, this.height, this.onCloseScreen);
+      return new Props(this.width, this.height, this.minecraft, this.onCloseScreen);
     }
 
     @Override
@@ -40,13 +43,21 @@ public class DashboardMainView extends Component.ComponentFactory<DashboardConte
   }
 
   public static class VProps extends ComponentData.ViewProps<VProps> {
-    public VProps() {
+    public int width;
+    public int height;
+    public Minecraft minecraft;
+    public Runnable onClick;
 
+    public VProps(int width, int height, Minecraft minecraft, Runnable onCloseScreen) {
+      this.width = width;
+      this.height = height;
+      this.minecraft = minecraft;
+      this.onClick = onCloseScreen;
     }
 
     @Override
     public VProps copy() {
-      return new VProps();
+      return new VProps(this.width, this.height, this.minecraft, this.onClick);
     }
 
     @Override

@@ -2,6 +2,8 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.ChatMate;
 import dev.rebel.chatmate.gui.*;
+import dev.rebel.chatmate.gui.dashboard.DashboardContext;
+import dev.rebel.chatmate.gui.dashboard.DashboardScreen;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -18,19 +20,26 @@ public class GuiService {
   private final KeyBindingService keyBindingService;
   private final Minecraft minecraft;
   private final GuiChatMateHud guiChatMateHud;
+  private final SoundService soundService;
 
-  public GuiService(Config config, ForgeEventService forgeEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud) {
+  public GuiService(Config config, ForgeEventService forgeEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud, SoundService soundService) {
     this.config = config;
     this.forgeEventService = forgeEventService;
     this.keyBindingService = keyBindingService;
     this.minecraft = minecraft;
     this.guiChatMateHud = guiChatMateHud;
+    this.soundService = soundService;
 
     this.addEventHandlers();
   }
 
   public void onDisplayDashboard() {
-    this.minecraft.displayGuiScreen(new GuiDashboardScreen(this.minecraft));
+    this.minecraft.displayGuiScreen(new DashboardScreen(new DashboardContext(
+        this.minecraft,
+        this.minecraft.fontRendererObj,
+        this.forgeEventService,
+        this.soundService
+    )));
   }
 
   private void addEventHandlers() {

@@ -52,7 +52,7 @@ public final class Component<
 
   public void preRender() {
     if (this.nextViewProps == null) {
-      throw new RuntimeException("Cannot render the connected component before calling Component::setProps()");
+      throw new RuntimeException("Cannot render the connected component before calling Component::setProps() at least once");
     }
 
     TView view = this.componentFactory.getOrCreateView(this.componentManager);
@@ -87,7 +87,6 @@ public final class Component<
     }
 
     this.prevComponents = this.components;
-    this.nextViewProps = null;
   }
 
   public void dispose() {

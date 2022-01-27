@@ -60,7 +60,7 @@ public class ChatMate {
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, this.forgeEventService, statusService);
-    this.guiService = new GuiService(this.config, this.forgeEventService, this.keyBindingService, minecraft, guiChatMateHud);
+    this.guiService = new GuiService(this.config, this.forgeEventService, this.keyBindingService, minecraft, guiChatMateHud, soundService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(minecraft)),

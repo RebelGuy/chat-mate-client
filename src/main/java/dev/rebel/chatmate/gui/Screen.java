@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.gui;
 
 import java.io.IOException;
-import java.util.List;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
@@ -10,8 +9,6 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
@@ -26,11 +23,6 @@ import org.lwjgl.input.Mouse;
 @SideOnly(Side.CLIENT)
 public abstract class Screen extends GuiScreen
 {
-  public Minecraft minecraft;
-  protected RenderItem itemRender;
-  protected FontRenderer fontRendererObj;
-  public int width;
-  public int height;
   private int eventButton;
   private long lastMouseEvent;
 
@@ -38,12 +30,19 @@ public abstract class Screen extends GuiScreen
   }
 
   /** Called when the GUI is displayed and when the window resizes. */
+  @Override
   public abstract void initGui();
 
-  /** Called from the main game loop to update the screen. */
-  public abstract void updateScreen();
+  /** Called from the main game loop to update the screen EVERY TICK. */
+  @Override
+  public final void updateScreen() { }
+
+  /** Called from forge to draw all components to the screen EVERY FRAME. */
+  @Override
+  public abstract void drawScreen(int mouseX, int mouseY, float partialTicks);
 
   /** Called when the screen is unloaded (e.g. when menu closed, or replaced with other screen). */
+  @Override
   public abstract void onGuiClosed();
 
   /** Called when the screen dimensions change. */
@@ -51,18 +50,19 @@ public abstract class Screen extends GuiScreen
 
   /** Call this when the screen should be closed. Note that this will still emit a Screen::onGuiClosed event. */
   protected final void closeScreen() {
-    this.minecraft.displayGuiScreen(null);
+    this.mc.displayGuiScreen(null);
 
-    if (this.minecraft.currentScreen == null)
+    if (this.mc.currentScreen == null)
     {
-      this.minecraft.setIngameFocus();
+      this.mc.setIngameFocus();
     }
   }
 
   /** Causes the screen to lay out its subcomponents again. */
+  @Override
   public final void setWorldAndResolution(Minecraft mc, int width, int height)
   {
-    this.minecraft = mc;
+    this.mc = mc;
     this.itemRender = mc.getRenderItem();
     this.fontRendererObj = mc.fontRendererObj;
     this.width = width;
@@ -71,8 +71,6 @@ public abstract class Screen extends GuiScreen
   }
 
   @Override
-  public void drawScreen(int mouseX, int mouseY, float partialTicks) { }
-
   public final void setGuiSize(int w, int h)
   {
     boolean hasUpdated = this.width != w || this.height != h;
@@ -83,16 +81,33 @@ public abstract class Screen extends GuiScreen
     }
   }
 
-  /** Does nothing. */
-  public void handleInput() { }
+  @Override
+  public void onResize(Minecraft mc, int w, int h)
+  {
+    if (this.mc != mc) {
+      this.setWorldAndResolution(mc, w, h);
+    } else {
+      this.setGuiSize(w, h);
+    }
+  }
+
+  /** For now, use the super implementation.*/
+  @Override
+  public void handleInput() throws IOException {
+    super.handleInput();
+    // todo: add a MouseService and KeyboardService that listen on every tick (or whatever event is required -
+    // refer to KeybindingService), then can subscribe. Should be completely agnostic to the GuiScreen currently shown.
+    // MouseService should expose listeners for onMouseDown, onMouseMove, onMouseUp
+  }
 
   /**
    * Handles mouse input.
    */
+  @Override
   public void handleMouseInput() throws IOException
   {
-    int i = Mouse.getEventX() * this.width / this.minecraft.displayWidth;
-    int j = this.height - Mouse.getEventY() * this.height / this.minecraft.displayHeight - 1;
+    int i = Mouse.getEventX() * this.width / this.mc.displayWidth;
+    int j = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
     int k = Mouse.getEventButton();
 
     if (Mouse.getEventButtonState())
@@ -116,6 +131,7 @@ public abstract class Screen extends GuiScreen
   /**
    * Handles keyboard input.
    */
+  @Override
   public void handleKeyboardInput() throws IOException
   {
     if (Keyboard.getEventKeyState())
@@ -124,12 +140,13 @@ public abstract class Screen extends GuiScreen
       this.keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
     }
 
-    this.minecraft.dispatchKeypresses();
+    this.mc.dispatchKeypresses();
   }
 
+  @Override
   public void drawWorldBackground(int tint)
   {
-    if (this.minecraft.theWorld != null)
+    if (this.mc.theWorld != null)
     {
       this.drawGradientRect(0, 0, this.width, this.height, -1072689136, -804253680);
     }
@@ -142,13 +159,14 @@ public abstract class Screen extends GuiScreen
   /**
    * Draws the background (i is always 0 as of 1.2.2)
    */
+  @Override
   public void drawBackground(int tint)
   {
     GlStateManager.disableLighting();
     GlStateManager.disableFog();
     Tessellator tessellator = Tessellator.getInstance();
     WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-    this.minecraft.getTextureManager().bindTexture(optionsBackground);
+    this.mc.getTextureManager().bindTexture(optionsBackground);
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
     float f = 32.0F;
     worldrenderer.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
@@ -159,8 +177,9 @@ public abstract class Screen extends GuiScreen
     tessellator.draw();
   }
 
+  @Override
   public boolean doesGuiPauseGame()
   {
-    return true;
+    return false;
   }
 }

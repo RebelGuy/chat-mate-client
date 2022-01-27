@@ -14,7 +14,7 @@ public class DashboardMainViewController extends Controller<DashboardContext, Pr
   @Nonnull
   @Override
   protected VProps onSelectProps(@Nonnull Props props) {
-    return new VProps();
+    return new VProps(props.width, props.height, props.minecraft, props.onCloseScreen);
   }
 
   @Override
