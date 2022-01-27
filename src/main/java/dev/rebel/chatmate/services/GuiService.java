@@ -45,6 +45,7 @@ public class GuiService {
   private void addEventHandlers() {
     this.forgeEventService.onOpenGuiModList(this::onOpenGuiModList, null);
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
+    this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
     this.forgeEventService.onRenderGameOverlay(this::onRenderGameOverlay, new RenderGameOverlay.Options(ElementType.ALL));
 
@@ -58,6 +59,11 @@ public class GuiService {
 
   private OpenGui.Out onOpenIngameMenu(OpenGui.In eventIn) {
     GuiScreen replaceWithGui = new CustomGuiPause(this, this.config);
+    return new OpenGui.Out(replaceWithGui);
+  }
+
+  private OpenGui.Out onOpenChatSettingsMenu(OpenGui.In eventIn) {
+    GuiScreen replaceWithGui = new CustomScreenChatOptions(null, this.minecraft.gameSettings, this.config);
     return new OpenGui.Out(replaceWithGui);
   }
 

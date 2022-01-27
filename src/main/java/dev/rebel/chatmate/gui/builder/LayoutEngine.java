@@ -61,7 +61,7 @@ public class LayoutEngine {
   }
 
   private static List<Layout> fitFixedChildren(List<Integer> sizes, int basePadding, int availableSize, int currentSize) {
-    int additionalPadding = (availableSize - currentSize) / (sizes.size() - 1);
+    int additionalPadding = sizes.size() == 1 ? 0 : (availableSize - currentSize) / (sizes.size() - 1);
     int extraPixelPaddingForFirst = availableSize - currentSize - additionalPadding * (sizes.size() - 1); // takes care of rounding
     int paddingDelta = extraPixelPaddingForFirst > 0 ? 1 : -1;
 

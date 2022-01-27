@@ -58,6 +58,7 @@ public class SimpleButtonView extends View<VProps, State> {
 
   @Override
   protected void onRenderScreen() {
+    GlStateManager.translate(0, (float)(20 * Math.sin(System.currentTimeMillis() / 1000.0)), 0);
     FontRenderer fontrenderer = Minecraft.getMinecraft().fontRendererObj;
     Minecraft.getMinecraft().getTextureManager().bindTexture(buttonTextures);
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
