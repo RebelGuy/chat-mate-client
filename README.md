@@ -32,6 +32,13 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 Debug partial .minecraft folder: `chat-mate-client/run/` 
 
 # Change Log
+## v1.6 - The Dashboard Update [28/1/2022]
+- Added HUD overlay and screen
+  - Currently displays the status indicator
+  - Indicator can be dragged when in the HUD screen (hotkey `y`)
+- Improved appearance of the Mod Config screen
+- Added experimental MVC architecture for building custom and reusable GUI components
+
 ## v1.5 - The Experience Update [8/1/2022]
 - Levels are displayed next to the author's name in the same style as Mineplex levels
 - Added `/cm counter` command for the charity livestream

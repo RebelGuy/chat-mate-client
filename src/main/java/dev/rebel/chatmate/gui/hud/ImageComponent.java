@@ -86,7 +86,7 @@ public class ImageComponent extends Gui implements IHudComponent {
       this.y = newY;
     }
   }
-int type = 0;
+
   @Override
   public void render(RenderContext context) {
     if (context.textureManager == null) {
