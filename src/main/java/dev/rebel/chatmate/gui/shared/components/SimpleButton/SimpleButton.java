@@ -18,7 +18,7 @@ public class SimpleButton extends Component.ComponentFactory {
     return new SimpleButtonView(componentManager);
   }
 
-  public static class Props extends ComponentData.ControllerProps<Props> {
+  public static class Props extends ComponentData.ControllerPropsWithChildren<Props> {
     public Runnable onClick;
 
     public Props(Runnable onClick) {
@@ -36,7 +36,7 @@ public class SimpleButton extends Component.ComponentFactory {
     }
   }
 
-  public static class VProps extends ComponentData.ViewProps<VProps> {
+  public static class VProps extends ComponentData.ViewPropsWithChildren<VProps> {
     public Consumer<Function<GuiScreenMouse.In, GuiScreenMouse.Out>> mouseHandler;
     public Runnable onClick;
 

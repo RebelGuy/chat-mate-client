@@ -90,7 +90,7 @@ public class SimpleButtonView extends View<VProps, State> {
 
   @Override
   protected void onRenderComponents() {
-
+    this.add(this.getProps().children);
   }
 
   /**

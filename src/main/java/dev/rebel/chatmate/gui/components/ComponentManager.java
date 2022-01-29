@@ -33,7 +33,6 @@ public final class ComponentManager<TContext extends GuiContext> {
     }
 
     Component component = mapForType.get(id);
-    Component.ReadyComponent[] children = Arrays.stream(staticComponent.children).map(this::getOrCreate).toArray(Component.ReadyComponent[]::new);
-    return new Component.ReadyComponent(component, staticComponent.nextProps, children);
+    return new Component.ReadyComponent(component, staticComponent.nextProps);
   }
 }

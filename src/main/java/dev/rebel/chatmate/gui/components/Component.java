@@ -71,7 +71,7 @@ public final class Component<
     // now we want to render the other components.
     // we don't have to do any special treatment for new components, since
     // everything is handled by the new component's class :)
-    this.components.forEach(comp -> comp.getOrderedComponents().forEach(c -> c.setProps(comp.props)));
+    this.components.forEach(comp -> comp.component.setProps(comp.props));
     extractComponents(this.components).forEach(Component::preRender);
     extractComponents(this.components).forEach(Component::render);
     extractComponents(this.components).forEach(Component::postRender);
@@ -90,7 +90,7 @@ public final class Component<
   }
 
   public void dispose() {
-    extractComponents(this.components, true).forEach(Component::dispose);
+    extractComponents(this.components).forEach(Component::dispose);
     this.componentFactory.dispose();
     this.prevComponents = new ArrayList<>();
     this.components = new ArrayList<>();
@@ -100,15 +100,7 @@ public final class Component<
   }
 
   private static Stream<Component> extractComponents(List<ReadyComponent> readyComponents) {
-    return readyComponents.stream().flatMap(comp -> comp.getOrderedComponents().stream());
-  }
-
-  private static Stream<Component> extractComponents(List<ReadyComponent> readyComponents, boolean invertChildren) {
-    if (invertChildren) {
-      return readyComponents.stream().flatMap(comp -> comp.getInverseOrderedComponents().stream());
-    } else {
-      return extractComponents(readyComponents);
-    }
+    return readyComponents.stream().map(comp -> comp.component);
   }
 
   public static abstract class ComponentFactory<
@@ -151,52 +143,50 @@ public final class Component<
     public abstract @Nonnull TView createView(ComponentManager<TContext> componentManager);
   }
 
-  public static class StaticComponent<Props extends ComponentData.ControllerProps<?>> {
+  public static class StaticComponent<Props extends ComponentData.ControllerProps<?>> implements IChild {
     public final String id;
     public final Props nextProps;
     public final Class<? extends ComponentFactory> factory;
-    public final StaticComponent[] children;
 
-    public StaticComponent(String id, Props nextProps, Class<? extends ComponentFactory> factory, StaticComponent[] children) {
-      if (Arrays.stream(children).anyMatch(c -> c.factory == factory)) {
-        throw new RuntimeException(factory.getSimpleName() + " components cannot render instances of themselves as their children.");
-      }
-
+    public StaticComponent(String id, Props nextProps, Class<? extends ComponentFactory> factory) {
       this.id = id;
       this.nextProps = nextProps;
       this.factory = factory;
-      this.children = children;
     }
   }
 
   public static class ReadyComponent {
     public final Component component;
     public final ComponentData.ControllerProps props;
-    public final ReadyComponent[] children;
 
-    public ReadyComponent(Component component, ComponentData.ControllerProps props, ReadyComponent[] children) {
+    public ReadyComponent(Component component, ComponentData.ControllerProps props) {
       this.component = component;
       this.props = props;
-      this.children = children;
-    }
-
-    /** The ordering ensures that parents are always listed before children. */
-    public List<Component> getOrderedComponents() {
-      List<Component> list = new ArrayList<>();
-      list.add(this.component);
-
-      List<Component> children = Arrays.stream(this.children).flatMap(child -> child.getOrderedComponents().stream()).collect(Collectors.toList());
-      list.addAll(children);
-
-      return list;
-    }
-
-    public List<Component> getInverseOrderedComponents() {
-      List<Component> list = this.getOrderedComponents();
-      Collections.reverse(list);
-      return list;
     }
   }
+
+  public static class Children implements IChild {
+    public Component.StaticComponent[] childrenArray = new StaticComponent[0];
+
+    public Children(IChild... children) {
+      List<Component.StaticComponent> childrenList = new ArrayList<>();
+
+      for (IChild child : children) {
+        if (child instanceof Children) {
+          // this occurs when a View adds its provided children to the children of a component it renders
+          childrenList.addAll(Arrays.asList(((Children)child).childrenArray));
+        } else if (child instanceof StaticComponent) {
+          // this occurs when a View defines a new individual child to a component it renders
+          childrenList.add((StaticComponent)child);
+        } else {
+          throw new RuntimeException("Cannot add an IChild of type " + child.getClass().getSimpleName());
+        }
+      }
+    }
+  }
+
+  // This interface is only here to improve the typings of adding existing children to another component's children when rendering components in a View.
+  public interface IChild { }
 }
 
 

@@ -54,6 +54,13 @@ public abstract class View<TProps extends ComponentData.ViewProps<TProps>, TStat
     this.output.add(instance);
   }
 
+  /** It is the View's responsibility to render its children (or pass them down to another component), if applicable, otherwise they will get lost. */
+  protected final void add(Component.Children children) {
+    for (Component.StaticComponent child : children.childrenArray) {
+      this.add(child);
+    }
+  }
+
   // note: the following protected methods are deliberately abstract so there is never confusion about when/whether to call super().
 
   /** Called before the first render() call. */
