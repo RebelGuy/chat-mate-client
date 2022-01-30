@@ -28,6 +28,7 @@ public class ForgeEventService {
   private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openGuiModListHandlers;
   private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openGuiIngameMenuHandlers;
   private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openChatSettingsMenuHandlers;
+  private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openChatHandlers;
   private final ArrayList<EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options>> renderGameOverlayHandlers;
   private final ArrayList<EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options>> renderChatGameOverlayHandlers;
   private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> renderTickHandlers;
@@ -43,6 +44,7 @@ public class ForgeEventService {
     this.openGuiModListHandlers = new ArrayList<>();
     this.openGuiIngameMenuHandlers = new ArrayList<>();
     this.openChatSettingsMenuHandlers = new ArrayList<>();
+    this.openChatHandlers = new ArrayList<>();
     this.renderGameOverlayHandlers = new ArrayList<>();
     this.renderChatGameOverlayHandlers = new ArrayList<>();
     this.renderTickHandlers = new ArrayList<>();
@@ -60,6 +62,10 @@ public class ForgeEventService {
 
   public void onOpenChatSettingsMenu(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
     this.openChatSettingsMenuHandlers.add(new EventHandler<>(handler, options));
+  }
+
+  public void onOpenChat(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
+    this.openChatHandlers.add(new EventHandler<>(handler, options));
   }
 
   public void onRenderGameOverlay(Function<RenderGameOverlay.In, RenderGameOverlay.Out> handler, @Nonnull RenderGameOverlay.Options options) {
@@ -99,6 +105,8 @@ public class ForgeEventService {
       handlers = this.openGuiIngameMenuHandlers;
     } else if (event.gui instanceof ScreenChatOptions) {
       handlers = this.openChatSettingsMenuHandlers;
+    } else if (event.gui instanceof GuiChat) {
+      handlers = this.openChatHandlers;
     } else {
       return;
     }

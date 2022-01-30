@@ -11,6 +11,7 @@ import dev.rebel.chatmate.services.events.models.OpenGui;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 
@@ -46,6 +47,7 @@ public class GuiService {
     this.forgeEventService.onOpenGuiModList(this::onOpenGuiModList, null);
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
     this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
+    this.forgeEventService.onOpenChat(this::onOpenChat, null);
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
     this.forgeEventService.onRenderGameOverlay(this::onRenderGameOverlay, new RenderGameOverlay.Options(ElementType.ALL));
 
@@ -64,6 +66,11 @@ public class GuiService {
 
   private OpenGui.Out onOpenChatSettingsMenu(OpenGui.In eventIn) {
     GuiScreen replaceWithGui = new CustomScreenChatOptions(null, this.minecraft.gameSettings, this.config);
+    return new OpenGui.Out(replaceWithGui);
+  }
+
+  private OpenGui.Out onOpenChat(OpenGui.In eventIn) {
+    GuiScreen replaceWithGui = new CustomGuiChat(this.config);
     return new OpenGui.Out(replaceWithGui);
   }
 
