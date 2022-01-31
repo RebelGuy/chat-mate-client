@@ -1,13 +1,14 @@
 package dev.rebel.chatmate.services.events.models;
 
-import dev.rebel.chatmate.services.events.models.Base.EventIn;
-import dev.rebel.chatmate.services.events.models.Base.EventOptions;
-import dev.rebel.chatmate.services.events.models.Base.EventOut;
+import dev.rebel.chatmate.services.events.models.EventData.EventIn;
+import dev.rebel.chatmate.services.events.models.EventData.EventOptions;
+import dev.rebel.chatmate.services.events.models.EventData.EventOut;
+import dev.rebel.chatmate.services.events.models.GuiScreenMouse.In;
+import dev.rebel.chatmate.services.events.models.GuiScreenMouse.Options;
+import dev.rebel.chatmate.services.events.models.GuiScreenMouse.Out;
 import net.minecraft.client.gui.GuiScreen;
 
-import javax.annotation.Nullable;
-
-public class GuiScreenMouse {
+public class GuiScreenMouse extends EventData<In, Out, Options> {
   public static class In extends EventIn {
     public final Type type;
     public final int startX;

@@ -1,14 +1,10 @@
 package dev.rebel.chatmate.services.events.models;
 
-import dev.rebel.chatmate.services.events.models.Base.EventIn;
-import dev.rebel.chatmate.services.events.models.Base.EventOptions;
-import dev.rebel.chatmate.services.events.models.Base.EventOut;
-import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
+import dev.rebel.chatmate.services.events.models.Tick.In;
+import dev.rebel.chatmate.services.events.models.Tick.Out;
+import dev.rebel.chatmate.services.events.models.Tick.Options;
 
-import java.util.Arrays;
-import java.util.List;
-
-public class Tick {
+public class Tick extends EventData<In, Out, Options> {
   public static class In extends EventIn {
   }
 

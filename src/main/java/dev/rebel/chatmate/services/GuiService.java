@@ -11,8 +11,11 @@ import dev.rebel.chatmate.services.events.models.OpenGui;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
+
+import java.lang.reflect.Field;
 
 public class GuiService {
   private final Config config;
@@ -46,6 +49,7 @@ public class GuiService {
     this.forgeEventService.onOpenGuiModList(this::onOpenGuiModList, null);
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
     this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
+    this.forgeEventService.onOpenChat(this::onOpenChat, null);
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
     this.forgeEventService.onRenderGameOverlay(this::onRenderGameOverlay, new RenderGameOverlay.Options(ElementType.ALL));
 
@@ -64,6 +68,21 @@ public class GuiService {
 
   private OpenGui.Out onOpenChatSettingsMenu(OpenGui.In eventIn) {
     GuiScreen replaceWithGui = new CustomScreenChatOptions(null, this.minecraft.gameSettings, this.config);
+    return new OpenGui.Out(replaceWithGui);
+  }
+
+  private OpenGui.Out onOpenChat(OpenGui.In eventIn) {
+    GuiChat guiChat = (GuiChat)eventIn.gui;
+
+    // HACK: we need to get this private field, otherwise pressing "/" no longer pre-fills the chat window
+    String defaultValue = "";
+    try {
+      Field field = GuiChat.class.getDeclaredField("defaultInputFieldText");
+      field.setAccessible(true); // otherwise we get an IllegalAccessException
+      defaultValue = (String)field.get(guiChat);
+    } catch (Exception e) { throw new RuntimeException("This should never happen"); }
+
+    GuiScreen replaceWithGui = new CustomGuiChat(this.config, defaultValue);
     return new OpenGui.Out(replaceWithGui);
   }
 
