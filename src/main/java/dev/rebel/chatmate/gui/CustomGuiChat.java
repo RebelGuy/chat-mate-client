@@ -11,8 +11,8 @@ import java.io.IOException;
 public class CustomGuiChat extends GuiChat {
   private final Config config;
 
-  public CustomGuiChat(Config config) {
-    super();
+  public CustomGuiChat(Config config, String defaultInput) {
+    super(defaultInput);
     this.config = config;
   }
 

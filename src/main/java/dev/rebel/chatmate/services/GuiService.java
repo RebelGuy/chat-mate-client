@@ -15,6 +15,8 @@ import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 
+import java.lang.reflect.Field;
+
 public class GuiService {
   private final Config config;
   private final ForgeEventService forgeEventService;
@@ -70,7 +72,17 @@ public class GuiService {
   }
 
   private OpenGui.Out onOpenChat(OpenGui.In eventIn) {
-    GuiScreen replaceWithGui = new CustomGuiChat(this.config);
+    GuiChat guiChat = (GuiChat)eventIn.gui;
+
+    // HACK: we need to get this private field, otherwise pressing "/" no longer pre-fills the chat window
+    String defaultValue = "";
+    try {
+      Field field = GuiChat.class.getDeclaredField("defaultInputFieldText");
+      field.setAccessible(true); // otherwise we get an IllegalAccessException
+      defaultValue = (String)field.get(guiChat);
+    } catch (Exception e) { throw new RuntimeException("This should never happen"); }
+
+    GuiScreen replaceWithGui = new CustomGuiChat(this.config, defaultValue);
     return new OpenGui.Out(replaceWithGui);
   }
 
