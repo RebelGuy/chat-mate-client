@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services.events;
 
+import dev.rebel.chatmate.services.events.ForgeEventService.Events;
 import dev.rebel.chatmate.services.events.models.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
@@ -14,105 +15,84 @@ import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Optional;
 import java.util.function.Function;
 
 // why? because I would like to keep Forge event subscriptions centralised for an easier overview and for easier debugging.
 // it also makes testing specific events A LOT easier because we can just mock out this class and test the event handler
 // in complete isolation.
 // thank Java for the verbose typings.
-public class ForgeEventService {
+public class ForgeEventService extends EventServiceBase<Events> {
   private final Minecraft minecraft;
-
-  private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openGuiModListHandlers;
-  private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openGuiIngameMenuHandlers;
-  private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openChatSettingsMenuHandlers;
-  private final ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> openChatHandlers;
-  private final ArrayList<EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options>> renderGameOverlayHandlers;
-  private final ArrayList<EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options>> renderChatGameOverlayHandlers;
-  private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> renderTickHandlers;
-  private final ArrayList<EventHandler<Tick.In, Tick.Out, Tick.Options>> clientTickHandlers;
-  private final ArrayList<EventHandler<GuiScreenMouse.In, GuiScreenMouse.Out, GuiScreenMouse.Options>> guiScreenMouseHandlers;
 
   private Integer mouseStartX = null;
   private Integer mouseStartY = null;
 
   public ForgeEventService(Minecraft minecraft) {
+    super(Events.class);
     this.minecraft = minecraft;
-
-    this.openGuiModListHandlers = new ArrayList<>();
-    this.openGuiIngameMenuHandlers = new ArrayList<>();
-    this.openChatSettingsMenuHandlers = new ArrayList<>();
-    this.openChatHandlers = new ArrayList<>();
-    this.renderGameOverlayHandlers = new ArrayList<>();
-    this.renderChatGameOverlayHandlers = new ArrayList<>();
-    this.renderTickHandlers = new ArrayList<>();
-    this.clientTickHandlers = new ArrayList<>();
-    this.guiScreenMouseHandlers = new ArrayList<>();
   }
 
   public void onOpenGuiModList(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
-    this.openGuiModListHandlers.add(new EventHandler<>(handler, options));
+    this.addListener(Events.OpenGuiModList, handler, options);
   }
 
   public void onOpenGuiIngameMenu(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
-    this.openGuiIngameMenuHandlers.add(new EventHandler<>(handler, options));
+    this.addListener(Events.OpenGuiInGameMenu, handler, options);
   }
 
   public void onOpenChatSettingsMenu(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
-    this.openChatSettingsMenuHandlers.add(new EventHandler<>(handler, options));
+    this.addListener(Events.OpenChatSettingsMenu, handler, options);
   }
 
+  /** Fires when the GuiChat (GuiScreen) is shown. */
   public void onOpenChat(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
-    this.openChatHandlers.add(new EventHandler<>(handler, options));
+    this.addListener(Events.OpenChat, handler, options);
   }
 
   public void onRenderGameOverlay(Function<RenderGameOverlay.In, RenderGameOverlay.Out> handler, @Nonnull RenderGameOverlay.Options options) {
-    this.renderGameOverlayHandlers.add(new EventHandler<>(handler, options));
+    this.addListener(Events.RenderGameOverlay, handler, options);
   }
 
   /** Fires when the main chat box GUI component is rendered. */
   public void onRenderChatGameOverlay(Function<RenderChatGameOverlay.In, RenderChatGameOverlay.Out> handler, RenderChatGameOverlay.Options options) {
-    this.renderChatGameOverlayHandlers.add(new EventHandler<>(handler, options));
+    this.addListener(Events.RenderChatGameOverlay, handler, options);
   }
 
   public void onRenderTick(Function<Tick.In, Tick.Out> handler, @Nullable Tick.Options options) {
-    this.renderTickHandlers.add(new EventHandler<>(handler, options));
+    this.addListener(Events.RenderTick, handler, options);
   }
 
   public void onClientTick(Function<Tick.In, Tick.Out> handler, @Nullable Tick.Options options) {
-    this.clientTickHandlers.add(new EventHandler<>(handler, options));
+    this.addListener(Events.ClientTick, handler, options);
   }
 
   /** Fires for left-click mouse events within a GUI screen. */
   public void onGuiScreenMouse(Object key, Function<GuiScreenMouse.In, GuiScreenMouse.Out> handler, @Nonnull GuiScreenMouse.Options options) {
-    this.guiScreenMouseHandlers.add(new EventHandler<>(handler, options, key));
-    System.out.println(this.guiScreenMouseHandlers.size());
+    this.addListener(Events.GuiScreenMouse, handler, options, key);
   }
 
   public boolean offGuiScreenMouse(Object key) {
-    return this.removeListener(this.guiScreenMouseHandlers, key);
+    return this.removeListener(Events.GuiScreenMouse, key);
   }
 
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(GuiOpenEvent event) {
-    ArrayList<EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options>> handlers;
+    Events eventType;
     if (event.gui instanceof GuiModList) {
-      handlers = this.openGuiModListHandlers;
+      eventType = Events.OpenGuiModList;
     } else if (event.gui instanceof GuiIngameMenu) {
-      handlers = this.openGuiIngameMenuHandlers;
+      eventType = Events.OpenGuiInGameMenu;
     } else if (event.gui instanceof ScreenChatOptions) {
-      handlers = this.openChatSettingsMenuHandlers;
+      eventType = Events.OpenChatSettingsMenu;
     } else if (event.gui instanceof GuiChat) {
-      handlers = this.openChatHandlers;
+      eventType = Events.OpenChat;
     } else {
       return;
     }
 
     boolean guiReplaced = false;
-    for (EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options> handler : handlers) {
+    for (EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options> handler : this.getListeners(eventType, OpenGui.class)) {
       OpenGui.In eventIn = new OpenGui.In(event.gui, guiReplaced);
       OpenGui.Out eventOut = handler.callback.apply(eventIn);
 
@@ -158,7 +138,7 @@ public class ForgeEventService {
       return;
     }
 
-    for (EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options> handler : this.renderGameOverlayHandlers) {
+    for (EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options> handler : this.getListeners(Events.RenderGameOverlay, RenderGameOverlay.class)) {
       if (handler.options.subscribeToTypes.contains(event.type)) {
         RenderGameOverlay.In eventIn = new RenderGameOverlay.In(event.type);
         RenderGameOverlay.Out eventOut = handler.callback.apply(eventIn);
@@ -172,7 +152,7 @@ public class ForgeEventService {
     int posX = event.posX;
     int posY = event.posY;
 
-    for (EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options> handler : this.renderChatGameOverlayHandlers) {
+    for (EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options> handler : this.getListeners(Events.RenderChatGameOverlay, RenderChatGameOverlay.class)) {
       RenderChatGameOverlay.In eventIn = new RenderChatGameOverlay.In(posX, posY);
       RenderChatGameOverlay.Out eventOut = handler.callback.apply(eventIn);
 
@@ -193,7 +173,7 @@ public class ForgeEventService {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(TickEvent.RenderTickEvent event) {
-    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.renderTickHandlers) {
+    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(Events.RenderTick, Tick.class)) {
       Tick.In eventIn = new Tick.In();
       Tick.Out eventOut = handler.callback.apply(eventIn);
     }
@@ -202,9 +182,9 @@ public class ForgeEventService {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(TickEvent.ClientTickEvent event) {
-    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.clientTickHandlers) {
+    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(Events.ClientTick, Tick.class)) {
       Tick.In eventIn = new Tick.In();
-      Tick.Out eventOut = handler.callback.apply(eventIn);
+      Tick.Out eventOut = (Tick.Out)handler.callback.apply(eventIn);
     }
   }
 
@@ -243,45 +223,22 @@ public class ForgeEventService {
       }
     }
 
-    for (EventHandler<GuiScreenMouse.In, GuiScreenMouse.Out, GuiScreenMouse.Options> handler : this.guiScreenMouseHandlers) {
+    for (EventHandler<GuiScreenMouse.In, GuiScreenMouse.Out, GuiScreenMouse.Options> handler : this.getListeners(Events.GuiScreenMouse, GuiScreenMouse.class)) {
       if (handler.options.guiScreenClass.isInstance(event.gui)) {
         GuiScreenMouse.Out eventOut = handler.callback.apply(eventIn);
       }
     }
   }
 
-  // happy scrolling
-  private <In extends Base.EventIn, Out extends Base.EventOut, Options extends Base.EventOptions> boolean removeListener(ArrayList<EventHandler<In, Out, Options>> handlers, Object key) {
-    Optional<EventHandler<In, Out, Options>> handler = handlers.stream().filter(h -> h.isHandlerForKey(key)).findFirst();
-
-    if (handler.isPresent()) {
-      handlers.remove(handler.get());
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  private static class EventHandler<In extends Base.EventIn, Out extends Base.EventOut, Options extends Base.EventOptions> {
-    private final Function<In, Out> callback;
-    private final Options options;
-    private final Object key;
-
-    public EventHandler(Function<In, Out> callback, Options options) {
-      this.callback = callback;
-      this.options = options;
-      this.key = new Object();
-    }
-
-    public EventHandler(Function<In, Out> callback, Options options, Object key) {
-      this.callback = callback;
-      this.options = options;
-      this.key = key;
-    }
-
-    // we can't compare by callback because lambdas cannot be expected to follow reference equality.
-    public boolean isHandlerForKey(Object key) {
-      return this.key == key;
-    }
+  public enum Events {
+    OpenGuiModList,
+    OpenGuiInGameMenu,
+    OpenChatSettingsMenu,
+    OpenChat,
+    RenderGameOverlay,
+    RenderChatGameOverlay,
+    RenderTick,
+    ClientTick,
+    GuiScreenMouse
   }
 }
