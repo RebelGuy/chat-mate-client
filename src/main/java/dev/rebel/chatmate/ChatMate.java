@@ -7,6 +7,7 @@ import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.models.ConfigPersistorService;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
@@ -41,13 +42,19 @@ public class ChatMate {
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
   public ChatMate() throws Exception {
+    String currentDir = System.getProperty("user.dir").replace("\\", "/");
+    String dataDir = currentDir + "/mods/ChatMate";
+    FileService fileService = new FileService(dataDir);
+    LoggingService loggingService = new LoggingService(fileService, "log.log", false);
+
     Minecraft minecraft = Minecraft.getMinecraft();
-    this.config = new Config();
+
+    ConfigPersistorService configPersistorService = new ConfigPersistorService(loggingService, fileService);
+    this.config = new Config(configPersistorService);
     this.forgeEventService = new ForgeEventService(minecraft);
     this.mouseEventService = new MouseEventService(forgeEventService, minecraft);
     this.keyboardEventService = new KeyboardEventService(forgeEventService);
 
-    LoggingService loggingService = new LoggingService("log.log", false);
 
     String apiPath = "http://localhost:3010/api";
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(loggingService, apiPath);

@@ -1,31 +1,17 @@
 package dev.rebel.chatmate.services;
 
 import javax.annotation.Nullable;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class LoggingService {
-  private final @Nullable File file;
+  private final FileService fileService;
+  private final @Nullable String fileName;
 
-  public LoggingService(@Nullable String fileName, boolean debugOnly) throws Exception {
-    if (fileName == null) {
-      this.file = null;
-    } else {
-      String currentdir = System.getProperty("user.dir");
-      currentdir = currentdir.replace("\\", "/");
-      String dataDir = currentdir + "/mods/ChatMate";
-      File dataDirFile = new File(dataDir);
-
-      if (!fileName.startsWith("/")) fileName = "/" + fileName;
-      this.file = new File(dataDir + fileName);
-
-      if (!dataDirFile.exists()) dataDirFile.mkdir();
-      if (this.file.exists()) this.file.delete();
-      this.file.createNewFile();
-    }
+  public LoggingService(FileService fileService, @Nullable String fileName, boolean debugOnly) throws Exception {
+    this.fileService = fileService;
+    this.fileName = fileName;
   }
 
   public void log(Object... items) {
@@ -39,11 +25,9 @@ public class LoggingService {
 
     System.out.println(builder);
 
-    if (this.file != null) {
+    if (this.fileName != null) {
       try {
-        Writer writer = new OutputStreamWriter(new FileOutputStream(this.file, true), StandardCharsets.UTF_8);
-        writer.write(builder + "\r\n");
-        writer.close();
+        this.fileService.writeFile(this.fileName, builder.toString(), true);
       } catch (Exception e) {
         System.out.println("Error logging line to the file: " + e.getMessage());
       }
