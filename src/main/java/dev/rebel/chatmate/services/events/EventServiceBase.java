@@ -29,6 +29,9 @@ public abstract class EventServiceBase<Events extends Enum<Events>> {
 
   /** Add an event listener with a key (can unsubscribe) */
   protected final <In extends EventIn, Out extends EventOut, Options extends EventOptions> void addListener(Events event, Function<In, Out> handler, Options options, Object key) {
+    if (this.listeners.get(event).stream().anyMatch(eh -> eh.isHandlerForKey(key))) {
+      throw new RuntimeException("Key already exists for event " + event);
+    }
     this.listeners.get(event).add(new EventHandler<>(handler, options, key));
   }
 

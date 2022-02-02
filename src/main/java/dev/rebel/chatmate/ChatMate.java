@@ -13,6 +13,8 @@ import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.ForgeEventService;
+import dev.rebel.chatmate.services.events.KeyboardEventService;
+import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.util.FileHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
@@ -28,6 +30,8 @@ public class ChatMate {
   private final ForgeEventService forgeEventService;
   private final YtChatService ytChatService;
   private final McChatService mcChatService;
+  private final MouseEventService mouseEventService;
+  private final KeyboardEventService keyboardEventService;
   private final GuiService guiService;
   private final RenderService renderService;
   private final KeyBindingService keyBindingService;
@@ -40,6 +44,8 @@ public class ChatMate {
     Minecraft minecraft = Minecraft.getMinecraft();
     this.config = new Config();
     this.forgeEventService = new ForgeEventService(minecraft);
+    this.mouseEventService = new MouseEventService(forgeEventService, minecraft);
+    this.keyboardEventService = new KeyboardEventService(forgeEventService);
 
     LoggingService loggingService = new LoggingService("log.log", false);
 
