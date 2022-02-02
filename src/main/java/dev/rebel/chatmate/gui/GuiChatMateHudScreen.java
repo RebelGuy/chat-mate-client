@@ -2,9 +2,13 @@ package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.hud.IHudComponent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.models.GuiScreenMouse;
-import dev.rebel.chatmate.services.events.models.GuiScreenMouse.Options;
-import dev.rebel.chatmate.services.events.models.GuiScreenMouse.Type;
+import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.services.events.MouseEventService.Events;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MousePositionData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.Options;
+import dev.rebel.chatmate.services.events.models.MouseEventData.Out;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 
@@ -12,38 +16,42 @@ import net.minecraft.client.gui.GuiScreen;
 public class GuiChatMateHudScreen extends GuiScreen {
   private final Minecraft minecraft;
   private final GuiChatMateHud guiChatMateHud;
-  private final ForgeEventService forgeEventService;
+  private final MouseEventService mouseEventService;
 
   private IHudComponent draggingComponent = null;
   private Integer draggingComponentOffsetX = null;
   private Integer draggingComponentOffsetY = null;
 
-  public GuiChatMateHudScreen(Minecraft minecraft, GuiChatMateHud hud, ForgeEventService forgeEventService) {
+  public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, GuiChatMateHud hud) {
     super();
 
     this.minecraft = minecraft;
-    guiChatMateHud = hud;
-    this.forgeEventService = forgeEventService;
+    this.mouseEventService = mouseEventService;
+    this.guiChatMateHud = hud;
 
-    this.forgeEventService.onGuiScreenMouse(this, this::onMouse, new Options(GuiChatMateHudScreen.class));
+    Options options = new Options(false, MouseButton.LEFT_BUTTON);
+    this.mouseEventService.on(Events.MOUSE_DOWN, this::onMouseDown, options, this);
+    this.mouseEventService.on(Events.MOUSE_MOVE, this::onMouseMove, options, this);
+    this.mouseEventService.on(Events.MOUSE_UP, this::onMouseUp, options, this);
   }
 
   @Override
   public void onGuiClosed() {
     super.onGuiClosed();
 
-    this.forgeEventService.offGuiScreenMouse(this);
+    this.mouseEventService.off(Events.MOUSE_DOWN, this);
+    this.mouseEventService.off(Events.MOUSE_MOVE, this);
+    this.mouseEventService.off(Events.MOUSE_UP, this);
   }
 
   @Override
   public void initGui() {
     super.initGui();
-
   }
 
   @Override
-  public void updateScreen() {
-    super.updateScreen();
+  public void drawScreen(int x, int y, float partialTicks) {
+    super.drawScreen(x, y, partialTicks);
   }
 
   @Override
@@ -51,33 +59,40 @@ public class GuiChatMateHudScreen extends GuiScreen {
     return false;
   }
 
-  private GuiScreenMouse.Out onMouse(GuiScreenMouse.In eventIn) {
-    if (eventIn.type == Type.MOVE && eventIn.isDragging && this.draggingComponent != null) {
-      // note that we are not checking if the mouse is still hovering over the component
-      int newX = eventIn.currentX - this.draggingComponentOffsetX;
-      int newY = eventIn.currentY - this.draggingComponentOffsetY;
-      this.draggingComponent.onTranslate(newX, newY);
+  // todo: draw a rect around a component when hovering over it, coloured bordered when dragging, etc
 
-    } else if (eventIn.type == Type.DOWN) {
-      for (IHudComponent component : this.guiChatMateHud.hudComponents) {
-        if (component.canTranslate() && containsPoint(component, eventIn.startX, eventIn.startY)) {
-          this.draggingComponent = component;
+  private Out onMouseDown(In in) {
+    MousePositionData position = in.mousePositionData;
+    for (IHudComponent component : this.guiChatMateHud.hudComponents) {
+      if (component.canTranslate() && containsPoint(component, position.clientX, position.clientY)) {
+        this.draggingComponent = component;
 
-          // the position of the component is unlikely to be where we actually start the drag - calculate the offset
-          this.draggingComponentOffsetX = eventIn.startX - component.getX();
-          this.draggingComponentOffsetY = eventIn.startY - component.getY();
-          break;
-        }
+        // the position of the component is unlikely to be where we actually start the drag - calculate the offset
+        this.draggingComponentOffsetX = position.clientX - component.getX();
+        this.draggingComponentOffsetY = position.clientY - component.getY();
+        break;
       }
+    }
+    return new Out(null);
+  }
 
-    } else if (eventIn.type == Type.UP) {
-      this.draggingComponent = null;
-      this.draggingComponentOffsetX = null;
-      this.draggingComponentOffsetY = null;
+  private Out onMouseMove(In in) {
+    MousePositionData position = in.mousePositionData;
+    if (in.isDragged(MouseButton.LEFT_BUTTON) && this.draggingComponent != null) {
+      // note that we are not checking if the mouse is still hovering over the component
+      int newX = position.clientX - this.draggingComponentOffsetX;
+      int newY = position.clientY - this.draggingComponentOffsetY;
+      this.draggingComponent.onTranslate(newX, newY);
     }
 
+    return new Out(null);
+  }
 
-    return new GuiScreenMouse.Out(); // Draw a rect around a component when hovering over it, coloured bordered when dragging, etc
+  private Out onMouseUp(In in) {
+    this.draggingComponent = null;
+    this.draggingComponentOffsetX = null;
+    this.draggingComponentOffsetY = null;
+    return new Out(null);
   }
 
   private static boolean containsPoint(IHudComponent component, int x, int y) {

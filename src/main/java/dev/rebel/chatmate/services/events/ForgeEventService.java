@@ -2,12 +2,16 @@ package dev.rebel.chatmate.services.events;
 
 import dev.rebel.chatmate.services.events.ForgeEventService.Events;
 import dev.rebel.chatmate.services.events.models.*;
+import dev.rebel.chatmate.services.events.models.EventData.EventIn;
+import dev.rebel.chatmate.services.events.models.EventData.EventOptions;
+import dev.rebel.chatmate.services.events.models.EventData.EventOut;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.fml.client.GuiModList;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -66,14 +70,16 @@ public class ForgeEventService extends EventServiceBase<Events> {
     this.addListener(Events.ClientTick, handler, options);
   }
 
-  /** Fires for left-click mouse events within a GUI screen. */
-  public void onGuiScreenMouse(Object key, Function<GuiScreenMouse.In, GuiScreenMouse.Out> handler, @Nonnull GuiScreenMouse.Options options) {
-    this.addListener(Events.GuiScreenMouse, handler, options, key);
+  /** Fires for mouse events within a GUI screen. */
+  public void onGuiScreenMouse(Function<InputEventData.In, InputEventData.Out> handler, @Nullable InputEventData.Options options) {
+    this.addListener(Events.GuiScreenMouse, handler, options);
   }
 
-  public boolean offGuiScreenMouse(Object key) {
-    return this.removeListener(Events.GuiScreenMouse, key);
+  /** Fires for keyboard events within a GUI screen. */
+  public void onGuiScreenKeyboard(Function<InputEventData.In, InputEventData.Out> handler, @Nullable InputEventData.Options options) {
+    this.addListener(Events.GuiScreenKeyboard, handler, options);
   }
+
 
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
@@ -188,44 +194,33 @@ public class ForgeEventService extends EventServiceBase<Events> {
     }
   }
 
+  // note:
+  // * GuiScreenEvent.MouseInputEvent/KeyboardInputEvent: Fired from the GUI once it has been informed to handle input.
+  // * InputEvent.MouseInputEvent/KeyboardInputEvent: Fired for any events that haven't already been fired by screens
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(GuiScreenEvent.MouseInputEvent.Post event) {
-    // todo: create a proper mouse handler that can track the whole drag sequence + multiple buttons
-    // http://legacy.lwjgl.org/javadoc/org/lwjgl/input/Mouse.html
+  public void forgeEventSubscriber(GuiScreenEvent.MouseInputEvent.Pre event) {
+    for (EventHandler<InputEventData.In, InputEventData.Out, InputEventData.Options> handler : this.getListeners(Events.GuiScreenMouse, InputEventData.class)) {
+      InputEventData.In eventIn = new InputEventData.In();
+      InputEventData.Out eventOut = handler.callback.apply(eventIn);
 
-    // turns out the the `Mouse` object measures pixels from the bottom left corner. We have to apply the correct GUI
-    // scaling and invert the y position.
-    // see https://www.tabnine.com/web/assistant/code/rs/5c779284df79be0001d363ba#L100 for an example.
-    // due to integer rounding, we can't use the `dx` and `dy` values. Instead, keep track of the starting and current
-    // position of a mouse sequence (drag).
-    int currentX = Mouse.getEventX() * event.gui.width / this.minecraft.displayWidth;
-    int currentY = event.gui.height - Mouse.getEventY() * event.gui.height / this.minecraft.displayHeight - 1;
-    int startX = this.mouseStartX == null ? currentX : this.mouseStartX;
-    int startY = this.mouseStartY == null ? currentY : this.mouseStartY;
-
-    GuiScreenMouse.In eventIn;
-    if (Mouse.getEventButton() != 0) {
-      // move/drag
-      boolean isDragging = Mouse.isButtonDown(0);
-      eventIn = new GuiScreenMouse.In(startX, startY, currentX, currentY, isDragging);
-    } else {
-      // click
-      boolean isMouseDownEvent = Mouse.getEventButtonState();
-      eventIn = new GuiScreenMouse.In(isMouseDownEvent, startX, startY, currentX, currentY);
-
-      if (!isMouseDownEvent) {
-        this.mouseStartX = null;
-        this.mouseStartY = null;
-      } else {
-        this.mouseStartX = startX;
-        this.mouseStartY = startY;
+      if (eventOut.cancelled) {
+        event.setCanceled(true);
+        return;
       }
     }
+  }
 
-    for (EventHandler<GuiScreenMouse.In, GuiScreenMouse.Out, GuiScreenMouse.Options> handler : this.getListeners(Events.GuiScreenMouse, GuiScreenMouse.class)) {
-      if (handler.options.guiScreenClass.isInstance(event.gui)) {
-        GuiScreenMouse.Out eventOut = handler.callback.apply(eventIn);
+  @SideOnly(Side.CLIENT)
+  @SubscribeEvent
+  public void forgeEventSubscriber(GuiScreenEvent.KeyboardInputEvent.Pre event) {
+    for (EventHandler<InputEventData.In, InputEventData.Out, InputEventData.Options> handler : this.getListeners(Events.GuiScreenKeyboard, InputEventData.class)) {
+      InputEventData.In eventIn = new InputEventData.In();
+      InputEventData.Out eventOut = handler.callback.apply(eventIn);
+
+      if (eventOut.cancelled) {
+        event.setCanceled(true);
+        return;
       }
     }
   }
@@ -239,6 +234,7 @@ public class ForgeEventService extends EventServiceBase<Events> {
     RenderChatGameOverlay,
     RenderTick,
     ClientTick,
-    GuiScreenMouse
+    GuiScreenMouse,
+    GuiScreenKeyboard
   }
 }

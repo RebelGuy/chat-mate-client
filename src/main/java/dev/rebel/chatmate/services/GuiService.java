@@ -7,6 +7,7 @@ import dev.rebel.chatmate.gui.dashboard.DashboardScreen;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
+import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.OpenGui;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
@@ -20,14 +21,16 @@ import java.lang.reflect.Field;
 public class GuiService {
   private final Config config;
   private final ForgeEventService forgeEventService;
+  private final MouseEventService mouseEventService;
   private final KeyBindingService keyBindingService;
   private final Minecraft minecraft;
   private final GuiChatMateHud guiChatMateHud;
   private final SoundService soundService;
 
-  public GuiService(Config config, ForgeEventService forgeEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud, SoundService soundService) {
+  public GuiService(Config config, ForgeEventService forgeEventService, MouseEventService mouseEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud, SoundService soundService) {
     this.config = config;
     this.forgeEventService = forgeEventService;
+    this.mouseEventService = mouseEventService;
     this.keyBindingService = keyBindingService;
     this.minecraft = minecraft;
     this.guiChatMateHud = guiChatMateHud;
@@ -41,6 +44,7 @@ public class GuiService {
         this.minecraft,
         this.minecraft.fontRendererObj,
         this.forgeEventService,
+        this.mouseEventService,
         this.soundService
     )));
   }
@@ -103,7 +107,7 @@ public class GuiService {
   private Boolean onOpenChatMateHud() {
     if (this.config.getHudEnabled().get()) {
       // key events don't fire when we are in a menu, so don't need to worry about closing this GUI when the key is pressed again
-      GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.guiChatMateHud, this.forgeEventService);
+      GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.mouseEventService, this.guiChatMateHud);
       this.minecraft.displayGuiScreen(hudScreen);
       return true;
     } else {

@@ -3,7 +3,9 @@ package dev.rebel.chatmate.gui.shared.components.SimpleButton;
 import dev.rebel.chatmate.gui.components.ComponentManager;
 import dev.rebel.chatmate.gui.components.View;
 import dev.rebel.chatmate.gui.shared.components.SimpleButton.SimpleButton.*;
-import dev.rebel.chatmate.services.events.models.GuiScreenMouse;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MousePositionData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -29,21 +31,19 @@ public class SimpleButtonView extends View<VProps, State> {
 
   @Override
   protected void onInitialise(@Nonnull VProps initialProps) {
-    initialProps.mouseHandler.accept(this::onMouse);
+    initialProps.mouseHandler.accept(this::onMouseDown);
   }
 
-  private GuiScreenMouse.Out onMouse(GuiScreenMouse.In eventIn) {
-    boolean overButton = eventIn.currentX >= this.posX && eventIn.currentX <= this.posX + this.w && eventIn.currentY >= this.posY && eventIn.currentY <= this.posY + this.h;
+  private MouseEventData.Out onMouseDown(MouseEventData.In eventIn) {
+    MousePositionData position = eventIn.mousePositionData;
+    boolean overButton = position.clientX >= this.posX && position.clientX <= this.posX + this.w && position.clientY >= this.posY && position.clientY <= this.posY + this.h;
 
-    if (eventIn.type == GuiScreenMouse.Type.DOWN && overButton) {
-        this.getProps().onClick.run();
-    } else if (eventIn.type == GuiScreenMouse.Type.MOVE && overButton) {
-      this.setState(new State(true));
-    } else {
-      this.setState(new State(false));
+    if (overButton) {
+      this.getProps().onClick.run();
+      return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
     }
 
-    return new GuiScreenMouse.Out();
+    return new MouseEventData.Out();
   }
 
   @Override

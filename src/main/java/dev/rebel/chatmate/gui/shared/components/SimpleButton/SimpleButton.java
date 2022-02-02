@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui.shared.components.SimpleButton;
 
 import dev.rebel.chatmate.gui.components.*;
-import dev.rebel.chatmate.services.events.models.GuiScreenMouse;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
 
 import javax.annotation.Nonnull;
 import java.util.function.Consumer;
@@ -37,10 +37,10 @@ public class SimpleButton extends Component.ComponentFactory {
   }
 
   public static class VProps extends ComponentData.ViewPropsWithChildren<VProps> {
-    public Consumer<Function<GuiScreenMouse.In, GuiScreenMouse.Out>> mouseHandler;
+    public Consumer<Function<MouseEventData.In, MouseEventData.Out>> mouseHandler;
     public Runnable onClick;
 
-    public VProps(Consumer<Function<GuiScreenMouse.In, GuiScreenMouse.Out>> mouseHandler, Runnable onClick) {
+    public VProps(Consumer<Function<MouseEventData.In, MouseEventData.Out>> mouseHandler, Runnable onClick) {
       this.mouseHandler = mouseHandler;
       this.onClick = onClick;
     }

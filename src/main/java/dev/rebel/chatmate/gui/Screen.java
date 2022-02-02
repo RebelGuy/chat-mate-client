@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.input.Keyboard;
@@ -17,8 +18,6 @@ import org.lwjgl.input.Mouse;
 // does NOT fire the following events:
 // - InitGuiEvent.Pre and InitGuiEvent.Post
 // - ActionPerformedEvent.Pre and ActionPerformedEvent.Post
-// - MouseInputEvent
-// - KeyboardInputEvent
 
 @SideOnly(Side.CLIENT)
 public abstract class Screen extends GuiScreen
@@ -94,10 +93,28 @@ public abstract class Screen extends GuiScreen
   /** For now, use the super implementation.*/
   @Override
   public void handleInput() throws IOException {
-    super.handleInput();
-    // todo: add a MouseService and KeyboardService that listen on every tick (or whatever event is required -
-    // refer to KeybindingService), then can subscribe. Should be completely agnostic to the GuiScreen currently shown.
-    // MouseService should expose listeners for onMouseDown, onMouseMove, onMouseUp
+    // *sigh* we need to manually fire off the input events, otherwise the underlying GUI screen will do some extra
+    // behaviour that we don't want, and also because otherwise the minecraft game loop will behave oddly.
+    if (Mouse.isCreated()) {
+      while(Mouse.next()) {
+        if (!MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.MouseInputEvent.Pre(this))) {
+          if (this.equals(this.mc.currentScreen)) {
+            MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.MouseInputEvent.Post(this));
+          }
+        }
+      }
+    }
+
+    if (Keyboard.isCreated()) {
+      while(Keyboard.next()) {
+        if (!MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.KeyboardInputEvent.Pre(this))) {
+          if (this.equals(this.mc.currentScreen)) {
+            MinecraftForge.EVENT_BUS.post(new net.minecraftforge.client.event.GuiScreenEvent.KeyboardInputEvent.Post(this));
+          }
+        }
+      }
+    }
+
   }
 
   /**
