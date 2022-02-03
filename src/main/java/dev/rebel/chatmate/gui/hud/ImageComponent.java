@@ -6,15 +6,15 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 
 public class ImageComponent extends Gui implements IHudComponent {
-  private int x;
-  private int y;
+  private float x;
+  private float y;
   private float scale;
   private final boolean canRescale;
   private final boolean canTranslate;
 
   public final Texture texture;
 
-  public ImageComponent(Texture texture, int x, int y, float scale, boolean canRescale, boolean canTranslate) {
+  public ImageComponent(Texture texture, float x, float y, float scale, boolean canRescale, boolean canTranslate) {
     this.texture = texture;
     this.x = x;
     this.y = y;
@@ -24,23 +24,23 @@ public class ImageComponent extends Gui implements IHudComponent {
   }
 
   @Override
-  public int getX() {
+  public float getX() {
     return this.x;
   }
 
   @Override
-  public int getY() {
+  public float getY() {
     return this.y;
   }
 
   @Override
-  public int getWidth() {
-    return (int)(this.texture.width * this.scale);
+  public float getWidth() {
+    return this.texture.width * this.scale;
   }
 
   @Override
-  public int getHeight() {
-    return (int)(this.texture.height * this.scale);
+  public float getHeight() {
+    return this.texture.height * this.scale;
   }
 
   @Override
@@ -50,7 +50,7 @@ public class ImageComponent extends Gui implements IHudComponent {
   }
 
   @Override
-  public void onResize(int newWidth, int newHeight) { }
+  public void onResize(float newWidth, float newHeight, boolean keepCentred) { }
 
   @Override
   public boolean canRescaleContent() {
@@ -64,8 +64,8 @@ public class ImageComponent extends Gui implements IHudComponent {
       float deltaWidth = deltaScale * this.texture.width;
       float deltaHeight = deltaScale * this.texture.height;
       this.scale = newScale;
-      this.x = (int)(this.x + deltaWidth / 2);
-      this.y = (int)(this.y + deltaHeight / 2);
+      this.x = this.x + deltaWidth / 2;
+      this.y = this.y + deltaHeight / 2;
     }
   }
 
@@ -80,7 +80,7 @@ public class ImageComponent extends Gui implements IHudComponent {
   }
 
   @Override
-  public void onTranslate(int newX, int newY) {
+  public void onTranslate(float newX, float newY) {
     if (this.canTranslate) {
       this.x = newX;
       this.y = newY;
@@ -103,8 +103,8 @@ public class ImageComponent extends Gui implements IHudComponent {
     int u = 0, v = 0; // offset, with repeating boundaries in the 256x256 box
 
     // position and size in the transformed (scaled) space
-    int renderX = (int)(this.x / scaleX);
-    int renderY = (int)(this.y / scaleY);
+    float renderX = this.x / scaleX;
+    float renderY = this.y / scaleY;
     int width = 256;
     int height = 256;
 

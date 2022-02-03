@@ -6,6 +6,7 @@ import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.ScaledResolution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,9 @@ public class GuiChatMateHud extends Gui {
     this.forgeEventService = forgeEventService;
     this.statusService = statusService;
 
-    this.statusIndicatorComponent = new StatusIndicatorComponent(statusService);
+    int scaleFactor = new ScaledResolution(this.minecraft).getScaleFactor();
+
+    this.statusIndicatorComponent = new StatusIndicatorComponent(scaleFactor, 0.5f, statusService);
 
     this.hudComponents = new ArrayList<>();
     this.hudComponents.add(this.statusIndicatorComponent);

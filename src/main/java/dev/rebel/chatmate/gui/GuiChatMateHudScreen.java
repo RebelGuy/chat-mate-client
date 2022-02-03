@@ -1,12 +1,12 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.hud.IHudComponent;
-import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MousePositionData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Options;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out;
 import net.minecraft.client.Minecraft;
@@ -19,8 +19,8 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private final MouseEventService mouseEventService;
 
   private IHudComponent draggingComponent = null;
-  private Integer draggingComponentOffsetX = null;
-  private Integer draggingComponentOffsetY = null;
+  private Float draggingComponentOffsetX = null;
+  private Float draggingComponentOffsetY = null;
 
   public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, GuiChatMateHud hud) {
     super();
@@ -33,6 +33,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
     this.mouseEventService.on(Events.MOUSE_DOWN, this::onMouseDown, options, this);
     this.mouseEventService.on(Events.MOUSE_MOVE, this::onMouseMove, options, this);
     this.mouseEventService.on(Events.MOUSE_UP, this::onMouseUp, options, this);
+    this.mouseEventService.on(Events.MOUSE_SCROLL, this::onMouseScroll, options, this);
   }
 
   @Override
@@ -42,6 +43,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
     this.mouseEventService.off(Events.MOUSE_DOWN, this);
     this.mouseEventService.off(Events.MOUSE_MOVE, this);
     this.mouseEventService.off(Events.MOUSE_UP, this);
+    this.mouseEventService.off(Events.MOUSE_SCROLL, this);
   }
 
   @Override
@@ -64,12 +66,12 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private Out onMouseDown(In in) {
     MousePositionData position = in.mousePositionData;
     for (IHudComponent component : this.guiChatMateHud.hudComponents) {
-      if (component.canTranslate() && containsPoint(component, position.clientX, position.clientY)) {
+      if (component.canTranslate() && containsPoint(component, position.x, position.y)) {
         this.draggingComponent = component;
 
         // the position of the component is unlikely to be where we actually start the drag - calculate the offset
-        this.draggingComponentOffsetX = position.clientX - component.getX();
-        this.draggingComponentOffsetY = position.clientY - component.getY();
+        this.draggingComponentOffsetX = position.x - component.getX();
+        this.draggingComponentOffsetY = position.y - component.getY();
         break;
       }
     }
@@ -80,8 +82,8 @@ public class GuiChatMateHudScreen extends GuiScreen {
     MousePositionData position = in.mousePositionData;
     if (in.isDragged(MouseButton.LEFT_BUTTON) && this.draggingComponent != null) {
       // note that we are not checking if the mouse is still hovering over the component
-      int newX = position.clientX - this.draggingComponentOffsetX;
-      int newY = position.clientY - this.draggingComponentOffsetY;
+      float newX = position.x - this.draggingComponentOffsetX;
+      float newY = position.y - this.draggingComponentOffsetY;
       this.draggingComponent.onTranslate(newX, newY);
     }
 
@@ -95,7 +97,18 @@ public class GuiChatMateHudScreen extends GuiScreen {
     return new Out(null);
   }
 
-  private static boolean containsPoint(IHudComponent component, int x, int y) {
+  private Out onMouseScroll(In in) {
+    MousePositionData position = in.mousePositionData;
+    for (IHudComponent component : this.guiChatMateHud.hudComponents) {
+      if (component.canRescaleContent() && containsPoint(component, position.x, position.y)) {
+        int multiplier = in.mouseScrollData.scrollDirection == ScrollDirection.UP ? 1 : -1;
+        component.onRescaleContent(component.getContentScale() + multiplier * 0.1f);
+      }
+    }
+    return new Out(null);
+  }
+
+  private static boolean containsPoint(IHudComponent component, float x, float y) {
     return x <= component.getX() + component.getWidth()
         && x >= component.getX()
         && y <= component.getY() + component.getHeight()

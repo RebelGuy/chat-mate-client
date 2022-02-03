@@ -1,45 +1,62 @@
 package dev.rebel.chatmate.gui.hud;
 
+/** Note: all private/protected coordinate properties are in SCREEN COORDS, and all public get* coordinates are in GUI COORDS. */
 public class Box {
-  public int x;
-  public int y;
-  public int w;
-  public int h;
-  public boolean canTranslate;
-  public boolean canResize;
+  private int guiScaleMultiplier;
+  protected float x;
+  protected float y;
+  protected float w;
+  protected float h;
+  private boolean canTranslate;
+  private boolean canResize;
 
-  public Box(int x, int y, int w, int h, boolean canTranslate, boolean canResize) {
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
+  public Box(int guiScaleMultiplier, float x, float y, float w, float h, boolean canTranslate, boolean canResize) {
+    this.guiScaleMultiplier = guiScaleMultiplier;
+    this.x = this.guiToScreen(x);
+    this.y = this.guiToScreen(y);
+    this.w = this.guiToScreen(w);
+    this.h = this.guiToScreen(h);
     this.canResize = canResize;
     this.canTranslate = canTranslate;
   }
 
-  public int getX() { return this.x; }
+  public float getX() { return screenToGui(this.x); }
 
-  public int getY() { return this.y; }
+  public float getY() { return screenToGui(this.y); }
 
-  public int getWidth() { return this.w; }
+  public float getWidth() { return screenToGui(this.w); }
 
-  public int getHeight() { return this.h; }
+  public float getHeight() { return screenToGui(this.h); }
 
   public boolean canTranslate() { return this.canTranslate; }
 
-  public void onTranslate(int newX, int newY) {
+  public void onTranslate(float newX, float newY) {
     if (this.canTranslate) {
-      this.x = newX;
-      this.y = newY;
+      this.x = guiToScreen(newX);
+      this.y = guiToScreen(newY);
     }
   }
 
   public boolean canResizeBox() { return this.canResize; }
 
-  public void onResize(int newW, int newH) {
-    if (this.canResize) {
-      this.w = newW;
-      this.h = newH;
+  public void onResize(float newW, float newH, boolean keepCentred) {
+    if (!this.canResize || this.getWidth() == newW && this.getHeight() == newH) {
+      return;
     }
+
+    newW = guiToScreen(newW);
+    newH = guiToScreen(newH);
+
+    if (keepCentred) {
+      this.x -= (newW - this.w) / 2.0f;
+      this.y -= (newH - this.h) / 2.0f;
+    }
+
+    this.w = newW;
+    this.h = newH;
   }
+
+  public float screenToGui(float screen) { return screen / this.guiScaleMultiplier; }
+
+  public float guiToScreen(float screen) { return screen * this.guiScaleMultiplier; }
 }

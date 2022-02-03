@@ -12,14 +12,18 @@ import java.util.Map;
 public class StatusIndicatorComponent extends Box implements IHudComponent {
   private final StatusService statusService;
   private final Map<SimpleStatus, ImageComponent> statusIndicators;
+  private float scale;
 
-  public StatusIndicatorComponent(StatusService statusService) {
-    super(5, 5, 32, 32, true, false);
+  private final static int baseGuiSize = 16;
+
+  public StatusIndicatorComponent(int guiScaleMultiplier, float initialScale, StatusService statusService) {
+    // giving values in Gui coords. so at 2x gui scale, with an initial scale of 0.5f, will be at screen coords (20, 20) with a screen size of 16x16
+    super(guiScaleMultiplier, 10, 10, baseGuiSize * initialScale, baseGuiSize * initialScale, true, true);
     this.statusService = statusService;
+    this.scale = initialScale;
 
-    int x = 0, y = 0;
-    float scale = 0.5f;
-    boolean canRescale = false, canTranslate = true;
+    float x = 0, y = 0, scale = 1;
+    boolean canRescale = false, canTranslate = false;
 
     this.statusIndicators = new HashMap<>();
     this.statusIndicators.put(SimpleStatus.OK_LIVE, new ImageComponent(Asset.STATUS_INDICATOR_GREEN, x, y, scale, canRescale, canTranslate));
@@ -29,20 +33,30 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
   }
 
   @Override
-  public float getContentScale() { return 1; }
+  public float getContentScale() { return this.scale; }
 
   @Override
-  public boolean canRescaleContent() { return false; }
+  public boolean canRescaleContent() { return true; }
 
   @Override
-  public void onRescaleContent(float newScale) { }
+  public void onRescaleContent(float newScale) {
+    newScale = Math.max(0.2f, newScale);
+    newScale = Math.min(newScale, 5.0f);
+    if (this.scale == newScale) {
+      return;
+    }
+
+    this.onResize(baseGuiSize * newScale, baseGuiSize * newScale, true);
+    this.scale = newScale;
+  }
 
   @Override
   public void render(RenderContext context) {
     SimpleStatus status = this.statusService.getSimpleStatus();
 
     GlStateManager.pushMatrix();
-    GlStateManager.translate(this.x, this.y, 0);
+    GlStateManager.translate(this.getX(), this.getY(), 0);
+    GlStateManager.scale(this.scale, this.scale, 1);
 
     this.statusIndicators.get(status).render(context);
 

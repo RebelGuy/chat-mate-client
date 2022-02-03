@@ -175,7 +175,7 @@ public class MouseEventService extends EventServiceBase<Events> {
         continue;
       }
 
-      In eventIn = new In(event, positionData, buttonData, null);
+      In eventIn = new In(event, positionData, buttonData, scrollData);
       Out eventOut = handler.callback.apply(eventIn);
 
       if (eventOut.handlerAction == null) {
