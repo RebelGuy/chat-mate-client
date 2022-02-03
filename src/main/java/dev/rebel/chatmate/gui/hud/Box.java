@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
+
 /** Note: all private/protected coordinate properties are in SCREEN COORDS, and all public get* coordinates are in GUI COORDS. */
 public class Box {
   private int guiScaleMultiplier;
@@ -39,7 +41,7 @@ public class Box {
 
   public boolean canResizeBox() { return this.canResize; }
 
-  public void onResize(float newW, float newH, boolean keepCentred) {
+  public void onResize(float newW, float newH, Anchor resizeAnchor) {
     if (!this.canResize || this.getWidth() == newW && this.getHeight() == newH) {
       return;
     }
@@ -47,9 +49,50 @@ public class Box {
     newW = guiToScreen(newW);
     newH = guiToScreen(newH);
 
-    if (keepCentred) {
-      this.x -= (newW - this.w) / 2.0f;
-      this.y -= (newH - this.h) / 2.0f;
+    float dw = newW - this.w;
+    float dh = newH - this.h;
+    switch (resizeAnchor) {
+      case TOP_LEFT:
+        this.x += 0;
+        this.y += 0;
+        break;
+      case LEFT_CENTRE:
+        this.x += 0;
+        this.y += -dh / 2;
+        break;
+      case BOTTOM_LEFT:
+        this.x += 0;
+        this.y += -dh;
+        break;
+
+      case TOP_CENTRE:
+        this.x += -dw / 2.0f;
+        this.y += 0;
+        break;
+      case MIDDLE:
+        this.x += -dw / 2.0f;
+        this.y += -dh / 2.0f;
+        break;
+      case BOTTOM_CENTRE:
+        this.x += -dw / 2.0f;
+        this.y += -dh;
+        break;
+
+      case TOP_RIGHT:
+        this.x += -dw;
+        this.y += 0;
+        break;
+      case RIGHT_CENTRE:
+        this.x += -dw;
+        this.y += -dh / 2.0f;
+        break;
+      case BOTTOM_RIGHT:
+        this.x += -dw;
+        this.y += -dh;
+        break;
+
+      default:
+        throw new RuntimeException("Invalid anchor: " + resizeAnchor);
     }
 
     this.w = newW;
@@ -59,4 +102,11 @@ public class Box {
   public float screenToGui(float screen) { return screen / this.guiScaleMultiplier; }
 
   public float guiToScreen(float screen) { return screen * this.guiScaleMultiplier; }
+
+  protected void setRect(float x, float y, float w, float h) {
+    this.x = this.guiToScreen(x);
+    this.y = this.guiToScreen(y);
+    this.w = this.guiToScreen(w);
+    this.h = this.guiToScreen(h);
+  }
 }

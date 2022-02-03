@@ -12,6 +12,10 @@ import dev.rebel.chatmate.services.events.models.MouseEventData.Out;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /** This is the focused menu screen - for the game overlay class, go to GuiChatMateHud */
 public class GuiChatMateHudScreen extends GuiScreen {
   private final Minecraft minecraft;
@@ -65,7 +69,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
 
   private Out onMouseDown(In in) {
     MousePositionData position = in.mousePositionData;
-    for (IHudComponent component : this.guiChatMateHud.hudComponents) {
+    for (IHudComponent component : this.getReverseComponents()) {
       if (component.canTranslate() && containsPoint(component, position.x, position.y)) {
         this.draggingComponent = component;
 
@@ -99,13 +103,20 @@ public class GuiChatMateHudScreen extends GuiScreen {
 
   private Out onMouseScroll(In in) {
     MousePositionData position = in.mousePositionData;
-    for (IHudComponent component : this.guiChatMateHud.hudComponents) {
+    for (IHudComponent component : this.getReverseComponents()) {
       if (component.canRescaleContent() && containsPoint(component, position.x, position.y)) {
         int multiplier = in.mouseScrollData.scrollDirection == ScrollDirection.UP ? 1 : -1;
         component.onRescaleContent(component.getContentScale() + multiplier * 0.1f);
       }
     }
     return new Out(null);
+  }
+
+  /** Since components are drawn in order, any UI collision tests should start checking from the topmost item. */
+  private List<IHudComponent> getReverseComponents() {
+    List<IHudComponent> components = new ArrayList<>(this.guiChatMateHud.hudComponents);
+    Collections.reverse(components);
+    return components;
   }
 
   private static boolean containsPoint(IHudComponent component, float x, float y) {

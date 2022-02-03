@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.hud;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.RenderContext;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.StatusService.SimpleStatus;
 import net.minecraft.client.renderer.GlStateManager;
@@ -11,15 +12,27 @@ import java.util.Map;
 
 public class StatusIndicatorComponent extends Box implements IHudComponent {
   private final StatusService statusService;
+  private final Config config;
   private final Map<SimpleStatus, ImageComponent> statusIndicators;
+  private final float initialScale;
   private float scale;
 
   private final static int baseGuiSize = 16;
 
-  public StatusIndicatorComponent(int guiScaleMultiplier, float initialScale, StatusService statusService) {
+  public StatusIndicatorComponent(int guiScaleMultiplier, float initialScale, StatusService statusService, Config config) {
     // giving values in Gui coords. so at 2x gui scale, with an initial scale of 0.5f, will be at screen coords (20, 20) with a screen size of 16x16
-    super(guiScaleMultiplier, 10, 10, baseGuiSize * initialScale, baseGuiSize * initialScale, true, true);
+    super(
+        guiScaleMultiplier,
+        10,
+        10,
+        config.getShowStatusIndicator().get() ? baseGuiSize * initialScale : 0,
+        config.getShowStatusIndicator().get() ? baseGuiSize * initialScale : 0,
+        true,
+        true
+    );
     this.statusService = statusService;
+    this.config = config;
+    this.initialScale = initialScale;
     this.scale = initialScale;
 
     float x = 0, y = 0, scale = 1;
@@ -30,6 +43,8 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.statusIndicators.put(SimpleStatus.OK_OFFLINE, new ImageComponent(Asset.STATUS_INDICATOR_CYAN, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.YOUTUBE_UNREACHABLE, new ImageComponent(Asset.STATUS_INDICATOR_ORANGE, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.SERVER_UNREACHABLE, new ImageComponent(Asset.STATUS_INDICATOR_RED, x, y, scale, canRescale, canTranslate));
+
+    this.config.getShowStatusIndicator().listen(this::onShowStatusIndicator);
   }
 
   @Override
@@ -46,12 +61,16 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
       return;
     }
 
-    this.onResize(baseGuiSize * newScale, baseGuiSize * newScale, true);
+    this.onResize(baseGuiSize * newScale, baseGuiSize * newScale, Anchor.MIDDLE);
     this.scale = newScale;
   }
 
   @Override
   public void render(RenderContext context) {
+    if (!this.config.getShowStatusIndicator().get()) {
+      return;
+    }
+
     SimpleStatus status = this.statusService.getSimpleStatus();
 
     GlStateManager.pushMatrix();
@@ -61,5 +80,14 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.statusIndicators.get(status).render(context);
 
     GlStateManager.popMatrix();
+  }
+
+  private void onShowStatusIndicator(boolean enabled) {
+    float x = 10;
+    float y = 10;
+    float w = enabled ? baseGuiSize * this.scale : 0;
+    float h = enabled ? baseGuiSize * this.scale : 0;
+    this.setRect(x, y, w, h);
+    this.scale = this.initialScale;
   }
 }

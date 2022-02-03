@@ -1,7 +1,9 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.hud.IHudComponent;
+import dev.rebel.chatmate.gui.hud.LiveViewersComponent;
 import dev.rebel.chatmate.gui.hud.StatusIndicatorComponent;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import net.minecraft.client.Minecraft;
@@ -18,10 +20,11 @@ public class GuiChatMateHud extends Gui {
   private final StatusService statusService;
 
   private final StatusIndicatorComponent statusIndicatorComponent;
+  private final LiveViewersComponent liveViewersComponent;
 
   public final List<IHudComponent> hudComponents;
 
-  public GuiChatMateHud(Minecraft minecraft, ForgeEventService forgeEventService, StatusService statusService) {
+  public GuiChatMateHud(Minecraft minecraft, ForgeEventService forgeEventService, StatusService statusService, Config config) {
     super();
     this.minecraft = minecraft;
     this.forgeEventService = forgeEventService;
@@ -29,10 +32,12 @@ public class GuiChatMateHud extends Gui {
 
     int scaleFactor = new ScaledResolution(this.minecraft).getScaleFactor();
 
-    this.statusIndicatorComponent = new StatusIndicatorComponent(scaleFactor, 0.5f, statusService);
+    this.statusIndicatorComponent = new StatusIndicatorComponent(scaleFactor, 0.5f, statusService, config);
+    this.liveViewersComponent = new LiveViewersComponent(scaleFactor, 1, statusService, config, minecraft);
 
     this.hudComponents = new ArrayList<>();
     this.hudComponents.add(this.statusIndicatorComponent);
+    this.hudComponents.add(this.liveViewersComponent);
   }
 
   // render indicators here, etc.

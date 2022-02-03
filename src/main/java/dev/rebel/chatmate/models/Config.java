@@ -26,6 +26,12 @@ public class Config {
   private final StatefulEmitter<Boolean> hudEnabled; // todo: add more hud options, preferably in its own menu
   public StatefulEmitter<Boolean> getHudEnabled() { return this.hudEnabled; }
 
+  private final StatefulEmitter<Boolean> showStatusIndicator;
+  public StatefulEmitter<Boolean> getShowStatusIndicator() { return this.showStatusIndicator; }
+
+  private final StatefulEmitter<Boolean> showLiveViewers;
+  public StatefulEmitter<Boolean> getShowLiveViewers() { return this.showLiveViewers; }
+
   public Config(ConfigPersistorService configPersistorService) {
     this.configPersistorService = configPersistorService;
 
@@ -33,6 +39,8 @@ public class Config {
     this.soundEnabled = new StatefulEmitter<>(true, this::onUpdate);
     this.chatVerticalDisplacement = new StatefulEmitter<>(10, this::onUpdate);
     this.hudEnabled = new StatefulEmitter<>(true, this::onUpdate);
+    this.showStatusIndicator = new StatefulEmitter<>(true, this::onUpdate);
+    this.showLiveViewers = new StatefulEmitter<>(true, this::onUpdate);
 
     this.updateListeners = new ArrayList<>();
 
@@ -54,6 +62,8 @@ public class Config {
       this.soundEnabled.set(loaded.soundEnabled);
       this.chatVerticalDisplacement.set(loaded.chatVerticalDisplacement);
       this.hudEnabled.set(loaded.hudEnabled);
+      this.showStatusIndicator.set(loaded.showStatusIndicator);
+      this.showLiveViewers.set(loaded.showLiveViewers);
     }
   }
 
@@ -61,7 +71,9 @@ public class Config {
     SerialisedConfig serialisedConfig = new SerialisedConfig(
       this.soundEnabled.get(),
       this.chatVerticalDisplacement.get(),
-      this.hudEnabled.get()
+      this.hudEnabled.get(),
+      this.showStatusIndicator.get(),
+      this.showLiveViewers.get()
     );
     this.configPersistorService.save(serialisedConfig);
   }

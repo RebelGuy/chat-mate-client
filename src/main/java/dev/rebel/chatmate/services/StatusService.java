@@ -50,6 +50,16 @@ public class StatusService {
     }
   }
 
+  public @Nullable Integer getLiveViewerCount() {
+    GetStatusResponse status = this.lastStatusResponse;
+
+    if (status == null) {
+      return null;
+    } else {
+      return status.livestreamStatus.liveViewers;
+    }
+  }
+
   private void start() {
     if (this.timer == null) {
       this.timer = new Timer();

@@ -50,7 +50,7 @@ public class ImageComponent extends Gui implements IHudComponent {
   }
 
   @Override
-  public void onResize(float newWidth, float newHeight, boolean keepCentred) { }
+  public void onResize(float newWidth, float newHeight, Anchor keepCentred) { }
 
   @Override
   public boolean canRescaleContent() {

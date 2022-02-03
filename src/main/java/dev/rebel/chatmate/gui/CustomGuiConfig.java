@@ -49,6 +49,12 @@ public class CustomGuiConfig extends GuiConfig {
     LabelLayout hudLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable ChatMate HUD", Color.WHITE);
     CheckBoxLayout hudCheckbox = new CheckBoxLayout(this::onToggleHud, config.getHudEnabled()::get);
 
+    LabelLayout indicatorLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Status Indicator", Color.WHITE);
+    CheckBoxLayout indicatorCheckbox = new CheckBoxLayout(this::onToggleIndicator, config.getShowStatusIndicator()::get);
+
+    LabelLayout viewerCountLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Viewer Count", Color.WHITE);
+    CheckBoxLayout viewerCountCheckbox = new CheckBoxLayout(this::onToggleViewerCount, config.getShowLiveViewers()::get);
+
     LabelLayout chatOffsetLabel = new LabelLayout(this.fontRendererObj, new String[] { "0%", "100%" }, () -> "Chat Height Offset", Color.WHITE);
     SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacement()::get);
 
@@ -56,6 +62,8 @@ public class CustomGuiConfig extends GuiConfig {
         .withRow(apiLabel, apiCheckbox)
         .withRow(soundLabel, soundCheckbox)
         .withRow(hudLabel, hudCheckbox)
+        .withRow(indicatorLabel, indicatorCheckbox)
+        .withRow(viewerCountLabel, viewerCountCheckbox)
         .withRow(chatOffsetLabel, chatOffsetSlider)
         .instantiate();
   }
@@ -115,6 +123,14 @@ public class CustomGuiConfig extends GuiConfig {
 
   private void onToggleHud(CheckBoxActionCheckedData checkBoxActionCheckedData) {
     this.config.getHudEnabled().set(checkBoxActionCheckedData.checked);
+  }
+
+  private void onToggleIndicator(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.getShowStatusIndicator().set(checkBoxActionCheckedData.checked);
+  }
+
+  private void onToggleViewerCount(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.getShowLiveViewers().set(checkBoxActionCheckedData.checked);
   }
 
   private void onChangeChatOffset(SliderActionValueChangedData sliderActionChangeData) {
