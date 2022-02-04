@@ -136,7 +136,7 @@ public class ForgeEventService extends EventServiceBase<Events> {
   // writing text to the screen will place it only on top of the in-game GUI (underneath e.g. menu overlays)
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(RenderGameOverlayEvent event)
+  public void forgeEventSubscriber(RenderGameOverlayEvent.Post event) // need to subscribe to post so what we draw on top of what is already shown
   {
     // this is a bit naughty, but pretend there is no render event when the F3 screen is open.
     // we should probably just let the handlers decide for themselves if they want to render or not.
