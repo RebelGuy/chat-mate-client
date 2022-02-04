@@ -103,13 +103,15 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     // iterate current rotations to the next step
     this.advanceFrac();
     float[] current = new float[this.targetRotation.length];
+    float[] speed = new float[this.targetRotation.length];
     for (int i = 0; i < this.targetRotation.length; i++) {
       current[i] = this.getRotation(this.startRotation[i], this.targetRotation[i], this.currentFrac);
+      speed[i] = this.getSpeed(this.startRotation[i], this.targetRotation[i], this.currentFrac);
     }
 
     // render
     for (int i = 0; i < current.length; i++) {
-      this.drawReelDigit(i * (digitWidth + digitPadding), current[i], digitHeight);
+      this.drawReelDigit(i * (digitWidth + digitPadding), current[i], speed[i], digitHeight);
     }
 
     this.prevUpdate = new Date().getTime();
@@ -120,6 +122,12 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     float progress = (float)(0.5f - 0.5f * Math.cos(PI * frac));
     float distance = this.cyclic.distance(start, target);
     return this.cyclic.add(start, progress * distance);
+  }
+
+  private float getSpeed(float start, float target, float frac) {
+    float relSpeed = (float)(PI / 2 * Math.sin(PI * frac));
+    float distance = this.cyclic.distance(start, target);
+    return relSpeed * Math.abs(distance);
   }
 
   private void advanceFrac() {
@@ -146,7 +154,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     return true;
   }
 
-  private void drawReelDigit(int x, float rotation, float digitHeight) {
+  private void drawReelDigit(int x, float rotation, float speed, float digitHeight) {
     float increment = 2 * PI / 10;
     float eps = 0.01f;
 
@@ -164,28 +172,59 @@ public class LiveViewersComponent extends Box implements IHudComponent {
       // linear
       float alpha = 1 - Math.abs(strength);
 
-      // linear
+      // linear - this determines how closely the digits are spaced vertically
       // for some reason there is padding at the top of text, so the offset to the bottom appears to be much less.
       // to circumvent this, offset the bottom more
-      float offsetMultiplier = strength > 0 ? 1.33f : 0.67f;
+      float offsetMultiplier = strength > 0 ? 1 : 0.5f;
       float yOffset = offsetMultiplier * strength * digitHeight;
 
       // inverse parabola with value of 0.2 at extremities
       float scale = -(strength * strength) * 0.8f + 1;
 
-      this.drawDigit(x, yOffset, digit, scale, alpha);
+      // show motion blur if fast enough
+      boolean highSpeed = false;
+      float maxSpeed = PI * PI / 2;
+      float threshold = maxSpeed / 2;
+      if (speed > threshold) {
+        float alphaMultiplier = 0.5f;
+        float blurOffsetMultiplier = 1;
+        float blur = (speed - threshold) / threshold; // normalised
+        float blurredScale = (1 - 0.2f * blur) * scale; // up to 80% narrower
+
+        if (speed > threshold / 2) {
+          highSpeed = true;
+
+          // far, very faded
+          this.drawDigit(x, yOffset + blur * (2 * blurOffsetMultiplier), digit, blurredScale, scale, alpha * (alphaMultiplier / 2));
+          this.drawDigit(x, yOffset - blur * (2 * blurOffsetMultiplier), digit, blurredScale, scale, alpha * (alphaMultiplier / 2));
+
+          // close, slightly faded
+          this.drawDigit(x, yOffset + blur * blurOffsetMultiplier / 2, digit, blurredScale, scale, alpha * alphaMultiplier);
+          this.drawDigit(x, yOffset - blur * blurOffsetMultiplier / 2, digit, blurredScale, scale, alpha * alphaMultiplier);
+
+        } else {
+          // medium closeness, slightly faded
+          this.drawDigit(x, yOffset + blur * blurOffsetMultiplier, digit, scale, blurredScale, alpha * alphaMultiplier);
+          this.drawDigit(x, yOffset - blur * blurOffsetMultiplier, digit, scale, blurredScale, alpha * alphaMultiplier);
+        }
+      }
+
+      if (!highSpeed) {
+        // well-defined at low speeds
+        this.drawDigit(x, yOffset, digit, scale, scale, alpha);
+      }
     }
   }
 
-  private void drawDigit(float x, float y, int digit, float scale, float alpha) {
+  private void drawDigit(float x, float y, int digit, float scaleX, float scaleY, float alpha) {
     String text = String.valueOf(digit);
     float width = this.getFontRenderer().getStringWidth(text);
 
     GlStateManager.pushMatrix();
 
-    x = x + width * (1 - scale) / 2; // keep centred on its x position
+    x = x + width * (1 - scaleX) / 2; // keep centred on its x position
     GlStateManager.translate(x, y, 10);
-    GlStateManager.scale(scale, scale, scale);
+    GlStateManager.scale(scaleX, scaleY, 1);
 
     Colour color = new Colour(1, 1, 1, alpha);
     this.getFontRenderer().drawStringWithShadow(text, 0, 0, color.toSafeInt());
@@ -198,7 +237,8 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     float y = 15;
     float w = enabled ? this.getTextWidth() * this.scale : 0;
     float h = enabled ? this.getTextHeight() * this.scale : 0;
-    this.setRect(x, y, w, h);
+    this.onTranslate(x, y);
+    this.onResize(w, h, Anchor.LEFT_CENTRE);
     this.scale = this.initialScale;
     this.startRotation = new float[2];
     this.targetRotation = new float[2];

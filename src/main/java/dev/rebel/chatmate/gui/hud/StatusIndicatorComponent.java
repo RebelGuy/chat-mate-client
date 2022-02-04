@@ -87,7 +87,8 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     float y = 10;
     float w = enabled ? baseGuiSize * this.scale : 0;
     float h = enabled ? baseGuiSize * this.scale : 0;
-    this.setRect(x, y, w, h);
+    this.onTranslate(x, y);
+    this.onResize(w, h, Anchor.MIDDLE);
     this.scale = this.initialScale;
   }
 }
