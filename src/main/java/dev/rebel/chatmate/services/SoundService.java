@@ -6,31 +6,48 @@ import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.util.ResourceLocation;
 
 public class SoundService {
-    private Config config;
+  private final Minecraft minecraft;
+  private Config config;
 
-    public SoundService(Config config) {
-        // see https://minecraft.fandom.com/wiki/Sounds.json for all possible ResourceLocations
-        // testing can be done in-game with commands enabled using
-        // /tp 0 0 0
-        // /playsound <resource.location> @a 0 0 0 <volume> <pitch>
+  public SoundService(Minecraft minecraft, Config config) {
+    // see https://minecraft.fandom.com/wiki/Sounds.json for all possible ResourceLocations.
+    // there is also a list in .minecraft/assets/indexes/1.8.json
+    // testing can be done in-game with commands enabled using
+    // /playsound <resource.location> @a ~ ~ ~ <volume> <pitch>
+    // note that 0 <= volume <= 1 and 0.5 <= pitch <= 2
 
-        this.config = config;
+    this.minecraft = minecraft;
+    this.config = config;
+  }
+
+  public void playDing() {
+    this.playSound("random.successful_hit", 0.5F);
+  }
+
+  public void playButtonSound() { this.playSound("gui.button.press"); }
+
+  public void playLevelUp(float pitch) {
+    this.playSound("random.levelup", pitch);
+  }
+
+  public void playDragonKill() {
+    this.playSound("mob.enderdragon.end");
+  }
+
+  private void playSound(String resourceLocation) {
+    this.playSound(resourceLocation, 1);
+  }
+  private void playSound(String resourceLocation, float pitch) {
+    if (!this.config.getSoundEnabled().get()) {
+      return;
     }
 
-    public void playDing() {
-        this.playSound("random.successful_hit", 0.5F);
+    if (pitch < 0.5f) {
+      pitch = 0.5f;
+    } else if (pitch > 2) {
+      pitch = 2;
     }
 
-    public void playButtonSound() { this.playSound("gui.button.press"); }
-
-    private void playSound(String resourceLocation) {
-        this.playSound(resourceLocation, 1);
-    }
-    private void playSound(String resourceLocation, float pitch) {
-        if (!this.config.getSoundEnabled().get()) {
-            return;
-        }
-
-        Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation(resourceLocation), pitch));
-    }
+    this.minecraft.getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation(resourceLocation), pitch));
+  }
 }

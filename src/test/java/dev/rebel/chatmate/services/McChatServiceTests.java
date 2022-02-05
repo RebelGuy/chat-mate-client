@@ -4,6 +4,7 @@ import dev.rebel.chatmate.models.chat.GetChatResponse.Author;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
 import dev.rebel.chatmate.models.chat.PartialChatMessageType;
+import dev.rebel.chatmate.services.events.ChatMateEventService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiIngame;
@@ -25,6 +26,8 @@ public class McChatServiceTests {
   @Mock LoggingService mockLoggingService;
   @Mock FilterService mockFilterService;
   @Mock SoundService mockSoundService;
+  @Mock ChatMateEventService mockChatMateEventService;
+  @Mock MessageService mockMessageService;
 
   @Mock GuiIngame mockGuiIngame;
   @Mock FontRenderer mockFontRenderer;
@@ -42,7 +45,7 @@ public class McChatServiceTests {
     this.mockMinecraft.ingameGUI = null;
     McChatService service = this.setupService();
 
-    service.addToMcChat(null);
+    service.printStreamChatItem(null);
   }
 
   @Test
@@ -50,7 +53,7 @@ public class McChatServiceTests {
     ChatItem item = createItem(author1, text1);
     McChatService service = this.setupService();
 
-    service.addToMcChat(item);
+    service.printStreamChatItem(item);
 
     verify(this.mockFilterService).censorNaughtyWords(text1.text);
   }
@@ -61,7 +64,7 @@ public class McChatServiceTests {
     when(this.mockFontRenderer.getCharWidth(emoji1.name.charAt(0))).thenReturn(1);
     McChatService service = this.setupService();
 
-    service.addToMcChat(item);
+    service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, emoji1.name);
     verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
@@ -72,7 +75,7 @@ public class McChatServiceTests {
     ChatItem item = createItem(author1, emoji2);
     McChatService service = this.setupService();
 
-    service.addToMcChat(item);
+    service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, emoji2.label);
     verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
@@ -83,7 +86,7 @@ public class McChatServiceTests {
     ChatItem item = createItem(author1, text1, text2);
     McChatService service = this.setupService();
 
-    service.addToMcChat(item);
+    service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, text1.text + text2.text);
     verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
@@ -95,7 +98,7 @@ public class McChatServiceTests {
     when(this.mockFontRenderer.getCharWidth(emoji1.name.charAt(0))).thenReturn(1);
     McChatService service = this.setupService();
 
-    service.addToMcChat(item);
+    service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, text1.text + " " + emoji2.label + " " + emoji1.name + " " + text2.text);
     verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
@@ -112,7 +115,7 @@ public class McChatServiceTests {
     ChatItem item = createItem(author1, textRebel);
     McChatService service = this.setupService();
 
-    service.addToMcChat(item);
+    service.printStreamChatItem(item);
 
     verify(this.mockSoundService).playDing();
   }
@@ -129,7 +132,7 @@ public class McChatServiceTests {
     // just return the input
     when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArgument(0));
 
-    return new McChatService(this.mockMinecraft, this.mockLoggingService, this.mockFilterService, this.mockSoundService);
+    return new McChatService(this.mockMinecraft, this.mockLoggingService, this.mockFilterService, this.mockSoundService, this.mockChatMateEventService, this.mockMessageService);
   }
 
   // The below methods should be used for mock data creation. It sets all

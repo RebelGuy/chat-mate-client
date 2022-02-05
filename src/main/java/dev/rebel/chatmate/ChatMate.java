@@ -13,6 +13,7 @@ import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
+import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
@@ -66,8 +67,10 @@ public class ChatMate {
 
     this.ytChatService = new YtChatService(this.config, chatEndpointProxy);
 
-    SoundService soundService = new SoundService(this.config);
-    this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService);
+    SoundService soundService = new SoundService(minecraft, this.config);
+    ChatMateEventService chatMateEventService = new ChatMateEventService(config, chatMateEndpointProxy);
+    MessageService messageService = new MessageService();
+    this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService, chatMateEventService, messageService);
     StatusService statusService = new StatusService(this.config, chatMateEndpointProxy);
 
     this.renderService = new RenderService(minecraft, this.forgeEventService);
@@ -103,7 +106,7 @@ public class ChatMate {
 
   private void onNewYtChat(ChatItem[] newChat) {
     for (ChatItem chat: newChat) {
-      this.mcChatService.addToMcChat(chat);
+      this.mcChatService.printStreamChatItem(chat);
     }
   }
 }
