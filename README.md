@@ -32,6 +32,16 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 Debug partial .minecraft folder: `chat-mate-client/run/` 
 
 # Change Log
+## v1.7 - The Dashboard Update v2 [5/2/2022]
+- Added live viewer count to the HUD, which nicely animate changes in value
+- Added info messages for level-up events using the new events endpoint
+  - Levelling up a multiple of 5 will display a short static message
+  - Levelling up a multiple of 20 will display a composite semi-randomly generated message
+- Improved implementation of input events
+  - More fine-tuned dragging of HUD components
+  - Added the ability to zoom HUD components using the mouse wheel
+- Mod settings are now persisted locally
+
 ## v1.6 - The Dashboard Update [28/1/2022]
 - Added HUD overlay and screen
   - Currently displays the status indicator
