@@ -16,11 +16,12 @@ public class GetEventsResponse extends ApiResponseBase {
   public static class Event {
     public EventType type;
     public Long timestamp;
-    public Object data; // this is a LinkedTreeMap when original parsing the JSon
+    public Object data; // this is a LinkedTreeMap when originally parsing the JSON
 
     public <Data extends IEventData> Data getData(Class<Data> dataClass) {
       try {
-        Data data = new Gson().fromJson(this.data.toString(), dataClass);
+        // convert back to json, then parse using the now known object type
+        Data data = new Gson().fromJson(new Gson().toJson(this.data), dataClass);
         if (data == null) {
           throw new Exception("Could not get the event data because it could not be parsed to type " + dataClass.getSimpleName());
         } else if (data.getEventType() != this.type) {

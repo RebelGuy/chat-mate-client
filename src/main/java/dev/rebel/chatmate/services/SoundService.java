@@ -48,6 +48,11 @@ public class SoundService {
       pitch = 2;
     }
 
-    this.minecraft.getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation(resourceLocation), pitch));
+    // just in case we are trying to run this on a separate thread, which may cause a concurrency-related crash,
+    // schedule this on the minecraft thread. this goes for all actions that interact ith the mc world in some way.
+    float finalPitch = pitch;
+    this.minecraft.addScheduledTask(() -> {
+      this.minecraft.getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation(resourceLocation), finalPitch));
+    });
   }
 }
