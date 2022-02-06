@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.builder.SliderLayout;
 import dev.rebel.chatmate.gui.builder.SliderLayout.SliderAction.SliderActionValueChangedData;
 import dev.rebel.chatmate.gui.builder.TableLayout;
 import dev.rebel.chatmate.models.Config;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.fml.client.config.GuiConfig;
@@ -28,6 +29,13 @@ public class CustomGuiConfig extends GuiConfig {
     titleLine2 = "Mod Settings";
     this.config = config;
     this.config.listenAny(this::onConfigUpdate);
+  }
+
+  @Override
+  public void setWorldAndResolution(Minecraft mc, int width, int height) {
+    // for some reason only the buttonList is cleared, but not the labelList
+    this.labelList.clear();
+    super.setWorldAndResolution(mc, width, height);
   }
 
   // great tutorial: https://medium.com/@andreshj87/drawing-a-gui-screen-on-minecraft-forge-7e0059015596
