@@ -46,7 +46,7 @@ public class ChatMateEventService extends EventServiceBase<EventType> {
   private void start() {
     if (this.timer == null) {
       this.timer = new Timer();
-      this.timer.scheduleAtFixedRate(new TaskWrapper(this::makeRequest), 0, 5000);
+      this.timer.scheduleAtFixedRate(new TaskWrapper(this::makeRequest), 1000, 10000);
     }
   }
 
