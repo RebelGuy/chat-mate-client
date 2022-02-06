@@ -104,16 +104,20 @@ public class TextHelpers {
   }
 
   private static boolean isEndOfWord(char[] text, int i) {
-    return i == text.length - 1 || !isSpaceOrPunctuation(text[i]) && isSpaceOrPunctuation(text[i + 1]);
+    return i == text.length - 1 || !isWordSeparator(text[i]) && isWordSeparator(text[i + 1]);
   }
 
   private static boolean isStartOfWord(char[] text, int startAt, int i) {
-    return i == startAt || isSpaceOrPunctuation(text[i - 1]) && !isSpaceOrPunctuation(text[i]);
+    return i == startAt || isWordSeparator(text[i - 1]) && !isWordSeparator(text[i]);
   }
 
-  private static boolean isSpaceOrPunctuation(char c) {
+  /** Whether the given character is commonly used to separate one word from another, or mark the beginning/end of a word.
+   * This includes spaces, punctuations, and some special characters. */
+  private static boolean isWordSeparator(char c) {
     return c == ' ' || c == '.' || c == ',' || c == '!' || c == '?' || c == '’' || c == '\''
-        || c == '-' || c == '/' || c == ':' || c == ';' || c == '§'; // § only comes up when there is a single § at the end of the message
+        || c == '-' || c == '/' || c == ':' || c == ';'
+        || c == '§' // § only comes up when there is a single § at the end of the message
+        || c == '@'; // special case - in legitimate cases, it is either used to prefix a word or separate multiple words
   }
 
   // note: a static nested class does NOT mean that the nested class itself is static (lol), it just

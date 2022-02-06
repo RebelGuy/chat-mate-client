@@ -5,7 +5,7 @@
 # - use `*` for wildcard matches
 # - prefix a line with `+` to make a word whitelisted (will never be censored)
 # - prefix a line with `#` to make it a comment-line (obviously)
-# - use `[` and `]` to match only the beginning/end of words
+# - use `[` and `]` to match only the beginning/end of words (where words are assumed to be separated by punctuation or spaces)
 # todo: use `<` and `>` in the filter definition to extend the censor for the rest of the word in either direction, if a match is found. e.g. `<shit>`
 # todo: allow escaping special characters using `\` in the filter definition, e.g. `Hel\*o` will NOT match "Hello" but WILL match "Hel*o"
 
