@@ -30,8 +30,8 @@ public class ChatMateEventService extends EventServiceBase<EventType> {
     this.config = config;
     this.chatMateEndpointProxy = chatMateEndpointProxy;
 
-    this.config.getApiEnabled().listen(apiEnabled -> {
-      if (apiEnabled) {
+    this.config.getChatMateEnabled().listen(chatMateEnabled -> {
+      if (chatMateEnabled) {
         this.start();
       } else {
         this.stop();

@@ -10,7 +10,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.powermock.api.mockito.PowerMockito;
 
 import java.util.Date;
 import java.util.function.Consumer;
@@ -35,7 +34,7 @@ public class YtChatServiceTests {
     }};
 
     when(this.mockChatEndpointProxy.getChat(any(), any())).thenReturn(chatResponse);
-    when(this.mockConfig.getApiEnabled()).thenReturn(new StatefulEmitter(true));
+    when(this.mockConfig.getChatMateEnabled()).thenReturn(new StatefulEmitter(true));
     YtChatService chatService = new YtChatService(this.mockConfig, this.mockChatEndpointProxy);
     Consumer<ChatItem[]> mockCallback = mock(Consumer.class);
     chatService.listen(mockCallback);

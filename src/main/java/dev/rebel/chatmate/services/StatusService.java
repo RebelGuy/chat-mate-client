@@ -8,7 +8,6 @@ import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 
 import javax.annotation.Nullable;
-import java.util.Date;
 import java.util.Timer;
 
 public class StatusService {
@@ -27,8 +26,8 @@ public class StatusService {
     this.lastSuccessfulStatusResponse = null;
     this.lastStatusResponse = null;
 
-    this.config.getApiEnabled().listen(apiEnabled -> {
-      if (apiEnabled) {
+    this.config.getChatMateEnabled().listen(chatMateEnabled -> {
+      if (chatMateEnabled) {
         this.start();
       } else {
         this.stop();

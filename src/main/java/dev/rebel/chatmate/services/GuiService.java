@@ -1,6 +1,5 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.ChatMate;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.dashboard.DashboardContext;
 import dev.rebel.chatmate.gui.dashboard.DashboardScreen;
@@ -15,12 +14,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 public class GuiService {
   private final boolean isDev;
@@ -105,7 +100,7 @@ public class GuiService {
   }
 
   private RenderGameOverlay.Out onRenderGameOverlay(RenderGameOverlay.In in) {
-    if (this.config.getApiEnabled().get() && this.config.getHudEnabled().get()) {
+    if (this.config.getChatMateEnabled().get() && this.config.getHudEnabled().get()) {
       this.guiChatMateHud.renderGameOverlay();
     }
 

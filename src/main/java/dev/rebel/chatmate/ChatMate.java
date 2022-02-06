@@ -94,14 +94,14 @@ public class ChatMate {
 
     // to make our life easier, auto enable when in a dev environment
     if (this.isDev) {
-      this.config.getApiEnabled().set(true);
+      this.config.getChatMateEnabled().set(true);
     }
   }
 
   // this doesn't do anything!
   @Mod.EventHandler
   public void onFMLDeactivation(FMLModDisabledEvent event) {
-    this.config.getApiEnabled().set(false);
+    this.config.getChatMateEnabled().set(false);
   }
 
   private void onNewYtChat(ChatItem[] newChat) {

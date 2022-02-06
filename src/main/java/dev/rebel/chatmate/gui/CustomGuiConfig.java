@@ -48,8 +48,8 @@ public class CustomGuiConfig extends GuiConfig {
     int width = Math.min(300, this.width - 50); // shrink with screen, but only expand so much
     int left = this.width / 2 - width / 2; // centre table horizontally
 
-    LabelLayout apiLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable API", Color.WHITE);
-    CheckBoxLayout apiCheckbox = new CheckBoxLayout(this::onToggleApi, config.getApiEnabled()::get);
+    LabelLayout chatMateLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable ChatMate", Color.WHITE);
+    CheckBoxLayout chatMateCheckbox = new CheckBoxLayout(this::onToggleChatMate, config.getChatMateEnabled()::get);
 
     LabelLayout soundLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable Sound", Color.WHITE);
     CheckBoxLayout soundCheckbox = new CheckBoxLayout(this::onToggleSound, config.getSoundEnabled()::get);
@@ -67,7 +67,7 @@ public class CustomGuiConfig extends GuiConfig {
     SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacement()::get);
 
     this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 2, Layout.HEIGHT, Layout.VERTICAL_PADDING, Layout.HORIZONTAL_PADDING)
-        .withRow(apiLabel, apiCheckbox)
+        .withRow(chatMateLabel, chatMateCheckbox)
         .withRow(soundLabel, soundCheckbox)
         .withRow(hudLabel, hudCheckbox)
         .withRow(indicatorLabel, indicatorCheckbox)
@@ -121,8 +121,8 @@ public class CustomGuiConfig extends GuiConfig {
     }
   }
 
-  private void onToggleApi(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getApiEnabled().set(checkBoxActionCheckedData.checked);
+  private void onToggleChatMate(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.getChatMateEnabled().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleSound(CheckBoxActionCheckedData checkBoxActionCheckedData) {

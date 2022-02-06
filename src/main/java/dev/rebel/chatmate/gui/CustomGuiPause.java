@@ -64,11 +64,11 @@ public class CustomGuiPause extends GuiIngameMenu {
   }
 
   private void onClickYtButton(ButtonLayout.ButtonAction.ButtonActionClickData data) {
-    this.config.getApiEnabled().set(!this.config.getApiEnabled().get());
+    this.config.getChatMateEnabled().set(!this.config.getChatMateEnabled().get());
   }
 
   private String onRenderYtButtonText() {
-    return (this.config.getApiEnabled().get() ? "§2" : "§4") + "YT";
+    return (this.config.getChatMateEnabled().get() ? "§2" : "§4") + "YT";
   }
 
   private void onClickDashboardButton(ButtonActionClickData buttonActionClickData) {

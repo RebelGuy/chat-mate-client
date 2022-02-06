@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.services.EventEmitterService;
-import dev.rebel.chatmate.services.LoggingService;
 import dev.rebel.chatmate.services.util.Callback;
 
 import java.util.ArrayList;
@@ -14,8 +13,8 @@ public class Config {
 
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
-  private final StatefulEmitter<Boolean> apiEnabled;
-  public StatefulEmitter<Boolean> getApiEnabled() { return this.apiEnabled; }
+  private final StatefulEmitter<Boolean> chatMateEnabled;
+  public StatefulEmitter<Boolean> getChatMateEnabled() { return this.chatMateEnabled; }
 
   private final StatefulEmitter<Boolean> soundEnabled;
   public StatefulEmitter<Boolean> getSoundEnabled() { return this.soundEnabled; }
@@ -35,7 +34,7 @@ public class Config {
   public Config(ConfigPersistorService configPersistorService) {
     this.configPersistorService = configPersistorService;
 
-    this.apiEnabled = new StatefulEmitter<>(false, this::onUpdate);
+    this.chatMateEnabled = new StatefulEmitter<>(false, this::onUpdate);
     this.soundEnabled = new StatefulEmitter<>(true, this::onUpdate);
     this.chatVerticalDisplacement = new StatefulEmitter<>(10, this::onUpdate);
     this.hudEnabled = new StatefulEmitter<>(true, this::onUpdate);
