@@ -15,10 +15,15 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class GuiService {
+  private final boolean isDev;
   private final Config config;
   private final ForgeEventService forgeEventService;
   private final MouseEventService mouseEventService;
@@ -27,7 +32,8 @@ public class GuiService {
   private final GuiChatMateHud guiChatMateHud;
   private final SoundService soundService;
 
-  public GuiService(Config config, ForgeEventService forgeEventService, MouseEventService mouseEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud, SoundService soundService) {
+  public GuiService(boolean isDev, Config config, ForgeEventService forgeEventService, MouseEventService mouseEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud, SoundService soundService) {
+    this.isDev = isDev;
     this.config = config;
     this.forgeEventService = forgeEventService;
     this.mouseEventService = mouseEventService;
@@ -81,7 +87,9 @@ public class GuiService {
     // HACK: we need to get this private field, otherwise pressing "/" no longer pre-fills the chat window
     String defaultValue = "";
     try {
-      Field field = GuiChat.class.getDeclaredField("defaultInputFieldText");
+      // obfuscated field name found using trial and error
+      String fieldName = this.isDev ? "defaultInputFieldText" : "field_146409_v";
+      Field field = GuiChat.class.getDeclaredField(fieldName);
       field.setAccessible(true); // otherwise we get an IllegalAccessException
       defaultValue = (String)field.get(guiChat);
     } catch (Exception e) { throw new RuntimeException("This should never happen"); }
