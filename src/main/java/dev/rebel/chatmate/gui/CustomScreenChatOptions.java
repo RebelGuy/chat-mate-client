@@ -32,7 +32,7 @@ public class CustomScreenChatOptions extends ScreenChatOptions {
     int right = secondButton.xPosition + buttonW;
     int width = right - left;
 
-    SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ buttonW + "px" }, "Chat height: ", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacement()::get);
+    SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ buttonW + "px" }, "Chat height: ", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacementEmitter()::get);
     this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 1, buttonH, 1, 1)
         .withRow(chatOffsetSlider)
         .instantiate();
@@ -72,6 +72,6 @@ public class CustomScreenChatOptions extends ScreenChatOptions {
   }
 
   private void onChangeChatOffset(SliderLayout.SliderAction.SliderActionValueChangedData sliderActionChangeData) {
-    this.config.getChatVerticalDisplacement().set(sliderActionChangeData.newValue);
+    this.config.getChatVerticalDisplacementEmitter().set(sliderActionChangeData.newValue);
   }
 }

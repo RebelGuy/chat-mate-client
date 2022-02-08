@@ -49,22 +49,22 @@ public class CustomGuiConfig extends GuiConfig {
     int left = this.width / 2 - width / 2; // centre table horizontally
 
     LabelLayout chatMateLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable ChatMate", Color.WHITE);
-    CheckBoxLayout chatMateCheckbox = new CheckBoxLayout(this::onToggleChatMate, config.getChatMateEnabled()::get);
+    CheckBoxLayout chatMateCheckbox = new CheckBoxLayout(this::onToggleChatMate, config.getChatMateEnabledEmitter()::get);
 
     LabelLayout soundLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable Sound", Color.WHITE);
-    CheckBoxLayout soundCheckbox = new CheckBoxLayout(this::onToggleSound, config.getSoundEnabled()::get);
+    CheckBoxLayout soundCheckbox = new CheckBoxLayout(this::onToggleSound, config.getSoundEnabledEmitter()::get);
 
     LabelLayout hudLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable ChatMate HUD", Color.WHITE);
-    CheckBoxLayout hudCheckbox = new CheckBoxLayout(this::onToggleHud, config.getHudEnabled()::get);
+    CheckBoxLayout hudCheckbox = new CheckBoxLayout(this::onToggleHud, config.getHudEnabledEmitter()::get);
 
     LabelLayout indicatorLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Status Indicator", Color.WHITE);
-    CheckBoxLayout indicatorCheckbox = new CheckBoxLayout(this::onToggleIndicator, config.getShowStatusIndicator()::get);
+    CheckBoxLayout indicatorCheckbox = new CheckBoxLayout(this::onToggleIndicator, config.getShowStatusIndicatorEmitter()::get);
 
     LabelLayout viewerCountLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Viewer Count", Color.WHITE);
-    CheckBoxLayout viewerCountCheckbox = new CheckBoxLayout(this::onToggleViewerCount, config.getShowLiveViewers()::get);
+    CheckBoxLayout viewerCountCheckbox = new CheckBoxLayout(this::onToggleViewerCount, config.getShowLiveViewersEmitter()::get);
 
     LabelLayout chatOffsetLabel = new LabelLayout(this.fontRendererObj, new String[] { "0%", "100%" }, () -> "Chat Height Offset", Color.WHITE);
-    SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacement()::get);
+    SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacementEmitter()::get);
 
     this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 2, Layout.HEIGHT, Layout.VERTICAL_PADDING, Layout.HORIZONTAL_PADDING)
         .withRow(chatMateLabel, chatMateCheckbox)
@@ -122,26 +122,26 @@ public class CustomGuiConfig extends GuiConfig {
   }
 
   private void onToggleChatMate(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getChatMateEnabled().set(checkBoxActionCheckedData.checked);
+    this.config.getChatMateEnabledEmitter().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleSound(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getSoundEnabled().set(checkBoxActionCheckedData.checked);
+    this.config.getSoundEnabledEmitter().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleHud(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getHudEnabled().set(checkBoxActionCheckedData.checked);
+    this.config.getHudEnabledEmitter().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleIndicator(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getShowStatusIndicator().set(checkBoxActionCheckedData.checked);
+    this.config.getShowStatusIndicatorEmitter().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleViewerCount(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getShowLiveViewers().set(checkBoxActionCheckedData.checked);
+    this.config.getShowLiveViewersEmitter().set(checkBoxActionCheckedData.checked);
   }
 
   private void onChangeChatOffset(SliderActionValueChangedData sliderActionChangeData) {
-    this.config.getChatVerticalDisplacement().set(sliderActionChangeData.newValue);
+    this.config.getChatVerticalDisplacementEmitter().set(sliderActionChangeData.newValue);
   }
 }

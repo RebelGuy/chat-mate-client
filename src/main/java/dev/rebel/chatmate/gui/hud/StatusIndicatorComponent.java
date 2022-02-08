@@ -25,8 +25,8 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
         guiScaleMultiplier,
         10,
         10,
-        config.getShowStatusIndicator().get() ? baseGuiSize * initialScale : 0,
-        config.getShowStatusIndicator().get() ? baseGuiSize * initialScale : 0,
+        config.getShowStatusIndicatorEmitter().get() ? baseGuiSize * initialScale : 0,
+        config.getShowStatusIndicatorEmitter().get() ? baseGuiSize * initialScale : 0,
         true,
         true
     );
@@ -44,7 +44,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.statusIndicators.put(SimpleStatus.YOUTUBE_UNREACHABLE, new ImageComponent(Asset.STATUS_INDICATOR_ORANGE, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.SERVER_UNREACHABLE, new ImageComponent(Asset.STATUS_INDICATOR_RED, x, y, scale, canRescale, canTranslate));
 
-    this.config.getShowStatusIndicator().listen(this::onShowStatusIndicator);
+    this.config.getShowStatusIndicatorEmitter().listen(this::onShowStatusIndicator);
   }
 
   @Override
@@ -67,7 +67,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
 
   @Override
   public void render(RenderContext context) {
-    if (!this.config.getShowStatusIndicator().get()) {
+    if (!this.config.getShowStatusIndicatorEmitter().get()) {
       return;
     }
 

@@ -6,8 +6,6 @@ import dev.rebel.chatmate.services.StatusService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.Color;
 
 import javax.annotation.Nullable;
 import java.util.Date;
@@ -38,7 +36,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.scale = initialScale;
     this.minecraft = minecraft;
 
-    this.config.getShowLiveViewers().listen(this::onShowLiveViewers);
+    this.config.getShowLiveViewersEmitter().listen(this::onShowLiveViewers);
   }
 
   @Override
@@ -61,7 +59,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   @Override
   public void render(RenderContext context) {
-    if (!this.config.getShowLiveViewers().get() || this.getFontRenderer() == null) {
+    if (!this.config.getShowLiveViewersEmitter().get() || this.getFontRenderer() == null) {
       return;
     }
 

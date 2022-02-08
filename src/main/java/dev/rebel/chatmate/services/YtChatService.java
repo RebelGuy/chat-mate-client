@@ -27,7 +27,7 @@ public class YtChatService extends EventEmitterService<ChatItem[]> {
     this.config = config;
     this.chatEndpointProxy = chatEndpointProxy;
 
-    this.config.getChatMateEnabled().listen(chatMateEnabled -> {
+    this.config.getChatMateEnabledEmitter().listen(chatMateEnabled -> {
       if (chatMateEnabled) {
         this.start();
       } else {

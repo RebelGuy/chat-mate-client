@@ -26,7 +26,7 @@ public class StatusService {
     this.lastSuccessfulStatusResponse = null;
     this.lastStatusResponse = null;
 
-    this.config.getChatMateEnabled().listen(chatMateEnabled -> {
+    this.config.getChatMateEnabledEmitter().listen(chatMateEnabled -> {
       if (chatMateEnabled) {
         this.start();
       } else {

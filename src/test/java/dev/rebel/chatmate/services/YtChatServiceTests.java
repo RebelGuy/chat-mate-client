@@ -34,7 +34,7 @@ public class YtChatServiceTests {
     }};
 
     when(this.mockChatEndpointProxy.getChat(any(), any())).thenReturn(chatResponse);
-    when(this.mockConfig.getChatMateEnabled()).thenReturn(new StatefulEmitter(true));
+    when(this.mockConfig.getChatMateEnabledEmitter()).thenReturn(new StatefulEmitter(true));
     YtChatService chatService = new YtChatService(this.mockConfig, this.mockChatEndpointProxy);
     Consumer<ChatItem[]> mockCallback = mock(Consumer.class);
     chatService.listen(mockCallback);

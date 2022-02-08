@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.models;
 
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
 import dev.rebel.chatmate.services.EventEmitterService;
 import dev.rebel.chatmate.services.util.Callback;
 
@@ -9,27 +11,27 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class Config {
-  private final ConfigPersistorService configPersistorService;
+  private final ConfigPersistorService<SerialisedConfigV0> configPersistorService;
 
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
   private final StatefulEmitter<Boolean> chatMateEnabled;
-  public StatefulEmitter<Boolean> getChatMateEnabled() { return this.chatMateEnabled; }
+  public StatefulEmitter<Boolean> getChatMateEnabledEmitter() { return this.chatMateEnabled; }
 
   private final StatefulEmitter<Boolean> soundEnabled;
-  public StatefulEmitter<Boolean> getSoundEnabled() { return this.soundEnabled; }
+  public StatefulEmitter<Boolean> getSoundEnabledEmitter() { return this.soundEnabled; }
 
   private final StatefulEmitter<Integer> chatVerticalDisplacement;
-  public StatefulEmitter<Integer> getChatVerticalDisplacement() { return this.chatVerticalDisplacement; }
+  public StatefulEmitter<Integer> getChatVerticalDisplacementEmitter() { return this.chatVerticalDisplacement; }
 
   private final StatefulEmitter<Boolean> hudEnabled; // todo: add more hud options, preferably in its own menu
-  public StatefulEmitter<Boolean> getHudEnabled() { return this.hudEnabled; }
+  public StatefulEmitter<Boolean> getHudEnabledEmitter() { return this.hudEnabled; }
 
   private final StatefulEmitter<Boolean> showStatusIndicator;
-  public StatefulEmitter<Boolean> getShowStatusIndicator() { return this.showStatusIndicator; }
+  public StatefulEmitter<Boolean> getShowStatusIndicatorEmitter() { return this.showStatusIndicator; }
 
   private final StatefulEmitter<Boolean> showLiveViewers;
-  public StatefulEmitter<Boolean> getShowLiveViewers() { return this.showLiveViewers; }
+  public StatefulEmitter<Boolean> getShowLiveViewersEmitter() { return this.showLiveViewers; }
 
   public Config(ConfigPersistorService configPersistorService) {
     this.configPersistorService = configPersistorService;
@@ -56,7 +58,7 @@ public class Config {
   }
 
   private void load() {
-    SerialisedConfig loaded = this.configPersistorService.load();
+    SerialisedConfigV0 loaded = this.configPersistorService.load();
     if (loaded != null) {
       this.soundEnabled.set(loaded.soundEnabled);
       this.chatVerticalDisplacement.set(loaded.chatVerticalDisplacement);
@@ -67,7 +69,7 @@ public class Config {
   }
 
   private void save() {
-    SerialisedConfig serialisedConfig = new SerialisedConfig(
+    SerialisedConfigV0 serialisedConfig = new SerialisedConfigV0(
       this.soundEnabled.get(),
       this.chatVerticalDisplacement.get(),
       this.hudEnabled.get(),

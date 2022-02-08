@@ -49,7 +49,7 @@ public class CustomGuiChat extends GuiChat {
   // that the chat window's bottom value is a fixed y-value. so we have to transform the mouseY value to the coordinate
   // it would be if chatOffset was zero.
   private IChatComponent getChatComponent(int mouseX, int mouseY) {
-    int offset = this.config.getChatVerticalDisplacement().get();
+    int offset = this.config.getChatVerticalDisplacementEmitter().get();
 
     // the offset is in gui coordinate units, which may be scaled, but we need to convert it to screen coordinate units.
     ScaledResolution scaledResolution = new ScaledResolution(this.mc);

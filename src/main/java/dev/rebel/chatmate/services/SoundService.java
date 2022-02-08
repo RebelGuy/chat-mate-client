@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.models.Config;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.util.ResourceLocation;
@@ -41,7 +40,7 @@ public class SoundService {
     this.playSound(resourceLocation, 1);
   }
   private void playSound(String resourceLocation, float pitch) {
-    if (!this.config.getSoundEnabled().get()) {
+    if (!this.config.getSoundEnabledEmitter().get()) {
       return;
     }
 
