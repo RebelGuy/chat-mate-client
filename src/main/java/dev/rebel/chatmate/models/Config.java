@@ -11,6 +11,13 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class Config {
+  // Since config settings are stored locally, whenever you make changes to the Config that affect the serialised model,
+  // you must also change the schema. This is an additive process, and existing serialised models must not be changed.
+  // 1. Create new model version that extends `Version`
+  // 2. Update the generic type of ConfigPersistorService
+  // 3. Bump the ConfigPersistorService.CURRENT_VERSION
+  // 4. Add a new migration file
+  // 5. Use the new migration file when loading the serialised config
   private final ConfigPersistorService<SerialisedConfigV0> configPersistorService;
 
   /** Listeners are notified whenever any change has been made to the config. */
