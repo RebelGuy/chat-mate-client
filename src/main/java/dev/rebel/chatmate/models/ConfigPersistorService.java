@@ -1,21 +1,21 @@
 package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.services.FileService;
-import dev.rebel.chatmate.services.LoggingService;
+import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 
 import javax.annotation.Nullable;
 import java.util.Timer;
 
 public class ConfigPersistorService {
-  private final LoggingService loggingService;
+  private final LogService logService;
   private final FileService fileService;
   private final String fileName;
   private @Nullable Timer timer;
   private final int debounceTime = 500;
 
-  public ConfigPersistorService(LoggingService loggingService, FileService fileService) {
-    this.loggingService = loggingService;
+  public ConfigPersistorService(LogService logService, FileService fileService) {
+    this.logService = logService;
     this.fileService = fileService;
     this.fileName = "config.json";
     this.timer = null;
@@ -25,7 +25,7 @@ public class ConfigPersistorService {
     try {
       return this.fileService.readObjectFromFile(this.fileName, SerialisedConfig.class);
     } catch (Exception e) {
-      this.loggingService.log("[ConfigPersistorService] Unable to load configuration:", e.getMessage());
+      this.logService.logError(this,"Unable to load configuration:", e.getMessage());
       return null;
     }
   }
@@ -43,7 +43,7 @@ public class ConfigPersistorService {
     try {
       this.fileService.writeObjectToFile(this.fileName, serialised);
     } catch (Exception e) {
-      this.loggingService.log("[ConfigPersistorService] Unable to save configuration:", e.getMessage());
+      this.logService.logError(this,"Unable to save configuration:", e.getMessage());
     }
   }
 }

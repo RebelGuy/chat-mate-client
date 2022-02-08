@@ -2,7 +2,7 @@ package dev.rebel.chatmate.proxy;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import dev.rebel.chatmate.services.LoggingService;
+import dev.rebel.chatmate.services.LogService;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -12,30 +12,42 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 public class EndpointProxy {
-  private final LoggingService loggingService;
+  private final LogService logService;
   private final String basePath;
   private final Gson gson;
 
+  private int requestId = 0;
 
-  public EndpointProxy(LoggingService loggingService, String basePath) {
-    this.loggingService = loggingService;
+  public EndpointProxy(LogService logService, String basePath) {
+    this.logService = logService;
     this.basePath = basePath;
     this.gson = new Gson();
   }
 
   public <T extends ApiResponseBase> T makeRequest(Method method, String path, Class<T> returnClass) throws ConnectException, Exception {
+    int id = ++this.requestId;
+    this.logService.logApiRequest(this, id, method, path);
+
+    Exception ex = null;
+    String result;
     try {
-      String response = downloadString(method, path);
-      return this.parseResponse(response, returnClass);
+      result = downloadString(method, path);
     } catch (ConnectException e) {
-      this.loggingService.log("[EndpointProxy] Failed to connect to the server - is it running? " + e.getMessage());
-      throw e;
+      result = "Failed to connect to the server - is it running? " + e.getMessage();
+      ex = e;
     } catch (JsonSyntaxException e) {
-      this.loggingService.log("[EndpointProxy] Failed to parse JSON response to " + returnClass.getSimpleName() + " - has the schema changed? " + e.getMessage());
-      throw e;
+      result = "Failed to parse JSON response to " + returnClass.getSimpleName() + " - has the schema changed? " + e.getMessage();
+      ex = e;
     } catch (Exception e) {
-      this.loggingService.log("[EndpointProxy] Failed to get response. " + e.getMessage());
-      throw e;
+      result = "Failed to get response. " + e.getMessage();
+      ex = e;
+    }
+
+    this.logService.logApiResponse(this, id, ex != null, result);
+    if (ex == null) {
+      return this.parseResponse(result, returnClass);
+    } else {
+      throw ex;
     }
   }
 

@@ -46,20 +46,21 @@ public class ChatMate {
     String currentDir = System.getProperty("user.dir").replace("\\", "/");
     String dataDir = currentDir + "/mods/ChatMate";
     FileService fileService = new FileService(dataDir);
-    LoggingService loggingService = new LoggingService(fileService, "log.log", false);
+    LogService logService = new LogService(fileService, false);
 
     Minecraft minecraft = Minecraft.getMinecraft();
+    MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService);
 
-    ConfigPersistorService configPersistorService = new ConfigPersistorService(loggingService, fileService);
+    ConfigPersistorService configPersistorService = new ConfigPersistorService(logService, fileService);
     this.config = new Config(configPersistorService);
-    this.forgeEventService = new ForgeEventService(minecraft);
-    this.mouseEventService = new MouseEventService(forgeEventService, minecraft);
-    this.keyboardEventService = new KeyboardEventService(forgeEventService);
+    this.forgeEventService = new ForgeEventService(logService, minecraft);
+    this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft);
+    this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
 
     String apiPath = "http://localhost:3010/api";
-    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(loggingService, apiPath);
-    ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(loggingService, apiPath);
+    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiPath);
+    ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -67,10 +68,10 @@ public class ChatMate {
 
     this.ytChatService = new YtChatService(this.config, chatEndpointProxy);
 
-    SoundService soundService = new SoundService(minecraft, this.config);
-    ChatMateEventService chatMateEventService = new ChatMateEventService(config, chatMateEndpointProxy);
+    SoundService soundService = new SoundService(logService, minecraftProxyService, this.config);
+    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy);
     MessageService messageService = new MessageService();
-    this.mcChatService = new McChatService(minecraft, loggingService, filterService, soundService, chatMateEventService, messageService);
+    this.mcChatService = new McChatService(minecraftProxyService, logService, filterService, soundService, chatMateEventService, messageService);
     StatusService statusService = new StatusService(this.config, chatMateEndpointProxy);
 
     this.renderService = new RenderService(minecraft, this.forgeEventService);

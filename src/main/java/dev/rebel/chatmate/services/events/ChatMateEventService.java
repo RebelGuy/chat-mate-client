@@ -6,6 +6,7 @@ import dev.rebel.chatmate.models.chatMate.GetEventsResponse.Event;
 import dev.rebel.chatmate.models.chatMate.GetEventsResponse.EventType;
 import dev.rebel.chatmate.models.chatMate.GetEventsResponse.LevelUpData;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 
@@ -24,9 +25,8 @@ public class ChatMateEventService extends EventServiceBase<EventType> {
   private @Nullable Long pauseUntil = null;
   private boolean requestInProgress = false;
 
-  public ChatMateEventService(Config config, ChatMateEndpointProxy chatMateEndpointProxy) {
-    super(EventType.class);
-
+  public ChatMateEventService(LogService logService, Config config, ChatMateEndpointProxy chatMateEndpointProxy) {
+    super(EventType.class, logService);
     this.config = config;
     this.chatMateEndpointProxy = chatMateEndpointProxy;
 
@@ -71,12 +71,13 @@ public class ChatMateEventService extends EventServiceBase<EventType> {
     } catch (Exception ignored) { }
 
     if (response != null) {
+      EventType eventType = EventType.LEVEL_UP;
       this.lastTimestamp = response.timestamp;
       for (Event event : response.events) {
-        for (EventHandler<LevelUpEventData.In, LevelUpEventData.Out, LevelUpEventData.Options> handler : this.getListeners(EventType.LEVEL_UP, LevelUpEventData.class)) {
+        for (EventHandler<LevelUpEventData.In, LevelUpEventData.Out, LevelUpEventData.Options> handler : this.getListeners(eventType, LevelUpEventData.class)) {
           LevelUpData data = event.getData(LevelUpData.class);
           LevelUpEventData.In eventIn = new LevelUpEventData.In(new Date(event.timestamp), data.channelName, data.oldLevel, data.newLevel);
-          LevelUpEventData.Out eventOut = handler.callback.apply(eventIn);
+          LevelUpEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
         }
       }
     }

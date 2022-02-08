@@ -5,8 +5,6 @@ import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
 import dev.rebel.chatmate.models.chat.PartialChatMessageType;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
-import dev.rebel.chatmate.services.events.models.LevelUpEventData.In;
-import dev.rebel.chatmate.services.events.models.LevelUpEventData.Out;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
@@ -17,7 +15,6 @@ import net.minecraft.util.*;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static dev.rebel.chatmate.models.Styles.*;
@@ -25,21 +22,21 @@ import static dev.rebel.chatmate.services.util.ChatHelpers.joinComponents;
 import static dev.rebel.chatmate.services.util.ChatHelpers.styledTextWithMask;
 
 public class McChatService {
-  private final Minecraft minecraft;
-  private final LoggingService loggingService;
+  private final MinecraftProxyService minecraftProxyService;
+  private final LogService logService;
   private final FilterService filterService;
   private final SoundService soundService;
   private final ChatMateEventService chatMateEventService;
   private final MessageService messageService;
 
-  public McChatService(Minecraft minecraft,
-                       LoggingService loggingService,
+  public McChatService(MinecraftProxyService minecraftProxyService,
+                       LogService logService,
                        FilterService filterService,
                        SoundService soundService,
                        ChatMateEventService chatMateEventService,
                        MessageService messageService) {
-    this.minecraft = minecraft;
-    this.loggingService = loggingService;
+    this.minecraftProxyService = minecraftProxyService;
+    this.logService = logService;
     this.filterService = filterService;
     this.soundService = soundService;
     this.chatMateEventService = chatMateEventService;
@@ -49,38 +46,35 @@ public class McChatService {
   }
 
   public void printStreamChatItem(ChatItem item) {
-    GuiIngame gui = this.minecraft.ingameGUI;
+    if (!this.minecraftProxyService.canPrintChatMessage()) {
+      return;
+    }
 
-    if (gui != null) {
-      try {
-        Integer lvl = item.author.level;
-        IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
-        IChatComponent rank = styledText("VIEWER", VIEWER_RANK_STYLE);
-        IChatComponent player = styledText(item.author.name, VIEWER_NAME_STYLE);
-        McChatResult mcChatResult = this.ytChatToMcChat(item, gui.getFontRenderer());
+    try {
+      Integer lvl = item.author.level;
+      IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
+      IChatComponent rank = styledText("VIEWER", VIEWER_RANK_STYLE);
+      IChatComponent player = styledText(item.author.name, VIEWER_NAME_STYLE);
+      McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
 
-        ArrayList<IChatComponent> components = new ArrayList<>();
-        components.add(level);
-        components.add(rank);
-        components.add(player);
-        components.add(joinComponents("", mcChatResult.chatComponents));
-        IChatComponent result = joinComponents(" ", components);
+      ArrayList<IChatComponent> components = new ArrayList<>();
+      components.add(level);
+      components.add(rank);
+      components.add(player);
+      components.add(joinComponents("", mcChatResult.chatComponents));
+      IChatComponent message = joinComponents(" ", components);
 
-        gui.getChatGUI().printChatMessage(result);
-
-        if (mcChatResult.includesMention) {
-          this.soundService.playDing();
-        }
-      } catch (Exception e) {
-        // ignore error because it's not critical
-        this.loggingService.log("[McChatService] Could not print chat message: " + e.getMessage());
+      this.minecraftProxyService.tryPrintChatMessage("YouTube chat", message);
+      if (mcChatResult.includesMention) {
+        this.soundService.playDing();
       }
+    } catch (Exception e) {
+      this.logService.logError(this, String.format("Could not print YouTube chat message with id '%s': %s", item.id, e.getMessage()));
     }
   }
 
   public LevelUpEventData.Out onLevelUp(LevelUpEventData.In in) {
-    GuiIngame gui = this.minecraft.ingameGUI;
-    if (gui == null || in.newLevel == 0 || in.newLevel % 5 != 0) {
+    if (!this.minecraftProxyService.canPrintChatMessage() || in.newLevel == 0 || in.newLevel % 5 != 0) {
       return new LevelUpEventData.Out();
     }
 
@@ -94,10 +88,9 @@ public class McChatService {
         this.soundService.playLevelUp(2);
       }
 
-      gui.getChatGUI().printChatMessage(message);
+      this.minecraftProxyService.tryPrintChatMessage("Level up", message);
     } catch (Exception e) {
-      // ignore error because it's not critical
-      this.loggingService.log("[McChatService] Could not print level up message: " + e.getMessage());
+      this.logService.logError(this, String.format("Could not print level up message for '%s': %s", in.channelName, e.getMessage()));
     }
 
     return new LevelUpEventData.Out();
@@ -160,7 +153,7 @@ public class McChatService {
     return new McChatResult(components, includesMention);
   }
 
-  private class McChatResult {
+  private static class McChatResult {
     public final List<IChatComponent> chatComponents;
     public final boolean includesMention;
 

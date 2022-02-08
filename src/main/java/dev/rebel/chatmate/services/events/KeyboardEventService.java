@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services.events;
 
+import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.KeyboardEventService.Events;
 import dev.rebel.chatmate.services.events.models.InputEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
@@ -20,8 +21,8 @@ public class KeyboardEventService extends EventServiceBase<Events> {
 
   private Map<Integer, Character> currentlyHeldDown = new HashMap<>();
 
-  public KeyboardEventService(ForgeEventService forgeEventService) {
-    super(Events.class);
+  public KeyboardEventService(LogService logService, ForgeEventService forgeEventService) {
+    super(Events.class, logService);
     this.forgeEventService = forgeEventService;
 
     // it's possible onRenderTick is not the correct event to listen to - if it doesn't work, try
@@ -68,7 +69,7 @@ public class KeyboardEventService extends EventServiceBase<Events> {
         continue;
       }
 
-      Out eventOut = handler.callback.apply(eventIn);
+      Out eventOut = this.safeDispatch(event, handler, eventIn);
 
       if (eventOut.handlerAction == null) {
         continue;

@@ -2,21 +2,24 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.models.Config;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.util.ResourceLocation;
 
 public class SoundService {
-  private final Minecraft minecraft;
-  private Config config;
+  private final LogService logService;
+  private final MinecraftProxyService minecraftProxyService;
+  private final Config config;
 
-  public SoundService(Minecraft minecraft, Config config) {
+  public SoundService(LogService logService, MinecraftProxyService minecraftProxyService, Config config) {
     // see https://minecraft.fandom.com/wiki/Sounds.json for all possible ResourceLocations.
     // there is also a list in .minecraft/assets/indexes/1.8.json
     // testing can be done in-game with commands enabled using
     // /playsound <resource.location> @a ~ ~ ~ <volume> <pitch>
     // note that 0 <= volume <= 1 and 0.5 <= pitch <= 2
 
-    this.minecraft = minecraft;
+    this.logService = logService;
+    this.minecraftProxyService = minecraftProxyService;
     this.config = config;
   }
 
@@ -48,11 +51,8 @@ public class SoundService {
       pitch = 2;
     }
 
-    // just in case we are trying to run this on a separate thread, which may cause a concurrency-related crash,
-    // schedule this on the minecraft thread. this goes for all actions that interact ith the mc world in some way.
-    float finalPitch = pitch;
-    this.minecraft.addScheduledTask(() -> {
-      this.minecraft.getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation(resourceLocation), finalPitch));
-    });
+    this.logService.logInfo(this, "Playing sound", resourceLocation, "with pitch", pitch);
+    ISound sound = PositionedSoundRecord.create(new ResourceLocation(resourceLocation), pitch);
+    this.minecraftProxyService.playSound(sound);
   }
 }

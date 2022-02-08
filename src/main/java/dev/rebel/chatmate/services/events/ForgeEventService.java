@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services.events;
 
+import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService.Events;
 import dev.rebel.chatmate.services.events.models.*;
 import dev.rebel.chatmate.services.events.models.EventData.EventIn;
@@ -31,8 +32,8 @@ public class ForgeEventService extends EventServiceBase<Events> {
   private Integer mouseStartX = null;
   private Integer mouseStartY = null;
 
-  public ForgeEventService(Minecraft minecraft) {
-    super(Events.class);
+  public ForgeEventService(LogService logService, Minecraft minecraft) {
+    super(Events.class, logService);
     this.minecraft = minecraft;
   }
 
@@ -100,7 +101,7 @@ public class ForgeEventService extends EventServiceBase<Events> {
     boolean guiReplaced = false;
     for (EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options> handler : this.getListeners(eventType, OpenGui.class)) {
       OpenGui.In eventIn = new OpenGui.In(event.gui, guiReplaced);
-      OpenGui.Out eventOut = handler.callback.apply(eventIn);
+      OpenGui.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
 
       if (eventOut != null && eventOut.shouldReplaceGui) {
         guiReplaced = true;
@@ -144,10 +145,11 @@ public class ForgeEventService extends EventServiceBase<Events> {
       return;
     }
 
-    for (EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options> handler : this.getListeners(Events.RenderGameOverlay, RenderGameOverlay.class)) {
+    Events eventType = Events.RenderGameOverlay;
+    for (EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options> handler : this.getListeners(eventType, RenderGameOverlay.class)) {
       if (handler.options.subscribeToTypes.contains(event.type)) {
         RenderGameOverlay.In eventIn = new RenderGameOverlay.In(event.type);
-        RenderGameOverlay.Out eventOut = handler.callback.apply(eventIn);
+        RenderGameOverlay.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
       }
     }
   }
@@ -155,12 +157,13 @@ public class ForgeEventService extends EventServiceBase<Events> {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(RenderGameOverlayEvent.Chat event) {
+    Events eventType = Events.RenderChatGameOverlay;
     int posX = event.posX;
     int posY = event.posY;
 
-    for (EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options> handler : this.getListeners(Events.RenderChatGameOverlay, RenderChatGameOverlay.class)) {
+    for (EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options> handler : this.getListeners(eventType, RenderChatGameOverlay.class)) {
       RenderChatGameOverlay.In eventIn = new RenderChatGameOverlay.In(posX, posY);
-      RenderChatGameOverlay.Out eventOut = handler.callback.apply(eventIn);
+      RenderChatGameOverlay.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
 
       if (eventOut.newPosX != null) {
         posX = eventOut.newPosX;
@@ -179,18 +182,20 @@ public class ForgeEventService extends EventServiceBase<Events> {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(TickEvent.RenderTickEvent event) {
-    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(Events.RenderTick, Tick.class)) {
+    Events eventType = Events.RenderTick;
+    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(eventType, Tick.class)) {
       Tick.In eventIn = new Tick.In();
-      Tick.Out eventOut = handler.callback.apply(eventIn);
+      Tick.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
     }
   }
 
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(TickEvent.ClientTickEvent event) {
-    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(Events.ClientTick, Tick.class)) {
+    Events eventType = Events.ClientTick;
+    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(eventType, Tick.class)) {
       Tick.In eventIn = new Tick.In();
-      Tick.Out eventOut = (Tick.Out)handler.callback.apply(eventIn);
+      Tick.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
     }
   }
 
@@ -200,11 +205,12 @@ public class ForgeEventService extends EventServiceBase<Events> {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(GuiScreenEvent.MouseInputEvent.Pre event) {
-    for (EventHandler<InputEventData.In, InputEventData.Out, InputEventData.Options> handler : this.getListeners(Events.GuiScreenMouse, InputEventData.class)) {
+    Events eventType = Events.GuiScreenMouse;
+    for (EventHandler<InputEventData.In, InputEventData.Out, InputEventData.Options> handler : this.getListeners(eventType, InputEventData.class)) {
       InputEventData.In eventIn = new InputEventData.In();
-      InputEventData.Out eventOut = handler.callback.apply(eventIn);
+      InputEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
 
-      if (eventOut.cancelled) {
+      if (eventOut != null && eventOut.cancelled) {
         event.setCanceled(true);
         return;
       }
@@ -214,11 +220,12 @@ public class ForgeEventService extends EventServiceBase<Events> {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-    for (EventHandler<InputEventData.In, InputEventData.Out, InputEventData.Options> handler : this.getListeners(Events.GuiScreenKeyboard, InputEventData.class)) {
+    Events eventType = Events.GuiScreenKeyboard;
+    for (EventHandler<InputEventData.In, InputEventData.Out, InputEventData.Options> handler : this.getListeners(eventType, InputEventData.class)) {
       InputEventData.In eventIn = new InputEventData.In();
-      InputEventData.Out eventOut = handler.callback.apply(eventIn);
+      InputEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
 
-      if (eventOut.cancelled) {
+      if (eventOut != null && eventOut.cancelled) {
         event.setCanceled(true);
         return;
       }

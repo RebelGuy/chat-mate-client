@@ -5,7 +5,6 @@ import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
 import dev.rebel.chatmate.models.chat.PartialChatMessageType;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.gui.GuiNewChat;
@@ -16,22 +15,20 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
 
+import static org.mockito.Mockito.*;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(MockitoJUnitRunner.class) // this lets us use @Mock for auto-initialising mock objects
 public class McChatServiceTests {
-  @Mock Minecraft mockMinecraft;
-  @Mock LoggingService mockLoggingService;
+  @Mock MinecraftProxyService mockMinecraftProxyService;
+  @Mock LogService mockLogService;
   @Mock FilterService mockFilterService;
   @Mock SoundService mockSoundService;
   @Mock ChatMateEventService mockChatMateEventService;
   @Mock MessageService mockMessageService;
 
-  @Mock GuiIngame mockGuiIngame;
   @Mock FontRenderer mockFontRenderer;
-  @Mock GuiNewChat mockChatGui;
 
   Author author1 = createAuthor("Author 1");
   PartialChatMessage text1 = createText("Text 1");
@@ -41,11 +38,13 @@ public class McChatServiceTests {
   PartialChatMessage emoji2 = createEmoji("slightly smiling", ":slightly_smiling:");
 
   @Test
-  public void addChat_handlesNullGui() {
-    this.mockMinecraft.ingameGUI = null;
+  public void addChat_ignoresIfCantPrintChat() {
     McChatService service = this.setupService();
+    when(this.mockMinecraftProxyService.canPrintChatMessage()).thenReturn(false);
 
     service.printStreamChatItem(null);
+
+    verify(this.mockMinecraftProxyService, never()).tryPrintChatMessage(anyString(), any());
   }
 
   @Test
@@ -67,7 +66,7 @@ public class McChatServiceTests {
     service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, emoji1.name);
-    verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+    verify(this.mockMinecraftProxyService).tryPrintChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
@@ -78,7 +77,7 @@ public class McChatServiceTests {
     service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, emoji2.label);
-    verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+    verify(this.mockMinecraftProxyService).tryPrintChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
@@ -89,7 +88,7 @@ public class McChatServiceTests {
     service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, text1.text + text2.text);
-    verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+    verify(this.mockMinecraftProxyService).tryPrintChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
@@ -101,7 +100,7 @@ public class McChatServiceTests {
     service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, text1.text + " " + emoji2.label + " " + emoji1.name + " " + text2.text);
-    verify(this.mockChatGui).printChatMessage(ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+    verify(this.mockMinecraftProxyService).tryPrintChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
@@ -125,14 +124,13 @@ public class McChatServiceTests {
   }
 
   private McChatService setupService() {
-    this.mockMinecraft.ingameGUI = this.mockGuiIngame;
-    when(this.mockGuiIngame.getFontRenderer()).thenReturn(this.mockFontRenderer);
-    when(this.mockGuiIngame.getChatGUI()).thenReturn(this.mockChatGui);
+    when(this.mockMinecraftProxyService.getChatFontRenderer()).thenReturn(this.mockFontRenderer);
+    when(this.mockMinecraftProxyService.canPrintChatMessage()).thenReturn(true);
 
     // just return the input
     when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArgument(0));
 
-    return new McChatService(this.mockMinecraft, this.mockLoggingService, this.mockFilterService, this.mockSoundService, this.mockChatMateEventService, this.mockMessageService);
+    return new McChatService(this.mockMinecraftProxyService, this.mockLogService, this.mockFilterService, this.mockSoundService, this.mockChatMateEventService, this.mockMessageService);
   }
 
   // The below methods should be used for mock data creation. It sets all

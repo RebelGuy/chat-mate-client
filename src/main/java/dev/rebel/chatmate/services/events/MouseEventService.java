@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services.events;
 
+import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.InputEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
@@ -29,8 +30,8 @@ public class MouseEventService extends EventServiceBase<Events> {
   private MousePositionData prevPosition = null;
   private Set<MouseButton> prevHeld = new HashSet<>();
 
-  public MouseEventService(ForgeEventService forgeEventService, Minecraft minecraft) {
-    super(Events.class);
+  public MouseEventService(LogService logService, ForgeEventService forgeEventService, Minecraft minecraft) {
+    super(Events.class, logService);
     this.forgeEventService = forgeEventService;
     this.minecraft = minecraft;
 
@@ -176,9 +177,9 @@ public class MouseEventService extends EventServiceBase<Events> {
       }
 
       In eventIn = new In(event, positionData, buttonData, scrollData);
-      Out eventOut = handler.callback.apply(eventIn);
+      Out eventOut = this.safeDispatch(event, handler, eventIn);
 
-      if (eventOut.handlerAction == null) {
+      if (eventOut == null || eventOut.handlerAction == null) {
         continue;
       } else if (eventOut.handlerAction == MouseHandlerAction.HANDLED) {
         handled = true;
