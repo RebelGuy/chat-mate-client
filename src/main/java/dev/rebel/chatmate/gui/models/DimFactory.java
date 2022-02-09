@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.models;
 
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.util.Memoiser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -14,16 +15,18 @@ public class DimFactory {
     this.minecraft = minecraft;
   }
 
+  /** Create a `Dim` that is anchored to a screen value. */
   public Dim fromScreen(float screenValue) {
-    return new Dim(this::getScaleFactor).setScreen(screenValue);
+    return new Dim(this::getScaleFactor, DimAnchor.SCREEN).setScreen(screenValue);
   }
 
+  /** Create a `Dim` that is anchored to a gui value. */
   public Dim fromGui(float guiValue) {
-    return new Dim(this::getScaleFactor).setGui(guiValue);
+    return new Dim(this::getScaleFactor, DimAnchor.GUI).setGui(guiValue);
   }
 
-  public Dim zero() {
-    return this.fromScreen(0);
+  public Dim zeroGui() {
+    return this.fromGui(0);
   }
 
   private int getScaleFactor() {

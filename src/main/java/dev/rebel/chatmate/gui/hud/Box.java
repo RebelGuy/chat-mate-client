@@ -4,7 +4,6 @@ import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 
-/** Note: all private/protected coordinate properties are in SCREEN COORDS, and all public get* coordinates are in GUI COORDS. */
 public class Box {
   private final DimFactory dimFactory;
   protected Dim x;
@@ -24,13 +23,13 @@ public class Box {
     this.canTranslate = canTranslate;
   }
 
-  public Dim getX() { return this.x; }
+  public Dim getX() { return this.x.copy(); }
 
-  public Dim getY() { return this.y; }
+  public Dim getY() { return this.y.copy(); }
 
-  public Dim getWidth() { return this.w; }
+  public Dim getWidth() { return this.w.copy(); }
 
-  public Dim getHeight() { return this.h; }
+  public Dim getHeight() { return this.h.copy(); }
 
   public boolean canTranslate() { return this.canTranslate; }
 
@@ -50,7 +49,7 @@ public class Box {
 
     Dim dw = newW.minus(this.w);
     Dim dh = newH.minus(this.h);
-    Dim zero = this.dimFactory.zero();
+    Dim zero = this.dimFactory.zeroGui();
 
     switch (resizeAnchor) {
       case TOP_LEFT:
@@ -98,5 +97,12 @@ public class Box {
 
     this.w = newW;
     this.h = newH;
+  }
+
+  protected void setRect(Dim x, Dim y, Dim w, Dim h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
   }
 }

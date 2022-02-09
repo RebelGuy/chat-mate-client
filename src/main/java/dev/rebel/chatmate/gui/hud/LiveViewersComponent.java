@@ -33,7 +33,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private long prevUpdate = 0;
 
   public LiveViewersComponent(DimFactory dimFactory, float initialScale, StatusService statusService, Config config, Minecraft minecraft) {
-    super(dimFactory, dimFactory.fromGui(INITIAL_X_GUI), dimFactory.fromGui(INITIAL_Y_GUI), dimFactory.zero(), dimFactory.zero(), true, true);
+    super(dimFactory, dimFactory.fromGui(INITIAL_X_GUI), dimFactory.fromGui(INITIAL_Y_GUI), dimFactory.zeroGui(), dimFactory.zeroGui(), true, true);
     this.dimFactory = dimFactory;
     this.statusService = statusService;
     this.config = config;
@@ -243,10 +243,9 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private void onShowLiveViewers(boolean enabled) {
     Dim x = this.dimFactory.fromGui(INITIAL_X_GUI);
     Dim y = this.dimFactory.fromGui(INITIAL_Y_GUI);
-    Dim w = enabled ? this.getTextWidth().times(this.scale) : this.dimFactory.zero();
-    Dim h = enabled ? this.getTextHeight().times(this.scale) : this.dimFactory.zero();
-    this.onTranslate(x, y);
-    this.onResize(w, h, Anchor.LEFT_CENTRE);
+    Dim w = enabled ? this.getTextWidth().times(this.scale) : this.dimFactory.zeroGui();
+    Dim h = enabled ? this.getTextHeight().times(this.scale) : this.dimFactory.zeroGui();
+    this.setRect(x, y, w, h);
     this.scale = this.initialScale;
     this.startRotation = new float[2];
     this.targetRotation = new float[2];
@@ -255,7 +254,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   private Dim getTextWidth() {
     if (this.getFontRenderer() == null) {
-      return this.dimFactory.zero();
+      return this.dimFactory.zeroGui();
     } else {
       String text = this.getText();
       return this.dimFactory.fromGui(this.getFontRenderer().getStringWidth(text));
@@ -264,7 +263,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   private Dim getTextHeight() {
     if (this.getFontRenderer() == null) {
-      return this.dimFactory.zero();
+      return this.dimFactory.zeroGui();
     } else {
       return this.dimFactory.fromGui(this.getFontRenderer().FONT_HEIGHT);
     }

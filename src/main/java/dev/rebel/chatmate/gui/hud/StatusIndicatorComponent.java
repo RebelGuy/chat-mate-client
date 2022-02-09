@@ -41,8 +41,8 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.initialScale = initialScale;
     this.scale = initialScale;
 
-    Dim x = dimFactory.zero();
-    Dim y = dimFactory.zero();
+    Dim x = dimFactory.zeroGui();
+    Dim y = dimFactory.zeroGui();
     float scale = 1;
     boolean canRescale = false, canTranslate = false;
 
@@ -97,8 +97,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     Dim y = dimFactory.fromGui(INITIAL_Y_GUI);
     Dim w = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * this.scale : 0);
     Dim h = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * this.scale : 0);
-    this.onTranslate(x, y);
-    this.onResize(w, h, Anchor.TOP_LEFT);
+    this.setRect(x, y, w, h);
     this.scale = this.initialScale;
   }
 }
