@@ -3,6 +3,7 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.dashboard.DashboardContext;
 import dev.rebel.chatmate.gui.dashboard.DashboardScreen;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -26,8 +27,17 @@ public class GuiService {
   private final Minecraft minecraft;
   private final GuiChatMateHud guiChatMateHud;
   private final SoundService soundService;
+  private final DimFactory dimFactory;
 
-  public GuiService(boolean isDev, Config config, ForgeEventService forgeEventService, MouseEventService mouseEventService, KeyBindingService keyBindingService, Minecraft minecraft, GuiChatMateHud guiChatMateHud, SoundService soundService) {
+  public GuiService(boolean isDev,
+                    Config config,
+                    ForgeEventService forgeEventService,
+                    MouseEventService mouseEventService,
+                    KeyBindingService keyBindingService,
+                    Minecraft minecraft,
+                    GuiChatMateHud guiChatMateHud,
+                    SoundService soundService,
+                    DimFactory dimFactory) {
     this.isDev = isDev;
     this.config = config;
     this.forgeEventService = forgeEventService;
@@ -36,6 +46,7 @@ public class GuiService {
     this.minecraft = minecraft;
     this.guiChatMateHud = guiChatMateHud;
     this.soundService = soundService;
+    this.dimFactory = dimFactory;
 
     this.addEventHandlers();
   }
@@ -110,7 +121,7 @@ public class GuiService {
   private Boolean onOpenChatMateHud() {
     if (this.config.getHudEnabledEmitter().get()) {
       // key events don't fire when we are in a menu, so don't need to worry about closing this GUI when the key is pressed again
-      GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.mouseEventService, this.guiChatMateHud);
+      GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.mouseEventService, this.dimFactory, this.guiChatMateHud);
       this.minecraft.displayGuiScreen(hudScreen);
       return true;
     } else {

@@ -1,23 +1,24 @@
 package dev.rebel.chatmate.gui.hud;
 
 import dev.rebel.chatmate.gui.RenderContext;
+import dev.rebel.chatmate.gui.models.Dim;
 
 /** Should be implemented by the component that is drawn to the HUD. All public facing coordinates are GUI coords. */
 public interface IHudComponent {
-  public float getX();
-  public float getY();
-  public float getWidth();
-  public float getHeight();
+  public Dim getX();
+  public Dim getY();
+  public Dim getWidth();
+  public Dim getHeight();
   public float getContentScale();
 
   public boolean canResizeBox();
-  public void onResize(float newWidth, float newHeight, Anchor resizeAnchor);
+  public void onResize(Dim newWidth, Dim newHeight, Anchor resizeAnchor);
 
   public boolean canRescaleContent();
   public void onRescaleContent(float newScale);
 
   public boolean canTranslate();
-  public void onTranslate(float newX, float newY);
+  public void onTranslate(Dim newX, Dim newY);
 
   public void render(RenderContext context);
 

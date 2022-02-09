@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services.events.models;
 
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
@@ -58,27 +59,16 @@ public class MouseEventData extends EventData<In, Out, Options> {
 
     public static class MousePositionData {
       /** The rounded position of the mouse in GUI coordinates (possibly scaled) */
-      public final int clientX;
-      public final int clientY;
+      public final Dim x;
+      public final Dim y;
 
-      /** The exact position of the mouse in GUI coordinates (possibly scaled) */
-      public final float x;
-      public final float y;
-
-      public final int screenX;
-      public final int screenY;
-
-      public MousePositionData(int clientX, int clientY, float x, float y, int screenX, int screenY) {
-        this.clientX = clientX;
-        this.clientY = clientY;
-        this.x = x;
-        this.y = y;
-        this.screenX = screenX;
-        this.screenY = screenY;
+      public MousePositionData(Dim x, Dim y) {
+        this.x = x.copy();
+        this.y = y.copy();
       }
 
       public boolean Equals(MousePositionData other) {
-        return other == null || this.screenX == other.screenX && this.screenY == other.screenY;
+        return other == null || this.x.equals(other.x) && this.y.equals(other.y);
       }
     }
 

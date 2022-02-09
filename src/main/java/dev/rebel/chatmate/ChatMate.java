@@ -6,6 +6,7 @@ import dev.rebel.chatmate.commands.CounterCommand;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
@@ -50,11 +51,12 @@ public class ChatMate {
 
     Minecraft minecraft = Minecraft.getMinecraft();
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService);
+    DimFactory dimFactory = new DimFactory(minecraft);
 
     ConfigPersistorService configPersistorService = new ConfigPersistorService(logService, fileService);
     this.config = new Config(configPersistorService);
     this.forgeEventService = new ForgeEventService(logService, minecraft);
-    this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft);
+    this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
 
@@ -76,8 +78,8 @@ public class ChatMate {
 
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
-    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, this.forgeEventService, statusService, config);
-    this.guiService = new GuiService(this.isDev, this.config, this.forgeEventService, this.mouseEventService, this.keyBindingService, minecraft, guiChatMateHud, soundService);
+    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config);
+    this.guiService = new GuiService(this.isDev, this.config, this.forgeEventService, this.mouseEventService, this.keyBindingService, minecraft, guiChatMateHud, soundService, dimFactory);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(minecraft)),

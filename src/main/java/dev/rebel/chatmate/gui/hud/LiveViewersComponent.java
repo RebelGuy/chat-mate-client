@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.hud;
 
 import dev.rebel.chatmate.gui.RenderContext;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import net.minecraft.client.Minecraft;
@@ -14,7 +16,10 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private final static int COLOR = 0xFFFFFFFF;
   private final static int ANIMATION_DURATION = 1500;
   private final static float PI = (float)Math.PI;
+  private final static int INITIAL_X_GUI = 23;
+  private final static int INITIAL_Y_GUI = 15;
 
+  private final DimFactory dimFactory;
   private final StatusService statusService;
   private final Config config;
   private final float initialScale;
@@ -27,9 +32,9 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private float currentFrac = 0;
   private long prevUpdate = 0;
 
-  public LiveViewersComponent(int guiScaleMultiplier, float initialScale, StatusService statusService, Config config, Minecraft minecraft) {
-    // giving values in Gui coords. so at 2x gui scale, with an initial scale of 0.5f, will be at screen coords (20, 20) with a screen size of 16x16
-    super(guiScaleMultiplier, 23, 15, 0, 0, true, true);
+  public LiveViewersComponent(DimFactory dimFactory, float initialScale, StatusService statusService, Config config, Minecraft minecraft) {
+    super(dimFactory, dimFactory.fromGui(INITIAL_X_GUI), dimFactory.fromGui(INITIAL_Y_GUI), dimFactory.zero(), dimFactory.zero(), true, true);
+    this.dimFactory = dimFactory;
     this.statusService = statusService;
     this.config = config;
     this.initialScale = initialScale;
@@ -53,7 +58,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
       return;
     }
 
-    this.onResize(this.getTextWidth() * newScale, this.getTextHeight() * newScale, Anchor.LEFT_CENTRE);
+    this.onResize(this.getTextWidth().times(newScale), this.getTextHeight().times(newScale), Anchor.LEFT_CENTRE);
     this.scale = newScale;
   }
 
@@ -64,26 +69,26 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     }
 
     // we have to update this constantly because of dynamic content
-    this.onResize(this.getTextWidth() * this.scale, this.getTextHeight() * this.scale, Anchor.LEFT_CENTRE);
+    this.onResize(this.getTextWidth().times(this.scale), this.getTextHeight().times(this.scale), Anchor.LEFT_CENTRE);
 
     GlStateManager.pushMatrix();
-    GlStateManager.translate(this.getX(), this.getY(), 0);
+    GlStateManager.translate(this.getX().getScreen(), this.getY().getScreen(), 0);
     GlStateManager.scale(this.scale, this.scale, 1);
 
     String text = this.getText();
     if (this.statusService.getLiveViewerCount() == null || text.length() != this.targetRotation.length) {
       this.getFontRenderer().drawStringWithShadow(text, 0, 0, COLOR);
     } else {
-      int digitWidth = this.getFontRenderer().getCharWidth('0');
-      int digitPadding = 1;
-      float digitHeight = this.getTextHeight();
+      Dim digitWidth = this.dimFactory.fromGui(this.getFontRenderer().getCharWidth('0'));
+      Dim digitPadding = this.dimFactory.fromGui(1);
+      Dim digitHeight = this.getTextHeight();
       this.drawReel(text, digitWidth, digitPadding, digitHeight);
     }
 
     GlStateManager.popMatrix();
   }
 
-  private void drawReel(String text, int digitWidth, int digitPadding, float digitHeight) {
+  private void drawReel(String text, Dim digitWidth, Dim digitPadding, Dim digitHeight) {
     // get target rotations
     char[] chars = text.toCharArray();
     float[] newTarget = new float[this.targetRotation.length];
@@ -109,7 +114,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
     // render
     for (int i = 0; i < current.length; i++) {
-      this.drawReelDigit(i * (digitWidth + digitPadding), current[i], speed[i], digitHeight);
+      this.drawReelDigit(digitWidth.plus(digitPadding).times(i), current[i], speed[i], digitHeight);
     }
 
     this.prevUpdate = new Date().getTime();
@@ -152,7 +157,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     return true;
   }
 
-  private void drawReelDigit(int x, float rotation, float speed, float digitHeight) {
+  private void drawReelDigit(Dim x, float rotation, float speed, Dim digitHeight) {
     float increment = 2 * PI / 10;
     float eps = 0.01f;
 
@@ -174,7 +179,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
       // for some reason there is padding at the top of text, so the offset to the bottom appears to be much less.
       // to circumvent this, offset the bottom more
       float offsetMultiplier = strength > 0 ? 1 : 0.5f;
-      float yOffset = offsetMultiplier * strength * digitHeight;
+      Dim yOffset = digitHeight.times(offsetMultiplier * strength);
 
       // inverse parabola with value of 0.2 at extremities
       float scale = -(strength * strength) * 0.8f + 1;
@@ -193,17 +198,20 @@ public class LiveViewersComponent extends Box implements IHudComponent {
           highSpeed = true;
 
           // far, very faded
-          this.drawDigit(x, yOffset + blur * (2 * blurOffsetMultiplier), digit, blurredScale, scale, alpha * (alphaMultiplier / 2));
-          this.drawDigit(x, yOffset - blur * (2 * blurOffsetMultiplier), digit, blurredScale, scale, alpha * (alphaMultiplier / 2));
+          Dim yOffsetDeltaFar = this.dimFactory.fromGui(blur * (2 * blurOffsetMultiplier));
+          this.drawDigit(x, yOffset.plus(yOffsetDeltaFar), digit, blurredScale, scale, alpha * (alphaMultiplier / 2));
+          this.drawDigit(x, yOffset.minus(yOffsetDeltaFar), digit, blurredScale, scale, alpha * (alphaMultiplier / 2));
 
           // close, slightly faded
-          this.drawDigit(x, yOffset + blur * blurOffsetMultiplier / 2, digit, blurredScale, scale, alpha * alphaMultiplier);
-          this.drawDigit(x, yOffset - blur * blurOffsetMultiplier / 2, digit, blurredScale, scale, alpha * alphaMultiplier);
+          Dim yOffsetDeltaClose = this.dimFactory.fromGui(blur * blurOffsetMultiplier / 2);
+          this.drawDigit(x, yOffset.plus(yOffsetDeltaClose), digit, blurredScale, scale, alpha * alphaMultiplier);
+          this.drawDigit(x, yOffset.minus(yOffsetDeltaClose), digit, blurredScale, scale, alpha * alphaMultiplier);
 
         } else {
           // medium closeness, slightly faded
-          this.drawDigit(x, yOffset + blur * blurOffsetMultiplier, digit, scale, blurredScale, alpha * alphaMultiplier);
-          this.drawDigit(x, yOffset - blur * blurOffsetMultiplier, digit, scale, blurredScale, alpha * alphaMultiplier);
+          Dim yOffsetDelta = this.dimFactory.fromGui(blur * blurOffsetMultiplier);
+          this.drawDigit(x, yOffset.plus(yOffsetDelta), digit, scale, blurredScale, alpha * alphaMultiplier);
+          this.drawDigit(x, yOffset.minus(yOffsetDelta), digit, scale, blurredScale, alpha * alphaMultiplier);
         }
       }
 
@@ -214,14 +222,16 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     }
   }
 
-  private void drawDigit(float x, float y, int digit, float scaleX, float scaleY, float alpha) {
+  private void drawDigit(Dim x, Dim y, int digit, float scaleX, float scaleY, float alpha) {
     String text = String.valueOf(digit);
-    float width = this.getFontRenderer().getStringWidth(text);
+    float wGui = this.getFontRenderer().getStringWidth(text);
+    float xGui = x.getGui();
+    float yGui = y.getGui();
 
     GlStateManager.pushMatrix();
 
-    x = x + width * (1 - scaleX) / 2; // keep centred on its x position
-    GlStateManager.translate(x, y, 10);
+    xGui = xGui + wGui * (1 - scaleX) / 2; // keep centred on its x position
+    GlStateManager.translate(xGui, yGui, 10);
     GlStateManager.scale(scaleX, scaleY, 1);
 
     Colour color = new Colour(1, 1, 1, alpha);
@@ -231,10 +241,10 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   }
 
   private void onShowLiveViewers(boolean enabled) {
-    float x = 23;
-    float y = 15;
-    float w = enabled ? this.getTextWidth() * this.scale : 0;
-    float h = enabled ? this.getTextHeight() * this.scale : 0;
+    Dim x = this.dimFactory.fromGui(INITIAL_X_GUI);
+    Dim y = this.dimFactory.fromGui(INITIAL_Y_GUI);
+    Dim w = enabled ? this.getTextWidth().times(this.scale) : this.dimFactory.zero();
+    Dim h = enabled ? this.getTextHeight().times(this.scale) : this.dimFactory.zero();
     this.onTranslate(x, y);
     this.onResize(w, h, Anchor.LEFT_CENTRE);
     this.scale = this.initialScale;
@@ -243,20 +253,20 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.currentFrac = 0;
   }
 
-  private float getTextWidth() {
+  private Dim getTextWidth() {
     if (this.getFontRenderer() == null) {
-      return 0;
+      return this.dimFactory.zero();
     } else {
       String text = this.getText();
-      return this.getFontRenderer().getStringWidth(text);
+      return this.dimFactory.fromGui(this.getFontRenderer().getStringWidth(text));
     }
   }
 
-  private float getTextHeight() {
+  private Dim getTextHeight() {
     if (this.getFontRenderer() == null) {
-      return 0;
+      return this.dimFactory.zero();
     } else {
-      return this.getFontRenderer().FONT_HEIGHT;
+      return this.dimFactory.fromGui(this.getFontRenderer().FONT_HEIGHT);
     }
   }
 

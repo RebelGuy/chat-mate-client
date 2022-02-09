@@ -36,7 +36,7 @@ public class SimpleButtonView extends View<VProps, State> {
 
   private MouseEventData.Out onMouseDown(MouseEventData.In eventIn) {
     MousePositionData position = eventIn.mousePositionData;
-    boolean overButton = position.clientX >= this.posX && position.clientX <= this.posX + this.w && position.clientY >= this.posY && position.clientY <= this.posY + this.h;
+    boolean overButton = position.x.getScreen() >= this.posX && position.x.getScreen() <= this.posX + this.w && position.y.getScreen() >= this.posY && position.y.getScreen() <= this.posY + this.h;
 
     if (overButton) {
       this.getProps().onClick.run();

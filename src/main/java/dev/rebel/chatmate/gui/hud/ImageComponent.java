@@ -2,19 +2,23 @@ package dev.rebel.chatmate.gui.hud;
 
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.RenderContext;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 
 public class ImageComponent extends Gui implements IHudComponent {
-  private float x;
-  private float y;
+  private final DimFactory dimFactory;
+  private Dim x;
+  private Dim y;
   private float scale;
   private final boolean canRescale;
   private final boolean canTranslate;
 
   public final Texture texture;
 
-  public ImageComponent(Texture texture, float x, float y, float scale, boolean canRescale, boolean canTranslate) {
+  public ImageComponent(DimFactory dimFactory, Texture texture, Dim x, Dim y, float scale, boolean canRescale, boolean canTranslate) {
+    this.dimFactory = dimFactory;
     this.texture = texture;
     this.x = x;
     this.y = y;
@@ -24,23 +28,23 @@ public class ImageComponent extends Gui implements IHudComponent {
   }
 
   @Override
-  public float getX() {
+  public Dim getX() {
     return this.x;
   }
 
   @Override
-  public float getY() {
+  public Dim getY() {
     return this.y;
   }
 
   @Override
-  public float getWidth() {
-    return this.texture.width * this.scale;
+  public Dim getWidth() {
+    return this.dimFactory.fromScreen(this.texture.width * this.scale);
   }
 
   @Override
-  public float getHeight() {
-    return this.texture.height * this.scale;
+  public Dim getHeight() {
+    return this.dimFactory.fromScreen(this.texture.height * this.scale);
   }
 
   @Override
@@ -50,7 +54,7 @@ public class ImageComponent extends Gui implements IHudComponent {
   }
 
   @Override
-  public void onResize(float newWidth, float newHeight, Anchor keepCentred) { }
+  public void onResize(Dim newWidth, Dim newHeight, Anchor keepCentred) { }
 
   @Override
   public boolean canRescaleContent() {
@@ -61,11 +65,11 @@ public class ImageComponent extends Gui implements IHudComponent {
   public void onRescaleContent(float newScale) {
     if (this.canRescale && this.scale != newScale) {
       float deltaScale = newScale - this.scale;
-      float deltaWidth = deltaScale * this.texture.width;
-      float deltaHeight = deltaScale * this.texture.height;
+      Dim deltaWidth = this.dimFactory.fromScreen(deltaScale * this.texture.width);
+      Dim deltaHeight = this.dimFactory.fromScreen(deltaScale * this.texture.height);
       this.scale = newScale;
-      this.x = this.x + deltaWidth / 2;
-      this.y = this.y + deltaHeight / 2;
+      this.x = this.x.plus(deltaWidth.over(2));
+      this.y = this.y.plus(deltaHeight.over(2));
     }
   }
 
@@ -80,7 +84,7 @@ public class ImageComponent extends Gui implements IHudComponent {
   }
 
   @Override
-  public void onTranslate(float newX, float newY) {
+  public void onTranslate(Dim newX, Dim newY) {
     if (this.canTranslate) {
       this.x = newX;
       this.y = newY;
@@ -103,8 +107,8 @@ public class ImageComponent extends Gui implements IHudComponent {
     int u = 0, v = 0; // offset, with repeating boundaries in the 256x256 box
 
     // position and size in the transformed (scaled) space
-    float renderX = this.x / scaleX;
-    float renderY = this.y / scaleY;
+    float renderX = this.x.getGui() / scaleX;
+    float renderY = this.y.getGui() / scaleY;
     int width = 256;
     int height = 256;
 

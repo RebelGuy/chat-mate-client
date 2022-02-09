@@ -2,6 +2,8 @@ package dev.rebel.chatmate.gui.hud;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.RenderContext;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.StatusService.SimpleStatus;
@@ -11,38 +13,44 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class StatusIndicatorComponent extends Box implements IHudComponent {
+  private final DimFactory dimFactory;
   private final StatusService statusService;
   private final Config config;
   private final Map<SimpleStatus, ImageComponent> statusIndicators;
   private final float initialScale;
   private float scale;
 
-  private final static int baseGuiSize = 16;
+  private final static int BASE_SIZE_GUI = 16;
+  private final static int INITIAL_X_GUI = 10;
+  private final static int INITIAL_Y_GUI = 10;
 
-  public StatusIndicatorComponent(int guiScaleMultiplier, float initialScale, StatusService statusService, Config config) {
+  public StatusIndicatorComponent(DimFactory dimFactory, float initialScale, StatusService statusService, Config config) {
     // giving values in Gui coords. so at 2x gui scale, with an initial scale of 0.5f, will be at screen coords (20, 20) with a screen size of 16x16
     super(
-        guiScaleMultiplier,
-        10,
-        10,
-        config.getShowStatusIndicatorEmitter().get() ? baseGuiSize * initialScale : 0,
-        config.getShowStatusIndicatorEmitter().get() ? baseGuiSize * initialScale : 0,
+        dimFactory,
+        dimFactory.fromGui(INITIAL_X_GUI),
+        dimFactory.fromGui(INITIAL_Y_GUI),
+        dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * initialScale : 0),
+        dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * initialScale : 0),
         true,
         true
     );
+    this.dimFactory = dimFactory;
     this.statusService = statusService;
     this.config = config;
     this.initialScale = initialScale;
     this.scale = initialScale;
 
-    float x = 0, y = 0, scale = 1;
+    Dim x = dimFactory.zero();
+    Dim y = dimFactory.zero();
+    float scale = 1;
     boolean canRescale = false, canTranslate = false;
 
     this.statusIndicators = new HashMap<>();
-    this.statusIndicators.put(SimpleStatus.OK_LIVE, new ImageComponent(Asset.STATUS_INDICATOR_GREEN, x, y, scale, canRescale, canTranslate));
-    this.statusIndicators.put(SimpleStatus.OK_OFFLINE, new ImageComponent(Asset.STATUS_INDICATOR_CYAN, x, y, scale, canRescale, canTranslate));
-    this.statusIndicators.put(SimpleStatus.YOUTUBE_UNREACHABLE, new ImageComponent(Asset.STATUS_INDICATOR_ORANGE, x, y, scale, canRescale, canTranslate));
-    this.statusIndicators.put(SimpleStatus.SERVER_UNREACHABLE, new ImageComponent(Asset.STATUS_INDICATOR_RED, x, y, scale, canRescale, canTranslate));
+    this.statusIndicators.put(SimpleStatus.OK_LIVE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_GREEN, x, y, scale, canRescale, canTranslate));
+    this.statusIndicators.put(SimpleStatus.OK_OFFLINE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_CYAN, x, y, scale, canRescale, canTranslate));
+    this.statusIndicators.put(SimpleStatus.YOUTUBE_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_ORANGE, x, y, scale, canRescale, canTranslate));
+    this.statusIndicators.put(SimpleStatus.SERVER_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_RED, x, y, scale, canRescale, canTranslate));
 
     this.config.getShowStatusIndicatorEmitter().listen(this::onShowStatusIndicator);
   }
@@ -61,7 +69,9 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
       return;
     }
 
-    this.onResize(baseGuiSize * newScale, baseGuiSize * newScale, Anchor.MIDDLE);
+    Dim newW = this.dimFactory.fromGui(BASE_SIZE_GUI * newScale);
+    Dim newH = this.dimFactory.fromGui(BASE_SIZE_GUI * newScale);
+    this.onResize(newW, newH, Anchor.MIDDLE);
     this.scale = newScale;
   }
 
@@ -74,7 +84,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     SimpleStatus status = this.statusService.getSimpleStatus();
 
     GlStateManager.pushMatrix();
-    GlStateManager.translate(this.getX(), this.getY(), 0);
+    GlStateManager.translate(this.getX().getScreen(), this.getY().getScreen(), 0);
     GlStateManager.scale(this.scale, this.scale, 1);
 
     this.statusIndicators.get(status).render(context);
@@ -83,10 +93,10 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
   }
 
   private void onShowStatusIndicator(boolean enabled) {
-    float x = 10;
-    float y = 10;
-    float w = enabled ? baseGuiSize * this.scale : 0;
-    float h = enabled ? baseGuiSize * this.scale : 0;
+    Dim x = dimFactory.fromGui(INITIAL_X_GUI);
+    Dim y = dimFactory.fromGui(INITIAL_Y_GUI);
+    Dim w = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * this.scale : 0);
+    Dim h = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * this.scale : 0);
     this.onTranslate(x, y);
     this.onResize(w, h, Anchor.MIDDLE);
     this.scale = this.initialScale;

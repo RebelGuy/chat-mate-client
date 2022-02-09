@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.hud.IHudComponent;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
@@ -19,18 +21,20 @@ import java.util.List;
 /** This is the focused menu screen - for the game overlay class, go to GuiChatMateHud */
 public class GuiChatMateHudScreen extends GuiScreen {
   private final Minecraft minecraft;
+  private final DimFactory dimFactory;
   private final GuiChatMateHud guiChatMateHud;
   private final MouseEventService mouseEventService;
 
   private IHudComponent draggingComponent = null;
-  private Float draggingComponentOffsetX = null;
-  private Float draggingComponentOffsetY = null;
+  private Dim draggingComponentOffsetX = null;
+  private Dim draggingComponentOffsetY = null;
 
-  public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, GuiChatMateHud hud) {
+  public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, DimFactory dimFactory, GuiChatMateHud hud) {
     super();
 
     this.minecraft = minecraft;
     this.mouseEventService = mouseEventService;
+    this.dimFactory = dimFactory;
     this.guiChatMateHud = hud;
 
     Options options = new Options(false, MouseButton.LEFT_BUTTON);
@@ -74,8 +78,8 @@ public class GuiChatMateHudScreen extends GuiScreen {
         this.draggingComponent = component;
 
         // the position of the component is unlikely to be where we actually start the drag - calculate the offset
-        this.draggingComponentOffsetX = position.x - component.getX();
-        this.draggingComponentOffsetY = position.y - component.getY();
+        this.draggingComponentOffsetX = position.x.minus(component.getX());
+        this.draggingComponentOffsetY = position.y.minus(component.getY());
         break;
       }
     }
@@ -86,8 +90,8 @@ public class GuiChatMateHudScreen extends GuiScreen {
     MousePositionData position = in.mousePositionData;
     if (in.isDragged(MouseButton.LEFT_BUTTON) && this.draggingComponent != null) {
       // note that we are not checking if the mouse is still hovering over the component
-      float newX = position.x - this.draggingComponentOffsetX;
-      float newY = position.y - this.draggingComponentOffsetY;
+      Dim newX = position.x.minus(this.draggingComponentOffsetX);
+      Dim newY = position.y.minus(this.draggingComponentOffsetY);
       this.draggingComponent.onTranslate(newX, newY);
     }
 
@@ -119,10 +123,11 @@ public class GuiChatMateHudScreen extends GuiScreen {
     return components;
   }
 
-  private static boolean containsPoint(IHudComponent component, float x, float y) {
-    return x <= component.getX() + component.getWidth()
-        && x >= component.getX()
-        && y <= component.getY() + component.getHeight()
-        && y >= component.getY();
+  private static boolean containsPoint(IHudComponent component, Dim x, Dim y) {
+    Dim left = component.getX();
+    Dim right = component.getX().plus(component.getWidth());
+    Dim top = component.getY();
+    Dim bottom = component.getY().plus(component.getHeight());
+    return x.gte(left) && x.lte(right) && y.gte(top) && y.lte(bottom);
   }
 }

@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.services.events;
 
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.InputEventData;
@@ -26,14 +28,16 @@ import java.util.function.Function;
 public class MouseEventService extends EventServiceBase<Events> {
   private final ForgeEventService forgeEventService;
   private final Minecraft minecraft;
+  private final DimFactory dimFactory;
 
   private MousePositionData prevPosition = null;
   private Set<MouseButton> prevHeld = new HashSet<>();
 
-  public MouseEventService(LogService logService, ForgeEventService forgeEventService, Minecraft minecraft) {
+  public MouseEventService(LogService logService, ForgeEventService forgeEventService, Minecraft minecraft, DimFactory dimFactory) {
     super(Events.class, logService);
     this.forgeEventService = forgeEventService;
     this.minecraft = minecraft;
+    this.dimFactory = dimFactory;
 
     this.forgeEventService.onGuiScreenMouse(this::onGuiScreenMouse, new InputEventData.Options());
   }
@@ -151,16 +155,10 @@ public class MouseEventService extends EventServiceBase<Events> {
   }
 
   private MousePositionData constructPositionData(int rawMouseX, int rawMouseY) {
-    int screenX = rawMouseX;
-    int screenY = this.minecraft.displayHeight - rawMouseY - 1;
+    Dim x = this.dimFactory.fromScreen(rawMouseX);
+    Dim y = this.dimFactory.fromScreen(this.minecraft.displayHeight - rawMouseY - 1);
 
-    int scale = new ScaledResolution(this.minecraft).getScaleFactor();
-    float x = screenX / (float)scale;
-    float y = screenY / (float)scale;
-    int clientX = (int)x;
-    int clientY = (int)y;
-
-    return new MousePositionData(clientX, clientY, x, y, screenX, screenY);
+    return new MousePositionData(x, y);
   }
 
   /** Returns true if the event has been swallowed. */

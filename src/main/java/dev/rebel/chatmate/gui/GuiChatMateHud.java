@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui;
 import dev.rebel.chatmate.gui.hud.IHudComponent;
 import dev.rebel.chatmate.gui.hud.LiveViewersComponent;
 import dev.rebel.chatmate.gui.hud.StatusIndicatorComponent;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -16,6 +17,7 @@ import java.util.List;
 /** This is the game overlay class - for the focussed menu screen, go to GuiChatMateHudScreen */
 public class GuiChatMateHud extends Gui {
   private final Minecraft minecraft;
+  private final DimFactory dimFactory;
   private final ForgeEventService forgeEventService;
   private final StatusService statusService;
 
@@ -24,16 +26,17 @@ public class GuiChatMateHud extends Gui {
 
   public final List<IHudComponent> hudComponents;
 
-  public GuiChatMateHud(Minecraft minecraft, ForgeEventService forgeEventService, StatusService statusService, Config config) {
+  public GuiChatMateHud(Minecraft minecraft, DimFactory dimFactory, ForgeEventService forgeEventService, StatusService statusService, Config config) {
     super();
     this.minecraft = minecraft;
+    this.dimFactory = dimFactory;
     this.forgeEventService = forgeEventService;
     this.statusService = statusService;
 
     int scaleFactor = new ScaledResolution(this.minecraft).getScaleFactor();
 
-    this.statusIndicatorComponent = new StatusIndicatorComponent(scaleFactor, 0.5f, statusService, config);
-    this.liveViewersComponent = new LiveViewersComponent(scaleFactor, 1, statusService, config, minecraft);
+    this.statusIndicatorComponent = new StatusIndicatorComponent(dimFactory, 0.5f, statusService, config);
+    this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft);
 
     this.hudComponents = new ArrayList<>();
     this.hudComponents.add(this.statusIndicatorComponent);
