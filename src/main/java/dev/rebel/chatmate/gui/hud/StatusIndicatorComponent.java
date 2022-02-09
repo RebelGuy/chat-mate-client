@@ -84,7 +84,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     SimpleStatus status = this.statusService.getSimpleStatus();
 
     GlStateManager.pushMatrix();
-    GlStateManager.translate(this.getX().getScreen(), this.getY().getScreen(), 0);
+    GlStateManager.translate(this.getX().getGui(), this.getY().getGui(), 0);
     GlStateManager.scale(this.scale, this.scale, 1);
 
     this.statusIndicators.get(status).render(context);
@@ -98,7 +98,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     Dim w = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * this.scale : 0);
     Dim h = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * this.scale : 0);
     this.onTranslate(x, y);
-    this.onResize(w, h, Anchor.MIDDLE);
+    this.onResize(w, h, Anchor.TOP_LEFT);
     this.scale = this.initialScale;
   }
 }

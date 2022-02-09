@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.models;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+/** Note: GlStateManager uses Gui values. */
 public class Dim {
   private final Supplier<Integer> scaleFactor;
   private float value;

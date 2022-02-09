@@ -6,8 +6,10 @@ import dev.rebel.chatmate.proxy.EndpointProxy.Method;
 import javax.annotation.Nullable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 public class LogService {
   private final FileService fileService;
@@ -51,17 +53,13 @@ public class LogService {
   private void log(String type, Object logger, Object... args) {
     DateFormat timeFormat = new SimpleDateFormat("HH:mm:ss.SSS");
     String timestamp = timeFormat.format(new Date());
-    String loggerName = logger.getClass().getName();
-    String prefix = String.format("%s %s > [%s] ", timestamp, type, loggerName);
+    String loggerName = logger.getClass().getSimpleName();
 
-    StringJoiner stringJoiner = new StringJoiner(prefix);
-    for (Object obj: args) {
-      stringJoiner.add(this.stringify(obj));
-    }
-    String message = stringJoiner.toString();
+    String prefix = String.format("%s %s > [%s] ", timestamp, type, loggerName);
+    String body = String.join(" ", Arrays.stream(args).map(this::stringify).toArray(String[]::new));
+    String message = prefix + body;
 
     System.out.println(message);
-
     if (this.fileName != null) {
       try {
         this.fileService.writeFile(this.fileName, message, true);
@@ -73,8 +71,8 @@ public class LogService {
 
   private String stringify(Object obj) {
     Class<?> c = obj.getClass();
-    if (c.isPrimitive()) {
-      return c.toString();
+    if (c.isPrimitive() || c.equals(String.class)) {
+      return obj.toString();
     } else {
       return this.gson.toJson(obj);
     }

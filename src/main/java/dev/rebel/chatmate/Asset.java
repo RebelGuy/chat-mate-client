@@ -9,7 +9,9 @@ public class Asset {
   public static Texture STATUS_INDICATOR_GREEN = new Texture(16, 16, "textures/status_indicator_green.png");
 
   public static class Texture {
+    /** In screen units. */
     public final int width;
+    /** In screen units. */
     public final int height;
     public final ResourceLocation resourceLocation;
 

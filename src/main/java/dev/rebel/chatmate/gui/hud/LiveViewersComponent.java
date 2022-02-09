@@ -72,7 +72,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.onResize(this.getTextWidth().times(this.scale), this.getTextHeight().times(this.scale), Anchor.LEFT_CENTRE);
 
     GlStateManager.pushMatrix();
-    GlStateManager.translate(this.getX().getScreen(), this.getY().getScreen(), 0);
+    GlStateManager.translate(this.getX().getGui(), this.getY().getGui(), 0);
     GlStateManager.scale(this.scale, this.scale, 1);
 
     String text = this.getText();

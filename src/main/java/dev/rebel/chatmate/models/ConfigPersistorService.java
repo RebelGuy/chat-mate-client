@@ -12,13 +12,15 @@ import java.util.Timer;
 public class ConfigPersistorService<SerialisedConfig extends Version> {
   private final static int CURRENT_SCHEMA = 0;
 
+  private final Class<SerialisedConfig> currentSerialisedVersion;
   private final LogService logService;
   private final FileService fileService;
   private final String fileName;
   private @Nullable Timer timer;
   private final int debounceTime = 500;
 
-  public ConfigPersistorService(LogService logService, FileService fileService) {
+  public ConfigPersistorService(Class<SerialisedConfig> currentSerialisedVersion, LogService logService, FileService fileService) {
+    this.currentSerialisedVersion = currentSerialisedVersion;
     this.logService = logService;
     this.fileService = fileService;
     this.fileName = "config.json";
@@ -34,7 +36,9 @@ public class ConfigPersistorService<SerialisedConfig extends Version> {
       }
 
       if (data.schema == CURRENT_SCHEMA) {
-        return (SerialisedConfig)data.data;
+        SerialisedConfig parsed = data.parseData(this.currentSerialisedVersion);
+        this.logService.logInfo(this, "Parsed configuration for schema " + CURRENT_SCHEMA);
+        return parsed;
       } else {
         throw new Exception("Failed to parse config (schema " + data.schema + ") to schema version " + CURRENT_SCHEMA);
       }

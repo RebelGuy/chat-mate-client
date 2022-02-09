@@ -26,7 +26,7 @@ public class EndpointProxy {
 
   public <T extends ApiResponseBase> T makeRequest(Method method, String path, Class<T> returnClass) throws ConnectException, Exception {
     int id = ++this.requestId;
-    this.logService.logApiRequest(this, id, method, path);
+    this.logService.logApiRequest(this, id, method, this.basePath + path);
 
     Exception ex = null;
     String result;
