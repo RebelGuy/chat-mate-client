@@ -8,9 +8,7 @@ import dev.rebel.chatmate.services.events.models.LevelUpEventData;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.util.*;
 
 import javax.annotation.Nullable;
@@ -64,7 +62,7 @@ public class McChatService {
       components.add(joinComponents("", mcChatResult.chatComponents));
       IChatComponent message = joinComponents(" ", components);
 
-      this.minecraftProxyService.tryPrintChatMessage("YouTube chat", message);
+      this.minecraftProxyService.printChatMessage("YouTube chat", message);
       if (mcChatResult.includesMention) {
         this.soundService.playDing();
       }
@@ -88,7 +86,7 @@ public class McChatService {
         this.soundService.playLevelUp(2);
       }
 
-      this.minecraftProxyService.tryPrintChatMessage("Level up", message);
+      this.minecraftProxyService.printChatMessage("Level up", message);
     } catch (Exception e) {
       this.logService.logError(this, String.format("Could not print level up message for '%s': %s", in.channelName, e.getMessage()));
     }

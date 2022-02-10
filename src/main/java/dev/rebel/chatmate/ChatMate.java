@@ -48,12 +48,12 @@ public class ChatMate {
     LogService logService = new LogService(fileService, false);
 
     Minecraft minecraft = Minecraft.getMinecraft();
-    MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService);
+    this.forgeEventService = new ForgeEventService(logService, minecraft);
+    MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
 
     ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV0.class, logService, fileService);
     this.config = new Config(logService, configPersistorService);
-    this.forgeEventService = new ForgeEventService(logService, minecraft);
     this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 

@@ -58,8 +58,8 @@ public class ForgeEventService extends EventServiceBase<Events> {
     this.addListener(Events.RenderGameOverlay, handler, options);
   }
 
-  /** Fires when the main chat box GUI component is rendered. */
-  public void onRenderChatGameOverlay(Function<RenderChatGameOverlay.In, RenderChatGameOverlay.Out> handler, RenderChatGameOverlay.Options options) {
+  /** Fires before the main chat box GUI component is rendered. */
+  public void onRenderChatGameOverlay(Function<RenderChatGameOverlay.In, RenderChatGameOverlay.Out> handler, @Nullable RenderChatGameOverlay.Options options) {
     this.addListener(Events.RenderChatGameOverlay, handler, options);
   }
 
@@ -165,6 +165,9 @@ public class ForgeEventService extends EventServiceBase<Events> {
       RenderChatGameOverlay.In eventIn = new RenderChatGameOverlay.In(posX, posY);
       RenderChatGameOverlay.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
 
+      if (eventOut == null) {
+        continue;
+      }
       if (eventOut.newPosX != null) {
         posX = eventOut.newPosX;
       }

@@ -6,8 +6,6 @@ import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
 import dev.rebel.chatmate.models.chat.PartialChatMessageType;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiIngame;
-import net.minecraft.client.gui.GuiNewChat;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
@@ -44,7 +42,7 @@ public class McChatServiceTests {
 
     service.printStreamChatItem(null);
 
-    verify(this.mockMinecraftProxyService, never()).tryPrintChatMessage(anyString(), any());
+    verify(this.mockMinecraftProxyService, never()).printChatMessage(anyString(), any());
   }
 
   @Test
@@ -66,7 +64,7 @@ public class McChatServiceTests {
     service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, emoji1.name);
-    verify(this.mockMinecraftProxyService).tryPrintChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+    verify(this.mockMinecraftProxyService).printChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
@@ -77,7 +75,7 @@ public class McChatServiceTests {
     service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, emoji2.label);
-    verify(this.mockMinecraftProxyService).tryPrintChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+    verify(this.mockMinecraftProxyService).printChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
@@ -88,7 +86,7 @@ public class McChatServiceTests {
     service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, text1.text + text2.text);
-    verify(this.mockMinecraftProxyService).tryPrintChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+    verify(this.mockMinecraftProxyService).printChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
@@ -100,7 +98,7 @@ public class McChatServiceTests {
     service.printStreamChatItem(item);
 
     String expected = getExpectedChatText(author1, text1.text + " " + emoji2.label + " " + emoji1.name + " " + text2.text);
-    verify(this.mockMinecraftProxyService).tryPrintChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
+    verify(this.mockMinecraftProxyService).printChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test

@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services;
 
 import com.google.gson.Gson;
 import dev.rebel.chatmate.proxy.EndpointProxy.Method;
+import org.apache.commons.lang3.ClassUtils;
 
 import javax.annotation.Nullable;
 import java.text.DateFormat;
@@ -75,7 +76,7 @@ public class LogService {
     }
 
     Class<?> c = obj.getClass();
-    if (c.isPrimitive() || c.equals(String.class)) {
+    if (ClassUtils.isPrimitiveOrWrapper(c)) {
       return obj.toString();
     } else {
       return this.gson.toJson(obj);
