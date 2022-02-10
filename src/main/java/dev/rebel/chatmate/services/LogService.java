@@ -70,6 +70,10 @@ public class LogService {
   }
 
   private String stringify(Object obj) {
+    if (obj == null) {
+      return "null";
+    }
+
     Class<?> c = obj.getClass();
     if (c.isPrimitive() || c.equals(String.class)) {
       return obj.toString();

@@ -39,7 +39,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
       } else {
         this.stop();
       }
-    }, this);
+    });
   }
 
   public void start() {

@@ -107,10 +107,22 @@ public class Config extends EventServiceBase<ConfigType> {
       Arrays.asList(initialListeners).forEach(l -> Config.this.addListener(this.type, l, null));
     }
 
+    /** Lambda allowed. */
+    public void onChange(Consumer<T> callback) {
+      this.onChange(callback, null);
+    }
+
+    /** **NO LAMBDA** */
     public void onChange(Consumer<T> callback, Object key) {
       this.onChange(callback, new Options<>(), key);
     }
 
+    /** Lambda allowed. */
+    public void onChange(Consumer<T> callback, @Nullable Options<T> options) {
+      this.onChange(callback, options, null);
+    }
+
+    /** **NO LAMBDA** */
     public void onChange(Consumer<T> callback, @Nullable Options<T> options, Object key) {
       Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
       Config.this.addListener(this.type, handler, options, key);

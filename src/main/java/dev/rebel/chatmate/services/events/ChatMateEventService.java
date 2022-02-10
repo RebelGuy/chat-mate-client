@@ -36,7 +36,7 @@ public class ChatMateEventService extends EventServiceBase<EventType> {
       } else {
         this.stop();
       }
-    }, this);
+    });
   }
 
   public void onLevelUp(Function<LevelUpEventData.In, LevelUpEventData.Out> handler, @Nullable LevelUpEventData.Options options) {

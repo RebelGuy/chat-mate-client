@@ -45,16 +45,6 @@ public class GuiChatMateHudScreen extends GuiScreen {
   }
 
   @Override
-  public void onGuiClosed() {
-    super.onGuiClosed();
-
-    this.mouseEventService.off(Events.MOUSE_DOWN, this);
-    this.mouseEventService.off(Events.MOUSE_MOVE, this);
-    this.mouseEventService.off(Events.MOUSE_UP, this);
-    this.mouseEventService.off(Events.MOUSE_SCROLL, this);
-  }
-
-  @Override
   public void initGui() {
     super.initGui();
   }

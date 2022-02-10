@@ -1,5 +1,4 @@
 package dev.rebel.chatmate.services.events;
-import dev.rebel.chatmate.models.chatMate.GetEventsResponse.EventType;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.models.EventData;
 import dev.rebel.chatmate.services.events.models.EventData.EventIn;
@@ -27,12 +26,12 @@ public abstract class EventServiceBase<Events extends Enum<Events>> {
     }
   }
 
-  /** Add an event listener without a key (cannot unsubscribe) */
+  /** Add an event listener without a key (cannot unsubscribe - callback will be held as a strong reference). Lambda allowed. */
   protected final <In extends EventIn, Out extends EventOut, Options extends EventOptions> void addListener(Events event, Function<In, Out> handler, Options options) {
     this.listeners.get(event).add(new EventHandler<>(handler, options));
   }
 
-  /** Add an event listener with a key (can unsubscribe) */
+  /** Add an event listener with a key (can unsubscribe explicitly or implicitly - callback will be held as a weak reference). **LAMBDA FORBIDDEN.** */
   protected final <In extends EventIn, Out extends EventOut, Options extends EventOptions> void addListener(Events event, Function<In, Out> handler, Options options, Object key) {
     if (this.listeners.get(event).stream().anyMatch(eh -> eh.isHandlerForKey(key))) {
       throw new RuntimeException("Key already exists for event " + event);
@@ -60,10 +59,15 @@ public abstract class EventServiceBase<Events extends Enum<Events>> {
   }
 
   protected final @Nullable <In extends EventIn, Out extends EventOut, Options extends EventOptions> Out safeDispatch(Events event, EventHandler<In, Out, Options> handler, In eventIn) {
+    if (!handler.isActive()) {
+      this.logService.logWarning(this, "Could not notify listener of the", event, "event because it is no longer active.");
+      return null;
+    }
+
     try {
-      return handler.callback.apply(eventIn);
+      return handler.getCallbackRef().apply(eventIn);
     } catch (Exception e) {
-      this.logService.logError(this, "A problem occurred while notifying listener of the", EventType.LEVEL_UP, "event. Event data:", eventIn);
+      this.logService.logError(this, "A problem occurred while notifying listener of the", event, "event. Event data:", eventIn, "| Error:", e.getMessage());
       return null;
     }
   }
