@@ -16,7 +16,7 @@ import java.util.function.Function;
 // happy scrolling lmao
 public abstract class EventServiceBase<Events extends Enum<Events>> {
   private final LogService logService;
-  private Map<Events, ArrayList<EventHandler<?, ?, ?>>> listeners;
+  private final Map<Events, ArrayList<EventHandler<?, ?, ?>>> listeners;
 
   public EventServiceBase(Class<Events> events, LogService logService) {
     this.logService = logService;
@@ -38,14 +38,17 @@ public abstract class EventServiceBase<Events extends Enum<Events>> {
       throw new RuntimeException("Key already exists for event " + event);
     }
     this.listeners.get(event).add(new EventHandler<>(handler, options, key));
+    this.removeDeadHandlers(event);
   }
 
   /** It is the caller's responsibility to ensure that the correct type parameters are provided. */
   protected final <In extends EventIn, Out extends EventOut, Options extends EventOptions, Data extends EventData<In, Out, Options>> ArrayList<EventHandler<In, Out, Options>> getListeners(Events event, Class<Data> eventClass) {
+    this.removeDeadHandlers(event);
     return (ArrayList<EventHandler<In, Out, Options>>)(Object)this.listeners.get(event);
   }
 
   protected final boolean removeListener(Events event, Object key) {
+    this.removeDeadHandlers(event);
     Optional<EventHandler<?, ?, ?>> match = this.listeners.get(event).stream().filter(h -> h.isHandlerForKey(key)).findFirst();
 
     if (match.isPresent()) {
@@ -63,5 +66,9 @@ public abstract class EventServiceBase<Events extends Enum<Events>> {
       this.logService.logError(this, "A problem occurred while notifying listener of the", EventType.LEVEL_UP, "event. Event data:", eventIn);
       return null;
     }
+  }
+
+  private void removeDeadHandlers(Events event) {
+    this.listeners.get(event).removeIf(handler -> !handler.isActive());
   }
 }

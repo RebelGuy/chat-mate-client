@@ -243,9 +243,11 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private void onShowLiveViewers(boolean enabled) {
     Dim x = this.dimFactory.fromGui(INITIAL_X_GUI);
     Dim y = this.dimFactory.fromGui(INITIAL_Y_GUI);
-    Dim w = enabled ? this.getTextWidth().times(this.scale) : this.dimFactory.zeroGui();
-    Dim h = enabled ? this.getTextHeight().times(this.scale) : this.dimFactory.zeroGui();
-    this.setRect(x, y, w, h);
+    this.setRect(x, y, this.dimFactory.zeroGui(), this.dimFactory.zeroGui());
+    if (enabled) {
+      // make sure the anchor is consistent
+      this.onResize(this.getTextWidth().times(this.scale), this.getTextHeight().times(this.scale), Anchor.LEFT_CENTRE);
+    }
     this.scale = this.initialScale;
     this.startRotation = new float[2];
     this.targetRotation = new float[2];
