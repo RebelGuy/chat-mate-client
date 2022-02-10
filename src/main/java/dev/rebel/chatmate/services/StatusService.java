@@ -26,13 +26,13 @@ public class StatusService {
     this.lastSuccessfulStatusResponse = null;
     this.lastStatusResponse = null;
 
-    this.config.getChatMateEnabledEmitter().listen(chatMateEnabled -> {
+    this.config.getChatMateEnabledEmitter().onChange(chatMateEnabled -> {
       if (chatMateEnabled) {
         this.start();
       } else {
         this.stop();
       }
-    });
+    }, this);
   }
 
   public SimpleStatus getSimpleStatus() {

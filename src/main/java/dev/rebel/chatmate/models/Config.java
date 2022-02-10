@@ -1,16 +1,22 @@
 package dev.rebel.chatmate.models;
 
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions;
+import dev.rebel.chatmate.models.Config.ConfigType;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
-import dev.rebel.chatmate.services.EventEmitterService;
+import dev.rebel.chatmate.services.LogService;
+import dev.rebel.chatmate.services.events.EventHandler;
+import dev.rebel.chatmate.services.events.EventServiceBase;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
+import dev.rebel.chatmate.services.events.models.ConfigEventData.In;
+import dev.rebel.chatmate.services.events.models.ConfigEventData.Options;
+import dev.rebel.chatmate.services.events.models.ConfigEventData.Out;
 import dev.rebel.chatmate.services.util.Callback;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import javax.annotation.Nullable;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
-public class Config {
+public class Config extends EventServiceBase<ConfigType> {
   // Since config settings are stored locally, whenever you make changes to the Config that affect the serialised model,
   // you must also change the schema. This is an additive process, and existing serialised models must not be changed.
   // 1. Create new model version that extends `Version`
@@ -20,8 +26,6 @@ public class Config {
   // 5. Use the new migration file when loading the serialised config
   private final ConfigPersistorService<SerialisedConfigV0> configPersistorService;
 
-  /** Listeners are notified whenever any change has been made to the config. */
-  private final List<Callback> updateListeners;
   private final StatefulEmitter<Boolean> chatMateEnabled;
   public StatefulEmitter<Boolean> getChatMateEnabledEmitter() { return this.chatMateEnabled; }
 
@@ -31,7 +35,7 @@ public class Config {
   private final StatefulEmitter<Integer> chatVerticalDisplacement;
   public StatefulEmitter<Integer> getChatVerticalDisplacementEmitter() { return this.chatVerticalDisplacement; }
 
-  private final StatefulEmitter<Boolean> hudEnabled; // todo: add more hud options, preferably in its own menu
+  private final StatefulEmitter<Boolean> hudEnabled;
   public StatefulEmitter<Boolean> getHudEnabledEmitter() { return this.hudEnabled; }
 
   private final StatefulEmitter<Boolean> showStatusIndicator;
@@ -40,17 +44,20 @@ public class Config {
   private final StatefulEmitter<Boolean> showLiveViewers;
   public StatefulEmitter<Boolean> getShowLiveViewersEmitter() { return this.showLiveViewers; }
 
-  public Config(ConfigPersistorService configPersistorService) {
+  /** Listeners are notified whenever any change has been made to the config. */
+  private final List<Callback> updateListeners;
+
+  public Config(LogService logService, ConfigPersistorService configPersistorService) {
+    super(ConfigType.class, logService);
     this.configPersistorService = configPersistorService;
 
-    this.chatMateEnabled = new StatefulEmitter<>(false, this::onUpdate);
-    this.soundEnabled = new StatefulEmitter<>(true, this::onUpdate);
-    this.chatVerticalDisplacement = new StatefulEmitter<>(10, this::onUpdate);
-    this.hudEnabled = new StatefulEmitter<>(true, this::onUpdate);
-    this.showStatusIndicator = new StatefulEmitter<>(true, this::onUpdate);
-    this.showLiveViewers = new StatefulEmitter<>(true, this::onUpdate);
-
     this.updateListeners = new ArrayList<>();
+    this.chatMateEnabled = new StatefulEmitter<>(ConfigType.ENABLE_CHAT_MATE, false, this::onUpdate);
+    this.soundEnabled = new StatefulEmitter<>(ConfigType.ENABLE_SOUND, true, this::onUpdate);
+    this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, 10, this::onUpdate);
+    this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, true, this::onUpdate);
+    this.showStatusIndicator = new StatefulEmitter<>(ConfigType.SHOW_STATUS_INDICATOR, true, this::onUpdate);
+    this.showLiveViewers = new StatefulEmitter<>(ConfigType.SHOW_LIVE_VIEWERS, true, this::onUpdate);
 
     this.load();
   }
@@ -59,9 +66,10 @@ public class Config {
     this.updateListeners.add(callback);
   }
 
-  private <T> void onUpdate(T _unused) {
+  private <T> Out<T> onUpdate(In<T> _unused) {
     this.save();
     this.updateListeners.forEach(Callback::call);
+    return new Out<>();
   }
 
   private void load() {
@@ -87,28 +95,61 @@ public class Config {
   }
 
   /** Represents a state that emits an event when modified */
-  public static class StatefulEmitter<T> extends EventEmitterService<T> {
+  public class StatefulEmitter<T> {
+    private final ConfigType type;
     private T state;
 
     @SafeVarargs
-    public StatefulEmitter (T initialState, Consumer<T>... initialListeners) {
+    public StatefulEmitter (ConfigType type, T initialState, Function<In<T>, Out<T>>... initialListeners) {
       super();
+      this.type = type;
       this.state = initialState;
-      Arrays.asList(initialListeners).forEach(super::listen);
+      Arrays.asList(initialListeners).forEach(l -> Config.this.addListener(this.type, l, null));
+    }
+
+    public void onChange(Consumer<T> callback, Object key) {
+      this.onChange(callback, new Options<>(), key);
+    }
+
+    public void onChange(Consumer<T> callback, @Nullable Options<T> options, Object key) {
+      Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
+      Config.this.addListener(this.type, handler, options, key);
+    }
+
+    public void off(Object key) {
+      Config.this.removeListener(this.type, key);
     }
 
     public void set(T newValue) {
-      if (this.state == newValue) {
+      if (this.state == null && newValue == null || this.state != null && this.state.equals(newValue)) {
         return;
       } else {
         this.state = newValue;
       }
 
-      super.dispatch(newValue);
+      ArrayList<EventHandler<In<T>, Out<T>, Options<T>>> handlers = Config.this.getListeners(this.type, ConfigEventData.class);
+      for (EventHandler<In<T>, Out<T>, Options<T>> handler : handlers) {
+        Options<T> options = handler.options;
+        if (options != null && options.filter != null && !options.filter.test(newValue)) {
+          continue;
+        }
+
+        In<T> eventIn = new In<>(newValue);
+        Out<T> eventOut = Config.this.safeDispatch(this.type, handler, eventIn);
+      }
     }
 
     public T get() {
       return this.state;
     }
+  }
+
+  public enum ConfigType {
+    ENABLE_CHAT_MATE,
+    ENABLE_SOUND,
+    CHAT_VERTICAL_DISPLACEMENT,
+    ENABLE_HUD,
+    SHOW_STATUS_INDICATOR,
+    SHOW_LIVE_VIEWERS
   }
 }

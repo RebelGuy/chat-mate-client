@@ -30,13 +30,13 @@ public class ChatMateEventService extends EventServiceBase<EventType> {
     this.config = config;
     this.chatMateEndpointProxy = chatMateEndpointProxy;
 
-    this.config.getChatMateEnabledEmitter().listen(chatMateEnabled -> {
+    this.config.getChatMateEnabledEmitter().onChange(chatMateEnabled -> {
       if (chatMateEnabled) {
         this.start();
       } else {
         this.stop();
       }
-    });
+    }, this);
   }
 
   public void onLevelUp(Function<LevelUpEventData.In, LevelUpEventData.Out> handler, @Nullable LevelUpEventData.Options options) {

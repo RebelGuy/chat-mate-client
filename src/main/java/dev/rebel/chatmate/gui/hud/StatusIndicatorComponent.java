@@ -52,7 +52,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.statusIndicators.put(SimpleStatus.YOUTUBE_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_ORANGE, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.SERVER_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_RED, x, y, scale, canRescale, canTranslate));
 
-    this.config.getShowStatusIndicatorEmitter().listen(this::onShowStatusIndicator);
+    this.config.getShowStatusIndicatorEmitter().onChange(this::onShowStatusIndicator, this);
   }
 
   @Override

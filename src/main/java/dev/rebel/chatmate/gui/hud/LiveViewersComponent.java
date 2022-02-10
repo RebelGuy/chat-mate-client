@@ -41,7 +41,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.scale = initialScale;
     this.minecraft = minecraft;
 
-    this.config.getShowLiveViewersEmitter().listen(this::onShowLiveViewers);
+    this.config.getShowLiveViewersEmitter().onChange(this::onShowLiveViewers, this);
   }
 
   @Override

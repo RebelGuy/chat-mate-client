@@ -1,10 +1,12 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.models.Config.ConfigType;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.models.chat.GetChatResponse;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
+import dev.rebel.chatmate.services.events.ChatMateChatService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
@@ -18,9 +20,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
-public class YtChatServiceTests {
+public class ChatMateChatServiceTests {
+  @Mock LogService mockLogService;
   @Mock ChatEndpointProxy mockChatEndpointProxy;
   @Mock Config mockConfig;
+  @Mock StatefulEmitter<Boolean> chatMateEnabled;
 
   @Test
   public void newChatItem_dispatched() throws Exception {
@@ -34,10 +38,10 @@ public class YtChatServiceTests {
     }};
 
     when(this.mockChatEndpointProxy.getChat(any(), any())).thenReturn(chatResponse);
-    when(this.mockConfig.getChatMateEnabledEmitter()).thenReturn(new StatefulEmitter(true));
-    YtChatService chatService = new YtChatService(this.mockConfig, this.mockChatEndpointProxy);
+    when(this.mockConfig.getChatMateEnabledEmitter()).thenReturn(this.chatMateEnabled);
+    ChatMateChatService chatService = new ChatMateChatService(this.mockLogService, this.mockConfig, this.mockChatEndpointProxy);
     Consumer<ChatItem[]> mockCallback = mock(Consumer.class);
-    chatService.listen(mockCallback);
+    chatService.onNewChat(mockCallback, this);
 
     chatService.start();
 

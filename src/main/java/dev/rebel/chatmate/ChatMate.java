@@ -15,10 +15,7 @@ import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
-import dev.rebel.chatmate.services.events.ChatMateEventService;
-import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.KeyboardEventService;
-import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.services.events.*;
 import dev.rebel.chatmate.services.util.FileHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
@@ -32,7 +29,7 @@ import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
 public class ChatMate {
   private final ForgeEventService forgeEventService;
-  private final YtChatService ytChatService;
+  private final ChatMateChatService chatMateChatService;
   private final McChatService mcChatService;
   private final MouseEventService mouseEventService;
   private final KeyboardEventService keyboardEventService;
@@ -54,12 +51,11 @@ public class ChatMate {
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService);
     DimFactory dimFactory = new DimFactory(minecraft);
 
-    ConfigPersistorService configPersistorService = new ConfigPersistorService(SerialisedConfigV0.class, logService, fileService);
-    this.config = new Config(configPersistorService);
+    ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV0.class, logService, fileService);
+    this.config = new Config(logService, configPersistorService);
     this.forgeEventService = new ForgeEventService(logService, minecraft);
     this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);
-
 
     String apiPath = "http://localhost:3010/api";
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiPath);
@@ -69,7 +65,7 @@ public class ChatMate {
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
-    this.ytChatService = new YtChatService(this.config, chatEndpointProxy);
+    this.chatMateChatService = new ChatMateChatService(logService, this.config, chatEndpointProxy);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, this.config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy);
@@ -88,7 +84,7 @@ public class ChatMate {
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 
-    ytChatService.listen(this::onNewYtChat);
+    chatMateChatService.onNewChat(this::onNewYtChat, this);
   }
 
   @Mod.EventHandler
