@@ -17,6 +17,7 @@ import net.minecraft.client.gui.GuiScreen;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /** This is the focused menu screen - for the game overlay class, go to GuiChatMateHud */
 public class GuiChatMateHudScreen extends GuiScreen {
@@ -24,6 +25,11 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private final DimFactory dimFactory;
   private final GuiChatMateHud guiChatMateHud;
   private final MouseEventService mouseEventService;
+  
+  private final Function<In, Out> onMouseDown = this::onMouseDown;
+  private final Function<In, Out> onMouseMove = this::onMouseMove;
+  private final Function<In, Out> onMouseUp = this::onMouseUp;
+  private final Function<In, Out> onMouseScroll = this::onMouseScroll;
 
   private IHudComponent draggingComponent = null;
   private Dim draggingComponentOffsetX = null;
@@ -38,10 +44,10 @@ public class GuiChatMateHudScreen extends GuiScreen {
     this.guiChatMateHud = hud;
 
     Options options = new Options(false, MouseButton.LEFT_BUTTON);
-    this.mouseEventService.on(Events.MOUSE_DOWN, this::onMouseDown, options, this);
-    this.mouseEventService.on(Events.MOUSE_MOVE, this::onMouseMove, options, this);
-    this.mouseEventService.on(Events.MOUSE_UP, this::onMouseUp, options, this);
-    this.mouseEventService.on(Events.MOUSE_SCROLL, this::onMouseScroll, options, this);
+    this.mouseEventService.on(Events.MOUSE_DOWN, this.onMouseDown, options, this);
+    this.mouseEventService.on(Events.MOUSE_MOVE, this.onMouseMove, options, this);
+    this.mouseEventService.on(Events.MOUSE_UP, this.onMouseUp, options, this);
+    this.mouseEventService.on(Events.MOUSE_SCROLL, this.onMouseScroll, options, this);
   }
 
   @Override
