@@ -32,6 +32,15 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 Debug partial .minecraft folder: `chat-mate-client/run/` 
 
 # Change Log
+## v1.8 - The Housekeeping Update [12/2/2022]
+- Added `/cm ranks` command for displaying the leaderboard
+  - If called without arguments, will display the full leaderboard with pagination
+  - If called with a name argument, will display only a section of the leaderboard that features the specified channel
+- Added a migration framework for the config file
+- Various small bug fixes, visual fixes, and code improvements
+- Minecraft chat entries from ChatMate are now withheld if a chat GUI is not currently visible
+- Better logging
+
 ## v1.7 - The Dashboard Update v2 [5/2/2022]
 - Added live viewer count to the HUD, which nicely animate changes in value
 - Added info messages for level-up events using the new events endpoint
