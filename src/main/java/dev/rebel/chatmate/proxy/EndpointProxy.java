@@ -4,12 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.services.LogService;
 
+import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
 
 public class EndpointProxy {
   private final LogService logService;
@@ -22,6 +26,20 @@ public class EndpointProxy {
     this.logService = logService;
     this.basePath = basePath;
     this.gson = new Gson();
+  }
+
+  public <T extends ApiResponseBase> void makeRequestAsync(Method method, String path, Class<T> returnClass, Consumer<T> callback, @Nullable Consumer<Throwable> errorHandler) {
+    // we got there eventually.....
+    CompletableFuture.supplyAsync(() -> {
+      try {
+        return this.makeRequest(method, path, returnClass);
+      } catch (Exception e) {
+        if (errorHandler != null) {
+          errorHandler.accept(e);
+        }
+        return null;
+      }
+    }).thenAccept(callback);
   }
 
   public <T extends ApiResponseBase> T makeRequest(Method method, String path, Class<T> returnClass) throws ConnectException, Exception {

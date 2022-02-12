@@ -3,6 +3,7 @@ package dev.rebel.chatmate.services;
 import com.google.gson.Gson;
 import dev.rebel.chatmate.proxy.EndpointProxy.Method;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.annotation.Nullable;
 import java.text.DateFormat;
@@ -73,10 +74,13 @@ public class LogService {
   private String stringify(Object obj) {
     if (obj == null) {
       return "null";
-    }
-
-    Class<?> c = obj.getClass();
-    if (ClassUtils.isPrimitiveOrWrapper(c)) {
+    } else if (obj instanceof Exception) {
+      Exception e = (Exception)obj;
+      return String.format("\n---EXCEPTION LOG START\nEncountered error of type %s. Error message: %s\n%s\n---EXCEPTION LOG END\n",
+          e.getClass().getSimpleName(),
+          ExceptionUtils.getMessage(e),
+          ExceptionUtils.getStackTrace(e));
+    } else if (ClassUtils.isPrimitiveOrWrapper(obj.getClass())) {
       return obj.toString();
     } else {
       return this.gson.toJson(obj);

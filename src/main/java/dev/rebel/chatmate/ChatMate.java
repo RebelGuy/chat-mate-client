@@ -3,8 +3,10 @@ package dev.rebel.chatmate;
 import dev.rebel.chatmate.commands.ChatMateCommand;
 import dev.rebel.chatmate.commands.CountdownCommand;
 import dev.rebel.chatmate.commands.CounterCommand;
+import dev.rebel.chatmate.commands.RanksCommand;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
+import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
@@ -13,6 +15,7 @@ import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
@@ -60,6 +63,7 @@ public class ChatMate {
     String apiPath = "http://localhost:3010/api";
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiPath);
     ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, apiPath);
+    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -69,7 +73,7 @@ public class ChatMate {
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, this.config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy);
-    MessageService messageService = new MessageService();
+    MessageService messageService = new MessageService(logService, minecraftProxyService);
     this.mcChatService = new McChatService(minecraftProxyService, logService, filterService, soundService, chatMateEventService, messageService);
     StatusService statusService = new StatusService(this.config, chatMateEndpointProxy);
 
@@ -80,7 +84,8 @@ public class ChatMate {
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(minecraft)),
-      new CounterCommand(new CounterHandler(this.keyBindingService, this.renderService))
+      new CounterCommand(new CounterHandler(this.keyBindingService, this.renderService)),
+      new RanksCommand(new RanksHandler(mcChatService, experienceEndpointProxy))
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 

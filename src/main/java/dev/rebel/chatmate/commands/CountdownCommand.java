@@ -55,7 +55,6 @@ public class CountdownCommand extends ChatMateSubCommand {
     }
   }
 
-
   private static int parseDurationSeconds(String str) throws NumberInvalidException {
     String[] parts = str.split(":");
     int seconds = parts.length >= 1 ? CommandBase.parseInt(parts[0]) : 0;

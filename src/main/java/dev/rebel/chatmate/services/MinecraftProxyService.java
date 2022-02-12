@@ -63,6 +63,14 @@ public class MinecraftProxyService {
     }
   }
 
+  public @Nullable Integer getChatWidth() {
+    if (this.minecraft.ingameGUI == null) {
+      return null;
+    }
+
+    return this.minecraft.ingameGUI.getChatGUI().getChatWidth();
+  }
+
   private void schedule(Consumer<Minecraft> work) {
     this.minecraft.addScheduledTask(() -> work.accept(this.minecraft));
   }

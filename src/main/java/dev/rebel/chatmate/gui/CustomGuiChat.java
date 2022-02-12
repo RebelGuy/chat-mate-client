@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Sets;
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiConfirmOpenLink;
 import net.minecraft.client.gui.ScaledResolution;
@@ -74,7 +75,11 @@ public class CustomGuiChat extends GuiChat {
         this.setText(component.getChatStyle().getInsertion(), false);
       }
     } else if (clickevent != null) {
-      if (clickevent.getAction() == ClickEvent.Action.OPEN_URL) {
+      if (ClickEventWithCallback.isClickEventWithCallback(clickevent)) {
+        ClickEventWithCallback customEvent = (ClickEventWithCallback)clickevent;
+        return customEvent.handleClick();
+
+      } else if (clickevent.getAction() == ClickEvent.Action.OPEN_URL) {
         if (!this.mc.gameSettings.chatLinks) {
           return false;
         }

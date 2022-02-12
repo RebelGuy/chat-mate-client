@@ -1,24 +1,46 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.models.experience.RankedEntry;
+import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
 
 import static dev.rebel.chatmate.models.Styles.*;
 import static dev.rebel.chatmate.services.util.ChatHelpers.joinComponents;
+import static dev.rebel.chatmate.services.util.ChatHelpers.stringWithWidth;
 
 public class MessageService {
   private static final IChatComponent INFO_PREFIX = styledText("ChatMate>", INFO_MSG_PREFIX_STYLE);
 
   private final Random random = new Random();
+  private final LogService logService;
+  private final MinecraftProxyService minecraftProxyService;
 
-  public MessageService() {
+  public MessageService(LogService logService, MinecraftProxyService minecraftProxyService) {
+    this.logService = logService;
+    this.minecraftProxyService = minecraftProxyService;
+  }
 
+  public IChatComponent getErrorMessage(String msg) {
+    List<IChatComponent> list = new ArrayList<>();
+    list.add(INFO_PREFIX);
+    list.add(styledText(msg, ERROR_MSG_STYLE));
+    return joinComponents(" ", list);
+  }
+
+  public IChatComponent getInfoMessage(String msg) {
+    List<IChatComponent> list = new ArrayList<>();
+    list.add(INFO_PREFIX);
+    list.add(styledText(msg, INFO_MSG_STYLE));
+    return joinComponents(" ", list);
   }
 
   public IChatComponent getSmallLevelUpMessage(String name, int newLevel) {
@@ -37,6 +59,75 @@ public class MessageService {
     list.add(this.getLargeLevelUpBody(name, newLevel));
     list.add(this.getLargeLevelUpOutro(name, newLevel));
     return joinComponents(" ", list);
+  }
+
+  public IChatComponent getRankedEntryMessage(RankedEntry entry, boolean deEmphasise, int rankDigits, int levelDigits, int nameWidth, int messageWidth) {
+    // example:
+    // #24 ShiroTheS... 41 <⣿⣿⣿⣿⣿     > 42
+    // rank name levelStart barStart barFilled barBlank barEnd levelEnd
+
+    FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
+    assert fontRenderer != null;
+
+    String separator = " ";
+
+    int rankNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(rankDigits, "4")));
+    String rank = "#" + stringWithWidth(fontRenderer, String.valueOf(entry.rank), "", ' ', rankNumberWidth) + separator;
+
+    String name = stringWithWidth(fontRenderer, entry.channelName, "…", ' ', nameWidth) + separator;
+
+    int levelNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")));
+    String levelStart = stringWithWidth(fontRenderer, String.valueOf(entry.level), "", ' ', levelNumberWidth) + separator;
+    String levelEnd = stringWithWidth(fontRenderer, String.valueOf(entry.level + 1), "", ' ', levelNumberWidth);
+
+    String marker = "⣿";
+    int markerWidth = fontRenderer.getStringWidth(marker);
+
+    String barStart = "<";
+    String barEnd = ">" + separator;
+
+    int barBodyWidth = Math.max(0, messageWidth - fontRenderer.getStringWidth(rank + name + levelStart)
+        - fontRenderer.getStringWidth(barStart) - fontRenderer.getStringWidth(barEnd + levelEnd));
+    int fillWidth = Math.round(barBodyWidth * entry.levelProgress - markerWidth / 2.0f);
+    String progressBar = stringWithWidth(fontRenderer, "", "", '⣿', fillWidth);
+    String emptyBar = stringWithWidth(fontRenderer, "", "", ' ', barBodyWidth - fontRenderer.getStringWidth(progressBar));
+
+    List<IChatComponent> list = new ArrayList<>();
+    list.add(styledText(rank, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE));
+    list.add(styledText(name, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE));
+    list.add(styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level)));
+    list.add(styledText(barStart, INFO_MSG_STYLE));
+    list.add(styledText(progressBar, INFO_MSG_STYLE));
+    list.add(styledText(marker, INFO_MSG_STYLE));
+    list.add(styledText(emptyBar, INFO_MSG_STYLE));
+    list.add(styledText(barEnd, INFO_MSG_STYLE));
+    list.add(styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level + 1)));
+    return joinComponents("", list);
+  }
+
+  public IChatComponent getLeaderboardFooterMessage(int messageWidth, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
+    FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
+    assert fontRenderer != null;
+
+    if (onPrevPage == null && onNextPage == null) {
+      return styledText(stringWithWidth(fontRenderer, "", "", '-', messageWidth), INFO_MSG_STYLE);
+    }
+
+    String prevPageMsg = "<< Previous";
+    String nextPageMsg = "Next >>";
+    int interiorWidth = messageWidth - fontRenderer.getStringWidth(prevPageMsg) - fontRenderer.getStringWidth(nextPageMsg);
+    String interior = "  " + stringWithWidth(fontRenderer, "", "", '-', interiorWidth) + "  ";
+
+    ClickEventWithCallback onPrevClick = new ClickEventWithCallback(this.logService, onPrevPage, false);
+    ClickEventWithCallback onNextClick = new ClickEventWithCallback(this.logService, onNextPage, false);
+
+    List<IChatComponent> list = new ArrayList<>();
+    list.add(styledText("  ", INFO_MSG_STYLE));
+    list.add(styledText(prevPageMsg, onPrevClick.bind(onPrevPage == null ? INTERACTIVE_STYLE_DISABLED : INTERACTIVE_STYLE)));
+    list.add(styledText(interior, INFO_MSG_STYLE));
+    list.add(styledText(nextPageMsg, onNextClick.bind(onNextPage == null ? INTERACTIVE_STYLE_DISABLED : INTERACTIVE_STYLE)));
+    list.add(styledText("  ", INFO_MSG_STYLE));
+    return joinComponents("", list);
   }
 
   private IChatComponent getLargeLevelUpIntro(String name, int newLevel) {

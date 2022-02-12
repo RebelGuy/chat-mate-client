@@ -3,17 +3,27 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
 import dev.rebel.chatmate.models.chat.PartialChatMessageType;
+import dev.rebel.chatmate.models.experience.RankedEntry;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
+import dev.rebel.chatmate.services.util.Action3;
+import dev.rebel.chatmate.services.util.Action4;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.*;
+import org.apache.commons.lang3.ArrayUtils;
+import scala.Function3;
+import scala.Product3;
 
 import javax.annotation.Nullable;
+import java.net.ConnectException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static dev.rebel.chatmate.models.Styles.*;
 import static dev.rebel.chatmate.services.util.ChatHelpers.joinComponents;
@@ -94,6 +104,49 @@ public class McChatService {
     return new LevelUpEventData.Out();
   }
 
+  public void printLeaderboard(RankedEntry[] entries, @Nullable Integer highlightEntry) {
+    if (entries.length == 0) {
+      this.minecraftProxyService.printChatMessage("Leaderboard", this.messageService.getInfoMessage("No entries to show."));
+      return;
+    }
+    if (highlightEntry != null && (highlightEntry < 0 || highlightEntry >= entries.length)) {
+      highlightEntry = null;
+    }
+
+    boolean anyHighlighting = highlightEntry != null;
+    ChatLeaderboard leaderboard = new ChatLeaderboard(entries, highlightEntry, (visibleEntries, highlighted, onPrevPage, onNextPage) -> {
+      int rankDigits = String.valueOf(visibleEntries[visibleEntries.length - 1].rank).length();
+      int levelDigits = String.valueOf(visibleEntries[0].level + 1).length();
+      List<Integer> allNameWidths = Arrays.stream(visibleEntries).map(entry -> this.minecraftProxyService.getChatFontRenderer().getStringWidth(entry.channelName)).collect(Collectors.toList());
+      int nameWidth = Math.min((this.minecraftProxyService.getChatWidth() - 5) / 3, Collections.max(allNameWidths));
+      int messageWidth = this.minecraftProxyService.getChatWidth() - 5;
+
+      for (int i = 0; i < visibleEntries.length; i++) {
+        RankedEntry entry = visibleEntries[i];
+        boolean deEmphasise = anyHighlighting && highlighted != i;
+        IChatComponent entryComponent = this.messageService.getRankedEntryMessage(entry, deEmphasise, rankDigits, levelDigits, nameWidth, messageWidth);
+        this.minecraftProxyService.printChatMessage("Leaderboard", entryComponent);
+      }
+
+      IChatComponent footer = this.messageService.getLeaderboardFooterMessage(messageWidth, onPrevPage, onNextPage);
+      this.minecraftProxyService.printChatMessage("Leaderboard", footer);
+    });
+
+    leaderboard.print();
+  }
+
+  public void printError(Throwable e) {
+    String msg;
+    if (e instanceof ConnectException) {
+      msg = "Unable to connect.";
+    } else {
+      msg = "Something went wrong.";
+    }
+
+    IChatComponent message = this.messageService.getErrorMessage(msg);
+    this.minecraftProxyService.printChatMessage("Error", message);
+  }
+
   private McChatResult ytChatToMcChat(ChatItem item, FontRenderer fontRenderer) throws Exception {
     ArrayList<IChatComponent> components = new ArrayList<>();
     boolean includesMention = false;
@@ -158,6 +211,91 @@ public class McChatService {
     private McChatResult(List<IChatComponent> chatComponents, boolean includesMention) {
       this.chatComponents = chatComponents;
       this.includesMention = includesMention;
+    }
+  }
+
+  private static class ChatLeaderboard {
+    private static final int ENTRIES_PER_PAGE = 10;
+
+    private final RankedEntry[] underlyingEntries;
+    private final @Nullable Integer highlightedEntry;
+    private final Action4<RankedEntry[], Integer, Runnable, Runnable> renderer;
+
+    private int currentPage = 0;
+
+    public ChatLeaderboard(RankedEntry[] underlyingEntries, @Nullable Integer highlightedEntry, Action4<RankedEntry[], Integer, Runnable, Runnable> renderer) {
+      this.underlyingEntries = underlyingEntries;
+      this.highlightedEntry = highlightedEntry;
+      this.renderer = renderer;
+    }
+
+    public void print() {
+      this.renderer.run(
+          this.getVisibleEntries(),
+          this.getHighlightedIndexOfCurrentPage(),
+          this.canGoToPreviousPage() ? null : this::previousPage,
+          this.canGoToNextPage() ? null : this::nextPage
+      );
+    }
+
+    public boolean canGoToPreviousPage() {
+      return this.currentPage > 0;
+    }
+
+    public boolean canGoToNextPage() {
+      int maxPage = this.underlyingEntries.length / ENTRIES_PER_PAGE;
+      return this.currentPage >= maxPage;
+    }
+
+    public void nextPage() {
+      if (this.canGoToNextPage()) {
+        this.currentPage++;
+        this.print();
+      }
+    }
+
+    public void previousPage() {
+      if (this.canGoToPreviousPage()) {
+        this.currentPage--;
+        this.print();
+      }
+    }
+
+    public RankedEntry[] getVisibleEntries() {
+      if (underlyingEntries.length <= ENTRIES_PER_PAGE) {
+        return Arrays.copyOf(this.underlyingEntries, this.underlyingEntries.length);
+      } else {
+        int from = this.getVisibleStartIndex();
+        int to = this.getVisibleEndIndex();
+        return Arrays.copyOfRange(this.underlyingEntries, from, to);
+      }
+    }
+
+    public @Nullable Integer getHighlightedIndexOfCurrentPage() {
+      if (this.highlightedEntry == null) {
+        return null;
+      }
+
+      int from = this.getVisibleStartIndex();
+      int to = this.getVisibleEndIndex();
+      int shiftedHighlighted = this.highlightedEntry - from;
+      if (shiftedHighlighted >= 0 && shiftedHighlighted <= to) {
+        return shiftedHighlighted;
+      }
+
+      return null;
+    }
+
+    private int getVisibleStartIndex() {
+      return this.currentPage * ENTRIES_PER_PAGE;
+    }
+
+    private int getVisibleEndIndex() {
+      int to = this.currentPage * ENTRIES_PER_PAGE + ENTRIES_PER_PAGE - 1;
+      if (to >= this.underlyingEntries.length) {
+        to = this.underlyingEntries.length - 1;
+      }
+      return to;
     }
   }
 }
