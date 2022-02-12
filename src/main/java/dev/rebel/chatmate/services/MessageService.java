@@ -71,24 +71,21 @@ public class MessageService {
 
     String separator = " ";
 
-    int rankNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(rankDigits, "4")));
+    int rankNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(rankDigits, "4")) + separator);
     String rank = "#" + stringWithWidth(fontRenderer, String.valueOf(entry.rank), "", ' ', rankNumberWidth) + separator;
 
     String name = stringWithWidth(fontRenderer, entry.channelName, "…", ' ', nameWidth) + separator;
 
-    int levelNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")));
+    int levelNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")) + separator);
     String levelStart = stringWithWidth(fontRenderer, String.valueOf(entry.level), "", ' ', levelNumberWidth) + separator;
     String levelEnd = stringWithWidth(fontRenderer, String.valueOf(entry.level + 1), "", ' ', levelNumberWidth);
-
-    String marker = "⣿";
-    int markerWidth = fontRenderer.getStringWidth(marker);
 
     String barStart = "<";
     String barEnd = ">" + separator;
 
     int barBodyWidth = Math.max(0, messageWidth - fontRenderer.getStringWidth(rank + name + levelStart)
         - fontRenderer.getStringWidth(barStart) - fontRenderer.getStringWidth(barEnd + levelEnd));
-    int fillWidth = Math.round(barBodyWidth * entry.levelProgress - markerWidth / 2.0f);
+    int fillWidth = Math.round(barBodyWidth * entry.levelProgress);
     String progressBar = stringWithWidth(fontRenderer, "", "", '⣿', fillWidth);
     String emptyBar = stringWithWidth(fontRenderer, "", "", ' ', barBodyWidth - fontRenderer.getStringWidth(progressBar));
 
@@ -98,7 +95,6 @@ public class MessageService {
     list.add(styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level)));
     list.add(styledText(barStart, INFO_MSG_STYLE));
     list.add(styledText(progressBar, INFO_MSG_STYLE));
-    list.add(styledText(marker, INFO_MSG_STYLE));
     list.add(styledText(emptyBar, INFO_MSG_STYLE));
     list.add(styledText(barEnd, INFO_MSG_STYLE));
     list.add(styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level + 1)));
@@ -113,20 +109,23 @@ public class MessageService {
       return styledText(stringWithWidth(fontRenderer, "", "", '-', messageWidth), INFO_MSG_STYLE);
     }
 
+    String padding = "  ";
     String prevPageMsg = "<< Previous";
     String nextPageMsg = "Next >>";
-    int interiorWidth = messageWidth - fontRenderer.getStringWidth(prevPageMsg) - fontRenderer.getStringWidth(nextPageMsg);
-    String interior = "  " + stringWithWidth(fontRenderer, "", "", '-', interiorWidth) + "  ";
+    int interiorWidth = messageWidth - fontRenderer.getStringWidth(padding + prevPageMsg + padding + padding + nextPageMsg + padding);
+    String interior = stringWithWidth(fontRenderer, "", "", '-', interiorWidth);
 
-    ClickEventWithCallback onPrevClick = new ClickEventWithCallback(this.logService, onPrevPage, false);
-    ClickEventWithCallback onNextClick = new ClickEventWithCallback(this.logService, onNextPage, false);
+    ClickEventWithCallback onPrevClick = new ClickEventWithCallback(this.logService, onPrevPage, true);
+    ClickEventWithCallback onNextClick = new ClickEventWithCallback(this.logService, onNextPage, true);
 
     List<IChatComponent> list = new ArrayList<>();
-    list.add(styledText("  ", INFO_MSG_STYLE));
-    list.add(styledText(prevPageMsg, onPrevClick.bind(onPrevPage == null ? INTERACTIVE_STYLE_DISABLED : INTERACTIVE_STYLE)));
+    list.add(styledText(padding, INFO_MSG_STYLE));
+    list.add(styledText(prevPageMsg, onPrevClick.bind(onPrevPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get())));
+    list.add(styledText(padding, INFO_MSG_STYLE));
     list.add(styledText(interior, INFO_MSG_STYLE));
-    list.add(styledText(nextPageMsg, onNextClick.bind(onNextPage == null ? INTERACTIVE_STYLE_DISABLED : INTERACTIVE_STYLE)));
-    list.add(styledText("  ", INFO_MSG_STYLE));
+    list.add(styledText(padding, INFO_MSG_STYLE));
+    list.add(styledText(nextPageMsg, onNextClick.bind(onNextPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get())));
+    list.add(styledText(padding, INFO_MSG_STYLE));
     return joinComponents("", list);
   }
 

@@ -130,6 +130,7 @@ public class McChatService {
 
       IChatComponent footer = this.messageService.getLeaderboardFooterMessage(messageWidth, onPrevPage, onNextPage);
       this.minecraftProxyService.printChatMessage("Leaderboard", footer);
+      this.minecraftProxyService.printChatMessage("Leaderboard", new ChatComponentText(""));
     });
 
     leaderboard.print();
@@ -233,8 +234,8 @@ public class McChatService {
       this.renderer.run(
           this.getVisibleEntries(),
           this.getHighlightedIndexOfCurrentPage(),
-          this.canGoToPreviousPage() ? null : this::previousPage,
-          this.canGoToNextPage() ? null : this::nextPage
+          this.canGoToPreviousPage() ? this::previousPage : null,
+          this.canGoToNextPage() ? this::nextPage : null
       );
     }
 
@@ -244,7 +245,7 @@ public class McChatService {
 
     public boolean canGoToNextPage() {
       int maxPage = this.underlyingEntries.length / ENTRIES_PER_PAGE;
-      return this.currentPage >= maxPage;
+      return this.currentPage < maxPage;
     }
 
     public void nextPage() {
@@ -267,7 +268,7 @@ public class McChatService {
       } else {
         int from = this.getVisibleStartIndex();
         int to = this.getVisibleEndIndex();
-        return Arrays.copyOfRange(this.underlyingEntries, from, to);
+        return Arrays.copyOfRange(this.underlyingEntries, from, to + 1);
       }
     }
 

@@ -5,6 +5,8 @@ import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
+import java.util.function.Supplier;
+
 public class Styles {
   public static final ChatStyle VIEWER_RANK_STYLE = new ChatStyle().setColor(EnumChatFormatting.DARK_PURPLE).setBold(true);
   public static final ChatStyle VIEWER_NAME_STYLE = new ChatStyle().setColor(EnumChatFormatting.YELLOW).setBold(false);
@@ -26,10 +28,8 @@ public class Styles {
   public static final ChatStyle ERROR_MSG_STYLE = new ChatStyle().setColor(EnumChatFormatting.RED);
   public static final ChatStyle INFO_MSG_PREFIX_STYLE = new ChatStyle().setColor(EnumChatFormatting.BLUE);
 
-  public static final ChatStyle INTERACTIVE_STYLE = new ChatStyle().setColor(EnumChatFormatting.BLUE).setUnderlined(true);
-  public static final ChatStyle INTERACTIVE_STYLE_DISABLED = new ChatStyle().setColor(EnumChatFormatting.DARK_GRAY).setUnderlined(false);
-
-  public static final ChatStyle LEVEL_UP_MESSAGE_BODY = new ChatStyle().setColor(EnumChatFormatting.WHITE);
+  public static final Supplier<ChatStyle> INTERACTIVE_STYLE = () -> new ChatStyle().setColor(EnumChatFormatting.BLUE).setUnderlined(true);
+  public static final Supplier<ChatStyle> INTERACTIVE_STYLE_DISABLED = () -> new ChatStyle().setColor(EnumChatFormatting.DARK_GRAY).setUnderlined(false);
 
   public static ChatStyle getLevelStyle(Integer level) {
     if (level < 20) {
