@@ -80,6 +80,8 @@ public class LogService {
           e.getClass().getSimpleName(),
           ExceptionUtils.getMessage(e),
           ExceptionUtils.getStackTrace(e));
+    } else if (obj instanceof String) {
+      return (String)obj;
     } else if (ClassUtils.isPrimitiveOrWrapper(obj.getClass())) {
       return obj.toString();
     } else {

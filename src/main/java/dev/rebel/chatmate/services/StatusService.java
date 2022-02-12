@@ -32,7 +32,7 @@ public class StatusService {
       } else {
         this.stop();
       }
-    }, this);
+    });
   }
 
   public SimpleStatus getSimpleStatus() {
