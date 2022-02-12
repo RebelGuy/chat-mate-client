@@ -89,7 +89,7 @@ public class ChatMate {
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 
-    chatMateChatService.onNewChat(this::onNewYtChat, this);
+    chatMateChatService.onNewChat(this::onNewYtChat, null);
   }
 
   @Mod.EventHandler
