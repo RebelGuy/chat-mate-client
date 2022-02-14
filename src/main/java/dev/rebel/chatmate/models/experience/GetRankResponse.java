@@ -1,14 +1,16 @@
 package dev.rebel.chatmate.models.experience;
 
+import dev.rebel.chatmate.models.experience.GetRankResponse.GetRankResponseData;
 import dev.rebel.chatmate.proxy.ApiResponseBase;
 
-public class GetRankResponse extends ApiResponseBase {
-  public Long timestamp;
-  public Integer relevantIndex;
-  public RankedEntry[] entries;
-
+public class GetRankResponse extends ApiResponseBase<GetRankResponseData> {
   @Override
-  public Number GetExpectedSchema() {
+  public Integer GetExpectedSchema() {
     return 1;
+  }
+
+  public static class GetRankResponseData {
+    public Integer relevantIndex;
+    public RankedEntry[] entries;
   }
 }

@@ -1,18 +1,20 @@
 package dev.rebel.chatmate.models.chatMate;
 
 import com.google.gson.annotations.SerializedName;
+import dev.rebel.chatmate.models.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.proxy.ApiResponseBase;
 
 import javax.annotation.Nullable;
 
-public class GetStatusResponse extends ApiResponseBase {
-  public Long timestamp;
-  public LivestreamStatus livestreamStatus;
-  public ApiStatus apiStatus;
-
+public class GetStatusResponse extends ApiResponseBase<GetStatusResponseData> {
   @Override
-  public Number GetExpectedSchema() {
+  public Integer GetExpectedSchema() {
     return 1;
+  }
+
+  public static class GetStatusResponseData {
+    public LivestreamStatus livestreamStatus;
+    public ApiStatus apiStatus;
   }
 
   public static class LivestreamStatus {

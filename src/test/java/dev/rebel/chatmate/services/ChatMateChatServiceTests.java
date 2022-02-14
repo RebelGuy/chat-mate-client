@@ -1,10 +1,10 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.Config.ConfigType;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.models.chat.GetChatResponse;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
+import dev.rebel.chatmate.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.services.events.ChatMateChatService;
 import org.junit.Test;
@@ -32,8 +32,8 @@ public class ChatMateChatServiceTests {
         McChatServiceTests.createAuthor("Test author"),
         McChatServiceTests.createText("Test text")
     )};
-    GetChatResponse chatResponse = new GetChatResponse() {{
-      lastTimestamp = new Date().getTime();
+    GetChatResponseData chatResponse = new GetChatResponseData() {{
+      reusableTimestamp = new Date().getTime();
       chat = chatItems;
     }};
 

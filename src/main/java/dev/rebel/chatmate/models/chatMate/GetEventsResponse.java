@@ -2,15 +2,18 @@ package dev.rebel.chatmate.models.chatMate;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import dev.rebel.chatmate.models.chatMate.GetEventsResponse.GetEventsResponseData;
 import dev.rebel.chatmate.proxy.ApiResponseBase;
 
-public class GetEventsResponse extends ApiResponseBase {
-  public Long timestamp;
-  public Event[] events;
-
+public class GetEventsResponse extends ApiResponseBase<GetEventsResponseData> {
   @Override
-  public Number GetExpectedSchema() {
-    return 1;
+  public Integer GetExpectedSchema() {
+    return 2;
+  }
+
+  public static class GetEventsResponseData {
+    public Long reusableTimestamp;
+    public Event[] events;
   }
 
   public static class Event {

@@ -1,15 +1,17 @@
 package dev.rebel.chatmate.models.chat;
 
+import dev.rebel.chatmate.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.proxy.ApiResponseBase;
 
-public class GetChatResponse extends ApiResponseBase {
-  public String liveId;
-  public Long lastTimestamp;
-  public ChatItem[] chat;
-
+public class GetChatResponse extends ApiResponseBase<GetChatResponseData> {
   @Override
-  public Number GetExpectedSchema() {
-    return 4;
+  public Integer GetExpectedSchema() {
+    return 5;
+  }
+
+  public static class GetChatResponseData {
+    public Long reusableTimestamp;
+    public ChatItem[] chat;
   }
 
   public static class ChatItem {

@@ -2,6 +2,7 @@ package dev.rebel.chatmate.proxy;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.services.LogService;
 
 import javax.annotation.Nullable;
@@ -12,7 +13,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 
 public class EndpointProxy {
@@ -28,7 +28,8 @@ public class EndpointProxy {
     this.gson = new Gson();
   }
 
-  public <T extends ApiResponseBase> void makeRequestAsync(Method method, String path, Class<T> returnClass, Consumer<T> callback, @Nullable Consumer<Throwable> errorHandler) {
+  /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler) {
     // we got there eventually.....
     CompletableFuture.supplyAsync(() -> {
       try {
@@ -42,7 +43,7 @@ public class EndpointProxy {
     }).thenAccept(callback);
   }
 
-  public <T extends ApiResponseBase> T makeRequest(Method method, String path, Class<T> returnClass) throws ConnectException, Exception {
+  public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass) throws ConnectException, ChatMateApiException, Exception {
     int id = ++this.requestId;
     this.logService.logApiRequest(this, id, method, this.basePath + path);
 
@@ -63,7 +64,13 @@ public class EndpointProxy {
 
     this.logService.logApiResponse(this, id, ex != null, result);
     if (ex == null) {
-      return this.parseResponse(result, returnClass);
+      Res parsed = this.parseResponse(result, returnClass);
+      parsed.assertIntegrity();
+      if (!parsed.success) {
+        throw new ChatMateApiException(parsed.error);
+      } else {
+        return parsed.data;
+      }
     } else {
       throw ex;
     }
@@ -86,8 +93,11 @@ public class EndpointProxy {
     return result.toString();
   }
 
-  private <T extends ApiResponseBase> T parseResponse(String response, Class<T> returnClass) throws Exception {
+  private <T extends ApiResponseBase<?>> T parseResponse(String response, Class<T> returnClass) throws Exception {
     T parsed = this.gson.fromJson(response, returnClass);
+    if (parsed == null) {
+      throw new Exception("Parsed response is null - is the JSON conversion implemented correctly?");
+    }
 
     String error = null;
     if (parsed.schema == null) {

@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.proxy;
 
+import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.models.chat.GetChatResponse;
+import dev.rebel.chatmate.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.services.LogService;
 
 import javax.annotation.Nullable;
@@ -12,7 +14,7 @@ public class ChatEndpointProxy extends EndpointProxy {
     super(logService, basePath + "/chat");
   }
 
-  public GetChatResponse getChat(@Nullable Long since, @Nullable Integer limit) throws ConnectException, Exception {
+  public GetChatResponseData getChat(@Nullable Long since, @Nullable Integer limit) throws ConnectException, ChatMateApiException, Exception {
     long sinceTimestamp = since != null ? since : new Date().getTime();
     String limitParam = limit == null ? "" : String.format("&limit=%s", limit.toString());
     String url = String.format("?since=%d%s", sinceTimestamp, limitParam);

@@ -1,7 +1,10 @@
 package dev.rebel.chatmate.proxy;
 
+import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.models.chatMate.GetEventsResponse;
+import dev.rebel.chatmate.models.chatMate.GetEventsResponse.GetEventsResponseData;
 import dev.rebel.chatmate.models.chatMate.GetStatusResponse;
+import dev.rebel.chatmate.models.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.services.LogService;
 
 import javax.annotation.Nullable;
@@ -13,11 +16,11 @@ public class ChatMateEndpointProxy extends EndpointProxy {
     super(logService, basePath + "/chatMate");
   }
 
-  public GetStatusResponse getStatus() throws ConnectException, Exception {
+  public GetStatusResponseData getStatus() throws ConnectException, ChatMateApiException, Exception {
     return this.makeRequest(Method.GET, "/status", GetStatusResponse.class);
   }
 
-  public GetEventsResponse getEvents(@Nullable Long sinceTimestamp) throws ConnectException, Exception {
+  public GetEventsResponseData getEvents(@Nullable Long sinceTimestamp) throws ConnectException, ChatMateApiException, Exception {
     if (sinceTimestamp == null) {
       sinceTimestamp = new Date().getTime();
     }

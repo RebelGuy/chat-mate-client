@@ -3,10 +3,10 @@ package dev.rebel.chatmate.services.events;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chat.GetChatResponse;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
+import dev.rebel.chatmate.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ChatMateChatService.EventType;
-import dev.rebel.chatmate.services.events.EventServiceBase;
 import dev.rebel.chatmate.services.events.models.NewChatEventData;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 import jline.internal.Nullable;
@@ -70,7 +70,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     }
     this.requestInProgress = true;
 
-    GetChatResponse response = null;
+    GetChatResponseData response = null;
     try {
       response = this.chatEndpointProxy.getChat(this.lastTimestamp, null);
     } catch (ConnectException e) {
@@ -78,7 +78,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     } catch (Exception ignored) { }
 
     if (response != null) {
-      this.lastTimestamp = response.lastTimestamp;
+      this.lastTimestamp = response.reusableTimestamp;
       for (EventHandler<NewChatEventData.In, NewChatEventData.Out, NewChatEventData.Options> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
         NewChatEventData.In eventIn = new NewChatEventData.In(response.chat);
         super.safeDispatch(EventType.NEW_CHAT, handler, eventIn);

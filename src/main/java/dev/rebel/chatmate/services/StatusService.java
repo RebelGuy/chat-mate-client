@@ -3,6 +3,7 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chatMate.GetStatusResponse;
 import dev.rebel.chatmate.models.chatMate.GetStatusResponse.ApiStatus;
+import dev.rebel.chatmate.models.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.models.chatMate.GetStatusResponse.LivestreamStatus;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.util.TaskWrapper;
@@ -15,8 +16,8 @@ public class StatusService {
   private final ChatMateEndpointProxy chatMateEndpointProxy;
 
   private @Nullable Timer timer;
-  private @Nullable GetStatusResponse lastSuccessfulStatusResponse;
-  private @Nullable GetStatusResponse lastStatusResponse;
+  private @Nullable GetStatusResponseData lastSuccessfulStatusResponse;
+  private @Nullable GetStatusResponseData lastStatusResponse;
 
   public StatusService(Config config, ChatMateEndpointProxy chatMateEndpointProxy) {
     this.config = config;
@@ -36,7 +37,7 @@ public class StatusService {
   }
 
   public SimpleStatus getSimpleStatus() {
-    GetStatusResponse status = this.lastStatusResponse;
+    GetStatusResponseData status = this.lastStatusResponse;
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
@@ -50,7 +51,7 @@ public class StatusService {
   }
 
   public @Nullable Integer getLiveViewerCount() {
-    GetStatusResponse status = this.lastStatusResponse;
+    GetStatusResponseData status = this.lastStatusResponse;
 
     if (status == null) {
       return null;
@@ -74,7 +75,7 @@ public class StatusService {
   }
 
   private void fetchStatus() {
-    GetStatusResponse response = null;
+    GetStatusResponseData response = null;
     try {
       response = this.chatMateEndpointProxy.getStatus();
     } catch (Exception ignored) { }

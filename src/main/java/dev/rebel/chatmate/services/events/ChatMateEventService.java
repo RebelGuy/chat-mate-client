@@ -4,6 +4,7 @@ import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.chatMate.GetEventsResponse;
 import dev.rebel.chatmate.models.chatMate.GetEventsResponse.Event;
 import dev.rebel.chatmate.models.chatMate.GetEventsResponse.EventType;
+import dev.rebel.chatmate.models.chatMate.GetEventsResponse.GetEventsResponseData;
 import dev.rebel.chatmate.models.chatMate.GetEventsResponse.LevelUpData;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.LogService;
@@ -63,7 +64,7 @@ public class ChatMateEventService extends EventServiceBase<EventType> {
     }
     this.requestInProgress = true;
 
-    GetEventsResponse response = null;
+    GetEventsResponseData response = null;
     try {
       response = this.chatMateEndpointProxy.getEvents(this.lastTimestamp);
     } catch (ConnectException e) {
@@ -72,7 +73,7 @@ public class ChatMateEventService extends EventServiceBase<EventType> {
 
     if (response != null) {
       EventType eventType = EventType.LEVEL_UP;
-      this.lastTimestamp = response.timestamp;
+      this.lastTimestamp = response.reusableTimestamp;
       for (Event event : response.events) {
         for (EventHandler<LevelUpEventData.In, LevelUpEventData.Out, LevelUpEventData.Options> handler : this.getListeners(eventType, LevelUpEventData.class)) {
           LevelUpData data = event.getData(LevelUpData.class);
