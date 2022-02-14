@@ -7,6 +7,8 @@ import dev.rebel.chatmate.commands.RanksCommand;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
+import dev.rebel.chatmate.gui.CustomGuiIngame;
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
@@ -19,6 +21,7 @@ import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
+import dev.rebel.chatmate.services.events.models.Tick;
 import dev.rebel.chatmate.services.util.FileHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
@@ -31,6 +34,7 @@ import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
 // refer to mcmod.info for more settings.
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
 public class ChatMate {
+  private final Minecraft minecraft;
   private final ForgeEventService forgeEventService;
   private final ChatMateChatService chatMateChatService;
   private final McChatService mcChatService;
@@ -51,6 +55,7 @@ public class ChatMate {
     LogService logService = new LogService(fileService, false);
 
     Minecraft minecraft = Minecraft.getMinecraft();
+    this.minecraft = minecraft;
     this.forgeEventService = new ForgeEventService(logService, minecraft);
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
@@ -101,6 +106,8 @@ public class ChatMate {
     if (this.isDev) {
       this.config.getChatMateEnabledEmitter().set(true);
     }
+
+    this.guiService.initialiseCustomChat();
   }
 
   // this doesn't do anything!

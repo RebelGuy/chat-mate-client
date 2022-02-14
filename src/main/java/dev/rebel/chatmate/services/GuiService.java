@@ -11,6 +11,9 @@ import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.OpenGui;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
+import dev.rebel.chatmate.services.events.models.Tick;
+import dev.rebel.chatmate.services.events.models.Tick.In;
+import dev.rebel.chatmate.services.events.models.Tick.Out;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
@@ -20,6 +23,7 @@ import java.lang.reflect.Field;
 
 public class GuiService {
   private final boolean isDev;
+  private final LogService logService;
   private final Config config;
   private final ForgeEventService forgeEventService;
   private final MouseEventService mouseEventService;
@@ -29,7 +33,10 @@ public class GuiService {
   private final SoundService soundService;
   private final DimFactory dimFactory;
 
+  private CustomGuiIngame customGuiIngame;
+
   public GuiService(boolean isDev,
+                    LogService logService,
                     Config config,
                     ForgeEventService forgeEventService,
                     MouseEventService mouseEventService,
@@ -39,6 +46,7 @@ public class GuiService {
                     SoundService soundService,
                     DimFactory dimFactory) {
     this.isDev = isDev;
+    this.logService = logService;
     this.config = config;
     this.forgeEventService = forgeEventService;
     this.mouseEventService = mouseEventService;
@@ -61,6 +69,13 @@ public class GuiService {
     )));
   }
 
+  public void initialiseCustomChat() {
+    // we can only instantiate the GuiIngame once Minecraft is fully initialised (NOT in the ChatMate constructor)
+    // because it has a getter that returns null if not fully initialised, which would cause a render crash later on.
+    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(minecraft, forgeEventService);
+    this.customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
+  }
+
   private void addEventHandlers() {
     this.forgeEventService.onOpenGuiModList(this::onOpenGuiModList, null);
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
@@ -68,8 +83,25 @@ public class GuiService {
     this.forgeEventService.onOpenChat(this::onOpenChat, null);
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
     this.forgeEventService.onRenderGameOverlay(this::onRenderGameOverlay, new RenderGameOverlay.Options(ElementType.ALL));
+    this.forgeEventService.onClientTick(this::onClientTick, null);
 
     this.keyBindingService.on(ChatMateKeyEvent.OPEN_CHAT_MATE_HUD, this::onOpenChatMateHud);
+  }
+
+  private Out onClientTick(In in) {
+    if (this.minecraft.ingameGUI != customGuiIngame) {
+      if (customGuiIngame == null) {
+        throw new RuntimeException("The CustomGuiIngame object has not been instantiated.");
+      }
+
+      // Replace the ingameGui with our own implementation as soon as the title screen is shown.
+      // The reason we can't do this before is because, in Minecraft::start literally two lines after
+      // everything is initialised and this event is fired, the ingameGUI is initialised by Forge, which would just
+      // overwrite the value we just set. Instead, wait until the game has been fully initialised.
+      this.minecraft.ingameGUI = customGuiIngame;
+      this.logService.logInfo(this, "Setting minecraft.ingameGUI to our custom IngameGui implementation.");
+    }
+    return new Tick.Out();
   }
 
   private OpenGui.Out onOpenGuiModList(OpenGui.In eventIn) {
@@ -106,8 +138,8 @@ public class GuiService {
 
   /** Moves up the chat a bit so that it doesn't cover the bottom GUI. */
   private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
-    int newPosY = eventIn.posY - this.config.getChatVerticalDisplacementEmitter().get();
-    return new RenderChatGameOverlay.Out(eventIn.posX, newPosY);
+    eventIn.event.posY -= this.config.getChatVerticalDisplacementEmitter().get();
+    return new RenderChatGameOverlay.Out();
   }
 
   private RenderGameOverlay.Out onRenderGameOverlay(RenderGameOverlay.In in) {

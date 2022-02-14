@@ -3,31 +3,18 @@ package dev.rebel.chatmate.services.events.models;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay.In;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay.Out;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay.Options;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 
 public class RenderChatGameOverlay extends EventData<In, Out, Options> {
   public static class In extends EventIn {
-    public final int posX;
-    public final int posY;
+    public RenderGameOverlayEvent.Chat event;
 
-    public In(int posX, int posY) {
-      this.posX = posX;
-      this.posY = posY;
+    public In(RenderGameOverlayEvent.Chat event) {
+      this.event = event;
     }
   }
 
-  public static class Out extends EventOut {
-    public final Integer newPosX;
-    public final Integer newPosY;
-
-    public Out() {
-      this(null, null);
-    }
-
-    public Out(Integer newPosX, Integer newPosY) {
-      this.newPosX = newPosX;
-      this.newPosY = newPosY;
-    }
-  }
+  public static class Out extends EventOut { }
 
   public static class Options extends EventOptions { }
 }

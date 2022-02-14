@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.services.events;
 
+import dev.rebel.chatmate.gui.CustomGuiIngame;
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService.Events;
 import dev.rebel.chatmate.services.events.models.*;
@@ -8,7 +10,9 @@ import dev.rebel.chatmate.services.events.models.EventData.EventOptions;
 import dev.rebel.chatmate.services.events.models.EventData.EventOut;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.fml.client.GuiModList;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -20,6 +24,7 @@ import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 // why? because I would like to keep Forge event subscriptions centralised for an easier overview and for easier debugging.
@@ -28,9 +33,6 @@ import java.util.function.Function;
 // thank Java for the verbose typings.
 public class ForgeEventService extends EventServiceBase<Events> {
   private final Minecraft minecraft;
-
-  private Integer mouseStartX = null;
-  private Integer mouseStartY = null;
 
   public ForgeEventService(LogService logService, Minecraft minecraft) {
     super(Events.class, logService);
@@ -59,7 +61,7 @@ public class ForgeEventService extends EventServiceBase<Events> {
   }
 
   /** Fires before the main chat box GUI component is rendered. */
-  public void onRenderChatGameOverlay(Function<RenderChatGameOverlay.In, RenderChatGameOverlay.Out> handler, @Nullable RenderChatGameOverlay.Options options) {
+  public void onRenderChatGameOverlay(Function<RenderChatGameOverlay.In, RenderChatGameOverlay.Out> handler, @Nullable RenderGameOverlay.Options options) {
     this.addListener(Events.RenderChatGameOverlay, handler, options);
   }
 
@@ -157,27 +159,12 @@ public class ForgeEventService extends EventServiceBase<Events> {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(RenderGameOverlayEvent.Chat event) {
+    // fired by GuiIngameForge::renderChat
     Events eventType = Events.RenderChatGameOverlay;
-    int posX = event.posX;
-    int posY = event.posY;
-
     for (EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options> handler : this.getListeners(eventType, RenderChatGameOverlay.class)) {
-      RenderChatGameOverlay.In eventIn = new RenderChatGameOverlay.In(posX, posY);
+      RenderChatGameOverlay.In eventIn = new RenderChatGameOverlay.In(event);
       RenderChatGameOverlay.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
-
-      if (eventOut == null) {
-        continue;
-      }
-      if (eventOut.newPosX != null) {
-        posX = eventOut.newPosX;
-      }
-      if (eventOut.newPosY != null) {
-        posY = eventOut.newPosY;
-      }
     }
-
-    event.posX = posX;
-    event.posY = posY;
   }
 
   // similar to RenderGameOverlayEvent.ALL, except fires even in menus
