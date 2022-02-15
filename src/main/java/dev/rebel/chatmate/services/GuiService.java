@@ -72,8 +72,8 @@ public class GuiService {
   public void initialiseCustomChat() {
     // we can only instantiate the GuiIngame once Minecraft is fully initialised (NOT in the ChatMate constructor)
     // because it has a getter that returns null if not fully initialised, which would cause a render crash later on.
-    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(minecraft, forgeEventService);
-    this.customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
+    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(this.minecraft, this.config, this.forgeEventService);
+    this.customGuiIngame = new CustomGuiIngame(this.minecraft, customGuiNewChat);
   }
 
   private void addEventHandlers() {
@@ -81,7 +81,6 @@ public class GuiService {
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
     this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
     this.forgeEventService.onOpenChat(this::onOpenChat, null);
-    this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
     this.forgeEventService.onRenderGameOverlay(this::onRenderGameOverlay, new RenderGameOverlay.Options(ElementType.ALL));
     this.forgeEventService.onClientTick(this::onClientTick, null);
 
@@ -132,14 +131,8 @@ public class GuiService {
       defaultValue = (String)field.get(guiChat);
     } catch (Exception e) { throw new RuntimeException("This should never happen"); }
 
-    GuiScreen replaceWithGui = new CustomGuiChat(this.config, defaultValue);
+    GuiScreen replaceWithGui = new CustomGuiChat(defaultValue);
     return new OpenGui.Out(replaceWithGui);
-  }
-
-  /** Moves up the chat a bit so that it doesn't cover the bottom GUI. */
-  private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
-    eventIn.event.posY -= this.config.getChatVerticalDisplacementEmitter().get();
-    return new RenderChatGameOverlay.Out();
   }
 
   private RenderGameOverlay.Out onRenderGameOverlay(RenderGameOverlay.In in) {

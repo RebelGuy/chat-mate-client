@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
@@ -20,6 +21,7 @@ import java.util.List;
 public class CustomGuiNewChat extends GuiNewChat {
   private static final Logger logger = LogManager.getLogger();
   private final Minecraft minecraft;
+  private final Config config;
   private final ForgeEventService forgeEventService;
   private final List<String> sentMessages = Lists.newArrayList();
   private final List<ChatLine> chatLines = Lists.newArrayList();
@@ -27,9 +29,10 @@ public class CustomGuiNewChat extends GuiNewChat {
   private int scrollPos;
   private boolean isScrolled;
 
-  public CustomGuiNewChat(Minecraft minecraft, ForgeEventService forgeEventService) {
+  public CustomGuiNewChat(Minecraft minecraft, Config config, ForgeEventService forgeEventService) {
     super(minecraft);
     this.minecraft = minecraft;
+    this.config = config;
     this.forgeEventService = forgeEventService;
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
@@ -38,10 +41,12 @@ public class CustomGuiNewChat extends GuiNewChat {
   public RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
     RenderGameOverlayEvent.Chat event = eventIn.event;
     event.setCanceled(true);
+    float posX = event.posX;
+    float posY = eventIn.event.posY - this.config.getChatVerticalDisplacementEmitter().get();
 
     // copied from the GuiIngameForge::renderChat, except using our own GuiNewChat implementation
     GlStateManager.pushMatrix();
-    GlStateManager.translate((float)event.posX, (float)event.posY, 0.0F);
+    GlStateManager.translate(posX, posY, 0.0F);
     this.drawChat(this.minecraft.ingameGUI.getUpdateCounter());
     GlStateManager.popMatrix();
     this.minecraft.mcProfiler.endSection();
@@ -282,11 +287,12 @@ public class CustomGuiNewChat extends GuiNewChat {
     }
     else
     {
+      final int BOTTOM = 27 + this.config.getChatVerticalDisplacementEmitter().get();
       ScaledResolution scaledresolution = new ScaledResolution(this.minecraft);
       int i = scaledresolution.getScaleFactor();
       float f = this.getChatScale();
       int j = mouseX / i - 3;
-      int k = mouseY / i - 27;
+      int k = mouseY / i - BOTTOM;
       j = MathHelper.floor_float((float)j / f);
       k = MathHelper.floor_float((float)k / f);
 
