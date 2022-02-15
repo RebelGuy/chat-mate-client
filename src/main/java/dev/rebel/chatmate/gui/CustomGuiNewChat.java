@@ -15,18 +15,23 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Iterator;
 import java.util.List;
 
+// Note: for maintainability reasons, please do not remove any of the @Override methods, even if they replicate the super method.
+/** Responsible for drawing lines of chat and exposing the location of components. See also: `CustomGuiChat`, which is
+ * the screen shown when opening the chat. */
 public class CustomGuiNewChat extends GuiNewChat {
   private static final Logger logger = LogManager.getLogger();
+  private static final Integer MAX_DRAWN_LINES = 100; // limits drawnChatLines
+  private static final Integer MAX_LINES = 100; // limits chatLines
+
   private final Minecraft minecraft;
   private final Config config;
   private final ForgeEventService forgeEventService;
   private final List<String> sentMessages = Lists.newArrayList();
-  private final List<ChatLine> chatLines = Lists.newArrayList();
-  private final List<ChatLine> drawnChatLines = Lists.newArrayList();
-  private int scrollPos;
+  private final List<ChatLine> chatLines = Lists.newArrayList(); // unrendered chat lines
+  private final List<ChatLine> drawnChatLines = Lists.newArrayList(); // rendered chat lines, where components may be broken up into multiple lines to fit into the GUI.
+  private int scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
   private boolean isScrolled;
 
   public CustomGuiNewChat(Minecraft minecraft, Config config, ForgeEventService forgeEventService) {
@@ -38,7 +43,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
   }
 
-  public RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
+  private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
     RenderGameOverlayEvent.Chat event = eventIn.event;
     event.setCanceled(true);
     float posX = event.posX;
@@ -55,369 +60,308 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   @Override
-  public void drawChat(int updateCounter)
-  {
-    if (this.minecraft.gameSettings.chatVisibility != EntityPlayer.EnumChatVisibility.HIDDEN)
-    {
-      int i = this.getLineCount();
-      boolean flag = false;
-      int j = 0;
-      int k = this.drawnChatLines.size();
-      float f = this.minecraft.gameSettings.chatOpacity * 0.9F + 0.1F;
+  public void drawChat(int updateCounter) {
+    if (this.minecraft.gameSettings.chatVisibility == EntityPlayer.EnumChatVisibility.HIDDEN) {
+      return;
+    }
 
-      if (k > 0)
-      {
-        if (this.getChatOpen())
-        {
-          flag = true;
-        }
+    int lineCount = this.drawnChatLines.size();
+    if (lineCount == 0) {
+      return;
+    }
 
-        float f1 = this.getChatScale();
-        int l = MathHelper.ceiling_float_int((float)this.getChatWidth() / f1);
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(2.0F, 20.0F, 0.0F);
-        GlStateManager.scale(f1, f1, 1.0F);
+    int maxLines = this.getLineCount();
+    float opacity = this.minecraft.gameSettings.chatOpacity * 0.9F + 0.1F;
 
-        for (int i1 = 0; i1 + this.scrollPos < this.drawnChatLines.size() && i1 < i; ++i1)
-        {
-          ChatLine chatline = (ChatLine)this.drawnChatLines.get(i1 + this.scrollPos);
+    float scale = this.getChatScale();
+    int width = MathHelper.ceiling_float_int((float)this.getChatWidth() / scale);
+    GlStateManager.pushMatrix();
+    GlStateManager.translate(2.0F, 20.0F, 0.0F);
+    GlStateManager.scale(scale, scale, 1.0F);
 
-          if (chatline != null)
-          {
-            int j1 = updateCounter - chatline.getUpdatedCounter();
-
-            if (j1 < 200 || flag)
-            {
-              double d0 = (double)j1 / 200.0D;
-              d0 = 1.0D - d0;
-              d0 = d0 * 10.0D;
-              d0 = MathHelper.clamp_double(d0, 0.0D, 1.0D);
-              d0 = d0 * d0;
-              int l1 = (int)(255.0D * d0);
-
-              if (flag)
-              {
-                l1 = 255;
-              }
-
-              l1 = (int)((float)l1 * f);
-              ++j;
-
-              if (l1 > 3)
-              {
-                int i2 = 0;
-                int j2 = -i1 * 9;
-                drawRect(i2, j2 - 9, i2 + l + 4, j2, l1 / 2 << 24);
-                String s = chatline.getChatComponent().getFormattedText();
-                GlStateManager.enableBlend();
-                this.minecraft.fontRendererObj.drawStringWithShadow(s, (float)i2, (float)(j2 - 8), 16777215 + (l1 << 24));
-                GlStateManager.disableAlpha();
-                GlStateManager.disableBlend();
-              }
-            }
-          }
-        }
-
-        if (flag)
-        {
-          int k2 = this.minecraft.fontRendererObj.FONT_HEIGHT;
-          GlStateManager.translate(-3.0F, 0.0F, 0.0F);
-          int l2 = k * k2 + k;
-          int i3 = j * k2 + j;
-          int j3 = this.scrollPos * i3 / k;
-          int k1 = i3 * i3 / l2;
-
-          if (l2 != i3)
-          {
-            int k3 = j3 > 0 ? 170 : 96;
-            int l3 = this.isScrolled ? 13382451 : 3355562;
-            drawRect(0, -j3, 2, -j3 - k1, l3 + (k3 << 24));
-            drawRect(2, -j3, 1, -j3 - k1, 13421772 + (k3 << 24));
-          }
-        }
-
-        GlStateManager.popMatrix();
+    // for every line that is between the scroll position and
+    int renderedLines = 0; // how many lines we have actually rendered
+    for (int i = 0; i + this.scrollPos < this.drawnChatLines.size() && i < maxLines; ++i) {
+      ChatLine line = this.drawnChatLines.get(i + this.scrollPos);
+      if (line == null) {
+        continue;
       }
+
+      int lineOpacity = this.getLineOpacity(updateCounter, line, opacity);
+      if (lineOpacity < 4) {
+        // todo: standardise magic transparency number, we've seen this before when drawing the view count reels
+        continue;
+      }
+
+      this.drawLine(line, i, lineOpacity, width);
+      renderedLines++;
+    }
+
+    if (this.getChatOpen()) {
+      this.drawScrollBar(lineCount, renderedLines);
+    }
+
+    GlStateManager.popMatrix();
+  }
+
+  private void drawLine(ChatLine line, int index, int opacity, int width) {
+    int lineLeft = 0;
+    int lineBottom = -index * 9; // negative because we iterate from the bottom line to the top line
+    drawRect(lineLeft, lineBottom - 9, lineLeft + width + 4, lineBottom, opacity / 2 << 24);
+    GlStateManager.enableBlend();
+    String formattedText = line.getChatComponent().getFormattedText();
+    this.minecraft.fontRendererObj.drawStringWithShadow(formattedText, (float)lineLeft, (float)(lineBottom - 8), 16777215 + (opacity << 24));
+    GlStateManager.disableAlpha();
+    GlStateManager.disableBlend();
+  }
+
+  /** Given the lineCount (total lines) and the renderedLines (how many lines are visible on screen), draws the scrollbar to the left of the chat GUI. */
+  private void drawScrollBar(int lineCount, int renderedLines) {
+    int lineHeight = this.minecraft.fontRendererObj.FONT_HEIGHT;
+    GlStateManager.translate(-3.0F, 0.0F, 0.0F);
+    int fullHeight = lineCount * lineHeight + lineCount;
+    int renderedHeight = renderedLines * lineHeight + renderedLines;
+    int j3 = this.scrollPos * renderedHeight / lineCount;
+    int k1 = renderedHeight * renderedHeight / fullHeight;
+
+    if (fullHeight != renderedHeight)
+    {
+      int k3 = j3 > 0 ? 170 : 96;
+      int l3 = this.isScrolled ? 13382451 : 3355562;
+      drawRect(0, -j3, 2, -j3 - k1, l3 + (k3 << 24));
+      drawRect(2, -j3, 1, -j3 - k1, 13421772 + (k3 << 24));
     }
   }
 
-  /**
-   * Clears the chat.
-   */
+  private int getLineOpacity(int updateCounter, ChatLine line, float baseOpacity) {
+    final int MAX_LINE_AGE = 200;
+    int lineAge = updateCounter - line.getUpdatedCounter();
+    int lineOpacity = 0;
+
+    if (this.getChatOpen()) {
+      lineOpacity = 255;
+    } else if (lineAge < MAX_LINE_AGE) {
+      // for the last 10% of the line's lifetime, fade it out
+      double relAge = (double) lineAge / 200.0D;
+      relAge = 1.0D - relAge;
+      relAge = relAge * 10.0D;
+      relAge = MathHelper.clamp_double(relAge, 0.0D, 1.0D);
+      relAge = relAge * relAge;
+      lineOpacity = (int) (255.0D * relAge);
+    }
+
+    lineOpacity = (int)((float)lineOpacity * baseOpacity);
+    return lineOpacity;
+  }
+
+  /** Clears the chat. */
   @Override
-  public void clearChatMessages()
-  {
+  public void clearChatMessages() {
     this.drawnChatLines.clear();
     this.chatLines.clear();
     this.sentMessages.clear();
   }
 
   @Override
-  public void printChatMessage(IChatComponent chatComponent)
-  {
-    this.printChatMessageWithOptionalDeletion(chatComponent, 0);
+  public void printChatMessage(IChatComponent chatComponent) {
+    this.addComponent(chatComponent, 0, this.minecraft.ingameGUI.getUpdateCounter());
   }
 
-  /**
-   * prints the ChatComponent to Chat. If the ID is not 0, deletes an existing Chat Line of that ID from the GUI
-   */
+  /** Prints the ChatComponent to Chat. If the ID is not 0, deletes an existing Chat Line of that ID from the GUI.
+   * For example, this API is used by the command suggestion - there is only ever one set of suggested commands! */
   @Override
-  public void printChatMessageWithOptionalDeletion(IChatComponent chatComponent, int chatLineId)
-  {
-    this.setChatLine(chatComponent, chatLineId, this.minecraft.ingameGUI.getUpdateCounter(), false);
-    logger.info("[CHAT] " + chatComponent.getUnformattedText());
-  }
-
-  private void setChatLine(IChatComponent chatComponent, int chatLineId, int updateCounter, boolean displayOnly)
-  {
-    if (chatLineId != 0)
-    {
+  public void printChatMessageWithOptionalDeletion(IChatComponent chatComponent, int chatLineId) {
+    // note: the ID here is used by callers to withdraw an earlier message and print an updated message.
+    if (chatLineId != 0) {
       this.deleteChatLine(chatLineId);
     }
 
-    int i = MathHelper.floor_float((float)this.getChatWidth() / this.getChatScale());
-    List<IChatComponent> list = GuiUtilRenderComponents.splitText(chatComponent, i, this.minecraft.fontRendererObj, false, false);
-    boolean flag = this.getChatOpen();
+    this.addComponent(chatComponent, chatLineId, this.minecraft.ingameGUI.getUpdateCounter());
+  }
 
-    for (IChatComponent ichatcomponent : list)
-    {
-      if (flag && this.scrollPos > 0)
-      {
+  /** Adds a new chat message. Automatically splits up the component's text based on its text width. */
+  private void addComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
+    this.chatLines.add(0, new ChatLine(updateCounter, chatComponent, chatLineId));
+
+    // purge entries at the top
+    while (this.chatLines.size() > MAX_LINES) {
+      this.chatLines.remove(this.chatLines.size() - 1);
+    }
+
+    this.drawComponent(chatComponent, chatLineId, updateCounter);
+
+    // todo: replace with our own logger
+    logger.info("[CHAT] " + chatComponent.getUnformattedText());
+  }
+
+  private void drawComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
+    int lineWidth = this.getLineWidth();
+
+    List<IChatComponent> splitComponents = GuiUtilRenderComponents.splitText(chatComponent, lineWidth, this.minecraft.fontRendererObj, false, false);
+    for (IChatComponent component : splitComponents) {
+      // make sure we keep the same lines visible even as we push more lines to the bottom of the chat
+      if (this.getChatOpen() && this.scrollPos > 0) {
         this.isScrolled = true;
         this.scroll(1);
       }
 
-      this.drawnChatLines.add(0, new ChatLine(updateCounter, ichatcomponent, chatLineId));
+      this.drawnChatLines.add(0, new ChatLine(updateCounter, component, chatLineId));
     }
 
-    while (this.drawnChatLines.size() > 100)
-    {
+    // purge entries at the top
+    while (this.drawnChatLines.size() > MAX_DRAWN_LINES) {
       this.drawnChatLines.remove(this.drawnChatLines.size() - 1);
-    }
-
-    if (!displayOnly)
-    {
-      this.chatLines.add(0, new ChatLine(updateCounter, chatComponent, chatLineId));
-
-      while (this.chatLines.size() > 100)
-      {
-        this.chatLines.remove(this.chatLines.size() - 1);
-      }
     }
   }
 
+  /** Re-draws all `this.chatLines`, generating a new list of `drawnChatLines`. Probably used when the chat width has been changed. */
   @Override
   public void refreshChat()
   {
     this.drawnChatLines.clear();
     this.resetScroll();
 
-    for (int i = this.chatLines.size() - 1; i >= 0; --i)
-    {
-      ChatLine chatline = (ChatLine)this.chatLines.get(i);
-      this.setChatLine(chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter(), true);
+    for (int i = this.chatLines.size() - 1; i >= 0; --i) {
+      ChatLine chatline = this.chatLines.get(i);
+      this.drawComponent(chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter());
     }
   }
 
   @Override
-  public List<String> getSentMessages()
-  {
+  public List<String> getSentMessages() {
     return this.sentMessages;
   }
 
-  /**
-   * Adds this string to the list of sent messages, for recall using the up/down arrow keys
-   *
-   * @param message The message to add in the sendMessage List
-   */
+  /** Adds this string to the list of sent messages, for recall using the up/down arrow keys. */
   @Override
-  public void addToSentMessages(String message)
-  {
-    if (this.sentMessages.isEmpty() || !((String)this.sentMessages.get(this.sentMessages.size() - 1)).equals(message))
-    {
+  public void addToSentMessages(String message) {
+    if (this.sentMessages.isEmpty() || !(this.sentMessages.get(this.sentMessages.size() - 1)).equals(message)) {
       this.sentMessages.add(message);
     }
   }
 
-  /**
-   * Resets the chat scroll (executed when the GUI is closed, among others)
-   */
+  /** Resets the chat scroll (executed when the GUI is closed, among others). */
   @Override
-  public void resetScroll()
-  {
+  public void resetScroll() {
     this.scrollPos = 0;
     this.isScrolled = false;
   }
 
-  /**
-   * Scrolls the chat by the given number of lines.
-   *
-   * @param amount The amount to scroll
-   */
+  /** Scrolls the chat by the given number of lines. */
   @Override
-  public void scroll(int amount)
-  {
+  public void scroll(int amount) {
     this.scrollPos += amount;
     int i = this.drawnChatLines.size();
 
-    if (this.scrollPos > i - this.getLineCount())
-    {
+    // clamp maximum
+    if (this.scrollPos > i - this.getLineCount()) {
       this.scrollPos = i - this.getLineCount();
     }
 
-    if (this.scrollPos <= 0)
-    {
+    // clamp minimum and stop scrolling
+    if (this.scrollPos <= 0) {
       this.scrollPos = 0;
       this.isScrolled = false;
     }
   }
 
-  /**
-   * Gets the chat component under the mouse
-   *
-   * @param mouseX The x position of the mouse
-   * @param mouseY The y position of the mouse
-   */
+  /** Gets the chat component at the screen position. */
   @Override
-  public IChatComponent getChatComponent(int mouseX, int mouseY)
-  {
-    if (!this.getChatOpen())
-    {
+  public IChatComponent getChatComponent(int mouseX, int mouseY) {
+    if (!this.getChatOpen()) {
       return null;
     }
-    else
-    {
-      final int BOTTOM = 27 + this.config.getChatVerticalDisplacementEmitter().get();
-      ScaledResolution scaledresolution = new ScaledResolution(this.minecraft);
-      int i = scaledresolution.getScaleFactor();
-      float f = this.getChatScale();
-      int j = mouseX / i - 3;
-      int k = mouseY / i - BOTTOM;
-      j = MathHelper.floor_float((float)j / f);
-      k = MathHelper.floor_float((float)k / f);
 
-      if (j >= 0 && k >= 0)
-      {
-        int l = Math.min(this.getLineCount(), this.drawnChatLines.size());
+    // 27 is a magic number
+    int bottom = 27 + this.config.getChatVerticalDisplacementEmitter().get();
+    int scaleFactor = new ScaledResolution(this.minecraft).getScaleFactor();
+    float chatScale = this.getChatScale();
+    int x = mouseX / scaleFactor - 3; // 3 is a magic number
+    int y = mouseY / scaleFactor - bottom;
+    x = MathHelper.floor_float((float)x / chatScale);
+    y = MathHelper.floor_float((float)y / chatScale);
 
-        if (j <= MathHelper.floor_float((float)this.getChatWidth() / this.getChatScale()) && k < this.minecraft.fontRendererObj.FONT_HEIGHT * l + l)
-        {
-          int i1 = k / this.minecraft.fontRendererObj.FONT_HEIGHT + this.scrollPos;
+    if (x < 0 || y < 0) {
+      return null;
+    }
 
-          if (i1 >= 0 && i1 < this.drawnChatLines.size())
-          {
-            ChatLine chatline = (ChatLine)this.drawnChatLines.get(i1);
-            int j1 = 0;
+    int visibleLines = Math.min(this.getLineCount(), this.drawnChatLines.size());
 
-            for (IChatComponent ichatcomponent : chatline.getChatComponent())
-            {
-              if (ichatcomponent instanceof ChatComponentText)
-              {
-                j1 += this.minecraft.fontRendererObj.getStringWidth(GuiUtilRenderComponents.func_178909_a(((ChatComponentText)ichatcomponent).getChatComponentText_TextValue(), false));
+    int maxX = this.getLineWidth();
+    int maxY = this.minecraft.fontRendererObj.FONT_HEIGHT * visibleLines + visibleLines + 1;
+    if (x > maxX || y > maxY) {
+      return null;
+    }
 
-                if (j1 > j)
-                {
-                  return ichatcomponent;
-                }
-              }
-            }
-          }
+    // the line index at the current y-position
+    int lineIndex = y / this.minecraft.fontRendererObj.FONT_HEIGHT + this.scrollPos;
+    if (lineIndex < 0 || lineIndex >= this.drawnChatLines.size()) {
+      return null;
+    }
 
-          return null;
+    ChatLine chatline = this.drawnChatLines.get(lineIndex);
+
+    // walk from component to component until we first pass our desired x-position
+    int lineX = 0;
+    for (IChatComponent component : chatline.getChatComponent()) {
+      // todo: also check for instances of any custom components here in the future
+      if (component instanceof ChatComponentText) {
+        lineX += this.minecraft.fontRendererObj.getStringWidth(GuiUtilRenderComponents.func_178909_a(((ChatComponentText)component).getChatComponentText_TextValue(), false));
+        if (lineX > x) {
+          return component;
         }
-        else
-        {
-          return null;
-        }
-      }
-      else
-      {
-        return null;
       }
     }
+
+    return null;
   }
 
-  /**
-   * Returns true if the chat GUI is open
-   */
   @Override
-  public boolean getChatOpen()
-  {
+  public boolean getChatOpen() {
     return this.minecraft.currentScreen instanceof GuiChat;
   }
 
-  /**
-   * finds and deletes a Chat line by ID
-   *
-   * @param id The ChatLine's id to delete
-   */
   @Override
-  public void deleteChatLine(int id)
-  {
-    Iterator<ChatLine> iterator = this.drawnChatLines.iterator();
-
-    while (iterator.hasNext())
-    {
-      ChatLine chatline = (ChatLine)iterator.next();
-
-      if (chatline.getChatLineID() == id)
-      {
-        iterator.remove();
-      }
-    }
-
-    iterator = this.chatLines.iterator();
-
-    while (iterator.hasNext())
-    {
-      ChatLine chatline1 = (ChatLine)iterator.next();
-
-      if (chatline1.getChatLineID() == id)
-      {
-        iterator.remove();
-        break;
-      }
-    }
+  public void deleteChatLine(int id) {
+    this.chatLines.removeIf(line -> line.getChatLineID() == id);
+    this.drawnChatLines.removeIf(line -> line.getChatLineID() == id);
   }
 
   @Override
-  public int getChatWidth()
-  {
+  public int getChatWidth() {
     return calculateChatboxWidth(this.minecraft.gameSettings.chatWidth);
   }
 
   @Override
-  public int getChatHeight()
-  {
+  public int getChatHeight() {
     return calculateChatboxHeight(this.getChatOpen() ? this.minecraft.gameSettings.chatHeightFocused : this.minecraft.gameSettings.chatHeightUnfocused);
   }
 
-  /**
-   * Returns the chatscale from mc.gameSettings.chatScale
-   */
   @Override
-  public float getChatScale()
-  {
+  public float getChatScale() {
     return this.minecraft.gameSettings.chatScale;
   }
 
-  public static int calculateChatboxWidth(float scale)
-  {
+  public static int calculateChatboxWidth(float scale) {
     int i = 320;
     int j = 40;
     return MathHelper.floor_float(scale * (float)(i - j) + (float)j);
   }
 
-  public static int calculateChatboxHeight(float scale)
-  {
+  public static int calculateChatboxHeight(float scale) {
     int i = 180;
     int j = 20;
     return MathHelper.floor_float(scale * (float)(i - j) + (float)j);
   }
 
+  /** Returns the maximum number of lines that fit into the visible chat window. */
   @Override
-  public int getLineCount()
-  {
+  public int getLineCount() {
     return this.getChatHeight() / 9;
+  }
+
+  /** Returns the width in GUI space. */
+  private int getLineWidth() {
+    return MathHelper.floor_float((float)this.getChatWidth() / this.getChatScale());
   }
 }
