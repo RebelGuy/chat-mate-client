@@ -24,7 +24,7 @@ public class RanksCommand extends ChatMateSubCommand {
   public void processCommand(ICommandSender commandSender, String[] args) throws CommandException {
     @Nullable String name = null;
     if (args.length > 0) {
-      String joinedArgs = String.join("", args).trim();
+      String joinedArgs = String.join(" ", args).trim();
       if (joinedArgs.length() > 0) {
         name = joinedArgs;
       }

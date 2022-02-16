@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
 import dev.rebel.chatmate.models.chat.PartialChatMessageType;
@@ -140,6 +141,12 @@ public class McChatService {
     String msg;
     if (e instanceof ConnectException) {
       msg = "Unable to connect.";
+    } else if (e instanceof ChatMateApiException) {
+      ChatMateApiException error = (ChatMateApiException)e;
+      msg = error.apiResponseError.message;
+      if (msg == null) {
+        msg = error.apiResponseError.errorType;
+      }
     } else {
       msg = "Something went wrong.";
     }
