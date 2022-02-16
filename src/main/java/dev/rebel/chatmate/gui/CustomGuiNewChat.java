@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
@@ -14,6 +15,7 @@ import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import scala.Tuple2;
 
 import java.util.List;
 
@@ -26,6 +28,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   private static final Integer MAX_LINES = 100; // limits chatLines
 
   private final Minecraft minecraft;
+  private final LogService logService;
   private final Config config;
   private final ForgeEventService forgeEventService;
   private final List<String> sentMessages = Lists.newArrayList();
@@ -34,9 +37,10 @@ public class CustomGuiNewChat extends GuiNewChat {
   private int scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
   private boolean isScrolled;
 
-  public CustomGuiNewChat(Minecraft minecraft, Config config, ForgeEventService forgeEventService) {
+  public CustomGuiNewChat(Minecraft minecraft, LogService logService, Config config, ForgeEventService forgeEventService) {
     super(minecraft);
     this.minecraft = minecraft;
+    this.logService = logService;
     this.config = config;
     this.forgeEventService = forgeEventService;
 
@@ -109,10 +113,25 @@ public class CustomGuiNewChat extends GuiNewChat {
     int lineBottom = -index * 9; // negative because we iterate from the bottom line to the top line
     drawRect(lineLeft, lineBottom - 9, lineLeft + width + 4, lineBottom, opacity / 2 << 24);
     GlStateManager.enableBlend();
-    String formattedText = line.getChatComponent().getFormattedText();
-    this.minecraft.fontRendererObj.drawStringWithShadow(formattedText, (float)lineLeft, (float)(lineBottom - 8), 16777215 + (opacity << 24));
+
+    IChatComponent chatComponent = line.getChatComponent();
+    if (chatComponent instanceof PrecisionChatComponentText) {
+      PrecisionChatComponentText component = (PrecisionChatComponentText)chatComponent;
+      for (Tuple2<PrecisionLayout, ChatComponentText> pair : component.getComponentsForLine(this.minecraft.fontRendererObj, width)) {
+        int left = lineLeft + pair._1.position.getGuiValue(width);
+        this.drawChatComponent(pair._2, left, lineBottom, opacity);
+      }
+    } else {
+      this.drawChatComponent(line.getChatComponent(), lineLeft, lineBottom, opacity);
+    }
     GlStateManager.disableAlpha();
     GlStateManager.disableBlend();
+  }
+
+  private void drawChatComponent(IChatComponent component, int x, int lineBottom, int opacity) {
+    int textColour = 16777215 + (opacity << 24);
+    String formattedText = component.getFormattedText();
+    this.minecraft.fontRendererObj.drawStringWithShadow(formattedText, x, lineBottom - 8, textColour);
   }
 
   /** Given the lineCount (total lines) and the renderedLines (how many lines are visible on screen), draws the scrollbar to the left of the chat GUI. */
@@ -181,31 +200,49 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   /** Adds a new chat message. Automatically splits up the component's text based on its text width. */
   private void addComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
+    this.pushFullComponent(chatComponent, chatLineId, updateCounter);
+    this.pushDrawnComponent(chatComponent, chatLineId, updateCounter);
+
+    // todo: replace with our own logger
+    logger.info("[CHAT] " + chatComponent.getUnformattedText());
+  }
+
+  private void pushFullComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
     this.chatLines.add(0, new ChatLine(updateCounter, chatComponent, chatLineId));
 
     // purge entries at the top
     while (this.chatLines.size() > MAX_LINES) {
       this.chatLines.remove(this.chatLines.size() - 1);
     }
-
-    this.drawComponent(chatComponent, chatLineId, updateCounter);
-
-    // todo: replace with our own logger
-    logger.info("[CHAT] " + chatComponent.getUnformattedText());
   }
 
-  private void drawComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
-    int lineWidth = this.getLineWidth();
+  /** Adds the component to `drawnChatLines` after processing its contents. */
+  private void pushDrawnComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
+    if (chatComponent instanceof PrecisionChatComponentText) {
+      this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId));
 
-    List<IChatComponent> splitComponents = GuiUtilRenderComponents.splitText(chatComponent, lineWidth, this.minecraft.fontRendererObj, false, false);
-    for (IChatComponent component : splitComponents) {
-      // make sure we keep the same lines visible even as we push more lines to the bottom of the chat
-      if (this.getChatOpen() && this.scrollPos > 0) {
-        this.isScrolled = true;
-        this.scroll(1);
+    } else {
+      int lineWidth = this.getLineWidth();
+      List<IChatComponent> splitComponents = GuiUtilRenderComponents.splitText(chatComponent, lineWidth, this.minecraft.fontRendererObj, false, false);
+      for (IChatComponent component : splitComponents) {
+        if (this.getChatOpen() && this.scrollPos > 0) {
+          this.isScrolled = true;
+          this.scroll(1);
+        }
+
+        this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId));
       }
+    }
+  }
 
-      this.drawnChatLines.add(0, new ChatLine(updateCounter, component, chatLineId));
+  /** Adds the ChatLine to the `drawnChatLines`. */
+  private void pushDrawnChatLine(ChatLine line) {
+    this.drawnChatLines.add(0, line);
+
+    // make sure we keep the same lines visible even as we push more lines to the bottom of the chat
+    if (this.getChatOpen() && this.scrollPos > 0) {
+      this.isScrolled = true;
+      this.scroll(1);
     }
 
     // purge entries at the top
@@ -223,7 +260,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     for (int i = this.chatLines.size() - 1; i >= 0; --i) {
       ChatLine chatline = this.chatLines.get(i);
-      this.drawComponent(chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter());
+      this.pushDrawnComponent(chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter());
     }
   }
 
@@ -310,6 +347,11 @@ public class CustomGuiNewChat extends GuiNewChat {
         if (lineX > x) {
           return component;
         }
+      } else if (component instanceof PrecisionChatComponentText) {
+        PrecisionChatComponentText precisionComponent = (PrecisionChatComponentText)component;
+
+        // there will be no siblings - only one Precision component is supported per line
+        return precisionComponent.getComponentAtGuiPosition(x, maxX, false, this.minecraft.fontRendererObj);
       }
     }
 
