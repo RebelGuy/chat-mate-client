@@ -47,8 +47,8 @@ public class Styles {
     }
   }
 
-  public static IChatComponent styledText(String text, ChatStyle styles) {
-    IChatComponent component = new ChatComponentText(text);
+  public static ChatComponentText styledText(String text, ChatStyle styles) {
+    ChatComponentText component = new ChatComponentText(text);
     component.setChatStyle(styles);
     return component;
   }

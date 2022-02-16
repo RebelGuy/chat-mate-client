@@ -1,10 +1,16 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.PrecisionChatComponentText;
+import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionAlignment;
+import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionLayout;
+import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionValue;
 import dev.rebel.chatmate.models.experience.RankedEntry;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
+import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -63,42 +69,61 @@ public class MessageService {
 
   public IChatComponent getRankedEntryMessage(RankedEntry entry, boolean deEmphasise, int rankDigits, int levelDigits, int nameWidth, int messageWidth) {
     // example:
-    // #24 ShiroTheS... 41 <⣿⣿⣿⣿⣿     > 42
+    // #24 ShiroTheS... 41 |⣿⣿⣿⣿⣿     | 42
     // rank name levelStart barStart barFilled barBlank barEnd levelEnd
 
     FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
     assert fontRenderer != null;
+    int padding = 4;
 
-    String separator = " ";
+    int rankNumberWidth = fontRenderer.getStringWidth("#" + String.join("", Collections.nCopies(rankDigits, "4")));
+    PrecisionLayout rankLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(rankNumberWidth), PrecisionAlignment.RIGHT);
+    String rankText = "#" + entry.rank;
+    int x = rankNumberWidth + padding;
 
-    int rankNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(rankDigits, "4")) + separator);
-    String rank = "#" + stringWithWidth(fontRenderer, String.valueOf(entry.rank), "", ' ', rankNumberWidth) + separator;
+    PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(nameWidth), PrecisionAlignment.LEFT);
+    x += nameWidth + padding;
 
-    String name = stringWithWidth(fontRenderer, entry.channelName, "…", ' ', nameWidth) + separator;
+    int levelNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")));
+    PrecisionLayout levelStartLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(levelNumberWidth), PrecisionAlignment.CENTRE);
+    String levelStart = String.valueOf(entry.level);
+    x += levelNumberWidth + padding;
 
-    int levelNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")) + separator);
-    String levelStart = stringWithWidth(fontRenderer, String.valueOf(entry.level), "", ' ', levelNumberWidth) + separator;
-    String levelEnd = stringWithWidth(fontRenderer, String.valueOf(entry.level + 1), "", ' ', levelNumberWidth);
+    String barStart = "|";
+    int barStartWidth = fontRenderer.getStringWidth(barStart);
+    PrecisionLayout barStartLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(barStartWidth), PrecisionAlignment.RIGHT);
+    x += barStartWidth; // no padding
 
-    String barStart = "<";
-    String barEnd = ">" + separator;
+    String barEnd = "|";
+    int barEndWidth = fontRenderer.getStringWidth(barStart) + padding;
 
-    int barBodyWidth = Math.max(0, messageWidth - fontRenderer.getStringWidth(rank + name + levelStart)
-        - fontRenderer.getStringWidth(barStart) - fontRenderer.getStringWidth(barEnd + levelEnd));
+    int barBodyWidth = messageWidth - x - barEndWidth - levelNumberWidth;
     int fillWidth = Math.round(barBodyWidth * entry.levelProgress);
-    String progressBar = stringWithWidth(fontRenderer, "", "", '⣿', fillWidth);
-    String emptyBar = stringWithWidth(fontRenderer, "", "", ' ', barBodyWidth - fontRenderer.getStringWidth(progressBar));
+    String filledBar = stringWithWidth(fontRenderer, "", "", '⣿', fillWidth) + "⣿";
+    PrecisionLayout filledBarLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(fillWidth), PrecisionAlignment.LEFT, "");
+    x += fillWidth; // no padding
 
-    List<IChatComponent> list = new ArrayList<>();
-    list.add(styledText(rank, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE));
-    list.add(styledText(name, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE));
-    list.add(styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level)));
-    list.add(styledText(barStart, INFO_MSG_STYLE));
-    list.add(styledText(progressBar, INFO_MSG_STYLE));
-    list.add(styledText(emptyBar, INFO_MSG_STYLE));
-    list.add(styledText(barEnd, INFO_MSG_STYLE));
-    list.add(styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level + 1)));
-    return joinComponents("", list);
+    int emptyBarWidth = barBodyWidth - fillWidth;
+    String emptyBar = "";
+    PrecisionLayout emptyBarLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(emptyBarWidth), PrecisionAlignment.LEFT);
+    x += emptyBarWidth; // no padding
+
+    PrecisionLayout barEndLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(barEndWidth), PrecisionAlignment.LEFT);
+    x += barEndWidth; // padding already included
+
+    PrecisionLayout levelEndLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(levelNumberWidth), PrecisionAlignment.CENTRE);
+    String levelEnd = String.valueOf(entry.level + 1);
+
+    List<Tuple2<PrecisionLayout, ChatComponentText>> list = new ArrayList<>();
+    list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
+    list.add(new Tuple2<>(nameLayout, styledText(entry.channelName, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE)));
+    list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level))));
+    list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
+    list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
+    list.add(new Tuple2<>(emptyBarLayout, styledText(emptyBar, INFO_MSG_STYLE)));
+    list.add(new Tuple2<>(barEndLayout, styledText(barEnd, INFO_MSG_STYLE)));
+    list.add(new Tuple2<>(levelEndLayout, styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level + 1))));
+    return new PrecisionChatComponentText(list);
   }
 
   public IChatComponent getLeaderboardFooterMessage(int messageWidth, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {

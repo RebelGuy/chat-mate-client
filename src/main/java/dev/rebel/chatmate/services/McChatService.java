@@ -119,7 +119,7 @@ public class McChatService {
       int levelDigits = String.valueOf(visibleEntries[0].level + 1).length();
       List<Integer> allNameWidths = Arrays.stream(visibleEntries).map(entry -> this.minecraftProxyService.getChatFontRenderer().getStringWidth(entry.channelName)).collect(Collectors.toList());
       int nameWidth = Math.min((this.minecraftProxyService.getChatWidth() - 5) / 3, Collections.max(allNameWidths));
-      int messageWidth = this.minecraftProxyService.getChatWidth() - 5;
+      int messageWidth = this.minecraftProxyService.getChatWidth();
 
       for (int i = 0; i < visibleEntries.length; i++) {
         RankedEntry entry = visibleEntries[i];

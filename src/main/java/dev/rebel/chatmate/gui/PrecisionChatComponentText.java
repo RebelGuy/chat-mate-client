@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static net.minecraft.client.gui.FontRenderer.getFormatFromString;
 import static net.minecraft.util.ChatComponentStyle.createDeepCopyIterator;
@@ -69,13 +70,13 @@ public class PrecisionChatComponentText implements IChatComponent {
     ChatComponentText component = pair._2;
     int maxWidth = layout.width.getGuiValue(lineWidth);
 
-    String text = component.getUnformattedTextForChat();
+    String text = component.getFormattedText();
     int textWidth = fontRenderer.getStringWidth(text);
 
     if (textWidth > maxWidth) {
-      String ellipsis = "…";
-      int suffixWidth = fontRenderer.getStringWidth(ellipsis);
-      text = listFormattedStringToWidth(component.getFormattedText(), maxWidth - suffixWidth, fontRenderer).get(0) + ellipsis;
+      String truncation = layout.customTruncation == null ? "…" : layout.customTruncation;
+      int suffixWidth = fontRenderer.getStringWidth(truncation);
+      text = listFormattedStringToWidth(component.getFormattedText(), maxWidth - suffixWidth, fontRenderer).get(0) + truncation;
       textWidth = fontRenderer.getStringWidth(text);
     }
 
@@ -100,25 +101,25 @@ public class PrecisionChatComponentText implements IChatComponent {
 
   //region Interface methods
   @Override
-  public IChatComponent setChatStyle(ChatStyle var1) { return this; }
+  public IChatComponent setChatStyle(ChatStyle var1) { return this; } // meaningless
 
   @Override
-  public ChatStyle getChatStyle() { return new ChatStyle(); }
+  public ChatStyle getChatStyle() { return new ChatStyle(); } // meaningless
 
   @Override
-  public IChatComponent appendText(String var1) { return this; }
+  public IChatComponent appendText(String var1) { return this; } // meaningless
 
   @Override
-  public IChatComponent appendSibling(IChatComponent component) { return this; }
+  public IChatComponent appendSibling(IChatComponent component) { return this; } // meaningless
 
   @Override
-  public String getUnformattedTextForChat() { return ""; }
+  public String getUnformattedTextForChat() { return this.components.stream().map(c -> c._2.getUnformattedTextForChat()).collect(Collectors.joining()); }
 
   @Override
-  public String getUnformattedText() { return ""; }
+  public String getUnformattedText() { return this.components.stream().map(c -> c._2.getUnformattedText()).collect(Collectors.joining()); }
 
   @Override
-  public String getFormattedText() { return ""; }
+  public String getFormattedText() { return this.components.stream().map(c -> c._2.getFormattedText()).collect(Collectors.joining()); }
 
   @Override
 //  public List<IChatComponent> getSiblings() { return this.components.stream().map(c -> c._2).collect(Collectors.toList()); }
@@ -141,17 +142,13 @@ public class PrecisionChatComponentText implements IChatComponent {
     return Arrays.asList(this.wrapFormattedStringToWidth(text, width, fontRenderer).split("\n"));
   }
 
-  /** Same as the FontRenderer implementation, except it treats spaces as just another character. */
+  /** From the FontRenderer::wrapFormattedStringToWidth, except it treats spaces as just another character and ignores newlines. */
   private String wrapFormattedStringToWidth(String text, int width, FontRenderer fontRenderer) {
     int i = this.sizeStringToWidth(text, width, fontRenderer);
     if (text.length() <= i) {
       return text;
     } else {
-      String s = text.substring(0, i);
-      char c0 = text.charAt(i);
-      boolean flag = c0 == '\n';
-      String s1 = getFormatFromString(s) + text.substring(i + (flag ? 1 : 0));
-      return s + "\n" + this.wrapFormattedStringToWidth(s1, width, fontRenderer);
+      return text.substring(0, i);
     }
   }
 
@@ -212,11 +209,20 @@ public class PrecisionChatComponentText implements IChatComponent {
     public final PrecisionValue position;
     public final PrecisionValue width;
     public final PrecisionAlignment alignment;
+    public final @Nullable String customTruncation;
 
     public PrecisionLayout(PrecisionValue position, PrecisionValue width, PrecisionAlignment alignment) {
       this.position = position;
       this.width = width;
       this.alignment = alignment;
+      this.customTruncation = null;
+    }
+
+    public PrecisionLayout(PrecisionValue position, PrecisionValue width, PrecisionAlignment alignment, String customTruncation) {
+      this.position = position;
+      this.width = width;
+      this.alignment = alignment;
+      this.customTruncation = customTruncation;
     }
   }
 
