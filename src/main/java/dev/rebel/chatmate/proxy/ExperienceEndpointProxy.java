@@ -1,9 +1,9 @@
 package dev.rebel.chatmate.proxy;
 
-import dev.rebel.chatmate.models.experience.GetLeaderboardResponse;
-import dev.rebel.chatmate.models.experience.GetLeaderboardResponse.GetLeaderboardResponseData;
-import dev.rebel.chatmate.models.experience.GetRankResponse;
-import dev.rebel.chatmate.models.experience.GetRankResponse.GetRankResponseData;
+import dev.rebel.chatmate.models.api.experience.GetLeaderboardResponse;
+import dev.rebel.chatmate.models.api.experience.GetLeaderboardResponse.GetLeaderboardResponseData;
+import dev.rebel.chatmate.models.api.experience.GetRankResponse;
+import dev.rebel.chatmate.models.api.experience.GetRankResponse.GetRankResponseData;
 import dev.rebel.chatmate.services.LogService;
 
 import javax.annotation.Nonnull;

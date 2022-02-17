@@ -1,22 +1,18 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.models.ChatMateApiException;
-import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
-import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
-import dev.rebel.chatmate.models.chat.PartialChatMessageType;
-import dev.rebel.chatmate.models.experience.RankedEntry;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart.MessagePartType;
+import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
-import dev.rebel.chatmate.services.util.Action3;
 import dev.rebel.chatmate.services.util.Action4;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.*;
-import org.apache.commons.lang3.ArrayUtils;
-import scala.Function3;
-import scala.Product3;
 
 import javax.annotation.Nullable;
 import java.net.ConnectException;
@@ -54,16 +50,16 @@ public class McChatService {
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
   }
 
-  public void printStreamChatItem(ChatItem item) {
+  public void printStreamChatItem(PublicChatItem item) {
     if (!this.minecraftProxyService.canPrintChatMessage()) {
       return;
     }
 
     try {
-      Integer lvl = item.author.level;
+      Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
       IChatComponent rank = styledText("VIEWER", VIEWER_RANK_STYLE);
-      IChatComponent player = styledText(item.author.name, VIEWER_NAME_STYLE);
+      IChatComponent player = styledText(item.author.userInfo.channelName, VIEWER_NAME_STYLE);
       McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
 
       ArrayList<IChatComponent> components = new ArrayList<>();
@@ -105,7 +101,7 @@ public class McChatService {
     return new LevelUpEventData.Out();
   }
 
-  public void printLeaderboard(RankedEntry[] entries, @Nullable Integer highlightEntry) {
+  public void printLeaderboard(PublicRankedUser[] entries, @Nullable Integer highlightEntry) {
     if (entries.length == 0) {
       this.minecraftProxyService.printChatMessage("Leaderboard", this.messageService.getInfoMessage("No entries to show."));
       return;
@@ -117,13 +113,13 @@ public class McChatService {
     boolean anyHighlighting = highlightEntry != null;
     ChatLeaderboard leaderboard = new ChatLeaderboard(entries, highlightEntry, (visibleEntries, highlighted, onPrevPage, onNextPage) -> {
       int rankDigits = String.valueOf(visibleEntries[visibleEntries.length - 1].rank).length();
-      int levelDigits = String.valueOf(visibleEntries[0].level + 1).length();
-      List<Integer> allNameWidths = Arrays.stream(visibleEntries).map(entry -> this.minecraftProxyService.getChatFontRenderer().getStringWidth(entry.channelName)).collect(Collectors.toList());
+      int levelDigits = String.valueOf(visibleEntries[0].user.levelInfo.level + 1).length();
+      List<Integer> allNameWidths = Arrays.stream(visibleEntries).map(entry -> this.minecraftProxyService.getChatFontRenderer().getStringWidth(entry.user.userInfo.channelName)).collect(Collectors.toList());
       int nameWidth = Math.min((this.minecraftProxyService.getChatWidth() - 5) / 3, Collections.max(allNameWidths));
       int messageWidth = this.minecraftProxyService.getChatWidth();
 
       for (int i = 0; i < visibleEntries.length; i++) {
-        RankedEntry entry = visibleEntries[i];
+        PublicRankedUser entry = visibleEntries[i];
         boolean deEmphasise = anyHighlighting && highlighted != i;
         IChatComponent entryComponent = this.messageService.getRankedEntryMessage(entry, deEmphasise, rankDigits, levelDigits, nameWidth, messageWidth);
         this.minecraftProxyService.printChatMessage("Leaderboard", entryComponent);
@@ -155,21 +151,23 @@ public class McChatService {
     this.minecraftProxyService.printChatMessage("Error", message);
   }
 
-  private McChatResult ytChatToMcChat(ChatItem item, FontRenderer fontRenderer) throws Exception {
+  private McChatResult ytChatToMcChat(PublicChatItem item, FontRenderer fontRenderer) throws Exception {
     ArrayList<IChatComponent> components = new ArrayList<>();
     boolean includesMention = false;
 
-    @Nullable PartialChatMessageType prevType = null;
+    @Nullable MessagePartType prevType = null;
     @Nullable String prevText = null;
-    for (PartialChatMessage msg: item.messageParts) {
+    for (PublicMessagePart msg: item.messageParts) {
       String text;
       ChatStyle style;
-      if (msg.type == PartialChatMessageType.text) {
-        text = this.filterService.censorNaughtyWords(msg.text);
-        style = YT_CHAT_MESSAGE_TEXT_STYLE.setBold(msg.isBold).setItalic(msg.isItalics);
+      if (msg.type == MessagePartType.text) {
+        assert msg.textData != null;
+        text = this.filterService.censorNaughtyWords(msg.textData.text);
+        style = YT_CHAT_MESSAGE_TEXT_STYLE.setBold(msg.textData.isBold).setItalic(msg.textData.isItalics);
 
-      } else if (msg.type == PartialChatMessageType.emoji) {
-        String name = msg.name;
+      } else if (msg.type == MessagePartType.emoji) {
+        assert msg.emojiData != null;
+        String name = msg.emojiData.name;
         char[] nameChars = name.toCharArray();
 
         // the name could be the literal emoji unicode character
@@ -178,14 +176,14 @@ public class McChatService {
           text = name;
           style = YT_CHAT_MESSAGE_TEXT_STYLE;
         } else {
-          text = msg.label; // e.g. :slightly_smiling:
+          text = msg.emojiData.label; // e.g. :slightly_smiling:
           style = YT_CHAT_MESSAGE_EMOJI_STYLE;
         }
 
       } else throw new Exception("Invalid partial message type " + msg.type);
 
       // add space between components except when we have two text types after one another.
-      if (prevType != null && !(msg.type == PartialChatMessageType.text && prevType == PartialChatMessageType.text)) {
+      if (prevType != null && !(msg.type == MessagePartType.text && prevType == MessagePartType.text)) {
         if (text.startsWith(" ") || (prevText != null && prevText.endsWith(" "))) {
           // already spaced out
         } else {
@@ -193,7 +191,7 @@ public class McChatService {
         }
       }
 
-      if (msg.type == PartialChatMessageType.text) {
+      if (msg.type == MessagePartType.text) {
         WordFilter[] mentionFilter = TextHelpers.makeWordFilters("[rebel_guy]", "[rebel guy]", "[rebel]");
         StringMask mentionMask = FilterService.filterWords(text, mentionFilter);
         components.addAll(styledTextWithMask(text, style, mentionMask, MENTION_TEXT_STYLE));
@@ -225,13 +223,13 @@ public class McChatService {
   private static class ChatLeaderboard {
     private static final int ENTRIES_PER_PAGE = 10;
 
-    private final RankedEntry[] underlyingEntries;
+    private final PublicRankedUser[] underlyingEntries;
     private final @Nullable Integer highlightedEntry;
-    private final Action4<RankedEntry[], Integer, Runnable, Runnable> renderer;
+    private final Action4<PublicRankedUser[], Integer, Runnable, Runnable> renderer;
 
     private int currentPage = 0;
 
-    public ChatLeaderboard(RankedEntry[] underlyingEntries, @Nullable Integer highlightedEntry, Action4<RankedEntry[], Integer, Runnable, Runnable> renderer) {
+    public ChatLeaderboard(PublicRankedUser[] underlyingEntries, @Nullable Integer highlightedEntry, Action4<PublicRankedUser[], Integer, Runnable, Runnable> renderer) {
       this.underlyingEntries = underlyingEntries;
       this.highlightedEntry = highlightedEntry;
       this.renderer = renderer;
@@ -269,7 +267,7 @@ public class McChatService {
       }
     }
 
-    public RankedEntry[] getVisibleEntries() {
+    public PublicRankedUser[] getVisibleEntries() {
       if (underlyingEntries.length <= ENTRIES_PER_PAGE) {
         return Arrays.copyOf(this.underlyingEntries, this.underlyingEntries.length);
       } else {

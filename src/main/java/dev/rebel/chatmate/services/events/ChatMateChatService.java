@@ -1,9 +1,8 @@
 package dev.rebel.chatmate.services.events;
 
 import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.chat.GetChatResponse;
-import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
-import dev.rebel.chatmate.models.chat.GetChatResponse.GetChatResponseData;
+import dev.rebel.chatmate.models.api.chat.GetChatResponse.GetChatResponseData;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ChatMateChatService.EventType;
@@ -56,7 +55,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     }
   }
 
-  public void onNewChat(Consumer<ChatItem[]> callback, Object key) {
+  public void onNewChat(Consumer<PublicChatItem[]> callback, Object key) {
     Function<NewChatEventData.In, NewChatEventData.Out> handler = newChat -> {
       callback.accept(newChat.chatItems);
       return new NewChatEventData.Out();

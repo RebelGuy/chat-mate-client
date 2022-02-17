@@ -2,9 +2,8 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
-import dev.rebel.chatmate.models.chat.GetChatResponse;
-import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
-import dev.rebel.chatmate.models.chat.GetChatResponse.GetChatResponseData;
+import dev.rebel.chatmate.models.api.chat.GetChatResponse.GetChatResponseData;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.services.events.ChatMateChatService;
 import org.junit.Test;
@@ -28,7 +27,7 @@ public class ChatMateChatServiceTests {
 
   @Test
   public void newChatItem_dispatched() throws Exception {
-    ChatItem[] chatItems = new ChatItem[] { McChatServiceTests.createItem(
+    PublicChatItem[] chatItems = new PublicChatItem[] { McChatServiceTests.createItem(
         McChatServiceTests.createAuthor("Test author"),
         McChatServiceTests.createText("Test text")
     )};
@@ -40,7 +39,7 @@ public class ChatMateChatServiceTests {
     when(this.mockChatEndpointProxy.getChat(any(), any())).thenReturn(chatResponse);
     when(this.mockConfig.getChatMateEnabledEmitter()).thenReturn(this.chatMateEnabled);
     ChatMateChatService chatService = new ChatMateChatService(this.mockLogService, this.mockConfig, this.mockChatEndpointProxy);
-    Consumer<ChatItem[]> mockCallback = mock(Consumer.class);
+    Consumer<PublicChatItem[]> mockCallback = mock(Consumer.class);
     chatService.onNewChat(mockCallback, this);
 
     chatService.start();

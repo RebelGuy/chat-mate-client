@@ -1,9 +1,12 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.models.chat.GetChatResponse.Author;
-import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
-import dev.rebel.chatmate.models.chat.GetChatResponse.PartialChatMessage;
-import dev.rebel.chatmate.models.chat.PartialChatMessageType;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicMessageEmoji;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicMessageText;
+import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
+import dev.rebel.chatmate.models.publicObjects.user.PublicLevelInfo;
+import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import net.minecraft.client.gui.FontRenderer;
 import org.junit.Test;
@@ -28,12 +31,12 @@ public class McChatServiceTests {
 
   @Mock FontRenderer mockFontRenderer;
 
-  Author author1 = createAuthor("Author 1");
-  PartialChatMessage text1 = createText("Text 1");
-  PartialChatMessage text2 = createText("Text 2");
-  PartialChatMessage textRebel = createText("Rebel");
-  PartialChatMessage emoji1 = createEmoji("☺", ":smiling:");
-  PartialChatMessage emoji2 = createEmoji("slightly smiling", ":slightly_smiling:");
+  PublicUser author1 = createAuthor("Author 1");
+  PublicMessagePart text1 = createText("Text 1");
+  PublicMessagePart text2 = createText("Text 2");
+  PublicMessagePart textRebel = createText("Rebel");
+  PublicMessagePart emoji1 = createEmoji("☺", ":smiling:");
+  PublicMessagePart emoji2 = createEmoji("slightly smiling", ":slightly_smiling:");
 
   @Test
   public void addChat_ignoresIfCantPrintChat() {
@@ -47,57 +50,57 @@ public class McChatServiceTests {
 
   @Test
   public void addChat_usesChatFilter() {
-    ChatItem item = createItem(author1, text1);
+    PublicChatItem item = createItem(author1, text1);
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
 
-    verify(this.mockFilterService).censorNaughtyWords(text1.text);
+    verify(this.mockFilterService).censorNaughtyWords(text1.textData.text);
   }
 
   @Test
   public void addChat_unicodeEmoji_PrintedDirectly() {
-    ChatItem item = createItem(author1, emoji1);
-    when(this.mockFontRenderer.getCharWidth(emoji1.name.charAt(0))).thenReturn(1);
+    PublicChatItem item = createItem(author1, emoji1);
+    when(this.mockFontRenderer.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
 
-    String expected = getExpectedChatText(author1, emoji1.name);
+    String expected = getExpectedChatText(author1, emoji1.emojiData.name);
     verify(this.mockMinecraftProxyService).printChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
   public void addChat_nonUnicodeEmoji_printLabel() {
-    ChatItem item = createItem(author1, emoji2);
+    PublicChatItem item = createItem(author1, emoji2);
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
 
-    String expected = getExpectedChatText(author1, emoji2.label);
+    String expected = getExpectedChatText(author1, emoji2.emojiData.label);
     verify(this.mockMinecraftProxyService).printChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
   public void addChat_multipleText_joined() {
-    ChatItem item = createItem(author1, text1, text2);
+    PublicChatItem item = createItem(author1, text1, text2);
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
 
-    String expected = getExpectedChatText(author1, text1.text + text2.text);
+    String expected = getExpectedChatText(author1, text1.textData.text + text2.textData.text);
     verify(this.mockMinecraftProxyService).printChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
   @Test
   public void addChat_textEmoji_spacingBetween() {
-    ChatItem item = createItem(author1, text1, emoji2, emoji1, text2);
-    when(this.mockFontRenderer.getCharWidth(emoji1.name.charAt(0))).thenReturn(1);
+    PublicChatItem item = createItem(author1, text1, emoji2, emoji1, text2);
+    when(this.mockFontRenderer.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
 
-    String expected = getExpectedChatText(author1, text1.text + " " + emoji2.label + " " + emoji1.name + " " + text2.text);
+    String expected = getExpectedChatText(author1, text1.textData.text + " " + emoji2.emojiData.label + " " + emoji1.emojiData.name + " " + text2.textData.text);
     verify(this.mockMinecraftProxyService).printChatMessage(anyString(), ArgumentMatchers.argThat(cmp -> cmp.getUnformattedText().equals(expected)));
   }
 
@@ -109,7 +112,7 @@ public class McChatServiceTests {
     // so for now just rely on the static method's implementation to work correctly (and it is tested in FilterServiceTests anyway).
 
     // note: if this test breaks it's probably because chat mentions are no longer hardcoded
-    ChatItem item = createItem(author1, textRebel);
+    PublicChatItem item = createItem(author1, textRebel);
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
@@ -117,8 +120,8 @@ public class McChatServiceTests {
     verify(this.mockSoundService).playDing();
   }
 
-  private static String getExpectedChatText(Author author, String text) {
-    return author.level + " VIEWER " + author.name + " " + text;
+  private static String getExpectedChatText(PublicUser author, String text) {
+    return author.levelInfo.level + " VIEWER " + author.userInfo.channelName + " " + text;
   }
 
   private McChatService setupService() {
@@ -134,35 +137,38 @@ public class McChatServiceTests {
   // The below methods should be used for mock data creation. It sets all
   // currently unused properties to null.
   //region mock data
-  public static ChatItem createItem(Author msgAuthor, PartialChatMessage... messages) {
-    return new ChatItem() {{
+  public static PublicChatItem createItem(PublicUser msgAuthor, PublicMessagePart... messages) {
+    return new PublicChatItem() {{
       author = msgAuthor;
       messageParts = messages;
     }};
   }
 
-  public static Author createAuthor(String authorName) {
-    return new Author() {{
-      name = authorName;
-      level = 0;
-      levelProgress = 0.0;
+  public static PublicUser createAuthor(String authorName) {
+    return new PublicUser() {{
+      userInfo = new PublicChannelInfo() {{ channelName = authorName; }};
+      levelInfo = new PublicLevelInfo() {{ level = 0; levelProgress = 0.0f; }};
     }};
   }
 
-  public static PartialChatMessage createText(String messageText) {
-    return new PartialChatMessage() {{
-      type = PartialChatMessageType.text;
-      text = messageText;
-      isBold = false;
-      isItalics = false;
+  public static PublicMessagePart createText(String messageText) {
+    return new PublicMessagePart() {{
+      type = MessagePartType.text;
+      textData = new PublicMessageText() {{
+        text = messageText;
+        isBold = false;
+        isItalics = false;
+      }};
     }};
   }
 
-  public static PartialChatMessage createEmoji(String emojiName, String emojiLabel) {
-    return new PartialChatMessage() {{
-      type = PartialChatMessageType.emoji;
-      name = emojiName;
-      label = emojiLabel;
+  public static PublicMessagePart createEmoji(String emojiName, String emojiLabel) {
+    return new PublicMessagePart() {{
+      type = MessagePartType.emoji;
+      emojiData = new PublicMessageEmoji() {{
+        name = emojiName;
+        label = emojiLabel;
+      }};
     }};
   }
   //endregion

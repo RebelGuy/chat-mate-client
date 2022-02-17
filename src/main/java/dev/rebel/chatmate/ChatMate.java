@@ -7,21 +7,18 @@ import dev.rebel.chatmate.commands.RanksCommand;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
-import dev.rebel.chatmate.gui.CustomGuiIngame;
-import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
-import dev.rebel.chatmate.models.chat.GetChatResponse.ChatItem;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
-import dev.rebel.chatmate.services.events.models.Tick;
 import dev.rebel.chatmate.services.util.FileHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
@@ -116,8 +113,8 @@ public class ChatMate {
     this.config.getChatMateEnabledEmitter().set(false);
   }
 
-  private void onNewYtChat(ChatItem[] newChat) {
-    for (ChatItem chat: newChat) {
+  private void onNewYtChat(PublicChatItem[] newChat) {
+    for (PublicChatItem chat: newChat) {
       this.mcChatService.printStreamChatItem(chat);
     }
   }

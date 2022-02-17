@@ -1,10 +1,10 @@
 package dev.rebel.chatmate.proxy;
 
 import dev.rebel.chatmate.models.ChatMateApiException;
-import dev.rebel.chatmate.models.chatMate.GetEventsResponse;
-import dev.rebel.chatmate.models.chatMate.GetEventsResponse.GetEventsResponseData;
-import dev.rebel.chatmate.models.chatMate.GetStatusResponse;
-import dev.rebel.chatmate.models.chatMate.GetStatusResponse.GetStatusResponseData;
+import dev.rebel.chatmate.models.api.chatMate.GetEventsResponse;
+import dev.rebel.chatmate.models.api.chatMate.GetEventsResponse.GetEventsResponseData;
+import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse;
+import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.services.LogService;
 
 import javax.annotation.Nullable;

@@ -117,7 +117,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     IChatComponent chatComponent = line.getChatComponent();
     if (chatComponent instanceof PrecisionChatComponentText) {
       PrecisionChatComponentText component = (PrecisionChatComponentText)chatComponent;
-      for (Tuple2<PrecisionLayout, ChatComponentText> pair : component.getComponentsForLine(this.minecraft.fontRendererObj, width)) {
+      for (Tuple2<PrecisionChatComponentText.PrecisionLayout, ChatComponentText> pair : component.getComponentsForLine(this.minecraft.fontRendererObj, width)) {
         int left = lineLeft + pair._1.position.getGuiValue(width);
         this.drawChatComponent(pair._2, left, lineBottom, opacity);
       }

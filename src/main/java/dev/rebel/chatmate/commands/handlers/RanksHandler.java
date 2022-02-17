@@ -16,9 +16,9 @@ public class RanksHandler {
 
   public void onRank(@Nullable String name) {
     if (name == null || name.trim().isEmpty()) {
-      this.experienceEndpointProxy.getLeaderboardAsync(res -> this.mcChatService.printLeaderboard(res.entries, null), this.mcChatService::printError);
+      this.experienceEndpointProxy.getLeaderboardAsync(res -> this.mcChatService.printLeaderboard(res.rankedUsers, null), this.mcChatService::printError);
     } else {
-      this.experienceEndpointProxy.getRankAsync(name, res -> this.mcChatService.printLeaderboard(res.entries, res.relevantIndex), this.mcChatService::printError);
+      this.experienceEndpointProxy.getRankAsync(name, res -> this.mcChatService.printLeaderboard(res.rankedUsers, res.relevantIndex), this.mcChatService::printError);
     }
   }
 }

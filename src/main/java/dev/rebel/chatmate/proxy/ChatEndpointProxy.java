@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.proxy;
 
 import dev.rebel.chatmate.models.ChatMateApiException;
-import dev.rebel.chatmate.models.chat.GetChatResponse;
-import dev.rebel.chatmate.models.chat.GetChatResponse.GetChatResponseData;
+import dev.rebel.chatmate.models.api.chat.GetChatResponse;
+import dev.rebel.chatmate.models.api.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.services.LogService;
 
 import javax.annotation.Nullable;

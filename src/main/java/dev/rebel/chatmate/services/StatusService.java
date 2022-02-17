@@ -1,10 +1,9 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.chatMate.GetStatusResponse;
-import dev.rebel.chatmate.models.chatMate.GetStatusResponse.ApiStatus;
-import dev.rebel.chatmate.models.chatMate.GetStatusResponse.GetStatusResponseData;
-import dev.rebel.chatmate.models.chatMate.GetStatusResponse.LivestreamStatus;
+import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse.GetStatusResponseData;
+import dev.rebel.chatmate.models.publicObjects.status.PublicApiStatus.ApiStatus;
+import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus.LivestreamStatus;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 
@@ -41,9 +40,9 @@ public class StatusService {
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.apiStatus.status == ApiStatus.Status.Error) {
+    } else if (status.apiStatus.status == ApiStatus.Error) {
       return SimpleStatus.YOUTUBE_UNREACHABLE;
-    } else if (status.livestreamStatus.status == LivestreamStatus.Status.Live) {
+    } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
       return SimpleStatus.OK_OFFLINE;

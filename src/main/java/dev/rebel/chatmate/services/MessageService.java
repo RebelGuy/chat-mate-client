@@ -4,7 +4,7 @@ import dev.rebel.chatmate.gui.PrecisionChatComponentText;
 import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionAlignment;
 import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionLayout;
 import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionValue;
-import dev.rebel.chatmate.models.experience.RankedEntry;
+import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
@@ -67,7 +67,7 @@ public class MessageService {
     return joinComponents(" ", list);
   }
 
-  public IChatComponent getRankedEntryMessage(RankedEntry entry, boolean deEmphasise, int rankDigits, int levelDigits, int nameWidth, int messageWidth) {
+  public IChatComponent getRankedEntryMessage(PublicRankedUser entry, boolean deEmphasise, int rankDigits, int levelDigits, int nameWidth, int messageWidth) {
     // example:
     // #24 ShiroTheS... 41 |⣿⣿⣿⣿⣿     | 42
     // rank name levelStart barStart barFilled barBlank barEnd levelEnd
@@ -86,7 +86,7 @@ public class MessageService {
 
     int levelNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")));
     PrecisionLayout levelStartLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(levelNumberWidth), PrecisionAlignment.CENTRE);
-    String levelStart = String.valueOf(entry.level);
+    String levelStart = String.valueOf(entry.user.levelInfo.level);
     x += levelNumberWidth + padding;
 
     String barStart = "|";
@@ -98,7 +98,7 @@ public class MessageService {
     int barEndWidth = fontRenderer.getStringWidth(barStart) + padding;
 
     int barBodyWidth = messageWidth - x - barEndWidth - levelNumberWidth;
-    int fillWidth = Math.round(barBodyWidth * entry.levelProgress);
+    int fillWidth = Math.round(barBodyWidth * entry.user.levelInfo.levelProgress);
     String filledBar = stringWithWidth(fontRenderer, "", "", '⣿', fillWidth) + "⣿";
     PrecisionLayout filledBarLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(fillWidth), PrecisionAlignment.LEFT, "");
     x += fillWidth; // no padding
@@ -112,17 +112,17 @@ public class MessageService {
     x += barEndWidth; // padding already included
 
     PrecisionLayout levelEndLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(levelNumberWidth), PrecisionAlignment.CENTRE);
-    String levelEnd = String.valueOf(entry.level + 1);
+    String levelEnd = String.valueOf(entry.user.levelInfo.level + 1);
 
     List<Tuple2<PrecisionLayout, ChatComponentText>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
-    list.add(new Tuple2<>(nameLayout, styledText(entry.channelName, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE)));
-    list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level))));
+    list.add(new Tuple2<>(nameLayout, styledText(entry.user.userInfo.channelName, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE)));
+    list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(emptyBarLayout, styledText(emptyBar, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(barEndLayout, styledText(barEnd, INFO_MSG_STYLE)));
-    list.add(new Tuple2<>(levelEndLayout, styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.level + 1))));
+    list.add(new Tuple2<>(levelEndLayout, styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level + 1))));
     return new PrecisionChatComponentText(list);
   }
 
