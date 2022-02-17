@@ -1,9 +1,9 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.gui.PrecisionChatComponentText;
-import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionAlignment;
-import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionLayout;
-import dev.rebel.chatmate.gui.PrecisionChatComponentText.PrecisionValue;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.gui.FontRenderer;
@@ -13,10 +13,7 @@ import net.minecraft.util.IChatComponent;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static dev.rebel.chatmate.models.Styles.*;
@@ -126,7 +123,7 @@ public class MessageService {
     return new PrecisionChatComponentText(list);
   }
 
-  public IChatComponent getLeaderboardFooterMessage(int messageWidth, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
+  public IChatComponent getPaginationFooterMessage(int messageWidth, int currentPage, int maxPage, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
     FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
     assert fontRenderer != null;
 
@@ -135,23 +132,57 @@ public class MessageService {
     }
 
     String padding = "  ";
+    int paddingWidth = fontRenderer.getStringWidth(padding);
+
+    String shortPageString = String.valueOf(currentPage);
+    int shortPageStringWidth = fontRenderer.getStringWidth(shortPageString);
+
+    String longPageString = String.format("%d of %d", currentPage, maxPage);
+    int longPageStringWidth = fontRenderer.getStringWidth(longPageString);
+
+    // we use layouts for the buttons because we want them to be fixed, even if the footer contents change sizes slightly
+    // (e.g. the page number width could change - we don't want the buttons to slightly shift their positions as a result)
     String prevPageMsg = "<< Previous";
+    int prevPageMsgWidth = fontRenderer.getStringWidth(prevPageMsg);
+    PrecisionLayout prevPageLayout = new PrecisionLayout(new PrecisionValue(paddingWidth), new PrecisionValue(messageWidth - paddingWidth), PrecisionAlignment.LEFT);
+
     String nextPageMsg = "Next >>";
-    int interiorWidth = messageWidth - fontRenderer.getStringWidth(padding + prevPageMsg + padding + padding + nextPageMsg + padding);
-    String interior = stringWithWidth(fontRenderer, "", "", '-', interiorWidth);
+    int nextPageMsgWidth = fontRenderer.getStringWidth(nextPageMsg);
+    PrecisionLayout nextPageLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(messageWidth - paddingWidth), PrecisionAlignment.RIGHT);
+
+    // we now have to decide what we want to render in the centre of the footer. this is how much free room we have:
+    int interiorWidth = messageWidth - (paddingWidth + prevPageMsgWidth + paddingWidth + paddingWidth + nextPageMsgWidth + paddingWidth);
+
+    String interior;
+    if (interiorWidth < shortPageStringWidth) {
+      // fill with `-`
+      interior = stringWithWidth(fontRenderer, "", "", '-', interiorWidth);
+    } else if (interiorWidth < longPageStringWidth) {
+      interior = shortPageString;
+    } else {
+      interior = longPageString;
+    }
+
+    // now try to also add some `-` fills to the left and right of the interior, if there is enough room.
+    int availableToFillSides = (interiorWidth - (fontRenderer.getStringWidth(interior) + paddingWidth + paddingWidth)) / 2;
+    if (availableToFillSides >= fontRenderer.getStringWidth("-")) {
+      String interiorSides = stringWithWidth(fontRenderer, "", "", '-', availableToFillSides);
+      interior = interiorSides + padding + interior + padding + interiorSides;
+    }
+    // centre the interior exactly between the outer buttons
+    PrecisionLayout interiorLayout = new PrecisionLayout(new PrecisionValue(prevPageMsgWidth), new PrecisionValue(messageWidth - prevPageMsgWidth - nextPageMsgWidth), PrecisionAlignment.CENTRE);
 
     ClickEventWithCallback onPrevClick = new ClickEventWithCallback(this.logService, onPrevPage, true);
     ClickEventWithCallback onNextClick = new ClickEventWithCallback(this.logService, onNextPage, true);
 
-    List<IChatComponent> list = new ArrayList<>();
-    list.add(styledText(padding, INFO_MSG_STYLE));
-    list.add(styledText(prevPageMsg, onPrevClick.bind(onPrevPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get())));
-    list.add(styledText(padding, INFO_MSG_STYLE));
-    list.add(styledText(interior, INFO_MSG_STYLE));
-    list.add(styledText(padding, INFO_MSG_STYLE));
-    list.add(styledText(nextPageMsg, onNextClick.bind(onNextPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get())));
-    list.add(styledText(padding, INFO_MSG_STYLE));
-    return joinComponents("", list);
+    ChatComponentText prevComponent = styledText(prevPageMsg, onPrevClick.bind(onPrevPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get()));
+    ChatComponentText interiorComponent = styledText(interior, INFO_MSG_STYLE);
+    ChatComponentText nextComponent = styledText(nextPageMsg, onNextClick.bind(onNextPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get()));
+    return new PrecisionChatComponentText(Arrays.asList(
+        new Tuple2<>(prevPageLayout, prevComponent),
+        new Tuple2<>(interiorLayout, interiorComponent),
+        new Tuple2<>(nextPageLayout, nextComponent)
+    ));
   }
 
   private IChatComponent getLargeLevelUpIntro(String name, int newLevel) {

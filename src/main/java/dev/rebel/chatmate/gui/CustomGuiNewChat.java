@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
+import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -17,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.Tuple2;
 
+import java.util.Iterator;
 import java.util.List;
 
 // Note: for maintainability reasons, please do not remove any of the @Override methods, even if they replicate the super method.
@@ -208,6 +211,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   private void pushFullComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
+    // indiscriminately add all component types
     this.chatLines.add(0, new ChatLine(updateCounter, chatComponent, chatLineId));
 
     // purge entries at the top
@@ -218,18 +222,18 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   /** Adds the component to `drawnChatLines` after processing its contents. */
   private void pushDrawnComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
-    if (chatComponent instanceof PrecisionChatComponentText) {
+    if (chatComponent instanceof ContainerChatComponent) {
+      // note that the container is stored in `this.chatLines`, but the contents are stored in `this.drawnChatLines`.
+      ContainerChatComponent container = (ContainerChatComponent)chatComponent;
+      this.pushDrawnComponent(container.component, chatLineId, updateCounter);
+
+    } else if (chatComponent instanceof PrecisionChatComponentText) {
       this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId));
 
     } else {
       int lineWidth = this.getLineWidth();
       List<IChatComponent> splitComponents = GuiUtilRenderComponents.splitText(chatComponent, lineWidth, this.minecraft.fontRendererObj, false, false);
       for (IChatComponent component : splitComponents) {
-        if (this.getChatOpen() && this.scrollPos > 0) {
-          this.isScrolled = true;
-          this.scroll(1);
-        }
-
         this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId));
       }
     }
@@ -255,12 +259,26 @@ public class CustomGuiNewChat extends GuiNewChat {
   @Override
   public void refreshChat()
   {
+    this.refreshChat(false);
+  }
+
+  public void refreshChat(boolean keepScrollPos) {
+    int initialScrollPos = this.scrollPos;
+    boolean initialIsScrolled = this.isScrolled;
+
     this.drawnChatLines.clear();
-    this.resetScroll();
+    if (!keepScrollPos) {
+      this.resetScroll();
+    }
 
     for (int i = this.chatLines.size() - 1; i >= 0; --i) {
       ChatLine chatline = this.chatLines.get(i);
       this.pushDrawnComponent(chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter());
+    }
+
+    if (keepScrollPos) {
+      this.scrollPos = initialScrollPos;
+      this.isScrolled = initialIsScrolled;
     }
   }
 
@@ -341,7 +359,11 @@ public class CustomGuiNewChat extends GuiNewChat {
     // walk from component to component until we first pass our desired x-position
     int lineX = 0;
     for (IChatComponent component : chatline.getChatComponent()) {
-      // todo: also check for instances of any custom components here in the future
+      // unwrap if required
+      while (component instanceof ContainerChatComponent) {
+        component = ((ContainerChatComponent)component).component;
+      }
+
       if (component instanceof ChatComponentText) {
         lineX += this.minecraft.fontRendererObj.getStringWidth(GuiUtilRenderComponents.func_178909_a(((ChatComponentText)component).getChatComponentText_TextValue(), false));
         if (lineX > x) {
@@ -367,6 +389,21 @@ public class CustomGuiNewChat extends GuiNewChat {
   public void deleteChatLine(int id) {
     this.chatLines.removeIf(line -> line.getChatLineID() == id);
     this.drawnChatLines.removeIf(line -> line.getChatLineID() == id);
+  }
+
+  /** Removes the component. Note that you must call `refreshChat` for the changes to come into effect. */
+  public void deleteComponent(IChatComponent component) {
+    int removed = 0;
+    Iterator<ChatLine> chatLines = this.chatLines.iterator();
+    while (chatLines.hasNext()) {
+      if (chatLines.next().getChatComponent() == component) {
+        chatLines.remove();
+        removed++;
+      }
+    }
+
+    // this ensures that the bottom lines will shift upwards to fill the gap, if we are currently scrolled
+    this.scroll(-removed);
   }
 
   @Override

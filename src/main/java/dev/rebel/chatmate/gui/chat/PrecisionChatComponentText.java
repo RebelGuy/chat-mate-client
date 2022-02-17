@@ -1,4 +1,4 @@
-package dev.rebel.chatmate.gui;
+package dev.rebel.chatmate.gui.chat;
 
 import com.google.common.collect.Iterators;
 import net.minecraft.client.gui.FontRenderer;

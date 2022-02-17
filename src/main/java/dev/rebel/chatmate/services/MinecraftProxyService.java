@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
@@ -25,6 +26,8 @@ public class MinecraftProxyService {
   private final ForgeEventService forgeEventService;
 
   private final List<Tuple<String, IChatComponent>> pendingChat;
+  private final List<IChatComponent> pendingDeletionChat;
+  private boolean refreshChat;
 
   public MinecraftProxyService(Minecraft minecraft, LogService logService, ForgeEventService forgeEventService) {
     this.minecraft = minecraft;
@@ -32,6 +35,9 @@ public class MinecraftProxyService {
     this.forgeEventService = forgeEventService;
 
     this.pendingChat = Collections.synchronizedList(new ArrayList<>());
+    this.pendingDeletionChat = Collections.synchronizedList(new ArrayList<>());
+    this.refreshChat = false;
+
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
   }
 
@@ -48,6 +54,11 @@ public class MinecraftProxyService {
         this.pendingChat.add(new Tuple<>(type, component));
       }
     }
+  }
+
+  /** Will regenerate the chat lines as soon as possible. */
+  public void refreshChat() {
+    this.refreshChat = true;
   }
 
   public boolean canPrintChatMessage() {
@@ -68,7 +79,13 @@ public class MinecraftProxyService {
       return null;
     }
 
-    return this.minecraft.ingameGUI.getChatGUI().getChatWidth();
+    return this.getChatGUI().getChatWidth();
+  }
+
+  public void deleteComponentFromChat(IChatComponent component) {
+    synchronized (this.pendingDeletionChat) {
+      this.pendingDeletionChat.add(component);
+    }
   }
 
   private void schedule(Consumer<Minecraft> work) {
@@ -76,18 +93,18 @@ public class MinecraftProxyService {
   }
 
   private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
-    this.flushPendingChat();
+    this.flushPendingChatChanges();
     return new RenderChatGameOverlay.Out();
   }
 
-  private void flushPendingChat() {
+  private void flushPendingChatChanges() {
     synchronized (this.pendingChat) {
       for (Tuple<String, IChatComponent> chatItem : this.pendingChat) {
         String type = chatItem.getFirst();
         IChatComponent component = chatItem.getSecond();
         String error = null;
         try {
-          this.minecraft.ingameGUI.getChatGUI().printChatMessage(component);
+          this.getChatGUI().printChatMessage(component);
         } catch (Exception e) {
           error = e.getMessage();
         }
@@ -101,5 +118,26 @@ public class MinecraftProxyService {
 
       this.pendingChat.clear();
     }
+
+    synchronized (this.pendingDeletionChat) {
+      CustomGuiNewChat gui = this.getChatGUI();
+      for (IChatComponent chatItem : this.pendingDeletionChat) {
+        gui.deleteComponent(chatItem);
+        this.refreshChat = true;
+      }
+
+      this.pendingDeletionChat.clear();
+    }
+
+    if (this.refreshChat) {
+      this.refreshChat = false;
+      this.getChatGUI().refreshChat(true);
+    }
+  }
+
+  private CustomGuiNewChat getChatGUI() {
+    CustomGuiNewChat gui = (CustomGuiNewChat)this.minecraft.ingameGUI.getChatGUI();
+    assert gui != null;
+    return gui;
   }
 }

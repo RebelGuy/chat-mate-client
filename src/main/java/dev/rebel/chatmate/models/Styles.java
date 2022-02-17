@@ -29,6 +29,7 @@ public class Styles {
   public static final ChatStyle INFO_MSG_PREFIX_STYLE = new ChatStyle().setColor(EnumChatFormatting.BLUE);
 
   public static final Supplier<ChatStyle> INTERACTIVE_STYLE = () -> new ChatStyle().setColor(EnumChatFormatting.BLUE).setUnderlined(true);
+  public static final Supplier<ChatStyle> INTERACTIVE_STYLE_DE_EMPHASISE = () -> new ChatStyle().setColor(EnumChatFormatting.DARK_GRAY).setUnderlined(true);
   public static final Supplier<ChatStyle> INTERACTIVE_STYLE_DISABLED = () -> new ChatStyle().setColor(EnumChatFormatting.DARK_GRAY).setUnderlined(false);
 
   public static ChatStyle getLevelStyle(Integer level) {

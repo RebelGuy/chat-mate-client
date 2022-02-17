@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.chat.ChatPagination;
+import dev.rebel.chatmate.gui.chat.LeaderboardRenderer;
 import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
@@ -101,36 +103,16 @@ public class McChatService {
     return new LevelUpEventData.Out();
   }
 
-  public void printLeaderboard(PublicRankedUser[] entries, @Nullable Integer highlightEntry) {
-    if (entries.length == 0) {
+  public void printLeaderboard(PublicRankedUser[] users, @Nullable Integer highlightIndex) {
+    if (users.length == 0) {
       this.minecraftProxyService.printChatMessage("Leaderboard", this.messageService.getInfoMessage("No entries to show."));
       return;
     }
-    if (highlightEntry != null && (highlightEntry < 0 || highlightEntry >= entries.length)) {
-      highlightEntry = null;
-    }
 
-    boolean anyHighlighting = highlightEntry != null;
-    ChatLeaderboard leaderboard = new ChatLeaderboard(entries, highlightEntry, (visibleEntries, highlighted, onPrevPage, onNextPage) -> {
-      int rankDigits = String.valueOf(visibleEntries[visibleEntries.length - 1].rank).length();
-      int levelDigits = String.valueOf(visibleEntries[0].user.levelInfo.level + 1).length();
-      List<Integer> allNameWidths = Arrays.stream(visibleEntries).map(entry -> this.minecraftProxyService.getChatFontRenderer().getStringWidth(entry.user.userInfo.channelName)).collect(Collectors.toList());
-      int nameWidth = Math.min((this.minecraftProxyService.getChatWidth() - 5) / 3, Collections.max(allNameWidths));
-      int messageWidth = this.minecraftProxyService.getChatWidth();
-
-      for (int i = 0; i < visibleEntries.length; i++) {
-        PublicRankedUser entry = visibleEntries[i];
-        boolean deEmphasise = anyHighlighting && highlighted != i;
-        IChatComponent entryComponent = this.messageService.getRankedEntryMessage(entry, deEmphasise, rankDigits, levelDigits, nameWidth, messageWidth);
-        this.minecraftProxyService.printChatMessage("Leaderboard", entryComponent);
-      }
-
-      IChatComponent footer = this.messageService.getLeaderboardFooterMessage(messageWidth, onPrevPage, onNextPage);
-      this.minecraftProxyService.printChatMessage("Leaderboard", footer);
-      this.minecraftProxyService.printChatMessage("Leaderboard", new ChatComponentText(""));
-    });
-
-    leaderboard.print();
+    PublicRankedUser highlightUser = highlightIndex == null ? null : users[highlightIndex];
+    LeaderboardRenderer renderer = new LeaderboardRenderer(this.messageService, highlightUser);
+    ChatPagination pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.messageService, renderer, users, 10, "Experience Leaderboard");
+    pagination.render();
   }
 
   public void printError(Throwable e) {
@@ -217,91 +199,6 @@ public class McChatService {
     private McChatResult(List<IChatComponent> chatComponents, boolean includesMention) {
       this.chatComponents = chatComponents;
       this.includesMention = includesMention;
-    }
-  }
-
-  private static class ChatLeaderboard {
-    private static final int ENTRIES_PER_PAGE = 10;
-
-    private final PublicRankedUser[] underlyingEntries;
-    private final @Nullable Integer highlightedEntry;
-    private final Action4<PublicRankedUser[], Integer, Runnable, Runnable> renderer;
-
-    private int currentPage = 0;
-
-    public ChatLeaderboard(PublicRankedUser[] underlyingEntries, @Nullable Integer highlightedEntry, Action4<PublicRankedUser[], Integer, Runnable, Runnable> renderer) {
-      this.underlyingEntries = underlyingEntries;
-      this.highlightedEntry = highlightedEntry;
-      this.renderer = renderer;
-    }
-
-    public void print() {
-      this.renderer.run(
-          this.getVisibleEntries(),
-          this.getHighlightedIndexOfCurrentPage(),
-          this.canGoToPreviousPage() ? this::previousPage : null,
-          this.canGoToNextPage() ? this::nextPage : null
-      );
-    }
-
-    public boolean canGoToPreviousPage() {
-      return this.currentPage > 0;
-    }
-
-    public boolean canGoToNextPage() {
-      int maxPage = this.underlyingEntries.length / ENTRIES_PER_PAGE;
-      return this.currentPage < maxPage;
-    }
-
-    public void nextPage() {
-      if (this.canGoToNextPage()) {
-        this.currentPage++;
-        this.print();
-      }
-    }
-
-    public void previousPage() {
-      if (this.canGoToPreviousPage()) {
-        this.currentPage--;
-        this.print();
-      }
-    }
-
-    public PublicRankedUser[] getVisibleEntries() {
-      if (underlyingEntries.length <= ENTRIES_PER_PAGE) {
-        return Arrays.copyOf(this.underlyingEntries, this.underlyingEntries.length);
-      } else {
-        int from = this.getVisibleStartIndex();
-        int to = this.getVisibleEndIndex();
-        return Arrays.copyOfRange(this.underlyingEntries, from, to + 1);
-      }
-    }
-
-    public @Nullable Integer getHighlightedIndexOfCurrentPage() {
-      if (this.highlightedEntry == null) {
-        return null;
-      }
-
-      int from = this.getVisibleStartIndex();
-      int to = this.getVisibleEndIndex();
-      int shiftedHighlighted = this.highlightedEntry - from;
-      if (shiftedHighlighted >= 0 && shiftedHighlighted <= to) {
-        return shiftedHighlighted;
-      }
-
-      return null;
-    }
-
-    private int getVisibleStartIndex() {
-      return this.currentPage * ENTRIES_PER_PAGE;
-    }
-
-    private int getVisibleEndIndex() {
-      int to = this.currentPage * ENTRIES_PER_PAGE + ENTRIES_PER_PAGE - 1;
-      if (to >= this.underlyingEntries.length) {
-        to = this.underlyingEntries.length - 1;
-      }
-      return to;
     }
   }
 }
