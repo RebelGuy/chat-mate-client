@@ -9,7 +9,6 @@ import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.OpenGui;
-import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import dev.rebel.chatmate.services.events.models.Tick;
 import dev.rebel.chatmate.services.events.models.Tick.In;
@@ -29,9 +28,12 @@ public class GuiService {
   private final MouseEventService mouseEventService;
   private final KeyBindingService keyBindingService;
   private final Minecraft minecraft;
+  private final MinecraftProxyService minecraftProxyService;
   private final GuiChatMateHud guiChatMateHud;
   private final SoundService soundService;
   private final DimFactory dimFactory;
+  private final ContextMenuStore contextMenuStore;
+  private final ContextMenuService contextMenuService;
 
   private CustomGuiIngame customGuiIngame;
 
@@ -42,9 +44,12 @@ public class GuiService {
                     MouseEventService mouseEventService,
                     KeyBindingService keyBindingService,
                     Minecraft minecraft,
+                    MinecraftProxyService minecraftProxyService,
                     GuiChatMateHud guiChatMateHud,
                     SoundService soundService,
-                    DimFactory dimFactory) {
+                    DimFactory dimFactory,
+                    ContextMenuStore contextMenuStore,
+                    ContextMenuService contextMenuService) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -52,9 +57,12 @@ public class GuiService {
     this.mouseEventService = mouseEventService;
     this.keyBindingService = keyBindingService;
     this.minecraft = minecraft;
+    this.minecraftProxyService = minecraftProxyService;
     this.guiChatMateHud = guiChatMateHud;
     this.soundService = soundService;
     this.dimFactory = dimFactory;
+    this.contextMenuStore = contextMenuStore;
+    this.contextMenuService = contextMenuService;
 
     this.addEventHandlers();
   }
@@ -81,7 +89,7 @@ public class GuiService {
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
     this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
     this.forgeEventService.onOpenChat(this::onOpenChat, null);
-    this.forgeEventService.onRenderGameOverlay(this::onRenderGameOverlay, new RenderGameOverlay.Options(ElementType.ALL));
+    this.forgeEventService.onRenderTick(this::onRender, null);
     this.forgeEventService.onClientTick(this::onClientTick, null);
 
     this.keyBindingService.on(ChatMateKeyEvent.OPEN_CHAT_MATE_HUD, this::onOpenChatMateHud);
@@ -131,16 +139,16 @@ public class GuiService {
       defaultValue = (String)field.get(guiChat);
     } catch (Exception e) { throw new RuntimeException("This should never happen"); }
 
-    GuiScreen replaceWithGui = new CustomGuiChat(defaultValue);
+    GuiScreen replaceWithGui = new CustomGuiChat(defaultValue, this.minecraftProxyService, this.mouseEventService, this.contextMenuStore, this.contextMenuService);
     return new OpenGui.Out(replaceWithGui);
   }
 
-  private RenderGameOverlay.Out onRenderGameOverlay(RenderGameOverlay.In in) {
+  private Out onRender(In in) {
     if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get()) {
       this.guiChatMateHud.renderGameOverlay();
     }
 
-    return new RenderGameOverlay.Out();
+    return new Out();
   }
 
   private Boolean onOpenChatMateHud() {

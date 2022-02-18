@@ -4,6 +4,7 @@ import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.util.Memoiser;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
+import scala.Tuple2;
 
 /** Dimension factory. */
 public class DimFactory {
@@ -27,6 +28,13 @@ public class DimFactory {
 
   public Dim zeroGui() {
     return this.fromGui(0);
+  }
+
+  public Tuple2<Dim, Dim> getMinecraftDim() {
+    return new Tuple2<>(
+        this.fromScreen(this.minecraft.displayWidth),
+        this.fromScreen(this.minecraft.displayHeight)
+    );
   }
 
   private int getScaleFactor() {

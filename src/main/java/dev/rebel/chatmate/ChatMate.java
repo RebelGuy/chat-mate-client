@@ -7,6 +7,7 @@ import dev.rebel.chatmate.commands.RanksCommand;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
+import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
@@ -82,7 +83,21 @@ public class ChatMate {
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config);
-    this.guiService = new GuiService(this.isDev, logService, this.config, this.forgeEventService, this.mouseEventService, this.keyBindingService, minecraft, guiChatMateHud, soundService, dimFactory);
+    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, this.forgeEventService, this.mouseEventService, dimFactory);
+    ContextMenuService contextMenuService = new ContextMenuService(contextMenuStore);
+    this.guiService = new GuiService(this.isDev,
+        logService,
+        this.config,
+        this.forgeEventService,
+        this.mouseEventService,
+        this.keyBindingService,
+        minecraft,
+        minecraftProxyService,
+        guiChatMateHud,
+        soundService,
+        dimFactory,
+        contextMenuStore,
+        contextMenuService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(minecraft)),

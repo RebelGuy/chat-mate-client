@@ -135,7 +135,7 @@ public class MinecraftProxyService {
     }
   }
 
-  private CustomGuiNewChat getChatGUI() {
+  public CustomGuiNewChat getChatGUI() {
     CustomGuiNewChat gui = (CustomGuiNewChat)this.minecraft.ingameGUI.getChatGUI();
     assert gui != null;
     return gui;

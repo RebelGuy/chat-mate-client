@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui;
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -318,6 +319,10 @@ public class CustomGuiNewChat extends GuiNewChat {
       this.scrollPos = 0;
       this.isScrolled = false;
     }
+  }
+
+  public IChatComponent getChatComponent(Dim x, Dim y) {
+    return this.getChatComponent((int)x.getScreen(), (int)y.getScreen());
   }
 
   /** Gets the chat component at the screen position. */

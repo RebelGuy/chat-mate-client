@@ -121,6 +121,10 @@ public class ImageComponent extends Gui implements IHudComponent {
     GlStateManager.scale(scaleX, scaleY, 1);
     GlStateManager.enableBlend();
 
+    // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
+    GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager.disableLighting();
+
     context.textureManager.bindTexture(this.texture.resourceLocation);
     this.drawTexturedModalRect(renderX, renderY, u, v, width, height);
 

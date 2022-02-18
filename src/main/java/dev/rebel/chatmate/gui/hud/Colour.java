@@ -1,5 +1,8 @@
 package dev.rebel.chatmate.gui.hud;
 
+import org.lwjgl.util.Color;
+import org.lwjgl.util.ReadableColor;
+
 public class Colour {
   public final int red;
   public final int green;
@@ -8,6 +11,14 @@ public class Colour {
 
   public Colour(int red, int green, int blue) {
     this(red, green, blue, 255);
+  }
+
+  public Colour(Color colour) {
+    this(colour.getRed(), colour.getGreen(), colour.getBlue(), colour.getAlpha());
+  }
+
+  public Colour(ReadableColor colour) {
+    this(colour.getRed(), colour.getGreen(), colour.getBlue(), colour.getAlpha());
   }
 
   public Colour(int red, int green, int blue, int alpha) {

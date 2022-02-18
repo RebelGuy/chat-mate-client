@@ -1,17 +1,21 @@
 package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Sets;
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.services.ContextMenuService;
+import dev.rebel.chatmate.services.MinecraftProxyService;
+import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiConfirmOpenLink;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.stream.GuiTwitchUserMode;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.util.IChatComponent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.input.Mouse;
 import tv.twitch.chat.ChatUserInfo;
 
 import java.io.File;
@@ -19,15 +23,52 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
+import java.util.function.Function;
 
 public class CustomGuiChat extends GuiChat {
   private static final Logger LOGGER = LogManager.getLogger();
   private static final Set<String> PROTOCOLS = Sets.newHashSet("http", "https");
 
+  private final MinecraftProxyService minecraftProxyService;
+  private final MouseEventService mouseEventService;
+  private final ContextMenuStore contextMenuStore;
+  private final ContextMenuService contextMenuService;
+  private final Function<MouseEventData.In, MouseEventData.Out> onMouseDown = this::onMouseDown;
+
   private URI clickedLinkURI;
 
-  public CustomGuiChat(String defaultInput) {
+  public CustomGuiChat(String defaultInput, MinecraftProxyService minecraftProxyService, MouseEventService mouseEventService, ContextMenuStore contextMenuStore, ContextMenuService contextMenuService) {
     super(defaultInput);
+
+    this.minecraftProxyService = minecraftProxyService;
+    this.mouseEventService = mouseEventService;
+    this.contextMenuStore = contextMenuStore;
+    this.contextMenuService = contextMenuService;
+
+    this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(), this);
+  }
+
+  private MouseEventData.Out onMouseDown(MouseEventData.In in) {
+    if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
+      Dim x = in.mousePositionData.x;
+      Dim y = in.mousePositionData.y;
+      IChatComponent component = this.minecraftProxyService.getChatGUI().getChatComponent(x, y);
+      if (component instanceof ContainerChatComponent) {
+        this.contextMenuService.showContext(x, y);
+        return new MouseEventData.Out(MouseEventData.Out.MouseHandlerAction.HANDLED);
+      }
+    }
+
+    return new MouseEventData.Out();
+  }
+
+  @Override
+  public void handleMouseInput() throws IOException {
+    if (this.contextMenuStore.isShowingContextMenu()) {
+      return;
+    }
+
+    super.handleMouseInput();
   }
 
   /** Stolen mostly from GuiScreen, but with custom callback handler handling. */
@@ -120,7 +161,7 @@ public class CustomGuiChat extends GuiChat {
     }
   }
 
-  /** Stolen from GuiScreen. */
+  /** Stolen from GuiScreen. Needs to be reproduced here because of the use of private `this.clickedLinkURI`. */
   @Override
   public void confirmClicked(boolean result, int id)
   {
@@ -134,5 +175,20 @@ public class CustomGuiChat extends GuiChat {
       this.clickedLinkURI = null;
       this.mc.displayGuiScreen(this);
     }
+  }
+
+  @Override
+  protected void handleComponentHover(IChatComponent component, int x, int y) {
+    // disable hovering effects if a context menu is showing
+    if (this.contextMenuStore.isShowingContextMenu()) {
+      return;
+    }
+    super.handleComponentHover(component, x, y);
+  }
+
+  @Override
+  public void onGuiClosed() {
+    this.contextMenuStore.clearContextMenu();
+    super.onGuiClosed();
   }
 }
