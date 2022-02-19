@@ -147,6 +147,11 @@ public class McChatService {
     this.minecraftProxyService.printChatMessage("Error", message);
   }
 
+  public void printInfo(String message) {
+    IChatComponent info = this.messageService.getInfoMessage(message);
+    this.minecraftProxyService.printChatMessage("Info", info);
+  }
+
   private McChatResult ytChatToMcChat(PublicChatItem item, FontRenderer fontRenderer) throws Exception {
     ArrayList<IChatComponent> components = new ArrayList<>();
     boolean includesMention = false;
