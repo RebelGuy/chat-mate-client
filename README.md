@@ -53,6 +53,19 @@ behaviour (i.e. `cancel` the event) and use `CustomGuiNewChat.drawChat()` instea
 never has a chance to interact with its private `GuiNewChat` object (which remains to be the default implementation).
 
 # Change Log
+## v1.9 - The Pre-Admin Update [20/2/2022]
+- Added a huge amount of fancy in-game chat updates
+  - Minecraft now renders a custom GuiChat and GuiNewChat so we can override things
+  - PrecisionChatComponentText for exactly determining how a component should be positioned on a chat line
+  - ContainerChatComponent for holding references to ChatComponents and custom data
+  - In-place pagination of chat. Formatted nicely, includes a close button
+- Added a context menu
+  - For now, right clicking a user's name will allow the option to bring up their rank, or modify their experience
+- Added GUI window for modifying a user's experience
+- Added search command for searching for a user. Results are displayed in chat
+- Custom cursors that change appearance based on the current context
+- API objects now use the standardised PublicObjects and errors
+
 ## v1.8 - The Housekeeping Update [12/2/2022]
 - Added `/cm ranks` command for displaying the leaderboard
   - If called without arguments, will display the full leaderboard with pagination
