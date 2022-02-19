@@ -9,7 +9,9 @@ import dev.rebel.chatmate.stores.ChatMateEndpointStore;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -34,11 +36,16 @@ public class EndpointProxy {
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
   public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler);
+  }
+
+  /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler) {
     // we got there eventually.....
     CompletableFuture.supplyAsync(() -> {
       Runnable onComplete = this.chatMateEndpointStore.onNewRequest();
       try {
-        Data result = this.makeRequest(method, path, returnClass);
+        Data result = this.makeRequest(method, path, returnClass, data);
         onComplete.run();
         return result;
 
@@ -53,13 +60,17 @@ public class EndpointProxy {
   }
 
   public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass) throws ConnectException, ChatMateApiException, Exception {
+    return this.makeRequest(method, path, returnClass, null);
+  }
+
+  public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass, Object data) throws ConnectException, ChatMateApiException, Exception {
     int id = ++this.requestId;
     this.logService.logApiRequest(this, id, method, this.basePath + path);
 
     Exception ex = null;
     String result;
     try {
-      result = downloadString(method, path);
+      result = downloadString(method, path, data);
     } catch (ConnectException e) {
       result = "Failed to connect to the server - is it running? " + e.getMessage();
       ex = e;
@@ -85,10 +96,23 @@ public class EndpointProxy {
     }
   }
 
-  private String downloadString(Method method, String path) throws Exception {
+  private String downloadString(Method method, String path, Object data) throws Exception {
     URL url = new URL(this.basePath + path);
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(method.toString());
+
+    if (method == Method.POST && data != null) {
+      String json = this.gson.toJson(data);
+      byte[] input = json.getBytes(StandardCharsets.UTF_8);
+
+      conn.setRequestProperty("Content-Type", "application/json");
+      conn.setRequestProperty("charset", "utf-8");
+      conn.setRequestProperty("Content-Length", String.valueOf(input.length));
+      conn.setDoOutput(true); // allow data for be sent outwards
+      try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
+        wr.write(input);
+      }
+    }
 
     // https://stackoverflow.com/a/1826995
     // turns out default encoding is system/environment dependent if not set explicitly.
@@ -122,5 +146,5 @@ public class EndpointProxy {
     }
   }
 
-  public enum Method { GET }
+  public enum Method { GET, POST }
 }

@@ -419,6 +419,12 @@ public class CustomGuiNewChat extends GuiNewChat {
     return calculateChatboxWidth(this.minecraft.gameSettings.chatWidth);
   }
 
+  /** Returns the effective chat width that takes into account scaling. If the font renderer measures text to be at most this width, it will fit onto the chat GUI. */
+  public int getChatWidthForText() {
+    float scale = this.getChatScale();
+    return MathHelper.floor_float((float)this.getChatWidth() / scale);
+  }
+
   @Override
   public int getChatHeight() {
     return calculateChatboxHeight(this.getChatOpen() ? this.minecraft.gameSettings.chatHeightFocused : this.minecraft.gameSettings.chatHeightUnfocused);

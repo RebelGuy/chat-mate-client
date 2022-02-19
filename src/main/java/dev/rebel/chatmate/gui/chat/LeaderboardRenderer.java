@@ -22,7 +22,7 @@ public class LeaderboardRenderer extends PaginationRenderer<PublicRankedUser> {
   }
 
   @Override
-  public IChatComponent renderItem(PublicRankedUser item, PublicRankedUser[] allItemsOnPage, FontRenderer fontRenderer, int chatWidth) {
+  public IChatComponent renderItem(PublicRankedUser item, PublicRankedUser[] allItemsOnPage, FontRenderer fontRenderer, int chatWidth, int effectiveChatWidth) {
     int rankDigits = String.valueOf(allItemsOnPage[allItemsOnPage.length - 1].rank).length();
     int levelDigits = String.valueOf(allItemsOnPage[0].user.levelInfo.level + 1).length();
     List<Integer> allNameWidths = Arrays.stream(allItemsOnPage).map(entry -> fontRenderer.getStringWidth(entry.user.userInfo.channelName)).collect(Collectors.toList());
@@ -31,6 +31,6 @@ public class LeaderboardRenderer extends PaginationRenderer<PublicRankedUser> {
     boolean anyHighlighting = highlightUser != null;
     boolean deEmphasise = anyHighlighting && this.highlightUser != item;
 
-    return this.messageService.getRankedEntryMessage(item, deEmphasise, rankDigits, levelDigits, nameWidth, chatWidth);
+    return this.messageService.getRankedEntryMessage(item, deEmphasise, rankDigits, levelDigits, nameWidth, effectiveChatWidth);
   }
 }

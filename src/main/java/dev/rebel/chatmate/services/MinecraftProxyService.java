@@ -82,6 +82,15 @@ public class MinecraftProxyService {
     return this.getChatGUI().getChatWidth();
   }
 
+  /** Returns the effective chat width that takes into account scaling. If the font renderer measures text to be at most this width, it will fit onto the chat GUI. */
+  public @Nullable Integer getChatWidthForText() {
+    if (this.minecraft.ingameGUI == null) {
+      return null;
+    }
+
+    return this.getChatGUI().getChatWidthForText();
+  }
+
   public void deleteComponentFromChat(IChatComponent component) {
     synchronized (this.pendingDeletionChat) {
       this.pendingDeletionChat.add(component);

@@ -1,12 +1,10 @@
 package dev.rebel.chatmate;
 
-import dev.rebel.chatmate.commands.ChatMateCommand;
-import dev.rebel.chatmate.commands.CountdownCommand;
-import dev.rebel.chatmate.commands.CounterCommand;
-import dev.rebel.chatmate.commands.RanksCommand;
+import dev.rebel.chatmate.commands.*;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
+import dev.rebel.chatmate.commands.handlers.SearchHandler;
 import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -17,6 +15,7 @@ import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
+import dev.rebel.chatmate.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
@@ -68,6 +67,7 @@ public class ChatMate {
     ChatMateEndpointStore chatMateEndpointStore = new ChatMateEndpointStore();
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, chatMateEndpointStore, apiPath);
     ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, chatMateEndpointStore, apiPath);
+    UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, chatMateEndpointStore, apiPath);
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, chatMateEndpointStore, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
@@ -106,7 +106,8 @@ public class ChatMate {
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(minecraft)),
       new CounterCommand(new CounterHandler(this.keyBindingService, this.renderService)),
-      new RanksCommand(new RanksHandler(mcChatService, experienceEndpointProxy))
+      new RanksCommand(new RanksHandler(mcChatService, experienceEndpointProxy)),
+      new SearchCommand(new SearchHandler(userEndpointProxy, mcChatService))
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 

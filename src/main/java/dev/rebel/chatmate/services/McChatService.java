@@ -3,11 +3,13 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.gui.chat.ChatPagination;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.chat.LeaderboardRenderer;
+import dev.rebel.chatmate.gui.chat.UserRenderer;
 import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart.MessagePartType;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
+import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
 import dev.rebel.chatmate.services.util.Action4;
@@ -113,6 +115,17 @@ public class McChatService {
     PublicRankedUser highlightUser = highlightIndex == null ? null : users[highlightIndex];
     LeaderboardRenderer renderer = new LeaderboardRenderer(this.messageService, highlightUser);
     ChatPagination pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.messageService, renderer, users, 10, "Experience Leaderboard");
+    pagination.render();
+  }
+
+  public void printUserList(PublicUser[] users) {
+    if (users.length == 0) {
+      this.minecraftProxyService.printChatMessage("UserList", this.messageService.getInfoMessage("No items to show."));
+      return;
+    }
+
+    UserRenderer renderer = new UserRenderer(this.messageService);
+    ChatPagination pagination = new ChatPagination(this.logService, this.minecraftProxyService, this.messageService, renderer, users, 10, "Search Results");
     pagination.render();
   }
 

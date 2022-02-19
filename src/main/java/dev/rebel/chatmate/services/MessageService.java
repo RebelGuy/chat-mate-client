@@ -125,12 +125,23 @@ public class MessageService {
     return new PrecisionChatComponentText(list);
   }
 
+  public IChatComponent getUserMessage(PublicUser user, int messageWidth) {
+    PrecisionLayout layout = new PrecisionLayout(new PrecisionValue(8), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
+    IChatComponent component = getUserComponent(user);
+
+    List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
+    list.add(new Tuple2<>(layout, component));
+    return new PrecisionChatComponentText(list);
+  }
+
   public IChatComponent getPaginationFooterMessage(int messageWidth, int currentPage, int maxPage, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
     FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
     assert fontRenderer != null;
 
     if (onPrevPage == null && onNextPage == null) {
-      return styledText(stringWithWidth(fontRenderer, "", "", '-', messageWidth), INFO_MSG_STYLE);
+      IChatComponent footer = styledText(stringWithWidth(fontRenderer, "", "", '-', messageWidth), INFO_MSG_STYLE);
+      PrecisionLayout footerLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(messageWidth), PrecisionAlignment.CENTRE);
+      return new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(footerLayout, footer)));
     }
 
     String padding = "  ";

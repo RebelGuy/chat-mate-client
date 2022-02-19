@@ -70,10 +70,11 @@ public class ChatPagination<T> {
 
     FontRenderer fontRenderer =  this.minecraftProxyService.getChatFontRenderer();
     int chatWidth = this.minecraftProxyService.getChatWidth();
+    int effectiveChatWidth = this.minecraftProxyService.getChatWidthForText();
     T[] visibleItems = this.getVisibleItems();
     for (int i = 0; i < renderedComponents.length; i++) {
       if (i < visibleItems.length) {
-        this.renderedComponents[i].component = this.renderer.renderItem(visibleItems[i], visibleItems, fontRenderer, chatWidth);
+        this.renderedComponents[i].component = this.renderer.renderItem(visibleItems[i], visibleItems, fontRenderer, chatWidth, effectiveChatWidth);
       } else {
         // empty padding on the last page
         this.renderedComponents[i].component = emptyLine;
@@ -153,7 +154,7 @@ public class ChatPagination<T> {
 
   private void renderFooter() {
     this.renderedFooter.component = this.messageService.getPaginationFooterMessage(
-        this.minecraftProxyService.getChatWidth(),
+        this.minecraftProxyService.getChatWidthForText(),
         this.currentPage + 1,
         this.maxPage + 1,
         this.enablePreviousPage() ? this::onPreviousPage : null,
@@ -222,7 +223,9 @@ public class ChatPagination<T> {
   }
 
   public abstract static class PaginationRenderer<T> {
-    /** Should return the chat component for rendering the given item. To help with layout, all items that are visible on the current page are also provided. */
-    public abstract IChatComponent renderItem(T item, T[] allItemsOnPage, FontRenderer fontRenderer, int chatWidth);
+    /** Should return the chat component for rendering the given item. To help with layout, all items that are visible on the current page are also provided.
+     * @param chatWidth is the actual chat width in GUI units.
+     * @param effectiveChatWidth is the effective chat width for text rendering considerations. If you limit your text to this width, it will fit onto a single line. */
+    public abstract IChatComponent renderItem(T item, T[] allItemsOnPage, FontRenderer fontRenderer, int chatWidth, int effectiveChatWidth);
   }
 }
