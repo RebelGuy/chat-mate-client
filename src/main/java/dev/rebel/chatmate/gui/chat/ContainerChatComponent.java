@@ -5,19 +5,27 @@ import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
-/** Represents a container that contains another replaceable component, used for modifying existing chat lines.
+/** Represents a container that contains another replaceable component and data. Used for modifying existing chat lines
+ * and associating custom data with chat components.
  * Note that, if the contents have been replaced with a different component instance, you must refresh the chat. */
 public class ContainerChatComponent implements IChatComponent {
   public @Nonnull IChatComponent component;
+  public @Nullable Object data;
 
   /** Draws an empty line by default. */
   public ContainerChatComponent() { this.component = new ChatComponentText(""); }
 
   public ContainerChatComponent(@Nonnull IChatComponent component) {
     this.component = component;
+  }
+
+  public ContainerChatComponent(@Nonnull IChatComponent component, @Nullable Object data) {
+    this.component = component;
+    this.data = data;
   }
 
   //region Interface methods

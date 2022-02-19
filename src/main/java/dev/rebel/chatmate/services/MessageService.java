@@ -1,10 +1,12 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
+import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
@@ -46,21 +48,21 @@ public class MessageService {
     return joinComponents(" ", list);
   }
 
-  public IChatComponent getSmallLevelUpMessage(String name, int newLevel) {
+  public IChatComponent getSmallLevelUpMessage(PublicUser user, int newLevel) {
     List<IChatComponent> list = new ArrayList<>();
     list.add(INFO_PREFIX);
     list.add(styledText(" ", INFO_MSG_STYLE));
-    list.add(styledText(name, VIEWER_NAME_STYLE));
+    list.add(getUserComponent(user));
     list.add(styledText(" has just reached level " + newLevel + "!", INFO_MSG_STYLE));
     return joinComponents("", list);
   }
 
-  public IChatComponent getLargeLevelUpMessage(String name, int newLevel) {
+  public IChatComponent getLargeLevelUpMessage(PublicUser user, int newLevel) {
     List<IChatComponent> list = new ArrayList<>();
     list.add(INFO_PREFIX);
-    list.add(this.getLargeLevelUpIntro(name, newLevel));
-    list.add(this.getLargeLevelUpBody(name, newLevel));
-    list.add(this.getLargeLevelUpOutro(name, newLevel));
+    list.add(this.getLargeLevelUpIntro(user, newLevel));
+    list.add(this.getLargeLevelUpBody(user, newLevel));
+    list.add(this.getLargeLevelUpOutro(user, newLevel));
     return joinComponents(" ", list);
   }
 
@@ -111,9 +113,9 @@ public class MessageService {
     PrecisionLayout levelEndLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(levelNumberWidth), PrecisionAlignment.CENTRE);
     String levelEnd = String.valueOf(entry.user.levelInfo.level + 1);
 
-    List<Tuple2<PrecisionLayout, ChatComponentText>> list = new ArrayList<>();
+    List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
-    list.add(new Tuple2<>(nameLayout, styledText(entry.user.userInfo.channelName, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE)));
+    list.add(new Tuple2<>(nameLayout, getUserComponent(entry.user, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
@@ -185,7 +187,7 @@ public class MessageService {
     ));
   }
 
-  private IChatComponent getLargeLevelUpIntro(String name, int newLevel) {
+  private IChatComponent getLargeLevelUpIntro(PublicUser user, int newLevel) {
     return pickRandom(INFO_MSG_STYLE,
         "My little rebels... I have news for you.",
         "You won't believe what just happened.",
@@ -197,16 +199,16 @@ public class MessageService {
       );
   }
 
-  private IChatComponent getLargeLevelUpBody(String name, int newLevel) {
+  private IChatComponent getLargeLevelUpBody(PublicUser user, int newLevel) {
     List<IChatComponent> list = new ArrayList<>();
-    list.add(styledText(name, VIEWER_NAME_STYLE));
+    list.add(getUserComponent(user));
     list.add(styledText(" has reached level ", INFO_MSG_STYLE));
     list.add(styledText(String.valueOf(newLevel), getLevelStyle(newLevel)));
     list.add(styledText("!", INFO_MSG_STYLE));
     return joinComponents("", list);
   }
 
-  private IChatComponent getLargeLevelUpOutro(String name, int newLevel) {
+  private IChatComponent getLargeLevelUpOutro(PublicUser user, int newLevel) {
     return pickRandom(INFO_MSG_STYLE,
         "Let's celebrate this incredible achievement!",
         "No one would believe it if it wasn't livestreamed!",
@@ -219,13 +221,28 @@ public class MessageService {
         "Level 100 is within reach!",
         "Level " + (newLevel + 1) + " is within reach!",
         "Congratulations!",
-        "Say 123 if you respect " + styledText(name, VIEWER_NAME_STYLE).getFormattedText() + styledText(".", INFO_MSG_STYLE).getFormattedText(),
-        "Subscribe to " + styledText(name, VIEWER_NAME_STYLE).getFormattedText() + styledText((name.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE).getFormattedText()
+        styledText("Say 123 if you respect ", INFO_MSG_STYLE).appendSibling(getUserComponent(user)).appendSibling(styledText(".", INFO_MSG_STYLE)),
+        styledText("Subscribe to ", INFO_MSG_STYLE).appendSibling(getUserComponent(user)).appendSibling(styledText((user.userInfo.channelName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE))
       );
   }
 
-  private IChatComponent pickRandom(ChatStyle style, String... message) {
-    int r = random.nextInt(message.length);
-    return styledText(message[r], style);
+  public static IChatComponent getUserComponent(PublicUser user) {
+    return getUserComponent(user, VIEWER_NAME_STYLE);
+  }
+
+  public static IChatComponent getUserComponent(PublicUser user, ChatStyle style) {
+    return new ContainerChatComponent(styledText(user.userInfo.channelName, style), user);
+  }
+
+  private IChatComponent pickRandom(ChatStyle style, Object... stringOrComponent) {
+    int r = random.nextInt(stringOrComponent.length);
+    Object picked = stringOrComponent[r];
+    if (picked instanceof String) {
+      return styledText((String)picked, style);
+    } else if (picked instanceof IChatComponent) {
+      return (IChatComponent)picked;
+    } else {
+      throw new RuntimeException("Cannot pick a random message because an input had type " + picked.getClass().getSimpleName());
+    }
   }
 }

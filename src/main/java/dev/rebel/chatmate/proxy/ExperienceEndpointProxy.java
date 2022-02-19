@@ -24,6 +24,11 @@ public class ExperienceEndpointProxy extends EndpointProxy {
     this.makeRequestAsync(Method.GET, url, GetRankResponse.class, callback, errorHandler);
   }
 
+  public void getRankAsync(@Nonnull Number userId, Consumer<GetRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    String url = String.format("/rank?id=%s", userId);
+    this.makeRequestAsync(Method.GET, url, GetRankResponse.class, callback, errorHandler);
+  }
+
   public void getRankAsync(@Nonnull Integer channelId, Consumer<GetRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     String url = String.format("/rank?id=%d", channelId);
     this.makeRequestAsync(Method.GET, url, GetRankResponse.class, callback, errorHandler);

@@ -121,7 +121,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     IChatComponent chatComponent = line.getChatComponent();
     if (chatComponent instanceof PrecisionChatComponentText) {
       PrecisionChatComponentText component = (PrecisionChatComponentText)chatComponent;
-      for (Tuple2<PrecisionChatComponentText.PrecisionLayout, ChatComponentText> pair : component.getComponentsForLine(this.minecraft.fontRendererObj, width)) {
+      for (Tuple2<PrecisionChatComponentText.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.minecraft.fontRendererObj, width)) {
         int left = lineLeft + pair._1.position.getGuiValue(width);
         this.drawChatComponent(pair._2, left, lineBottom, opacity);
       }
@@ -322,9 +322,12 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   public IChatComponent getChatComponent(Dim x, Dim y) {
-    return this.getChatComponent((int)x.getScreen(), (int)y.getScreen());
+    int mouseX = (int)x.getScreen();
+    int mouseY = this.minecraft.displayHeight - (int)y.getScreen() - 1;
+    return this.getChatComponent(mouseX, mouseY);
   }
 
+  // yep.. it uses the inverted screen coordinates
   /** Gets the chat component at the screen position. */
   @Override
   public IChatComponent getChatComponent(int mouseX, int mouseY) {

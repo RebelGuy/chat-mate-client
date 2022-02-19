@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.chat.ChatPagination;
+import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.chat.LeaderboardRenderer;
 import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
@@ -61,7 +62,7 @@ public class McChatService {
       Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
       IChatComponent rank = styledText("VIEWER", VIEWER_RANK_STYLE);
-      IChatComponent player = styledText(item.author.userInfo.channelName, VIEWER_NAME_STYLE);
+      IChatComponent player = MessageService.getUserComponent(item.author);
       McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
 
       ArrayList<IChatComponent> components = new ArrayList<>();
@@ -88,16 +89,16 @@ public class McChatService {
     try {
       IChatComponent message;
       if (in.newLevel % 20 == 0) {
-        message = this.messageService.getLargeLevelUpMessage(in.channelName, in.newLevel);
+        message = this.messageService.getLargeLevelUpMessage(in.user, in.newLevel);
         this.soundService.playLevelUp(1 - in.newLevel / 200.0f);
       } else {
-        message = this.messageService.getSmallLevelUpMessage(in.channelName, in.newLevel);
+        message = this.messageService.getSmallLevelUpMessage(in.user, in.newLevel);
         this.soundService.playLevelUp(2);
       }
 
       this.minecraftProxyService.printChatMessage("Level up", message);
     } catch (Exception e) {
-      this.logService.logError(this, String.format("Could not print level up message for '%s': %s", in.channelName, e.getMessage()));
+      this.logService.logError(this, String.format("Could not print level up message for '%s': %s", in.user, e.getMessage()));
     }
 
     return new LevelUpEventData.Out();

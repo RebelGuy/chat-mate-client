@@ -76,7 +76,7 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
       for (PublicChatMateEvent event : response.events) {
         for (EventHandler<LevelUpEventData.In, LevelUpEventData.Out, LevelUpEventData.Options> handler : this.getListeners(eventType, LevelUpEventData.class)) {
           PublicLevelUpData data = event.data;
-          LevelUpEventData.In eventIn = new LevelUpEventData.In(new Date(event.timestamp), data.user.userInfo.channelName, data.oldLevel, data.newLevel);
+          LevelUpEventData.In eventIn = new LevelUpEventData.In(new Date(event.timestamp), data.user, data.oldLevel, data.newLevel);
           LevelUpEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
         }
       }

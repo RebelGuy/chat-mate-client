@@ -61,8 +61,9 @@ public class ContextMenuStore {
   }
 
 
-  public void showContextMenu(Dim mouseX, Dim mouseY, ContextMenuOption... options) {
-    this.currentMenu = new ContextMenu(mouseX, mouseY, options);
+  public void showContextMenu(Dim x, Dim y, ContextMenuOption... options) {
+    this.currentMenu = new ContextMenu(x, y, options);
+    this.setClear = false;
   }
 
   public void clearContextMenu() {

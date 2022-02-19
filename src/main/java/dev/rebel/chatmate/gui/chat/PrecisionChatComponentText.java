@@ -20,18 +20,18 @@ import static net.minecraft.util.ChatComponentStyle.createDeepCopyIterator;
 
 /** A single-line chat component that is used to draw children components at precise x-values. */
 public class PrecisionChatComponentText implements IChatComponent {
-  private final List<Tuple2<PrecisionLayout, ChatComponentText>> components;
+  private final List<Tuple2<PrecisionLayout, IChatComponent>> components;
 
-  public PrecisionChatComponentText(List<Tuple2<PrecisionLayout, ChatComponentText>> components) {
+  public PrecisionChatComponentText(List<Tuple2<PrecisionLayout, IChatComponent>> components) {
     this.components = components;
   }
 
   /** Gets the effective components for a chat line. Note that any action events may be lost - they are only retained in the original components. */
-  public List<Tuple2<PrecisionLayout, ChatComponentText>> getComponentsForLine(FontRenderer fontRenderer, int guiLineWidth) {
-    List<Tuple2<PrecisionLayout, ChatComponentText>> list = new ArrayList<>();
+  public List<Tuple2<PrecisionLayout, IChatComponent>> getComponentsForLine(FontRenderer fontRenderer, int guiLineWidth) {
+    List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
 
-    for (Tuple2<PrecisionLayout, ChatComponentText> pair : components) {
-      Tuple2<PrecisionLayout, ChatComponentText> effective = this.getEffectiveComponent(pair, guiLineWidth, fontRenderer);
+    for (Tuple2<PrecisionLayout, IChatComponent> pair : components) {
+      Tuple2<PrecisionLayout, IChatComponent> effective = this.getEffectiveComponent(pair, guiLineWidth, fontRenderer);
       list.add(effective);
     }
 
@@ -40,8 +40,8 @@ public class PrecisionChatComponentText implements IChatComponent {
 
   /** If fullWidth is true, will use the whole layout box for the text component's hitbox, otherwise,
    * will use only the visible text region. Returns the original text component instance. */
-  public @Nullable ChatComponentText getComponentAtGuiPosition(int guiPosition, int guiLineWidth, boolean fullWidth, FontRenderer fontRenderer) {
-    for (Tuple2<PrecisionLayout, ChatComponentText> component : this.components) {
+  public @Nullable IChatComponent getComponentAtGuiPosition(int guiPosition, int guiLineWidth, boolean fullWidth, FontRenderer fontRenderer) {
+    for (Tuple2<PrecisionLayout, IChatComponent> component : this.components) {
       int start, width;
       if (fullWidth) {
         // full layout (may include whitespace)
@@ -49,7 +49,7 @@ public class PrecisionChatComponentText implements IChatComponent {
         width = component._1.width.getGuiValue(guiLineWidth);
       } else {
         // truncated/positioned layout (text region only)
-        Tuple2<PrecisionLayout, ChatComponentText> effective = this.getEffectiveComponent(component, guiLineWidth, fontRenderer);
+        Tuple2<PrecisionLayout, IChatComponent> effective = this.getEffectiveComponent(component, guiLineWidth, fontRenderer);
         start = effective._1.position.getGuiValue(guiLineWidth);
         width = effective._1.width.getGuiValue(guiLineWidth);
       }
@@ -65,9 +65,9 @@ public class PrecisionChatComponentText implements IChatComponent {
 
   /** Returns the left-aligned, truncated chat component that should be rendered to satisfy the layout of the provided component.
    * Retains all chat style properties of this component. The layout box is flush with the text. */
-  private Tuple2<PrecisionLayout, ChatComponentText> getEffectiveComponent(Tuple2<PrecisionLayout, ChatComponentText> pair, int lineWidth, FontRenderer fontRenderer) {
+  private Tuple2<PrecisionLayout, IChatComponent> getEffectiveComponent(Tuple2<PrecisionLayout, IChatComponent> pair, int lineWidth, FontRenderer fontRenderer) {
     PrecisionLayout layout = pair._1;
-    ChatComponentText component = pair._2;
+    IChatComponent component = pair._2;
     int maxWidth = layout.width.getGuiValue(lineWidth);
 
     String text = component.getFormattedText();
@@ -94,7 +94,7 @@ public class PrecisionChatComponentText implements IChatComponent {
     }
 
     // make sure we don't lose any style information from the parent (e.g. mouse actions)
-    ChatComponentText effectiveComponent = new ChatComponentText(text);
+    IChatComponent effectiveComponent = new ChatComponentText(text);
     PrecisionLayout effectiveLayout = new PrecisionLayout(new PrecisionValue(effectivePosition), new PrecisionValue(textWidth), PrecisionAlignment.LEFT);
     return new Tuple2<>(effectiveLayout, effectiveComponent);
   }

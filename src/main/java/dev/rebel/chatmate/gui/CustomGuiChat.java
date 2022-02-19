@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui;
 import com.google.common.collect.Sets;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.ContextMenuService;
 import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.events.MouseEventService;
@@ -53,9 +54,13 @@ public class CustomGuiChat extends GuiChat {
       Dim x = in.mousePositionData.x;
       Dim y = in.mousePositionData.y;
       IChatComponent component = this.minecraftProxyService.getChatGUI().getChatComponent(x, y);
+
       if (component instanceof ContainerChatComponent) {
-        this.contextMenuService.showContext(x, y);
-        return new MouseEventData.Out(MouseEventData.Out.MouseHandlerAction.HANDLED);
+        ContainerChatComponent container = (ContainerChatComponent)component;
+        if (container.data instanceof PublicUser) {
+          this.contextMenuService.showUserContext(x, y, (PublicUser)container.data);
+          return new MouseEventData.Out(MouseEventData.Out.MouseHandlerAction.HANDLED);
+        }
       }
     }
 
