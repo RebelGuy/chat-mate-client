@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.services.LogService;
+import dev.rebel.chatmate.services.StatusService;
+import dev.rebel.chatmate.stores.ChatMateEndpointStore;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
@@ -17,13 +19,15 @@ import java.util.function.Consumer;
 
 public class EndpointProxy {
   private final LogService logService;
+  private final ChatMateEndpointStore chatMateEndpointStore;
   private final String basePath;
   private final Gson gson;
 
   private int requestId = 0;
 
-  public EndpointProxy(LogService logService, String basePath) {
+  public EndpointProxy(LogService logService, ChatMateEndpointStore chatMateEndpointStore, String basePath) {
     this.logService = logService;
+    this.chatMateEndpointStore = chatMateEndpointStore;
     this.basePath = basePath;
     this.gson = new Gson();
   }
@@ -32,9 +36,14 @@ public class EndpointProxy {
   public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler) {
     // we got there eventually.....
     CompletableFuture.supplyAsync(() -> {
+      Runnable onComplete = this.chatMateEndpointStore.onNewRequest();
       try {
-        return this.makeRequest(method, path, returnClass);
+        Data result = this.makeRequest(method, path, returnClass);
+        onComplete.run();
+        return result;
+
       } catch (Exception e) {
+        onComplete.run();
         if (errorHandler != null) {
           errorHandler.accept(e);
         }

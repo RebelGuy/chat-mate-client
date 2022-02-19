@@ -5,24 +5,33 @@ import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.ContextMenuService;
+import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiConfirmOpenLink;
 import net.minecraft.client.gui.stream.GuiTwitchUserMode;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.util.IChatComponent;
+import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.input.Cursor;
+import org.lwjgl.input.Mouse;
 import tv.twitch.chat.ChatUserInfo;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.IntBuffer;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -34,19 +43,28 @@ public class CustomGuiChat extends GuiChat {
   private final MouseEventService mouseEventService;
   private final ContextMenuStore contextMenuStore;
   private final ContextMenuService contextMenuService;
+  private final CursorService cursorService;
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseDown = this::onMouseDown;
+  private final Function<MouseEventData.In, MouseEventData.Out> onMouseMove = this::onMouseMove;
 
   private URI clickedLinkURI;
 
-  public CustomGuiChat(String defaultInput, MinecraftProxyService minecraftProxyService, MouseEventService mouseEventService, ContextMenuStore contextMenuStore, ContextMenuService contextMenuService) {
+  public CustomGuiChat(String defaultInput,
+                       MinecraftProxyService minecraftProxyService,
+                       MouseEventService mouseEventService,
+                       ContextMenuStore contextMenuStore,
+                       ContextMenuService contextMenuService,
+                       CursorService cursorService) {
     super(defaultInput);
 
     this.minecraftProxyService = minecraftProxyService;
     this.mouseEventService = mouseEventService;
     this.contextMenuStore = contextMenuStore;
     this.contextMenuService = contextMenuService;
+    this.cursorService = cursorService;
 
     this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(), this);
+    this.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this.onMouseMove, new MouseEventData.Options(), this);
   }
 
   private MouseEventData.Out onMouseDown(MouseEventData.In in) {
@@ -67,6 +85,28 @@ public class CustomGuiChat extends GuiChat {
     return new MouseEventData.Out();
   }
 
+  private MouseEventData.Out onMouseMove(MouseEventData.In in) {
+    if (this.contextMenuStore.isShowingContextMenu()) {
+      this.cursorService.setCursor(CursorType.DEFAULT);
+      return new MouseEventData.Out();
+    }
+
+    Dim x = in.mousePositionData.x;
+    Dim y = in.mousePositionData.y;
+    IChatComponent component = this.minecraftProxyService.getChatGUI().getChatComponent(x, y);
+    ComponentActionType action = this.getComponentActionType(component);
+
+    if (action == ComponentActionType.CLICK) {
+      this.cursorService.setCursor(CursorType.CLICK);
+    } else if (action == ComponentActionType.CONTEXT) {
+      this.cursorService.setCursor(CursorType.TIP);
+    } else {
+      this.cursorService.setCursor(CursorType.DEFAULT);
+    }
+
+    return new MouseEventData.Out();
+  }
+
   @Override
   public void handleMouseInput() throws IOException {
     if (this.contextMenuStore.isShowingContextMenu()) {
@@ -74,6 +114,34 @@ public class CustomGuiChat extends GuiChat {
     }
 
     super.handleMouseInput();
+  }
+
+  private ComponentActionType getComponentActionType(IChatComponent component) {
+    if (component == null) {
+      return ComponentActionType.NONE;
+    }
+
+    if (component instanceof ContainerChatComponent) {
+      ContainerChatComponent container = (ContainerChatComponent)component;
+      if (container.data instanceof PublicUser) {
+        return ComponentActionType.CONTEXT;
+      } else {
+        return getComponentActionType(container.component);
+      }
+    } else {
+      ClickEvent clickEvent = component.getChatStyle().getChatClickEvent();
+      if (clickEvent instanceof ClickEventWithCallback) {
+        ClickEventWithCallback clickEventWithCallback = (ClickEventWithCallback)clickEvent;
+        if (clickEventWithCallback.isClickable()) {
+          return ComponentActionType.CLICK;
+        }
+      } else if (clickEvent != null) {
+        // can always click vanilla components
+        return ComponentActionType.CLICK;
+      }
+    }
+
+    return ComponentActionType.NONE;
   }
 
   /** Stolen mostly from GuiScreen, but with custom callback handler handling. */
@@ -194,6 +262,11 @@ public class CustomGuiChat extends GuiChat {
   @Override
   public void onGuiClosed() {
     this.contextMenuStore.clearContextMenu();
+    this.cursorService.setCursor(CursorType.DEFAULT);
     super.onGuiClosed();
+  }
+
+  private enum ComponentActionType {
+    NONE, CLICK, CONTEXT
   }
 }

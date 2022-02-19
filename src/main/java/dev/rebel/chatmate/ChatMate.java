@@ -21,6 +21,7 @@ import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
 import dev.rebel.chatmate.services.util.FileHelpers;
+import dev.rebel.chatmate.stores.ChatMateEndpointStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -64,9 +65,10 @@ public class ChatMate {
     this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
     String apiPath = "http://localhost:3010/api";
-    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiPath);
-    ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, apiPath);
-    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiPath);
+    ChatMateEndpointStore chatMateEndpointStore = new ChatMateEndpointStore();
+    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, chatMateEndpointStore, apiPath);
+    ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, chatMateEndpointStore, apiPath);
+    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, chatMateEndpointStore, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -85,6 +87,7 @@ public class ChatMate {
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config);
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, this.forgeEventService, this.mouseEventService, dimFactory);
     ContextMenuService contextMenuService = new ContextMenuService(contextMenuStore, experienceEndpointProxy, mcChatService);
+    CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
     this.guiService = new GuiService(this.isDev,
         logService,
         this.config,
@@ -97,7 +100,8 @@ public class ChatMate {
         soundService,
         dimFactory,
         contextMenuStore,
-        contextMenuService);
+        contextMenuService,
+        cursorService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(minecraft)),

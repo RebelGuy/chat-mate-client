@@ -6,14 +6,16 @@ import dev.rebel.chatmate.models.api.chatMate.GetEventsResponse.GetEventsRespons
 import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse;
 import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.services.LogService;
+import dev.rebel.chatmate.services.StatusService;
+import dev.rebel.chatmate.stores.ChatMateEndpointStore;
 
 import javax.annotation.Nullable;
 import java.net.ConnectException;
 import java.util.Date;
 
 public class ChatMateEndpointProxy extends EndpointProxy {
-  public ChatMateEndpointProxy(LogService logService, String basePath) {
-    super(logService, basePath + "/chatMate");
+  public ChatMateEndpointProxy(LogService logService, ChatMateEndpointStore chatMateEndpointStore, String basePath) {
+    super(logService, chatMateEndpointStore, basePath + "/chatMate");
   }
 
   public GetStatusResponseData getStatus() throws ConnectException, ChatMateApiException, Exception {

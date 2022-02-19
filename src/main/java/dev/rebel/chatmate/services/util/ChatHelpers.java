@@ -131,5 +131,9 @@ public class ChatHelpers {
         return success;
       }
     }
+
+    public boolean isClickable() {
+      return this.callback != null;
+    }
   }
 }

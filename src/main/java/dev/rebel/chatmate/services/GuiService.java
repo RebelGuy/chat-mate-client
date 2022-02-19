@@ -34,6 +34,7 @@ public class GuiService {
   private final DimFactory dimFactory;
   private final ContextMenuStore contextMenuStore;
   private final ContextMenuService contextMenuService;
+  private final CursorService cursorService;
 
   private CustomGuiIngame customGuiIngame;
 
@@ -49,7 +50,8 @@ public class GuiService {
                     SoundService soundService,
                     DimFactory dimFactory,
                     ContextMenuStore contextMenuStore,
-                    ContextMenuService contextMenuService) {
+                    ContextMenuService contextMenuService,
+                    CursorService cursorService) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -63,6 +65,7 @@ public class GuiService {
     this.dimFactory = dimFactory;
     this.contextMenuStore = contextMenuStore;
     this.contextMenuService = contextMenuService;
+    this.cursorService = cursorService;
 
     this.addEventHandlers();
   }
@@ -139,7 +142,7 @@ public class GuiService {
       defaultValue = (String)field.get(guiChat);
     } catch (Exception e) { throw new RuntimeException("This should never happen"); }
 
-    GuiScreen replaceWithGui = new CustomGuiChat(defaultValue, this.minecraftProxyService, this.mouseEventService, this.contextMenuStore, this.contextMenuService);
+    GuiScreen replaceWithGui = new CustomGuiChat(defaultValue, this.minecraftProxyService, this.mouseEventService, this.contextMenuStore, this.contextMenuService, this.cursorService);
     return new OpenGui.Out(replaceWithGui);
   }
 
