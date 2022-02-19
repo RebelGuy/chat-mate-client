@@ -20,7 +20,7 @@ public class ContextMenuService {
   public void showUserContext(Dim x, Dim y, PublicUser user) {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Reveal on leaderboard", () -> this.onRevealOnLeaderboard(user)),
-      new ContextMenuOption("Modify experience", () -> this.onModifyExperience(user))
+      new ContextMenuOption("Manage experience", () -> this.onModifyExperience(user))
     );
   }
 

@@ -4,6 +4,9 @@ import dev.rebel.chatmate.models.api.experience.GetLeaderboardResponse;
 import dev.rebel.chatmate.models.api.experience.GetLeaderboardResponse.GetLeaderboardResponseData;
 import dev.rebel.chatmate.models.api.experience.GetRankResponse;
 import dev.rebel.chatmate.models.api.experience.GetRankResponse.GetRankResponseData;
+import dev.rebel.chatmate.models.api.experience.ModifyExperienceRequest;
+import dev.rebel.chatmate.models.api.experience.ModifyExperienceResponse;
+import dev.rebel.chatmate.models.api.experience.ModifyExperienceResponse.ModifyExperienceResponseData;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.stores.ChatMateEndpointStore;
@@ -26,13 +29,12 @@ public class ExperienceEndpointProxy extends EndpointProxy {
     this.makeRequestAsync(Method.GET, url, GetRankResponse.class, callback, errorHandler);
   }
 
-  public void getRankAsync(@Nonnull Number userId, Consumer<GetRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
-    String url = String.format("/rank?id=%s", userId);
-    this.makeRequestAsync(Method.GET, url, GetRankResponse.class, callback, errorHandler);
-  }
-
   public void getRankAsync(@Nonnull Integer channelId, Consumer<GetRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     String url = String.format("/rank?id=%d", channelId);
     this.makeRequestAsync(Method.GET, url, GetRankResponse.class, callback, errorHandler);
+  }
+
+  public void modifyExperienceAsync(@Nonnull ModifyExperienceRequest request, Consumer<ModifyExperienceResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(Method.POST, "/modify", request, ModifyExperienceResponse.class, callback, errorHandler);
   }
 }
