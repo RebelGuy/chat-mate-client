@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.chat;
 
+import com.google.common.collect.Iterators;
+import net.minecraft.util.ChatComponentStyle;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
@@ -8,6 +10,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
+
+import static net.minecraft.util.ChatComponentStyle.createDeepCopyIterator;
 
 /** Represents a container that contains another replaceable component and data. Used for modifying existing chat lines
  * and associating custom data with chat components.
@@ -26,6 +30,21 @@ public class ContainerChatComponent implements IChatComponent {
   public ContainerChatComponent(@Nonnull IChatComponent component, @Nullable Object data) {
     this.component = component;
     this.data = data;
+  }
+
+  /** Recursively gets the underlying component until finding the one that is NOT a ContainerChatComponent. */
+  public IChatComponent getComponent() {
+    if (this.component == this) {
+      // infinite recursion? we don't do that here
+      throw new RuntimeException("ContainerChatComponent cannot hold a component reference to itself.");
+    }
+
+    if (this.component instanceof ContainerChatComponent) {
+      ContainerChatComponent container = (ContainerChatComponent)this.component;
+      return container.getComponent();
+    } else {
+      return this.component;
+    }
   }
 
   //region Interface methods
@@ -57,6 +76,8 @@ public class ContainerChatComponent implements IChatComponent {
   public IChatComponent createCopy() { return new ContainerChatComponent(this.component.createCopy()); }
 
   @Override
-  public Iterator<IChatComponent> iterator() { return this.component.iterator(); }
+  public Iterator<IChatComponent> iterator() {
+    return Iterators.concat(Iterators.forArray(this), createDeepCopyIterator(this.getSiblings()));
+  }
   //endregion
 }

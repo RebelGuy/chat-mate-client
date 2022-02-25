@@ -18,7 +18,8 @@ import java.util.stream.Collectors;
 import static net.minecraft.client.gui.FontRenderer.getFormatFromString;
 import static net.minecraft.util.ChatComponentStyle.createDeepCopyIterator;
 
-/** A single-line chat component that is used to draw children components at precise x-values. */
+/** A single-line chat component that is used to draw children components at precise x-values. When printing to chat,
+ * please make sure you print this by itself, and not as part of a sibling of another component. Otherwise, don't come crying when you get an exception. */
 public class PrecisionChatComponentText implements IChatComponent {
   private final List<Tuple2<PrecisionLayout, IChatComponent>> components;
 
