@@ -147,7 +147,7 @@ public class GuiService {
   }
 
   private Out onRender(In in) {
-    if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get()) {
+    if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get() && !this.minecraft.gameSettings.showDebugInfo) {
       this.guiChatMateHud.renderGameOverlay();
     }
 
