@@ -73,7 +73,7 @@ public class ContainerChatComponent implements IChatComponent {
   public List<IChatComponent> getSiblings() { return this.component.getSiblings(); }
 
   @Override
-  public IChatComponent createCopy() { return new ContainerChatComponent(this.component.createCopy()); }
+  public IChatComponent createCopy() { return new ContainerChatComponent(this.component.createCopy(), this.data); }
 
   @Override
   public Iterator<IChatComponent> iterator() {

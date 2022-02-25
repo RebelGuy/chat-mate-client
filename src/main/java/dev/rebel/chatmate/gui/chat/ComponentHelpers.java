@@ -66,8 +66,10 @@ public class ComponentHelpers {
       return trimComponent((ContainerChatComponent)component, maxWidth, isLineStart, font);
     } else if (component instanceof ChatComponentText) {
       return trimComponent((ChatComponentText)component, maxWidth, isLineStart, font);
+    } else if (component instanceof PrecisionChatComponentText && isLineStart) {
+      return new TrimmedComponent(component, maxWidth, null);
     } else {
-      throw new RuntimeException("Unable to trim component in a container because it is of type " + component.getClass().getSimpleName());
+      throw new RuntimeException(String.format("Unable to trim component (isLineStart=%s) because it is of type %s", String.valueOf(isLineStart), component.getClass().getSimpleName()));
     }
   }
 
