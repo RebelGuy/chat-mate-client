@@ -7,7 +7,7 @@ import net.minecraft.command.ICommandSender;
 import javax.annotation.Nullable;
 
 public class RanksCommand extends ChatMateSubCommand {
-  private static final String usage = "[name]";
+  private static final String usage = "";
 
   private final RanksHandler ranksHandler;
 
@@ -22,14 +22,10 @@ public class RanksCommand extends ChatMateSubCommand {
 
   @Override
   public void processCommand(ICommandSender commandSender, String[] args) throws CommandException {
-    @Nullable String name = null;
-    if (args.length > 0) {
-      String joinedArgs = String.join(" ", args).trim();
-      if (joinedArgs.length() > 0) {
-        name = joinedArgs;
-      }
+    if (args.length != 0) {
+      throw new CommandException("Usage: " + usage);
     }
 
-    this.ranksHandler.onRank(name);
+    this.ranksHandler.onRank();
   }
 }
