@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui;
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.gui.chat.ComponentHelpers;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.gui.chat.ImageChatComponent;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.Config;
@@ -14,6 +15,7 @@ import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -133,21 +135,39 @@ public class CustomGuiNewChat extends GuiNewChat {
         this.drawChatComponent(pair._2, left, lineBottom, opacity);
       }
     } else {
-      this.drawChatComponent(chatComponent, lineLeft, lineBottom, opacity);
+      int x = 0;
+      for (IChatComponent component : chatComponent) {
+        x += this.drawChatComponent(component, lineLeft + x, lineBottom, opacity);
+      }
     }
 
     GlStateManager.disableAlpha();
     GlStateManager.disableBlend();
   }
 
-  private void drawChatComponent(IChatComponent component, int x, int lineBottom, int opacity) {
+  /** Returns the width of the drawn component. */
+  private int drawChatComponent(IChatComponent component, int x, int lineBottom, int opacity) {
     if (component instanceof ContainerChatComponent) {
       throw new RuntimeException("Attempting to draw a ContainerChatComponent - this is probably a mistake.");
-    }
 
-    int textColour = 16777215 + (opacity << 24);
-    String formattedText = component.getFormattedText();
-    this.minecraft.fontRendererObj.drawStringWithShadow(formattedText, x, lineBottom - 8, textColour);
+    } else if (component instanceof ChatComponentText) {
+      // note: we can't use getFormattedText because it would also append the text of the siblings.
+      // the unformattedText, however, only gets the text of this particular component, so we have to apply styling ourselves.
+      String unformattedText = component.getUnformattedTextForChat();
+      String formattedText = component.getChatStyle().getFormattingCode() + unformattedText + EnumChatFormatting.RESET;
+
+      int textColour = 16777215 + (opacity << 24);
+      int newX = this.minecraft.fontRendererObj.drawStringWithShadow(formattedText, x, lineBottom - 8, textColour);
+      return newX == 0 ? 0 : newX - x;
+
+    } else if (component instanceof ImageChatComponent) {
+      // todo: draw image
+      ImageChatComponent imageComponent = (ImageChatComponent)component;
+      return imageComponent.paddingGui * 2 + this.minecraft.fontRendererObj.FONT_HEIGHT;
+
+    } else {
+      throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());
+    }
   }
 
   /** Given the lineCount (total lines) and the renderedLines (how many lines are visible on screen), draws the scrollbar to the left of the chat GUI. */
@@ -235,15 +255,15 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   /** Adds the component to `drawnChatLines` after processing its contents. */
   private void pushDrawnComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
-    boolean processText = true;
+    boolean processContents = true;
     if (chatComponent instanceof PrecisionChatComponentText) {
-      processText = false;
+      processContents = false;
     } else if (chatComponent instanceof ContainerChatComponent) {
       ContainerChatComponent container = (ContainerChatComponent)chatComponent;
-      processText = !(container.getComponent() instanceof PrecisionChatComponentText);
+      processContents = !(container.getComponent() instanceof PrecisionChatComponentText);
     }
 
-    if (!processText) {
+    if (!processContents) {
       // push as-is
       this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId));
 
@@ -400,7 +420,18 @@ public class CustomGuiNewChat extends GuiNewChat {
 
         // there will be no siblings - only one Precision component is supported per line
         return precisionComponent.getComponentAtGuiPosition(x, maxX, false, this.minecraft.fontRendererObj);
-        
+
+      } else if (component instanceof ImageChatComponent) {
+        ImageChatComponent imageComponent = (ImageChatComponent)component;
+        lineX += imageComponent.paddingGui;
+
+        // for now, assume images are square
+        int size = this.minecraft.fontRendererObj.FONT_HEIGHT;
+        if (lineX <= x && lineX + size > x) {
+          return originalComponent;
+        }
+        lineX += size + imageComponent.paddingGui;
+
       } else if (component instanceof ContainerChatComponent) {
         throw new RuntimeException("Cannot get chat component because a container has not been unwrapped.");
       }

@@ -65,7 +65,9 @@ public class ComponentHelpers {
     if (component instanceof ContainerChatComponent) {
       return trimComponent((ContainerChatComponent)component, maxWidth, isLineStart, font);
     } else if (component instanceof ChatComponentText) {
-      return trimComponent((ChatComponentText)component, maxWidth, isLineStart, font);
+      return trimComponent((ChatComponentText) component, maxWidth, isLineStart, font);
+    } else if (component instanceof ImageChatComponent) {
+      return trimComponent((ImageChatComponent)component, maxWidth, isLineStart, font);
     } else if (component instanceof PrecisionChatComponentText && isLineStart) {
       return new TrimmedComponent(component, maxWidth, null);
     } else {
@@ -134,6 +136,16 @@ public class ComponentHelpers {
     ContainerChatComponent leftoverContainer = trimmed.leftover == null ? null : new ContainerChatComponent(trimmed.leftover, component.data);
 
     return new TrimmedComponent(trimmedContainer, trimmed.trimmedWidth, leftoverContainer);
+  }
+
+  private static TrimmedComponent trimComponent(ImageChatComponent component, int maxWidth, boolean isLineStart, FontRenderer font) {
+    int requiredWidth = component.paddingGui * 2 + font.FONT_HEIGHT;
+    if (isLineStart || maxWidth >= requiredWidth) {
+      return new TrimmedComponent(component, requiredWidth, null);
+    } else {
+      // add to next line
+      return new TrimmedComponent(new ChatComponentText(""), requiredWidth, component);
+    }
   }
 
   /** Data class. */
