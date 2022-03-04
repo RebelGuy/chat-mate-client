@@ -1,9 +1,7 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.gui.chat.ChatPagination;
-import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
-import dev.rebel.chatmate.gui.chat.LeaderboardRenderer;
-import dev.rebel.chatmate.gui.chat.UserRenderer;
+import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
@@ -12,7 +10,6 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
-import dev.rebel.chatmate.services.util.Action4;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
@@ -22,10 +19,7 @@ import net.minecraft.util.*;
 import javax.annotation.Nullable;
 import java.net.ConnectException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static dev.rebel.chatmate.models.Styles.*;
 import static dev.rebel.chatmate.services.util.ChatHelpers.joinComponents;
@@ -38,19 +32,22 @@ public class McChatService {
   private final SoundService soundService;
   private final ChatMateEventService chatMateEventService;
   private final MessageService messageService;
+  private final ImageService imageService;
 
   public McChatService(MinecraftProxyService minecraftProxyService,
                        LogService logService,
                        FilterService filterService,
                        SoundService soundService,
                        ChatMateEventService chatMateEventService,
-                       MessageService messageService) {
+                       MessageService messageService,
+                       ImageService imageService) {
     this.minecraftProxyService = minecraftProxyService;
     this.logService = logService;
     this.filterService = filterService;
     this.soundService = soundService;
     this.chatMateEventService = chatMateEventService;
     this.messageService = messageService;
+    this.imageService = imageService;
 
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
   }
@@ -180,6 +177,14 @@ public class McChatService {
           text = msg.emojiData.label; // e.g. :slightly_smiling:
           style = YT_CHAT_MESSAGE_EMOJI_STYLE;
         }
+
+      } else if (msg.type == MessagePartType.customEmoji) {
+        prevType = msg.type;
+        prevText = null;
+
+        assert msg.customEmojiData != null;
+        components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData)));
+        continue;
 
       } else throw new Exception("Invalid partial message type " + msg.type);
 

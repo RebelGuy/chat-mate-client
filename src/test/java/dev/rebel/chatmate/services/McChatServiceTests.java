@@ -28,6 +28,7 @@ public class McChatServiceTests {
   @Mock SoundService mockSoundService;
   @Mock ChatMateEventService mockChatMateEventService;
   @Mock MessageService mockMessageService;
+  @Mock ImageService mockImageService;
 
   @Mock FontRenderer mockFontRenderer;
 
@@ -131,7 +132,7 @@ public class McChatServiceTests {
     // just return the input
     when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArgument(0));
 
-    return new McChatService(this.mockMinecraftProxyService, this.mockLogService, this.mockFilterService, this.mockSoundService, this.mockChatMateEventService, this.mockMessageService);
+    return new McChatService(this.mockMinecraftProxyService, this.mockLogService, this.mockFilterService, this.mockSoundService, this.mockChatMateEventService, this.mockMessageService, this.mockImageService);
   }
 
   // The below methods should be used for mock data creation. It sets all

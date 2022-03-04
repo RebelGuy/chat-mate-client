@@ -1,11 +1,11 @@
 package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
-import dev.rebel.chatmate.gui.chat.ComponentHelpers;
-import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
-import dev.rebel.chatmate.gui.chat.ImageChatComponent;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
+import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.gui.chat.*;
+import dev.rebel.chatmate.gui.hud.ImageComponent;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -38,18 +38,20 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final LogService logService;
   private final Config config;
   private final ForgeEventService forgeEventService;
+  private final DimFactory dimFactory;
   private final List<String> sentMessages = Lists.newArrayList();
   private final List<ChatLine> chatLines = Lists.newArrayList(); // unrendered chat lines
   private final List<ChatLine> drawnChatLines = Lists.newArrayList(); // rendered chat lines, where components may be broken up into multiple lines to fit into the GUI.
   private int scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
   private boolean isScrolled;
 
-  public CustomGuiNewChat(Minecraft minecraft, LogService logService, Config config, ForgeEventService forgeEventService) {
+  public CustomGuiNewChat(Minecraft minecraft, LogService logService, Config config, ForgeEventService forgeEventService, DimFactory dimFactory) {
     super(minecraft);
     this.minecraft = minecraft;
     this.logService = logService;
     this.config = config;
     this.forgeEventService = forgeEventService;
+    this.dimFactory = dimFactory;
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
   }
@@ -148,7 +150,8 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Returns the width of the drawn component. */
   private int drawChatComponent(IChatComponent component, int x, int lineBottom, int opacity) {
     if (component instanceof ContainerChatComponent) {
-      throw new RuntimeException("Attempting to draw a ContainerChatComponent - this is probably a mistake.");
+      ContainerChatComponent container = (ContainerChatComponent)component;
+      return drawChatComponent(container.getComponent(), x, lineBottom, opacity);
 
     } else if (component instanceof ChatComponentText) {
       // note: we can't use getFormattedText because it would also append the text of the siblings.
@@ -161,8 +164,37 @@ public class CustomGuiNewChat extends GuiNewChat {
       return newX == 0 ? 0 : newX - x;
 
     } else if (component instanceof ImageChatComponent) {
-      // todo: draw image
       ImageChatComponent imageComponent = (ImageChatComponent)component;
+      Texture texture = imageComponent.getTexture();
+      if (texture == null) {
+        return 0;
+      }
+
+      Dim targetHeight = this.dimFactory.fromGui(this.minecraft.fontRendererObj.FONT_HEIGHT);
+      Dim currentHeight = this.dimFactory.fromScreen(texture.height);
+      float imageX = x + imageComponent.paddingGui;
+      float imageY = lineBottom - targetHeight.getGui();
+
+      float scaleToReachTarget = targetHeight.getGui() / currentHeight.getGui();
+      float scale = currentHeight.getGui() / 256 * scaleToReachTarget;
+
+      GlStateManager.pushMatrix();
+      GlStateManager.scale(scale, scale, 1);
+      GlStateManager.enableBlend();
+
+      // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
+      GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+      GlStateManager.disableLighting();
+
+      // undo the scaling
+      float scaledX = imageX / scale;
+      float scaledY = imageY / scale;
+      int u = 0, v = 0;
+      this.minecraft.getTextureManager().bindTexture(texture.resourceLocation);
+      this.drawTexturedModalRect(scaledX, scaledY, u, v, 256, 256);
+
+      GlStateManager.popMatrix();
+
       return imageComponent.paddingGui * 2 + this.minecraft.fontRendererObj.FONT_HEIGHT;
 
     } else {
@@ -249,6 +281,14 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     // purge entries at the top
     while (this.chatLines.size() > MAX_LINES) {
+      ChatLine lastLine = this.chatLines.get(this.chatLines.size() - 1);
+      for (IChatComponent component : lastLine.getChatComponent()) {
+        if (component instanceof ImageChatComponent) {
+          // avoid memory leaks by unloading textures before removing the line
+          ImageChatComponent imageComponent = (ImageChatComponent)component;
+          imageComponent.destroy(this.minecraft.getTextureManager());
+        }
+      }
       this.chatLines.remove(this.chatLines.size() - 1);
     }
   }

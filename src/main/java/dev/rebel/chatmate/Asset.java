@@ -26,6 +26,12 @@ public class Asset {
       this.height = height;
       this.resourceLocation = new ResourceLocation("chatmate", resourceLocation);
     }
+
+    public Texture(int width, int height, ResourceLocation resourceLocation) {
+      this.width = width;
+      this.height = height;
+      this.resourceLocation = resourceLocation;
+    }
   }
 
   /** Image is considered "upgright" when viewed from the top left corner to the bottom right corner. */

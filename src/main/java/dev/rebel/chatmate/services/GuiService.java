@@ -83,7 +83,7 @@ public class GuiService {
   public void initialiseCustomChat() {
     // we can only instantiate the GuiIngame once Minecraft is fully initialised (NOT in the ChatMate constructor)
     // because it has a getter that returns null if not fully initialised, which would cause a render crash later on.
-    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(this.minecraft, this.logService, this.config, this.forgeEventService);
+    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(this.minecraft, this.logService, this.config, this.forgeEventService, this.dimFactory);
     this.customGuiIngame = new CustomGuiIngame(this.minecraft, customGuiNewChat);
   }
 
