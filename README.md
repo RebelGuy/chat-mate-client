@@ -53,6 +53,10 @@ behaviour (i.e. `cancel` the event) and use `CustomGuiNewChat.drawChat()` instea
 never has a chance to interact with its private `GuiNewChat` object (which remains to be the default implementation).
 
 # Change Log
+## v1.10 - The Emoji Update [5/3/2022]
+- Added Custom Emoji rendering in chat
+- Visual fixes and improvements
+
 ## v1.9 - The Pre-Admin Update [20/2/2022]
 - Added a huge amount of fancy in-game chat updates
   - Minecraft now renders a custom GuiChat and GuiNewChat so we can override things
