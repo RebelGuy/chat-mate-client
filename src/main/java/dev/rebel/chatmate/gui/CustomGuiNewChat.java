@@ -26,6 +26,8 @@ import scala.Tuple2;
 import java.util.Iterator;
 import java.util.List;
 
+import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
+
 // Note: for maintainability reasons, please do not remove any of the @Override methods, even if they replicate the super method.
 /** Responsible for drawing lines of chat and exposing the location of components. See also: `CustomGuiChat`, which is
  * the screen shown when opening the chat. */
@@ -33,6 +35,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   private static final Logger logger = LogManager.getLogger();
   private static final Integer MAX_DRAWN_LINES = 100; // limits drawnChatLines
   private static final Integer MAX_LINES = 100; // limits chatLines
+  private static final Integer LEFT_PADDING = 1; // padding between the start of the chat line, and the start of the text, in GUI units
 
   private final Minecraft minecraft;
   private final LogService logService;
@@ -118,9 +121,9 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   private void drawLine(ChatLine line, int index, int opacity, int width) {
-    int lineLeft = 0;
+    int lineLeft = LEFT_PADDING;
     int lineBottom = -index * 9; // negative because we iterate from the bottom line to the top line
-    drawRect(lineLeft, lineBottom - 9, lineLeft + width + 4, lineBottom, opacity / 2 << 24);
+    drawRect(0, lineBottom - 9, lineLeft + width + 4, lineBottom, opacity / 2 << 24);
     GlStateManager.enableBlend();
 
     // unpack the container
@@ -154,14 +157,10 @@ public class CustomGuiNewChat extends GuiNewChat {
       return drawChatComponent(container.getComponent(), x, lineBottom, opacity);
 
     } else if (component instanceof ChatComponentText) {
-      // note: we can't use getFormattedText because it would also append the text of the siblings.
-      // the unformattedText, however, only gets the text of this particular component, so we have to apply styling ourselves.
-      String unformattedText = component.getUnformattedTextForChat();
-      String formattedText = component.getChatStyle().getFormattingCode() + unformattedText + EnumChatFormatting.RESET;
-
+      String formattedText = getFormattedText((ChatComponentText)component);
       int textColour = 16777215 + (opacity << 24);
-      int newX = this.minecraft.fontRendererObj.drawStringWithShadow(formattedText, x, lineBottom - 8, textColour);
-      return newX == 0 ? 0 : newX - x;
+      this.minecraft.fontRendererObj.drawStringWithShadow(formattedText, x, lineBottom - 8, textColour);
+      return this.minecraft.fontRendererObj.getStringWidth(formattedText);
 
     } else if (component instanceof ImageChatComponent) {
       ImageChatComponent imageComponent = (ImageChatComponent)component;
@@ -191,7 +190,7 @@ public class CustomGuiNewChat extends GuiNewChat {
       GlStateManager.enableBlend();
 
       // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
-      GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+      GlStateManager.color(1.0f, 1.0f, 1.0f, opacity < 4 ? 0 : opacity / 255.0f);
       GlStateManager.disableLighting();
 
       // undo the scaling
@@ -423,7 +422,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     int bottom = 27 + this.config.getChatVerticalDisplacementEmitter().get();
     int scaleFactor = new ScaledResolution(this.minecraft).getScaleFactor();
     float chatScale = this.getChatScale();
-    int x = mouseX / scaleFactor - 3; // 3 is a magic number
+    int x = mouseX / scaleFactor;
     int y = mouseY / scaleFactor - bottom;
     x = MathHelper.floor_float((float)x / chatScale);
     y = MathHelper.floor_float((float)y / chatScale);
@@ -449,7 +448,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     ChatLine chatline = this.drawnChatLines.get(lineIndex);
 
     // walk from component to component until we first pass our desired x-position
-    int lineX = 0;
+    int lineX = LEFT_PADDING;
     for (IChatComponent component : chatline.getChatComponent()) {
       IChatComponent originalComponent = component;
 
@@ -459,8 +458,8 @@ public class CustomGuiNewChat extends GuiNewChat {
       }
 
       if (component instanceof ChatComponentText) {
-        lineX += this.minecraft.fontRendererObj.getStringWidth(GuiUtilRenderComponents.func_178909_a(((ChatComponentText)component).getChatComponentText_TextValue(), false));
-        if (lineX > x) {
+        lineX += this.minecraft.fontRendererObj.getStringWidth(getFormattedText((ChatComponentText)component));
+        if (lineX >= x) {
           return originalComponent;
         }
       } else if (component instanceof PrecisionChatComponentText) {
@@ -474,7 +473,7 @@ public class CustomGuiNewChat extends GuiNewChat {
         lineX += imageComponent.paddingGui;
 
         int width = (int)Math.ceil(imageComponent.getImageWidth(this.minecraft.fontRendererObj.FONT_HEIGHT));
-        if (lineX <= x && lineX + width > x) {
+        if (lineX <= x && lineX + width >= x) {
           return originalComponent;
         }
         lineX += width + imageComponent.paddingGui;

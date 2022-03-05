@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 import scala.Tuple2;
 
@@ -12,6 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ComponentHelpers {
+  public static String getFormattedText(ChatComponentText component) {
+    // note: we can't use getFormattedText because it would also append the text of the siblings.
+    // the unformattedText, however, only gets the text of this particular component, so we have to apply styling ourselves.
+    String unformattedText = component.getUnformattedTextForChat();
+    return component.getChatStyle().getFormattingCode() + unformattedText + EnumChatFormatting.RESET;
+  }
+
   /** Stolen from GuiUtilRenderComponents::splitText, but fixes custom components not being retained after the split. Supports splitting of custom components.
    * Returns one empty ChatComponentText per line, with the actual components added as siblings of each line component. Does not handle PrecisionChatComponentText in any way. */
   public static List<IChatComponent> splitText(IChatComponent componentToSplit, int maxWidth, FontRenderer font) {
@@ -79,7 +87,7 @@ public class ComponentHelpers {
   private static TrimmedComponent trimComponent(ChatComponentText component, int maxWidth, boolean isLineStart, FontRenderer font) {
     ChatStyle style = component.getChatStyle().createShallowCopy();
 
-    String fullText = component.getUnformattedTextForChat();
+    String fullText = getFormattedText(component);
     String text = fullText;
     String leftOver = "";
 
@@ -114,8 +122,7 @@ public class ComponentHelpers {
 
     int actualWidth = font.getStringWidth(text);
     ChatComponentText trimmedComponent = new ChatComponentText(text);
-    trimmedComponent.setChatStyle(style);
-
+    
     ChatComponentText leftoverComponent = null;
     if (leftOver.length() > 0) {
       leftoverComponent = new ChatComponentText(leftOver);
