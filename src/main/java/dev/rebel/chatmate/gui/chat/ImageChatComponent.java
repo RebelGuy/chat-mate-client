@@ -3,8 +3,8 @@ package dev.rebel.chatmate.gui.chat;
 import dev.rebel.chatmate.Asset.Texture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.IChatComponent;
-import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class ImageChatComponent extends ChatComponentBase {
@@ -31,6 +31,18 @@ public class ImageChatComponent extends ChatComponentBase {
     if (this.texture != null) {
       textureManager.deleteTexture(this.texture.resourceLocation);
     }
+  }
+
+  /** Returns the image width, in GUI units. */
+  public float getImageWidth(int guiHeight) {
+    Texture texture = this.getTexture();
+    float aspectRatio = (float)texture.width / texture.height;
+    return guiHeight * aspectRatio;
+  }
+
+  /** Returns the horizontal space required to display this image, in GUI units. */
+  public float getRequiredWidth(int guiHeight) {
+    return this.getImageWidth(guiHeight) + this.paddingGui * 2;
   }
 
   @Override

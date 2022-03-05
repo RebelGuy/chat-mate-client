@@ -170,16 +170,24 @@ public class CustomGuiNewChat extends GuiNewChat {
         return 0;
       }
 
+      // if the image is not square, it's possible that it will not be centred in the dedicated space in the chat line
+      // due to rounding error. the following adjustment will fix that
+      float requiredWidth = imageComponent.getRequiredWidth(this.minecraft.fontRendererObj.FONT_HEIGHT);
+      int requiredWidthInt = (int)Math.ceil(requiredWidth);
+      float xAdjustment = (requiredWidthInt - requiredWidth) / 2;
+
       Dim targetHeight = this.dimFactory.fromGui(this.minecraft.fontRendererObj.FONT_HEIGHT);
       Dim currentHeight = this.dimFactory.fromScreen(texture.height);
-      float imageX = x + imageComponent.paddingGui;
+      float imageX = x + imageComponent.paddingGui + xAdjustment;
       float imageY = lineBottom - targetHeight.getGui();
 
       float scaleToReachTarget = targetHeight.getGui() / currentHeight.getGui();
-      float scale = currentHeight.getGui() / 256 * scaleToReachTarget;
+      float scaleY = currentHeight.getGui() / 256 * scaleToReachTarget;
+      float aspectRatio = imageComponent.getImageWidth(this.minecraft.fontRendererObj.FONT_HEIGHT) / targetHeight.getGui();
+      float scaleX = aspectRatio * scaleY;
 
       GlStateManager.pushMatrix();
-      GlStateManager.scale(scale, scale, 1);
+      GlStateManager.scale(scaleX, scaleY, 1);
       GlStateManager.enableBlend();
 
       // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
@@ -187,15 +195,15 @@ public class CustomGuiNewChat extends GuiNewChat {
       GlStateManager.disableLighting();
 
       // undo the scaling
-      float scaledX = imageX / scale;
-      float scaledY = imageY / scale;
+      float scaledX = imageX / scaleX;
+      float scaledY = imageY / scaleY;
       int u = 0, v = 0;
       this.minecraft.getTextureManager().bindTexture(texture.resourceLocation);
       this.drawTexturedModalRect(scaledX, scaledY, u, v, 256, 256);
 
       GlStateManager.popMatrix();
 
-      return imageComponent.paddingGui * 2 + this.minecraft.fontRendererObj.FONT_HEIGHT;
+      return requiredWidthInt;
 
     } else {
       throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());
@@ -465,12 +473,11 @@ public class CustomGuiNewChat extends GuiNewChat {
         ImageChatComponent imageComponent = (ImageChatComponent)component;
         lineX += imageComponent.paddingGui;
 
-        // for now, assume images are square
-        int size = this.minecraft.fontRendererObj.FONT_HEIGHT;
-        if (lineX <= x && lineX + size > x) {
+        int width = (int)Math.ceil(imageComponent.getImageWidth(this.minecraft.fontRendererObj.FONT_HEIGHT));
+        if (lineX <= x && lineX + width > x) {
           return originalComponent;
         }
-        lineX += size + imageComponent.paddingGui;
+        lineX += width + imageComponent.paddingGui;
 
       } else if (component instanceof ContainerChatComponent) {
         throw new RuntimeException("Cannot get chat component because a container has not been unwrapped.");
