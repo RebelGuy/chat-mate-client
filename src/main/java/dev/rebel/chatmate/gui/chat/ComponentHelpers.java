@@ -87,7 +87,7 @@ public class ComponentHelpers {
   private static TrimmedComponent trimComponent(ChatComponentText component, int maxWidth, boolean isLineStart, FontRenderer font) {
     ChatStyle style = component.getChatStyle().createShallowCopy();
 
-    String fullText = getFormattedText(component);
+    String fullText = component.getUnformattedTextForChat();
     String text = fullText;
     String leftOver = "";
 
@@ -122,6 +122,7 @@ public class ComponentHelpers {
 
     int actualWidth = font.getStringWidth(text);
     ChatComponentText trimmedComponent = new ChatComponentText(text);
+    trimmedComponent.setChatStyle(style);
     
     ChatComponentText leftoverComponent = null;
     if (leftOver.length() > 0) {
