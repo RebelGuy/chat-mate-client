@@ -8,6 +8,8 @@ import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
+import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
@@ -242,7 +244,9 @@ public class MessageService {
   }
 
   public static IChatComponent getUserComponent(PublicUser user, ChatStyle style) {
-    return new ContainerChatComponent(styledText(user.userInfo.channelName, style), user);
+    ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(user.userInfo.channelName);
+    String unstyledName = extractedFormatting.unformattedText;
+    return new ContainerChatComponent(styledText(unstyledName, style), user);
   }
 
   private IChatComponent pickRandom(ChatStyle style, Object... stringOrComponent) {
