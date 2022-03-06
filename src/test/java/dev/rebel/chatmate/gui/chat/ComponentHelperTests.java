@@ -35,6 +35,7 @@ public class ComponentHelperTests {
   @Test
   public void splitText_LongTextComponent_RetainsStyleOnSplit() {
     when(this.fontRenderer.getStringWidth("Test1234")).thenReturn(10);
+    when(this.fontRenderer.getStringWidth("Test1")).thenReturn(7);
     when(this.fontRenderer.getStringWidth("234")).thenReturn(3);
     when(this.fontRenderer.trimStringToWidth("Test1234", 5)).thenReturn("Test1");
     IChatComponent component = new ChatComponentText("Test1234");
@@ -72,6 +73,7 @@ public class ComponentHelperTests {
   @Test
   public void splitText_LongContainerComponent_RetainsDataOnSplit() {
     when(this.fontRenderer.getStringWidth("Test1234")).thenReturn(10);
+    when(this.fontRenderer.getStringWidth("Test1")).thenReturn(7);
     when(this.fontRenderer.getStringWidth("234")).thenReturn(3);
     when(this.fontRenderer.trimStringToWidth("Test1234", 5)).thenReturn("Test1");
     Object data = new Object();
@@ -86,6 +88,23 @@ public class ComponentHelperTests {
     Assert.assertEquals(data, ((ContainerChatComponent)result.get(0)).data);
     Assert.assertEquals("234", result.get(1).getUnformattedTextForChat());
     Assert.assertEquals(data, ((ContainerChatComponent)result.get(1)).data);
+  }
 
+  @Test
+  public void splitText_AdjacentWords_SplitBetweenAndRemovedSpace() {
+    IChatComponent emojiComponent = new ChatComponentText(":test1:").appendSibling(new ChatComponentText(" :test2:"));
+    when(this.fontRenderer.getStringWidth(":test1:")).thenReturn(10);
+    when(this.fontRenderer.getStringWidth(" :test2:")).thenReturn(11);
+    when(this.fontRenderer.getStringWidth(":test2:")).thenReturn(10);
+    when(this.fontRenderer.trimStringToWidth(" :test2:", 5)).thenReturn(" :te");
+
+
+    List<IChatComponent> result = ComponentHelpers.splitText(emojiComponent, 15, this.fontRenderer);
+
+    Assert.assertEquals(2, result.size());
+    Assert.assertEquals(0, result.get(0).getSiblings().size());
+    Assert.assertEquals(0, result.get(1).getSiblings().size());
+    Assert.assertEquals(":test1:", result.get(0).getUnformattedTextForChat());
+    Assert.assertEquals(":test2:", result.get(1).getUnformattedTextForChat());
   }
 }

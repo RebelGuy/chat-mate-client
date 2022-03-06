@@ -50,7 +50,7 @@ public class ComponentHelpers {
 
       if (result == null) {
         result = trimmed.component;
-      } else {
+      } else if (trimmed.component != null) {
         result.appendSibling(trimmed.component);
       }
 
@@ -106,13 +106,15 @@ public class ComponentHelpers {
       if (maybeLeftover.length() > 0) {
         int lastSpaceIndex = maybeText.lastIndexOf(" ");
 
+        // trim away spaces where appropriate. we can do this only because we know this is the transition of one line
+        // to the next
         if (lastSpaceIndex >= 0 && font.getStringWidth(text.substring(0, lastSpaceIndex)) > 0) {
-          maybeText = text.substring(0, lastSpaceIndex);
-          maybeLeftover = text.substring(lastSpaceIndex + 1);
-        } else if (!text.contains(" ") && !isLineStart) {
+          maybeText = trimEnd(text.substring(0, lastSpaceIndex));
+          maybeLeftover = trimStart(text.substring(lastSpaceIndex + 1));
+        } else if (!text.trim().contains(" ") && !isLineStart) {
           // word is too long to fit - move everything to the next component as long as we are not starting the line
           maybeText = "";
-          maybeLeftover = text;
+          maybeLeftover = trimStart(text);
         }
       }
 
@@ -121,8 +123,11 @@ public class ComponentHelpers {
     }
 
     int actualWidth = font.getStringWidth(text);
-    ChatComponentText trimmedComponent = new ChatComponentText(text);
-    trimmedComponent.setChatStyle(style);
+    ChatComponentText trimmedComponent = null;
+    if (actualWidth > 0) {
+      trimmedComponent = new ChatComponentText(text);
+      trimmedComponent.setChatStyle(style);
+    }
     
     ChatComponentText leftoverComponent = null;
     if (leftOver.length() > 0) {
@@ -131,6 +136,23 @@ public class ComponentHelpers {
     }
 
     return new TrimmedComponent(trimmedComponent, actualWidth, leftoverComponent);
+  }
+
+  private static String trimStart(String string) {
+    StringBuilder sb = new StringBuilder();
+    for (char c : string.toCharArray()) {
+      if (c == ' ' && sb.length() == 0) {
+        continue;
+      } else {
+        sb.append(c);
+      }
+    }
+    return sb.toString();
+  }
+
+  private static String trimEnd(String string) {
+    String reversedTrimmed = trimStart(new StringBuilder(string).reverse().toString());
+    return new StringBuilder(reversedTrimmed).reverse().toString();
   }
 
   private static TrimmedComponent trimComponent(ContainerChatComponent component, int maxWidth, boolean isLineStart, FontRenderer font) {
@@ -158,8 +180,8 @@ public class ComponentHelpers {
 
   /** Data class. */
   private static class TrimmedComponent {
-    /** The component that was trimmed. */
-    public final IChatComponent component;
+    /** The component that was trimmed, if any. */
+    public final @Nullable IChatComponent component;
 
     /** The width of the trimmed component. */
     public final int trimmedWidth;
@@ -167,7 +189,7 @@ public class ComponentHelpers {
     /** The component that is leftover, if any. */
     public final @Nullable IChatComponent leftover;
 
-    public TrimmedComponent(IChatComponent trimmed, int trimmedWidth, @Nullable IChatComponent leftover) {
+    public TrimmedComponent(@Nullable IChatComponent trimmed, int trimmedWidth, @Nullable IChatComponent leftover) {
       this.component = trimmed;
       this.trimmedWidth = trimmedWidth;
       this.leftover = leftover;
