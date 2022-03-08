@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.gui.chat.ImageChatComponent;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
@@ -54,7 +55,7 @@ public class MessageService {
     List<IChatComponent> list = new ArrayList<>();
     list.add(INFO_PREFIX);
     list.add(styledText(" ", INFO_MSG_STYLE));
-    list.add(getUserComponent(user));
+    list.add(this.getUserComponent(user));
     list.add(styledText(" has just reached level " + newLevel + "!", INFO_MSG_STYLE));
     return joinComponents("", list);
   }
@@ -117,7 +118,7 @@ public class MessageService {
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
-    list.add(new Tuple2<>(nameLayout, getUserComponent(entry.user, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE)));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
@@ -129,7 +130,7 @@ public class MessageService {
 
   public IChatComponent getUserMessage(PublicUser user, int messageWidth) {
     PrecisionLayout layout = new PrecisionLayout(new PrecisionValue(8), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
-    IChatComponent component = getUserComponent(user);
+    IChatComponent component = this.getUserComponent(user);
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(layout, component));
@@ -214,7 +215,7 @@ public class MessageService {
 
   private IChatComponent getLargeLevelUpBody(PublicUser user, int newLevel) {
     List<IChatComponent> list = new ArrayList<>();
-    list.add(getUserComponent(user));
+    list.add(this.getUserComponent(user));
     list.add(styledText(" has reached level ", INFO_MSG_STYLE));
     list.add(styledText(String.valueOf(newLevel), getLevelStyle(newLevel)));
     list.add(styledText("!", INFO_MSG_STYLE));
@@ -234,19 +235,45 @@ public class MessageService {
         "Level 100 is within reach!",
         "Level " + (newLevel + 1) + " is within reach!",
         "Congratulations!",
-        styledText("Say 123 if you respect ", INFO_MSG_STYLE).appendSibling(getUserComponent(user)).appendSibling(styledText(".", INFO_MSG_STYLE)),
-        styledText("Subscribe to ", INFO_MSG_STYLE).appendSibling(getUserComponent(user)).appendSibling(styledText((user.userInfo.channelName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE))
+        styledText("Say 123 if you respect ", INFO_MSG_STYLE).appendSibling(this.getUserComponent(user)).appendSibling(styledText(".", INFO_MSG_STYLE)),
+        styledText("Subscribe to ", INFO_MSG_STYLE).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.userInfo.channelName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE))
       );
   }
 
-  public static IChatComponent getUserComponent(PublicUser user) {
-    return getUserComponent(user, VIEWER_NAME_STYLE);
+  public IChatComponent getUserComponent(PublicUser user) {
+    return this.getUserComponent(user, VIEWER_NAME_STYLE);
   }
 
-  public static IChatComponent getUserComponent(PublicUser user, ChatStyle style) {
+  public IChatComponent getUserComponent(PublicUser user, ChatStyle style) {
     ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(user.userInfo.channelName);
-    String unstyledName = extractedFormatting.unformattedText;
+    String unstyledName = extractedFormatting.unformattedText.trim();
+
+    // make sure we don't try to print an empty user name
+    if (this.minecraftProxyService.getChatFontRenderer().getStringWidth(unstyledName) == 0) {
+      unstyledName = "User " + user.id;
+    }
+
     return new ContainerChatComponent(styledText(unstyledName, style), user);
+  }
+
+  /** Ensures the component can be displayed in chat, otherwise replaces it with the provided message. */
+  public IChatComponent ensureNonempty(IChatComponent component, String msgIfEmpty) {
+    StringBuilder sb = new StringBuilder();
+
+    for (IChatComponent sibling : component) {
+      if (sibling instanceof ImageChatComponent) {
+        return component;
+      }
+
+      sb.append(sibling.getUnformattedTextForChat());
+    }
+
+    String text = sb.toString().trim();
+    if (this.minecraftProxyService.getChatFontRenderer().getStringWidth(text) == 0) {
+      return styledText(msgIfEmpty, INFO_SUBTLE_MSG_STYLE);
+    } else {
+      return component;
+    }
   }
 
   private IChatComponent pickRandom(ChatStyle style, Object... stringOrComponent) {

@@ -61,14 +61,17 @@ public class McChatService {
       Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
       IChatComponent rank = styledText("VIEWER", VIEWER_RANK_STYLE);
-      IChatComponent player = MessageService.getUserComponent(item.author);
+      IChatComponent player = this.messageService.getUserComponent(item.author);
       McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
+
+      IChatComponent joinedMessage = joinComponents("", mcChatResult.chatComponents);
+      joinedMessage = this.messageService.ensureNonempty(joinedMessage, "Empty message...");
 
       ArrayList<IChatComponent> components = new ArrayList<>();
       components.add(level);
       components.add(rank);
       components.add(player);
-      components.add(joinComponents("", mcChatResult.chatComponents));
+      components.add(joinedMessage);
       IChatComponent message = joinComponents(" ", components);
 
       this.minecraftProxyService.printChatMessage("YouTube chat", message);

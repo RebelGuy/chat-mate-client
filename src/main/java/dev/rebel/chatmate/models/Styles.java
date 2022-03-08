@@ -22,6 +22,7 @@ public class Styles {
   public static final ChatStyle LEVEL_100_UPWARDS = new ChatStyle().setColor(EnumChatFormatting.BLACK);
 
   public static final ChatStyle INFO_MSG_STYLE = new ChatStyle().setColor(EnumChatFormatting.GRAY);
+  public static final ChatStyle INFO_SUBTLE_MSG_STYLE = new ChatStyle().setColor(EnumChatFormatting.GRAY).setItalic(true);
   public static final ChatStyle GOOD_MSG_STYLE = new ChatStyle().setColor(EnumChatFormatting.GREEN);
   public static final ChatStyle BAD_MSG_STYLE = new ChatStyle().setColor(EnumChatFormatting.RED);
   public static final ChatStyle HIGHLIGHT_MSG_STYLE = new ChatStyle().setColor(EnumChatFormatting.YELLOW);

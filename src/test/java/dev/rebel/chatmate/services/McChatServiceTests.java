@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessageEmoji;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
@@ -9,6 +10,8 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.util.ChatComponentText;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatchers;
@@ -38,6 +41,17 @@ public class McChatServiceTests {
   PublicMessagePart textRebel = createText("Rebel");
   PublicMessagePart emoji1 = createEmoji("☺", ":smiling:");
   PublicMessagePart emoji2 = createEmoji("slightly smiling", ":slightly_smiling:");
+
+  @Before
+  public void setup() {
+    // assume nonempty, just return the input component
+    when(this.mockMessageService.ensureNonempty(ArgumentMatchers.any(), anyString())).thenAnswer(i -> i.getArgument(0));
+
+    when(this.mockMessageService.getUserComponent(ArgumentMatchers.any())).thenAnswer(i -> {
+      PublicUser user = i.getArgument(0);
+      return new ContainerChatComponent(new ChatComponentText(user.userInfo.channelName), user);
+    });
+  }
 
   @Test
   public void addChat_ignoresIfCantPrintChat() {
