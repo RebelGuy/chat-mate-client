@@ -65,7 +65,10 @@ public class ComponentHelpers {
       }
     }
 
-    // we could fit everything
+    // we could fit everything. make sure we always return *something*
+    if (result == null) {
+      result = new ChatComponentText("");
+    }
     return new Tuple2<>(result, new ArrayList<>());
   }
 
