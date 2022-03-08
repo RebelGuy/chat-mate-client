@@ -35,6 +35,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   private static final Logger logger = LogManager.getLogger();
   private static final Integer MAX_DRAWN_LINES = 100; // limits drawnChatLines
   private static final Integer MAX_LINES = 100; // limits chatLines
+  private static final Integer LEFT = 2; // distance of the chat window to the left side of the screen, in GUI units
   private static final Integer LEFT_PADDING = 1; // padding between the start of the chat line, and the start of the text, in GUI units
 
   private final Minecraft minecraft;
@@ -92,7 +93,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     float scale = this.getChatScale();
     int width = MathHelper.ceiling_float_int((float)this.getChatWidth() / scale);
     GlStateManager.pushMatrix();
-    GlStateManager.translate(2.0F, 20.0F, 0.0F);
+    GlStateManager.translate(LEFT, 20.0F, 0.0F);
     GlStateManager.scale(scale, scale, 1.0F);
 
     // for every line that is between the scroll position and
@@ -424,7 +425,9 @@ public class CustomGuiNewChat extends GuiNewChat {
     float chatScale = this.getChatScale();
     int x = mouseX / scaleFactor;
     int y = mouseY / scaleFactor - bottom;
-    x = MathHelper.floor_float((float)x / chatScale);
+
+    int xOffset = LEFT + LEFT_PADDING; // start of the line should be x = 0
+    x = MathHelper.floor_float((float)x / chatScale) - xOffset;
     y = MathHelper.floor_float((float)y / chatScale);
 
     if (x < 0 || y < 0) {
@@ -448,7 +451,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     ChatLine chatline = this.drawnChatLines.get(lineIndex);
 
     // walk from component to component until we first pass our desired x-position
-    int lineX = LEFT_PADDING;
+    int lineX = 0;
     for (IChatComponent component : chatline.getChatComponent()) {
       IChatComponent originalComponent = component;
 
@@ -459,7 +462,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
       if (component instanceof ChatComponentText) {
         lineX += this.minecraft.fontRendererObj.getStringWidth(getFormattedText((ChatComponentText)component));
-        if (lineX >= x) {
+        if (lineX > x) {
           return originalComponent;
         }
       } else if (component instanceof PrecisionChatComponentText) {
