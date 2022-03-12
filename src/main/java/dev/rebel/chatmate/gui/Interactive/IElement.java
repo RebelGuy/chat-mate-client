@@ -21,7 +21,7 @@ public interface IElement {
   boolean onKeyDown(KeyboardEventData.In in);
 
   void onInvalidateSize(); // to be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere.
-  DimPoint calculateSize(Dim maxWidth); // includes the full box
+  DimPoint calculateSize(Dim maxWidth); // this gives the maximum width that the child's full box can take up
   void setBox(DimRect box);
   DimRect getBox();
   void render();

@@ -46,14 +46,14 @@ public class HorizontalDivider extends SingleElement {
     Dim y = this.getBox().getY().plus(this.thickness.over(2));
     Dim x1, x2;
     if (this.mode == SizingMode.PARENT_CONTENT) {
-      x1 = this.getContentBox().getX();
-      x2 = this.getContentBox().getRight();
+      x1 = getContentBox(this.parent).getX();
+      x2 = getContentBox(this.parent).getRight();
     } else if (this.mode == SizingMode.PARENT_COLLISION) {
-      x1 = this.getCollisionBox().getX();
-      x2 = this.getCollisionBox().getRight();
+      x1 = getCollisionBox(this.parent).getX();
+      x2 = getCollisionBox(this.parent).getRight();
     } else if (this.mode == SizingMode.PARENT_FULL) {
-      x1 = this.parent.getBox().getX();
-      x2 = this.parent.getBox().getRight();
+      x1 = getFullBox(this.parent).getX();
+      x2 = getFullBox(this.parent).getRight();
     } else {
       throw new RuntimeException("Invalid SizingMode " + this.mode);
     }
