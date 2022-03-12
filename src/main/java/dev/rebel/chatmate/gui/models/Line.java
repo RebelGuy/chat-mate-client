@@ -21,6 +21,7 @@ public class Line {
     return (float)(Math.atan2(y, x) + Math.PI);
   }
 
+  /** Gets the outline in counter-clockwise order. */
   public List<Line> getOutline(Dim padding, boolean includeCaps) {
     if (includeCaps) {
       throw new RuntimeException("NYI");
@@ -43,9 +44,9 @@ public class Line {
     float dy2 = (float)Math.sin(theta2) * shortOffset;
 
     DimPoint p1 = new DimPoint(this.from.getX().setGui(x1 + dx1), this.from.getY().setGui(y1 + dy1)); // from+
-    DimPoint p2 = new DimPoint(this.to.getX().setGui(x2 + dx1), this.to.getY().setGui(y2 + dy1)); // to+
+    DimPoint p2 = new DimPoint(this.from.getX().setGui(x1 + dx2), this.from.getY().setGui(y1 + dy2)); // from-
     DimPoint p3 = new DimPoint(this.to.getX().setGui(x2 + dx2), this.to.getY().setGui(y2 + dy2)); // to-
-    DimPoint p4 = new DimPoint(this.from.getX().setGui(x1 + dx2), this.from.getY().setGui(y1 + dy2)); // from-
+    DimPoint p4 = new DimPoint(this.to.getX().setGui(x2 + dx1), this.to.getY().setGui(y2 + dy1)); // to+
 
     List<Line> lines = new ArrayList<>();
     lines.add(new Line(p1, p2));
@@ -53,5 +54,10 @@ public class Line {
     lines.add(new Line(p3, p4));
     lines.add(new Line(p4, p1));
     return lines;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("[%s, %s]", this.from.toString(), this.to.toString());
   }
 }

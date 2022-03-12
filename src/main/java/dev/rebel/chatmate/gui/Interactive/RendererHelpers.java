@@ -37,7 +37,7 @@ public class RendererHelpers {
       bottomColour = topColour;
     }
 
-    drawGradientRect(zLevel, x, y, w - x, y + h, topColour.toSafeInt(), bottomColour.toSafeInt());
+    drawGradientRect(zLevel, x, y, x + w, y + h, topColour.toSafeInt(), bottomColour.toSafeInt());
 
     if (borderWidth != null) {
       if (borderTopColour == null) {

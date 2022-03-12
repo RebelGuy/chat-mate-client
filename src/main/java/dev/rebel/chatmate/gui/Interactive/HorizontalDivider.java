@@ -15,9 +15,9 @@ public class HorizontalDivider extends SingleElement {
   public HorizontalDivider(InteractiveContext context, IElement parent) {
     super(context, parent);
 
-    this.thickness = context.dimFactory.fromGui(1);
+    this.thickness = context.dimFactory.fromGui(0.5f);
     this.mode = SizingMode.PARENT_CONTENT;
-    this.colour = new Colour(Color.GREY);
+    this.colour = new Colour(Color.BLACK);
   }
 
   public HorizontalDivider setThickness(Dim thickness) {
@@ -52,8 +52,8 @@ public class HorizontalDivider extends SingleElement {
       x1 = this.getCollisionBox().getX();
       x2 = this.getCollisionBox().getRight();
     } else if (this.mode == SizingMode.PARENT_FULL) {
-      x1 = this.getBox().getX();
-      x2 = this.getBox().getRight();
+      x1 = this.parent.getBox().getX();
+      x2 = this.parent.getBox().getRight();
     } else {
       throw new RuntimeException("Invalid SizingMode " + this.mode);
     }

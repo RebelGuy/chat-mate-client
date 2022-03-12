@@ -160,7 +160,7 @@ public abstract class ContainerElement extends ElementBase {
           currentY = currentY.plus(size.getY());
           DimPoint position = new DimPoint(currentX, currentY);
           this.childrenRelBoxes.put(element, new DimRect(position, size));
-          heightsInCurrentLine.add(position.getY());
+          heightsInCurrentLine.add(size.getY());
         }
 
         currentX = currentX.plus(size.getX());

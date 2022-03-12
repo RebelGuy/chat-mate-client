@@ -36,8 +36,7 @@ public class ManageExperienceModal extends ContainerElement {
         .setMargin(new Layout.RectExtension(ZERO, ZERO, ZERO, context.dimFactory.fromGui(30)));
 
     this.divider = new HorizontalDivider(context, this)
-        .setMode(SizingMode.PARENT_FULL)
-        .setThickness(context.dimFactory.fromGui(5));
+        .setMode(SizingMode.PARENT_FULL);
 //    this.footer = new FooterElement(context, this);
   }
 
@@ -49,7 +48,7 @@ public class ManageExperienceModal extends ContainerElement {
 
   @Override
   public DimPoint calculateSize(Dim maxWidth) {
-    return super.calculateSize(Dim.min(maxWidth, this.getContentBoxWidth(this.width)));
+    return super.calculateSize(Dim.min(maxWidth, this.width));
   }
 
   @Override

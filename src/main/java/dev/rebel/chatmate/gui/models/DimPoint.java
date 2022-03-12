@@ -24,4 +24,9 @@ public class DimPoint {
   public DimPoint minus(DimPoint other) {
     return new DimPoint(this.x.minus(other.getX()), this.y.minus(other.getY()));
   }
+
+  @Override
+  public String toString() {
+    return String.format("(%s, %s)", this.x.toString(), this.y.toString());
+  }
 }
