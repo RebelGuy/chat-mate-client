@@ -2,12 +2,17 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
-import dev.rebel.chatmate.gui.GuiManageExperienceScreen;
+import dev.rebel.chatmate.gui.Interactive.IElement;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.ManageExperienceModal;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
+import dev.rebel.chatmate.services.events.KeyboardEventService;
+import dev.rebel.chatmate.services.events.MouseEventService;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
 
 public class ContextMenuService {
   private final Minecraft minecraft;
@@ -15,13 +20,23 @@ public class ContextMenuService {
   private final ContextMenuStore store;
   private final ExperienceEndpointProxy experienceEndpointProxy;
   private final McChatService mcChatService;
+  private final MouseEventService mouseEventService;
+  private final KeyboardEventService keyboardEventService;
 
-  public ContextMenuService(Minecraft minecraft, DimFactory dimFactory, ContextMenuStore store, ExperienceEndpointProxy experienceEndpointProxy, McChatService mcChatService) {
+  public ContextMenuService(Minecraft minecraft,
+                            DimFactory dimFactory,
+                            ContextMenuStore store,
+                            ExperienceEndpointProxy experienceEndpointProxy,
+                            McChatService mcChatService,
+                            MouseEventService mouseEventService,
+                            KeyboardEventService keyboardEventService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
     this.experienceEndpointProxy = experienceEndpointProxy;
     this.mcChatService = mcChatService;
+    this.mouseEventService = mouseEventService;
+    this.keyboardEventService = keyboardEventService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -36,6 +51,10 @@ public class ContextMenuService {
   }
 
   private void onModifyExperience(PublicUser user) {
-    this.minecraft.displayGuiScreen(new GuiManageExperienceScreen(this.minecraft, this.dimFactory, user, this.experienceEndpointProxy, this.mcChatService));
+    InteractiveScreen.InteractiveContext context = new InteractiveScreen.InteractiveContext(this.mouseEventService, this.keyboardEventService, this.dimFactory, this.minecraft, this.minecraft.fontRendererObj);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    IElement modal = new ManageExperienceModal(context, screen, user, this.experienceEndpointProxy, this.mcChatService);
+    screen.setMainElement(modal);
+    this.minecraft.displayGuiScreen(screen);
   }
 }

@@ -1,5 +1,8 @@
 package dev.rebel.chatmate.gui.models;
 
+import dev.rebel.chatmate.services.util.Collections;
+
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -68,6 +71,12 @@ public class Dim {
 
   public static Dim max(Dim a, Dim b) { return a.gte(b) ? a : b; }
 
+  public static Dim max(List<Dim> items) {
+    return Collections.eliminate(items, Dim::max);
+  }
+
+  public static Dim min(Dim a, Dim b) { return a.lte(b) ? a : b; }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -107,6 +116,11 @@ public class Dim {
   private Dim withValue(float value) {
     this.value = value;
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%.2f (%s)", this.value, this.anchor);
   }
 
   public enum DimAnchor { SCREEN, GUI }

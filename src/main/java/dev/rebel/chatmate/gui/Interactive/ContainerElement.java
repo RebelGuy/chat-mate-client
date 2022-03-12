@@ -121,11 +121,14 @@ public abstract class ContainerElement extends ElementBase {
 
   @Override
   public DimPoint calculateSize(Dim maxWidth) {
+    maxWidth = this.getContentBoxWidth(maxWidth);
+
     Dim containerWidth = this.context.dimFactory.zeroGui();
     Dim containerHeight = this.context.dimFactory.zeroGui();
 
     Dim currentX = this.context.dimFactory.zeroGui();
     Dim currentY = this.context.dimFactory.zeroGui();
+    List<Dim> heightsInCurrentLine = new ArrayList<>();
     for (IElement element : this.children) {
       DimPoint size = element.calculateSize(maxWidth);
 
@@ -144,29 +147,41 @@ public abstract class ContainerElement extends ElementBase {
           // add to line
           DimPoint position = new DimPoint(currentX, currentY);
           this.childrenRelBoxes.put(element, new DimRect(position, size));
+          heightsInCurrentLine.add(size.getY());
 
         } else {
           // new line
+          if (heightsInCurrentLine.size() > 0) {
+            currentY = currentY.plus(Dim.max(heightsInCurrentLine));
+            heightsInCurrentLine.clear();
+          }
+
           currentX = this.context.dimFactory.zeroGui();
           currentY = currentY.plus(size.getY());
           DimPoint position = new DimPoint(currentX, currentY);
           this.childrenRelBoxes.put(element, new DimRect(position, size));
+          heightsInCurrentLine.add(position.getY());
         }
 
         currentX = currentX.plus(size.getX());
         containerWidth = Dim.max(containerWidth, currentX);
-        containerHeight = Dim.max(containerHeight, currentY);
 
       } else {
         throw new RuntimeException("Invalid layout mode " + this.mode);
       }
     }
 
-    return new DimPoint(containerWidth, containerHeight);
+    if (heightsInCurrentLine.size() > 0) {
+      currentY = currentY.plus(Dim.max(heightsInCurrentLine));
+      containerHeight = Dim.max(containerHeight, currentY);
+      heightsInCurrentLine.clear();
+    }
+
+    return this.getFullBoxSize(new DimPoint(containerWidth, containerHeight));
   }
 
   @Override
-  public final void render() {
+  public void render() {
     for (IElement element : this.children) {
       element.render();
     }
@@ -174,19 +189,22 @@ public abstract class ContainerElement extends ElementBase {
 
   @Override
   public void setBox(DimRect box) {
-    this.box = box;
+    super.setBox(box);
+
+    DimRect contentBox = this.getContentBox();
     for (IElement element : this.children) {
       DimRect relBox = this.childrenRelBoxes.get(element);
       if (relBox == null) {
         continue;
       }
-      element.setBox(relBox.withTranslation(box.getPosition()));
+      element.setBox(relBox.withTranslation(contentBox.getPosition()));
     }
   }
 
   @Override
-  public void setVisible(boolean visible) {
+  public ContainerElement setVisible(boolean visible) {
     this.children.forEach(el -> el.setVisible(visible));
+    return this;
   }
 
   @Override

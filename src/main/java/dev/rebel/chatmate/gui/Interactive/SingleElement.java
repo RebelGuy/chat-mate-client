@@ -29,7 +29,8 @@ public abstract class SingleElement extends ElementBase {
   }
 
   @Override
-  public void setVisible(boolean visible) {
+  public SingleElement setVisible(boolean visible) {
     this.visible = visible;
+    return this;
   }
 }

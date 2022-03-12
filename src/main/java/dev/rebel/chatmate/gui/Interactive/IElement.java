@@ -20,18 +20,18 @@ public interface IElement {
   boolean onMouseScroll(MouseEventData.In in);
   boolean onKeyDown(KeyboardEventData.In in);
 
-  void onInvalidateSize(); // to be called when the contents have changed in such a way that a size recalculation is required immediately.
+  void onInvalidateSize(); // to be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere.
   DimPoint calculateSize(Dim maxWidth); // includes the full box
   void setBox(DimRect box);
   DimRect getBox();
   void render();
 
   boolean getVisible();
-  void setVisible(boolean visible);
+  IElement setVisible(boolean visible);
 
   RectExtension getPadding();
-  void setPadding(RectExtension padding);
+  IElement setPadding(RectExtension padding);
 
   RectExtension getMargin();
-  void setMargin(RectExtension margin);
+  IElement setMargin(RectExtension margin);
 }

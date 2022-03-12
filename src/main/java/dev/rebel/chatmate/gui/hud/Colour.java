@@ -49,6 +49,11 @@ public class Colour {
     this((int)(red * 255), (int)(green * 255), (int)(blue * 255), (int)(alpha * 255));
   }
 
+  /** Inverse of Colour.toInt() */
+  public Colour(int intValue) {
+    this(intValue >> 16 & 255, intValue & 255, intValue >> 8 & 255, intValue >> 24 & 255);
+  }
+
   public int toInt() {
     return toInt(this.red, this.green, this.blue, this.alpha);
   }
