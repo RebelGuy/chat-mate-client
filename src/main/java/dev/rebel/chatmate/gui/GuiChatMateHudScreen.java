@@ -3,6 +3,8 @@ package dev.rebel.chatmate.gui;
 import dev.rebel.chatmate.gui.hud.IHudComponent;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
@@ -70,7 +72,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private Out onMouseDown(In in) {
     MousePositionData position = in.mousePositionData;
     for (IHudComponent component : this.getReverseComponents()) {
-      if (component.canTranslate() && containsPoint(component, position.x, position.y)) {
+      if (component.canTranslate() && containsPoint(component, new DimPoint(position.x, position.y))) {
         this.draggingComponent = component;
 
         // the position of the component is unlikely to be where we actually start the drag - calculate the offset
@@ -104,7 +106,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private Out onMouseScroll(In in) {
     MousePositionData position = in.mousePositionData;
     for (IHudComponent component : this.getReverseComponents()) {
-      if (component.canRescaleContent() && containsPoint(component, position.x, position.y)) {
+      if (component.canRescaleContent() && containsPoint(component, new DimPoint(position.x, position.y))) {
         int multiplier = in.mouseScrollData.scrollDirection == ScrollDirection.UP ? 1 : -1;
         component.onRescaleContent(component.getContentScale() + multiplier * 0.1f);
       }
@@ -119,11 +121,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
     return components;
   }
 
-  private static boolean containsPoint(IHudComponent component, Dim x, Dim y) {
-    Dim left = component.getX();
-    Dim right = component.getX().plus(component.getWidth());
-    Dim top = component.getY();
-    Dim bottom = component.getY().plus(component.getHeight());
-    return x.gte(left) && x.lte(right) && y.gte(top) && y.lte(bottom);
+  private static boolean containsPoint(IHudComponent component, DimPoint point) {
+    return new DimRect(component.getX(), component.getY(), component.getWidth(), component.getHeight()).checkCollision(point);
   }
 }

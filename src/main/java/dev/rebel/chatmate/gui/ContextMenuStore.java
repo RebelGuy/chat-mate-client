@@ -3,15 +3,14 @@ package dev.rebel.chatmate.gui;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
-import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import dev.rebel.chatmate.services.events.models.Tick;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import scala.Tuple2;
 
 public class ContextMenuStore {
@@ -82,9 +81,9 @@ public class ContextMenuStore {
       this.currentMenu = null;
     }
 
-    Tuple2<Dim, Dim> minecraftDim = this.dimFactory.getMinecraftDim();
-    int width = (int)minecraftDim._1.getGui();
-    int height = (int)minecraftDim._2.getGui();
+    DimPoint minecraftDim = this.dimFactory.getMinecraftSize();
+    int width = (int)minecraftDim.getX().getGui();
+    int height = (int)minecraftDim.getY().getGui();
     int maxWidth = width / 2;
     if (this.currentMenu != null && this.latestPositionData != null) {
       this.currentMenu.drawMenu(this.latestPositionData.x, this.latestPositionData.y, width, height, maxWidth, this.minecraft.fontRendererObj);

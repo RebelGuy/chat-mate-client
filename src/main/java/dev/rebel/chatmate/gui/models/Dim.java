@@ -66,6 +66,8 @@ public class Dim {
 
   public boolean gt(Dim other) { return this.value > this.getOtherValue(other); }
 
+  public static Dim max(Dim a, Dim b) { return a.gte(b) ? a : b; }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

@@ -1,12 +1,10 @@
 package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatmate.gui.builder.*;
-import dev.rebel.chatmate.gui.builder.ButtonLayout.ButtonAction.ButtonActionClickData;
 import dev.rebel.chatmate.gui.builder.Constants.Color;
-import dev.rebel.chatmate.gui.builder.Constants.Layout;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.models.api.experience.ModifyExperienceRequest;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
@@ -19,8 +17,6 @@ import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-
-import static net.minecraftforge.fml.client.config.GuiUtils.drawGradientRect;
 
 public class GuiManageExperienceScreen extends GuiScreen implements GuiPageButtonList.GuiResponder {
   private final static int MODAL_WIDTH = 200;
@@ -57,9 +53,9 @@ public class GuiManageExperienceScreen extends GuiScreen implements GuiPageButto
   public void initGui() {
     super.initGui();
 
-    Tuple2<Dim, Dim> display = this.dimFactory.getMinecraftDim();
-    int displayWidth = (int)display._1.getGui();
-    int displayHeight = (int)display._2.getGui();
+    DimPoint display = this.dimFactory.getMinecraftSize();
+    int displayWidth = (int)display.getX().getGui();
+    int displayHeight = (int)display.getY().getGui();
 
     // todo: set modal height based on contents so it's centred vertically!
     int x = (displayWidth - MODAL_WIDTH) / 2;
@@ -112,9 +108,9 @@ public class GuiManageExperienceScreen extends GuiScreen implements GuiPageButto
 
   @Override
   public void drawScreen(int p_drawScreen_1_, int p_drawScreen_2_, float p_drawScreen_3_) {
-    Tuple2<Dim, Dim> display = this.dimFactory.getMinecraftDim();
-    int displayWidth = (int)display._1.getGui();
-    int displayHeight = (int)display._2.getGui();
+    DimPoint display = this.dimFactory.getMinecraftSize();
+    int displayWidth = (int)display.getX().getGui();
+    int displayHeight = (int)display.getY().getGui();
 
     int actualHeight = 120;
     int x = (displayWidth - MODAL_WIDTH) / 2;

@@ -30,8 +30,8 @@ public class DimFactory {
     return this.fromGui(0);
   }
 
-  public Tuple2<Dim, Dim> getMinecraftDim() {
-    return new Tuple2<>(
+  public DimPoint getMinecraftSize() {
+    return new DimPoint(
         this.fromScreen(this.minecraft.displayWidth),
         this.fromScreen(this.minecraft.displayHeight)
     );

@@ -2,11 +2,17 @@ package dev.rebel.chatmate.services.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import dev.rebel.chatmate.gui.chat.ComponentHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting.Format;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.IChatComponent;
 
 public class TextHelpers {
   // custom implementation of String.indexOf that allows for a custom matching filter
@@ -101,6 +107,12 @@ public class TextHelpers {
     }
 
     return new ExtractedFormatting(unformattedString.toString(), formats);
+  }
+
+  public static List<String> splitText(String text, int maxWidth, FontRenderer font) {
+    // simply use the component splitText method, using a ChatComponentText as a wrapper around the string that is to be split
+    List<IChatComponent> components = ComponentHelpers.splitText(new ChatComponentText(text), maxWidth, font);
+    return components.stream().map(IChatComponent::getFormattedText).collect(Collectors.toList());
   }
 
   private static boolean isEndOfWord(char[] text, int i) {
