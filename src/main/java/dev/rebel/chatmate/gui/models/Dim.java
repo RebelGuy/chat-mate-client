@@ -27,18 +27,11 @@ public class Dim {
   }
 
   public Dim setScreen(float screenValue) {
-    this.value = screenValue * this.getConversionFactor(DimAnchor.SCREEN, this.anchor);
-    return this;
+    return new Dim(this.scaleFactor, this.anchor).withValue(screenValue * this.getConversionFactor(DimAnchor.SCREEN, this.anchor));
   }
 
   public Dim setGui(float guiValue) {
-    this.value = guiValue * this.getConversionFactor(DimAnchor.GUI, this.anchor);
-    return this;
-  }
-
-  public Dim set(Dim other) {
-    this.value = this.getOtherValue(other);
-    return this;
+    return new Dim(this.scaleFactor, this.anchor).withValue(guiValue * this.getConversionFactor(DimAnchor.GUI, this.anchor));
   }
 
   public Dim plus(Dim other) {
@@ -58,7 +51,7 @@ public class Dim {
   }
 
   public Dim copy() {
-    return new Dim(this.scaleFactor, this.anchor).set(this);
+    return new Dim(this.scaleFactor, this.anchor).withValue(this.value);
   }
 
   public boolean lte(Dim other) { return this.value <= this.getOtherValue(other); }
@@ -112,7 +105,7 @@ public class Dim {
     }
   }
 
-  /** For internal use only - it is the caller's responsibility that the units of `value` are correct. */
+  /** Mutates the value. For internal use only - it is the caller's responsibility that the units of `value` are correct. */
   private Dim withValue(float value) {
     this.value = value;
     return this;

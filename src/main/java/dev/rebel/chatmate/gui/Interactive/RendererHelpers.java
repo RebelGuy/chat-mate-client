@@ -4,6 +4,7 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.models.Line;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
@@ -14,6 +15,7 @@ import net.minecraftforge.fml.client.config.GuiUtils;
 import org.lwjgl.util.Color;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 public class RendererHelpers {
   public static void withTranslation(DimPoint translation, Runnable onRender) {
@@ -55,6 +57,36 @@ public class RendererHelpers {
     }
   }
 
+  /** The drawn line is centred about the mathematical line of connecting `from` and `to`. If includeCaps is true, the width will extend beyond the coordinates. */
+  public static void drawLine(Line line, Dim lineWidth, Colour colour, boolean includeCaps) {
+    int zLevel = 100;
+    int red = colour.red;
+    int green = colour.green;
+    int blue = colour.blue;
+    int alpha = colour.alpha;
+
+    List<Line> linesToDraw = line.getOutline(lineWidth, includeCaps);
+
+    GlStateManager.disableTexture2D();
+    GlStateManager.enableBlend();
+    GlStateManager.disableAlpha();
+    GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
+    GlStateManager.shadeModel(7425);
+
+    Tessellator tessellator = Tessellator.getInstance();
+    WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+    worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+
+    for (Line l : linesToDraw) {
+      worldrenderer.pos(l.from.getX().getGui(), l.from.getY().getGui(), zLevel).color(red, green, blue, alpha).endVertex();
+    }
+    tessellator.draw();
+
+    GlStateManager.shadeModel(7424);
+    GlStateManager.disableBlend();
+    GlStateManager.enableAlpha();
+    GlStateManager.enableTexture2D();
+  }
 
   /**
    * Stolen from GuiUtils (and amusingly also Gui.java), but modified for float coords.

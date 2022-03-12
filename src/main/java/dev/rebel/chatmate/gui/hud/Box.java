@@ -35,8 +35,8 @@ public class Box {
 
   public void onTranslate(Dim newX, Dim newY) {
     if (this.canTranslate) {
-      this.x.set(newX);
-      this.y.set(newY);
+      this.x = newX;
+      this.y = newY;
     }
   }
 

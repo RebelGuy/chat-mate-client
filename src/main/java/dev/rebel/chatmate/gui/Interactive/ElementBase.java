@@ -131,4 +131,6 @@ public abstract class ElementBase implements IElement {
   protected DimRect getContentBox() {
     return this.padding.plus(this.margin).applySubtractive(this.getBox());
   }
+
+  protected DimRect getCollisionBox() { return this.padding.applySubtractive(this.getBox()); }
 }

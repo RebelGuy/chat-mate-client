@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.SizingMode;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -15,7 +16,8 @@ public class ManageExperienceModal extends ContainerElement {
   private final Dim width;
 
   private LabelElement title;
-//  private FooterElement footer;
+  private HorizontalDivider divider;
+  private FooterElement footer;
 
   public ManageExperienceModal(InteractiveScreen.InteractiveContext context, InteractiveScreen parent, PublicUser user, ExperienceEndpointProxy experienceEndpointProxy, McChatService mcChatService) {
     super(context, parent, LayoutMode.INLINE);
@@ -33,12 +35,16 @@ public class ManageExperienceModal extends ContainerElement {
         .setLayoutMode(LabelElement.LayoutMode.FULL_WIDTH)
         .setMargin(new Layout.RectExtension(ZERO, ZERO, ZERO, context.dimFactory.fromGui(30)));
 
-//    this.footer = new FooterElement(context, this)
+    this.divider = new HorizontalDivider(context, this)
+        .setMode(SizingMode.PARENT_FULL)
+        .setThickness(context.dimFactory.fromGui(5));
+//    this.footer = new FooterElement(context, this);
   }
 
   @Override
   public void onCreate() {
     this.addElement(this.title);
+    this.addElement(this.divider);
   }
 
   @Override
@@ -48,8 +54,8 @@ public class ManageExperienceModal extends ContainerElement {
 
   @Override
   public void render() {
-    Colour backgroundTop = new Colour(-1072689136);
-    Colour backgroundBottom = new Colour(-804253680);
+    Colour backgroundTop = new Colour(64, 64, 64, 127); // light gray
+    Colour backgroundBottom = new Colour(32, 32, 32, 127); // dark gray
     RendererHelpers.renderRect(this.getBox(), backgroundTop, backgroundBottom, this.context.dimFactory.fromGui(1), null, null);
 
     super.render();

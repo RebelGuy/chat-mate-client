@@ -105,6 +105,10 @@ public class InteractiveScreen extends Screen implements IElement {
   public void onGuiClosed() {
     if (this.mainElement != null) {
       this.mainElement.onDispose();
+
+      // it is very important that we remove the reference to the mainElement, otherwise
+      // this screen will never be garbage collected since mainElement holds a reference to it
+      this.mainElement = null;
     }
   }
 
@@ -131,7 +135,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private KeyboardEventData.Out _onKeyDown(KeyboardEventData.In in) {
-    if (in.isPressed(Keyboard.KEY_ESCAPE)) {
+    if (this.mainElement != null && in.isPressed(Keyboard.KEY_ESCAPE)) {
       this.mc.displayGuiScreen(this.parentScreen);
       if (this.mc.currentScreen == null) {
         this.mc.setIngameFocus();

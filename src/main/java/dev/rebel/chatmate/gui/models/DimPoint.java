@@ -20,4 +20,8 @@ public class DimPoint {
   public DimPoint plus(DimPoint other) {
     return new DimPoint(this.x.plus(other.getX()), this.y.plus(other.getY()));
   }
+
+  public DimPoint minus(DimPoint other) {
+    return new DimPoint(this.x.minus(other.getX()), this.y.minus(other.getY()));
+  }
 }

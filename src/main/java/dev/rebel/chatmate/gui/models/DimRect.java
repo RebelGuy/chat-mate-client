@@ -33,6 +33,10 @@ public class DimRect {
     return this.height;
   }
 
+  public Dim getRight() { return this.x.plus(this.width); }
+
+  public Dim getBottom() { return this.y.plus(this.height); }
+
   public DimPoint getPosition() {
     return new DimPoint(this.x, this.y);
   }
