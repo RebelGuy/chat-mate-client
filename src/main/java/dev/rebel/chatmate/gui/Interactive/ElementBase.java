@@ -1,7 +1,9 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -18,9 +20,12 @@ public abstract class ElementBase implements IElement {
   protected final IElement parent;
   protected final Dim ZERO;
 
+  protected DimPoint lastCalculatedSize;
   private DimRect box;
   private RectExtension padding;
   private RectExtension margin;
+  private HorizontalAlignment horizontalAlignment;
+  private VerticalAlignment verticalAlignment;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     this.context = context;
@@ -30,6 +35,8 @@ public abstract class ElementBase implements IElement {
     this.box = null;
     this.padding = new RectExtension(context.dimFactory.zeroGui());
     this.margin = new RectExtension(context.dimFactory.zeroGui());
+    this.horizontalAlignment = HorizontalAlignment.LEFT;
+    this.verticalAlignment = VerticalAlignment.TOP;
   }
 
   @Override
@@ -68,6 +75,17 @@ public abstract class ElementBase implements IElement {
     this.parent.onInvalidateSize();
   }
 
+  /** Should be called after the onCalculateSize() method is complete.
+   * The reason this is abstract is to remind the element to update this property. */
+  // todo: this is actually kinda yucky - maybe the correct solution is to create some kind of wrapper class around each element,
+  // which can be used as an additional layer between parents calling methods on the child, and the child calling methods on (or passing data to) the parent.
+  protected abstract DimPoint setLastCalculatedSize(DimPoint size);
+
+  @Override
+  public DimPoint getLastCalculatedSize() {
+    return this.lastCalculatedSize;
+  }
+
   @Override
   public void setBox(DimRect box) {
     this.box = box;
@@ -98,6 +116,28 @@ public abstract class ElementBase implements IElement {
   @Override
   public RectExtension getMargin() {
     return this.margin == null ? new RectExtension(this.context.dimFactory.zeroGui()) : this.margin;
+  }
+
+  @Override
+  public IElement setHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
+    this.horizontalAlignment = horizontalAlignment;
+    return this;
+  }
+
+  @Override
+  public HorizontalAlignment getHorizontalAlignment() {
+    return this.horizontalAlignment;
+  }
+
+  @Override
+  public IElement setVerticalAlignment(VerticalAlignment verticalAlignment) {
+    this.verticalAlignment = verticalAlignment;
+    return this;
+  }
+
+  @Override
+  public VerticalAlignment getVerticalAlignment() {
+    return this.verticalAlignment;
   }
 
   protected boolean checkCollision(DimPoint point) {
@@ -144,5 +184,45 @@ public abstract class ElementBase implements IElement {
 
   protected static DimRect getFullBox(IElement element) {
     return element.getBox();
+  }
+
+  protected DimRect alignChild(IElement child) {
+    return alignElementInBox(child.getLastCalculatedSize(), this.getContentBox(), child.getHorizontalAlignment(), child.getVerticalAlignment());
+  }
+
+  /** Lays out the size within the given box, using the provided alignment options.
+   * Note: If the size is larger than the provided box, it will NOT be contained entirely. */
+  protected static DimRect alignElementInBox(DimPoint size, DimRect box, HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment) {
+    Dim x;
+    switch (horizontalAlignment) {
+      case LEFT:
+        x = box.getX();
+        break;
+      case CENTRE:
+        x = box.getX().plus(box.getWidth().minus(size.getX()).over(2));
+        break;
+      case RIGHT:
+        x = box.getRight().minus(size.getX());
+        break;
+      default:
+        throw new RuntimeException("Invalid HorizontalAlignment " + horizontalAlignment);
+    }
+
+    Dim y;
+    switch (verticalAlignment) {
+      case TOP:
+        y = box.getY();
+        break;
+      case MIDDLE:
+        y = box.getY().plus(box.getHeight().minus(size.getY()).over(2));
+        break;
+      case BOTTOM:
+        y = box.getBottom().minus(size.getY());
+        break;
+      default:
+        throw new RuntimeException("Invalid VerticalAlignment " + verticalAlignment);
+    }
+
+    return new DimRect(new DimPoint(x, y), size);
   }
 }

@@ -56,4 +56,12 @@ public class Layout {
       return new DimRect(newX, newY, newWidth, newHeight);
     }
   }
+
+  public enum HorizontalAlignment {
+    LEFT, CENTRE, RIGHT
+  }
+
+  public enum VerticalAlignment {
+    TOP, MIDDLE, BOTTOM
+  }
 }

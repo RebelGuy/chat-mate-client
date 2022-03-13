@@ -60,4 +60,14 @@ public class DimRect {
   public DimRect withSize(DimPoint size) {
     return new DimRect(this.getPosition(), size);
   }
+
+  /** Truncates the sides of this rect such that it fits into the given rect (loose fit). */
+  public DimRect clamp(DimRect other) {
+    Dim x = Dim.max(this.getX(), other.getX());
+    Dim y = Dim.max(this.getY(), other.getY());
+    Dim right = Dim.min(this.getRight(), other.getRight());
+    Dim bottom = Dim.min(this.getBottom(), other.getBottom());
+
+    return new DimRect(x, y, right.minus(x), bottom.minus(y));
+  }
 }

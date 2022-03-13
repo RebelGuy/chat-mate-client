@@ -70,7 +70,13 @@ public class LabelElement extends SingleElement {
       throw new RuntimeException("Invalid Overflow setting " + this.overflow);
     }
 
-    return this.getFullBoxSize(new DimPoint(this.layoutMode == LayoutMode.FIT ? contentWidth : maxWidth, contentHeight));
+    return this.setLastCalculatedSize(this.getFullBoxSize(new DimPoint(this.layoutMode == LayoutMode.FIT ? contentWidth : maxWidth, contentHeight)));
+  }
+
+  @Override
+  protected DimPoint setLastCalculatedSize(DimPoint size) {
+    this.lastCalculatedSize = size;
+    return size;
   }
 
   @Override
@@ -116,18 +122,10 @@ public class LabelElement extends SingleElement {
     return this;
   }
 
-  public TextAlignment getAlignment() {
-    return this.alignment;
-  }
-
   public LabelElement setOverflow(TextOverflow overflow) {
     this.overflow = overflow;
     this.onInvalidateSize();
     return this;
-  }
-
-  public TextOverflow getOverflow() {
-    return this.overflow;
   }
 
   public LabelElement setLinePadding(Dim linePadding) {
@@ -136,17 +134,9 @@ public class LabelElement extends SingleElement {
     return this;
   }
 
-  public Dim getLinePadding() {
-    return this.linePadding;
-  }
-
   public LabelElement setLayoutMode(LayoutMode layoutMode) {
     this.layoutMode = layoutMode;
     return this;
-  }
-
-  public LayoutMode getLayoutMode() {
-    return this.layoutMode;
   }
 
   public LabelElement setColour(Colour colour) {
@@ -154,18 +144,21 @@ public class LabelElement extends SingleElement {
     return this;
   }
 
+  /** How should the text fill the Label's content box? */
   public enum TextAlignment {
     LEFT,
     CENTRE,
     RIGHT
   }
 
+  /** What happens if the text goes beyond the content box? */
   public enum TextOverflow {
     OVERFLOW,
     SPLIT,
     TRUNCATE
   }
 
+  /** How should the Label calculate its width, given the parent's maxWidth? */
   public enum LayoutMode {
     FIT, // the element's width will be calculated to fit the text
     FULL_WIDTH // the element's width will always take up 100% of the provided width

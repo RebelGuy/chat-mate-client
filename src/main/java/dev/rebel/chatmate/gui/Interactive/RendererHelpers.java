@@ -10,6 +10,7 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraftforge.fml.client.config.GuiUtils;
 import org.lwjgl.util.Color;
@@ -57,9 +58,45 @@ public class RendererHelpers {
     }
   }
 
+  /** Stolen from GUI. */
+  public static void drawTexturedModalRect(DimRect rect, int zLevel, TextureAtlasSprite sprite) {
+    float x = rect.getX().getGui();
+    float y = rect.getY().getGui();
+    float width = rect.getWidth().getGui();
+    float height = rect.getHeight().getGui();
+
+    Tessellator tessellator = Tessellator.getInstance();
+    WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+    worldRenderer.begin(7, DefaultVertexFormats.POSITION_TEX);
+    worldRenderer.pos(x, y, zLevel).tex(sprite.getMinU(), sprite.getMaxV()).endVertex();
+    worldRenderer.pos(x + width, y + height, zLevel).tex(sprite.getMaxU(), sprite.getMaxV()).endVertex();
+    worldRenderer.pos(x + width, y, zLevel).tex(sprite.getMaxU(), sprite.getMinV()).endVertex();
+    worldRenderer.pos(x, y, zLevel).tex(sprite.getMinU(), sprite.getMinV()).endVertex();
+    tessellator.draw();
+  }
+
+  public static void drawTexturedModalRect(DimRect rect, int zLevel, int u, int v) {
+    float x = rect.getX().getGui();
+    float y = rect.getY().getGui();
+    float width = rect.getWidth().getGui();
+    float height = rect.getHeight().getGui();
+
+    float a = 0.00390625F;
+    float b = 0.00390625F;
+    Tessellator lvt_9_1_ = Tessellator.getInstance();
+    WorldRenderer lvt_10_1_ = lvt_9_1_.getWorldRenderer();
+    lvt_10_1_.begin(7, DefaultVertexFormats.POSITION_TEX);
+    lvt_10_1_.pos(x, y + height, zLevel).tex(u * a, (v + height) * b).endVertex();
+    lvt_10_1_.pos(x + width, y + height, zLevel).tex((u + width) * a, (v + height) * b).endVertex();
+    lvt_10_1_.pos(x + width, y, zLevel).tex((u + width) * a, v * b).endVertex();
+    lvt_10_1_.pos(x, y, zLevel).tex(u * a, v * b).endVertex();
+    lvt_9_1_.draw();
+  }
+
+
   /** The drawn line is centred about the mathematical line of connecting `from` and `to`. If includeCaps is true, the width will extend beyond the coordinates. */
   public static void drawLine(Line line, Dim lineWidth, Colour colour, boolean includeCaps) {
-    int zLevel = 100;
+    int zLevel = 0;
     int red = colour.red;
     int green = colour.green;
     int blue = colour.blue;

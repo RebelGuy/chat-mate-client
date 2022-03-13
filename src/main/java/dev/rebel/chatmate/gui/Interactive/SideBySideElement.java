@@ -71,6 +71,12 @@ public class SideBySideElement extends ContainerElement {
       containerHeight = Dim.max(containerHeight, size.getY());
     }
 
-    return this.getFullBoxSize(new DimPoint(maxWidth, containerHeight));
+    return this.setLastCalculatedSize(this.getFullBoxSize(new DimPoint(maxWidth, containerHeight)));
+  }
+
+  @Override
+  protected DimPoint setLastCalculatedSize(DimPoint size) {
+    this.lastCalculatedSize = size;
+    return size;
   }
 }

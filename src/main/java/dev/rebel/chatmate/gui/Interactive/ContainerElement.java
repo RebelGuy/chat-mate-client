@@ -105,7 +105,7 @@ public abstract class ContainerElement extends ElementBase {
       return false;
     }
 
-    DimRect rect = element.getBox();
+    DimRect rect = getCollisionBox(element);
     if (rect == null) {
       return false;
     }

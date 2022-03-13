@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Screen;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -20,8 +22,10 @@ import org.lwjgl.input.Keyboard;
 import javax.annotation.Nullable;
 import java.util.function.Function;
 
+// note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
+// it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
+// the correct way would have been to split IElement up into two interfaces, but it doesn't really matter.
 public class InteractiveScreen extends Screen implements IElement {
-  private IElement mainElement;
   private final InteractiveContext context;
   private final @Nullable GuiScreen parentScreen;
 
@@ -30,6 +34,8 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseUp = this::_onMouseUp;
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseScroll = this::_onMouseScroll;
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> onKeyDown = this::_onKeyDown;
+
+  private IElement mainElement;
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen) {
     super();
@@ -75,19 +81,21 @@ public class InteractiveScreen extends Screen implements IElement {
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   private void recalculateLayout() {
-    Dim maxX = this.context.dimFactory.getMinecraftSize().getX();
-    Dim maxY = this.context.dimFactory.getMinecraftSize().getY();
+    DimFactory factory = this.context.dimFactory;
+    Dim maxX = factory.getMinecraftSize().getX();
+    Dim maxY = factory.getMinecraftSize().getY();
 
     // inspired by https://limpet.net/mbrubeck/2014/09/17/toy-layout-engine-6-block.html
     // top-down: give the children a width so they can calculate their size and be positioned properly.
     // bottom-up: once sizes and positions have been calculated, the total box will be passed back up
     DimPoint mainSize = this.mainElement.calculateSize(maxX);
 
-    // now that we know our actual dimensions, pass the full rect down and let the children re-position (but they should do any resizing
-    // as that would invalidate the final box). Centre the box on the screen
-    Dim x = mainSize.getX().gte(maxX) ? this.context.dimFactory.zeroGui() : maxX.minus(mainSize.getX()).over(2);
-    Dim y = mainSize.getY().gte(maxY) ? this.context.dimFactory.zeroGui() : maxY.minus(mainSize.getY()).over(2);
-    this.mainElement.setBox(new DimRect(x, y, mainSize.getX(), mainSize.getY()));
+    // now that we know our actual dimensions, pass the full rect down and let the children re-position (but they should
+    // not do any resizing as that would invalidate the final box).
+    DimRect screenRect = new DimRect(factory.zeroGui(), factory.zeroGui(), maxX, maxY);
+    DimRect mainRect = ElementBase.alignElementInBox(mainSize, screenRect, this.mainElement.getHorizontalAlignment(), this.mainElement.getVerticalAlignment());
+    mainRect = mainRect.clamp(screenRect);
+    this.mainElement.setBox(mainRect);
   }
 
   @Override
@@ -183,6 +191,9 @@ public class InteractiveScreen extends Screen implements IElement {
   public DimPoint calculateSize(Dim maxWidth) { return null; }
 
   @Override
+  public DimPoint getLastCalculatedSize() { return null; }
+
+  @Override
   public DimRect getBox() {
     DimPoint pos = new DimPoint(this.context.dimFactory.zeroGui(), this.context.dimFactory.zeroGui());
     return new DimRect(pos, this.context.dimFactory.getMinecraftSize());
@@ -220,6 +231,19 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public InteractiveScreen setMargin(RectExtension margin) { return this; }
+
+  @Override
+  public InteractiveScreen setHorizontalAlignment(HorizontalAlignment horizontalAlignment) { return null; }
+
+  @Override
+  public HorizontalAlignment getHorizontalAlignment() { return null; }
+
+  @Override
+  public InteractiveScreen setVerticalAlignment(VerticalAlignment verticalAlignment) { return null; }
+
+  @Override
+  public VerticalAlignment getVerticalAlignment() { return null;}
+
   //endregion
 
   public static class InteractiveContext {

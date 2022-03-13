@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -29,6 +31,8 @@ public class ManageExperienceModal extends ContainerElement {
 
     this.width = context.dimFactory.fromGui(200);
     this.setPadding(new Layout.RectExtension(context.dimFactory.fromGui(10)));
+    this.setHorizontalAlignment(HorizontalAlignment.CENTRE);
+    this.setVerticalAlignment(VerticalAlignment.MIDDLE);
 
     this.title = (LabelElement)new LabelElement(context, this)
         .setText("Manage Experience for " + user.userInfo.channelName)
@@ -40,8 +44,10 @@ public class ManageExperienceModal extends ContainerElement {
     this.divider = new HorizontalDivider(context, this)
         .setMode(SizingMode.PARENT_FULL);
 
-    this.closeButton = new ButtonElement(context, this);
-    this.submitButton = new ButtonElement(context, this);
+    this.closeButton = new ButtonElement(context, this)
+        .setText("Close");
+    this.submitButton = new ButtonElement(context, this)
+        .setText("Submit");
 
     this.footer = (SideBySideElement)new SideBySideElement(context, this)
         .setElementPadding(this.width.over(2))
@@ -63,7 +69,13 @@ public class ManageExperienceModal extends ContainerElement {
 
   @Override
   public DimPoint calculateSize(Dim maxWidth) {
-    return super.calculateSize(Dim.min(maxWidth, this.width));
+    return this.setLastCalculatedSize(super.calculateSize(Dim.min(maxWidth, this.width)));
+  }
+
+  @Override
+  protected DimPoint setLastCalculatedSize(DimPoint size) {
+    this.lastCalculatedSize = size;
+    return size;
   }
 
   @Override
