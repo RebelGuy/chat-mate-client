@@ -27,21 +27,21 @@ public abstract class ContainerElement extends ElementBase {
     this.childrenRelBoxes = new HashMap<>();
   }
 
-  public void addElement(IElement element) {
+  protected ContainerElement addElement(IElement element) {
     this.children.add(element);
-    this.onInvalidateSize();
+    return this;
   }
 
-  public void removeElement(IElement element) {
+  protected ContainerElement removeElement(IElement element) {
     this.children.remove(element);
     this.childrenRelBoxes.remove(element);
-    this.onInvalidateSize();
+    return this;
   }
 
-  public void clear() {
+  protected ContainerElement clear() {
     this.children.clear();
     this.childrenRelBoxes.clear();
-    this.onInvalidateSize();
+    return this;
   }
 
   @Override
@@ -123,11 +123,11 @@ public abstract class ContainerElement extends ElementBase {
   public DimPoint calculateSize(Dim maxWidth) {
     maxWidth = this.getContentBoxWidth(maxWidth);
 
-    Dim containerWidth = this.context.dimFactory.zeroGui();
-    Dim containerHeight = this.context.dimFactory.zeroGui();
+    Dim containerWidth = ZERO;
+    Dim containerHeight = ZERO;
 
-    Dim currentX = this.context.dimFactory.zeroGui();
-    Dim currentY = this.context.dimFactory.zeroGui();
+    Dim currentX = ZERO;
+    Dim currentY = ZERO;
     List<Dim> heightsInCurrentLine = new ArrayList<>();
     for (IElement element : this.children) {
       DimPoint size = element.calculateSize(maxWidth);
@@ -156,7 +156,7 @@ public abstract class ContainerElement extends ElementBase {
             heightsInCurrentLine.clear();
           }
 
-          currentX = this.context.dimFactory.zeroGui();
+          currentX = ZERO;
           currentY = currentY.plus(size.getY());
           DimPoint position = new DimPoint(currentX, currentY);
           this.childrenRelBoxes.put(element, new DimRect(position, size));
@@ -197,6 +197,8 @@ public abstract class ContainerElement extends ElementBase {
       if (relBox == null) {
         continue;
       }
+      // todo: add horizontal alignment mode that allows us to align items left, centre, or right
+      // and vertical alignment as well (for elements on the same line)
       element.setBox(relBox.withTranslation(contentBox.getPosition()));
     }
   }

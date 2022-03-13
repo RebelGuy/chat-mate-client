@@ -17,7 +17,9 @@ public class ManageExperienceModal extends ContainerElement {
 
   private LabelElement title;
   private HorizontalDivider divider;
-  private FooterElement footer;
+  private ButtonElement closeButton;
+  private ButtonElement submitButton;
+  private SideBySideElement footer;
 
   public ManageExperienceModal(InteractiveScreen.InteractiveContext context, InteractiveScreen parent, PublicUser user, ExperienceEndpointProxy experienceEndpointProxy, McChatService mcChatService) {
     super(context, parent, LayoutMode.INLINE);
@@ -37,13 +39,26 @@ public class ManageExperienceModal extends ContainerElement {
 
     this.divider = new HorizontalDivider(context, this)
         .setMode(SizingMode.PARENT_FULL);
-//    this.footer = new FooterElement(context, this);
+
+    this.closeButton = new ButtonElement(context, this);
+    this.submitButton = new ButtonElement(context, this);
+
+    this.footer = (SideBySideElement)new SideBySideElement(context, this)
+        .setElementPadding(this.width.over(2))
+        .addElement(this.closeButton, 1)
+        .addElement(this.submitButton, 1)
+        .setPadding(new Layout.RectExtension(ZERO, context.dimFactory.fromGui(4)));
+
   }
 
   @Override
   public void onCreate() {
     this.addElement(this.title);
+
+
+
     this.addElement(this.divider);
+    this.addElement(this.footer);
   }
 
   @Override

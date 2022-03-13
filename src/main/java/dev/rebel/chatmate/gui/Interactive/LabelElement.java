@@ -19,6 +19,7 @@ public class LabelElement extends SingleElement {
   private TextOverflow overflow;
   private LayoutMode layoutMode;
   private Dim linePadding;
+  private Colour colour;
 
   private List<String> lines;
 
@@ -29,6 +30,7 @@ public class LabelElement extends SingleElement {
     this.overflow = TextOverflow.TRUNCATE;
     this.layoutMode = LayoutMode.FIT;
     this.linePadding = context.dimFactory.fromGui(1);
+    this.colour = new Colour(Color.WHITE);
   }
 
   @Override
@@ -93,7 +95,7 @@ public class LabelElement extends SingleElement {
         throw new RuntimeException("Invalid TextAlignment " + this.alignment);
       }
 
-      font.drawStringWithShadow(line, this.getContentBoxX(x).getGui(), y.getGui(), new Colour(Color.WHITE).toInt());
+      font.drawStringWithShadow(line, this.getContentBoxX(x).getGui(), y.getGui(), this.colour.toInt());
       y = y.plus(fontHeight).plus(this.linePadding);
     }
   }
@@ -145,6 +147,11 @@ public class LabelElement extends SingleElement {
 
   public LayoutMode getLayoutMode() {
     return this.layoutMode;
+  }
+
+  public LabelElement setColour(Colour colour) {
+    this.colour = colour;
+    return this;
   }
 
   public enum TextAlignment {

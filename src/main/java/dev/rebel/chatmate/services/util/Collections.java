@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -27,7 +28,7 @@ public class Collections {
     return max;
   }
 
-  public static <T> T eliminate(List<T> items, BiFunction<T, T, T> eliminator) {
+  public static <T> T eliminate(Collection<T> items, BiFunction<T, T, T> eliminator) {
     T winner = null;
     for (T item : items) {
       if (winner == null) {
