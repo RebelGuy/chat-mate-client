@@ -26,13 +26,17 @@ public class RendererHelpers {
     GlStateManager.popMatrix();
   }
 
+  /** Draws a coloured rect. */
+  public static void renderRect(int zLevel, DimRect rect, Colour colour) {
+    renderRect(zLevel, rect, colour, null, null, null, null);
+  }
+
   /** Draws a coloured rect with an optional top-to-bottom gradient, and an optional exterior border (default black) */
-  public static void renderRect(DimRect rect, Colour topColour, @Nullable Colour bottomColour, @Nullable Dim borderWidth, @Nullable Colour borderTopColour, @Nullable Colour borderBottomColour) {
+  public static void renderRect(int zLevel, DimRect rect, Colour topColour, @Nullable Colour bottomColour, @Nullable Dim borderWidth, @Nullable Colour borderTopColour, @Nullable Colour borderBottomColour) {
     float x = rect.getX().getGui();
     float y = rect.getY().getGui();
     float w = rect.getWidth().getGui();
     float h = rect.getHeight().getGui();
-    int zLevel = 0;
 
     if (bottomColour == null) {
       bottomColour = topColour;
@@ -56,6 +60,18 @@ public class RendererHelpers {
       drawGradientRect(zLevel, x - thickness, y - thickness, x + w + thickness, y, borderColorStart, borderColorStart); // top
       drawGradientRect(zLevel, x - thickness, y + h, x + w + thickness, y + h + thickness, borderColorEnd, borderColorEnd); // bottom
     }
+  }
+
+  /** Assumes that the cutout rect is strictly contained by the main rect. */
+  public static void renderRectWithCutout(int zLevel, DimRect mainRect, DimRect cutoutRect, Colour colour) {
+    // ----
+    // |  |
+    // ----
+
+    renderRect(zLevel, new DimRect(mainRect.getX(), mainRect.getY(), mainRect.getWidth(), cutoutRect.getY().minus(mainRect.getY())), colour); // top
+    renderRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getBottom(), mainRect.getWidth(), mainRect.getBottom().minus(cutoutRect.getBottom())), colour); // bottom
+    renderRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getY(), cutoutRect.getX().minus(mainRect.getX()), cutoutRect.getHeight()), colour); // left
+    renderRect(zLevel, new DimRect(cutoutRect.getRight(), cutoutRect.getY(), mainRect.getRight().minus(cutoutRect.getRight()), cutoutRect.getHeight()), colour); // right
   }
 
   /** Stolen from GUI. */

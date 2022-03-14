@@ -7,6 +7,9 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.Line;
 import org.lwjgl.util.Color;
 
+import javax.annotation.Nullable;
+import java.util.List;
+
 public class HorizontalDivider extends SingleElement {
   private Dim thickness;
   private Colour colour;
@@ -36,6 +39,11 @@ public class HorizontalDivider extends SingleElement {
   }
 
   @Override
+  public List<IElement> getChildren() {
+    return null;
+  }
+
+  @Override
   public DimPoint calculateSize(Dim maxWidth) {
     // cheating a little - the maxWidth may actually be wider than this, but the important part is that we will the available width completely
     return this.setLastCalculatedSize(new DimPoint(maxWidth, this.thickness));
@@ -48,7 +56,7 @@ public class HorizontalDivider extends SingleElement {
   }
 
   @Override
-  public void render() {
+  public void renderElement() {
     Dim y = this.getBox().getY().plus(this.thickness.over(2));
     Dim x1, x2;
     if (this.mode == SizingMode.PARENT_CONTENT) {

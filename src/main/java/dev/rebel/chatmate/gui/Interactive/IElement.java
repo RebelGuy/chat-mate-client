@@ -9,7 +9,13 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 
+import javax.annotation.Nullable;
+import java.util.List;
+
 public interface IElement {
+  IElement getParent();
+  @Nullable List<IElement> getChildren();
+
   /** Called when the screen is first initialised. */
   void onCreate();
 
@@ -37,6 +43,9 @@ public interface IElement {
 
   RectExtension getMargin();
   IElement setMargin(RectExtension margin);
+
+  int getZIndex();
+  IElement setZIndex(int zIndex);
 
   // how the element should be horizontally positioned in the parent content box. relevant in the parent's setBox method.
   HorizontalAlignment getHorizontalAlignment();

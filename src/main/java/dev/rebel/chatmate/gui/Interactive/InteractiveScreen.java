@@ -14,12 +14,14 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.Out.KeyboardHandlerAction;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
+import dev.rebel.chatmate.services.util.Collections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.function.Function;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
@@ -35,7 +37,7 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseScroll = this::_onMouseScroll;
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> onKeyDown = this::_onKeyDown;
 
-  private IElement mainElement;
+  private IElement mainElement = null;
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen) {
     super();
@@ -149,13 +151,30 @@ public class InteractiveScreen extends Screen implements IElement {
         this.mc.setIngameFocus();
       }
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+    } else if (in.isPressed(Keyboard.KEY_F3)) {
+      this.toggleDebug();
+      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     }
 
     boolean handled = this.mainElement != null && this.mainElement.onKeyDown(in);
     return new KeyboardEventData.Out(handled ? KeyboardHandlerAction.HANDLED : null);
   }
 
+  private void toggleDebug() {
+    this.context.debugLayout = !this.context.debugLayout;
+  }
+
   //region Empty or delegated IElement methods
+  @Override
+  public List<IElement> getChildren() {
+    return Collections.list(this.mainElement);
+  }
+
+  @Override
+  public IElement getParent() {
+    return null;
+  }
+
   @Override
   public void onCreate() { }
 
@@ -233,6 +252,12 @@ public class InteractiveScreen extends Screen implements IElement {
   public InteractiveScreen setMargin(RectExtension margin) { return this; }
 
   @Override
+  public int getZIndex() { return 0; }
+
+  @Override
+  public IElement setZIndex(int zIndex) { return this; }
+
+  @Override
   public InteractiveScreen setHorizontalAlignment(HorizontalAlignment horizontalAlignment) { return null; }
 
   @Override
@@ -252,6 +277,8 @@ public class InteractiveScreen extends Screen implements IElement {
     public final DimFactory dimFactory;
     public final Minecraft minecraft;
     public final FontRenderer fontRenderer;
+
+    public boolean debugLayout = false;
 
     public InteractiveContext(MouseEventService mouseEventService, KeyboardEventService keyboardEventService, DimFactory dimFactory, Minecraft minecraft, FontRenderer fontRenderer) {
       this.mouseEventService = mouseEventService;

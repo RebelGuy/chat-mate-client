@@ -4,11 +4,14 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
+
+import javax.swing.*;
 
 // a note about box size terminology:
 // the full box includes contents, surrounded by padding, surrounded by margin. it is the box used when calculating any sort of layout.
@@ -24,6 +27,7 @@ public abstract class ElementBase implements IElement {
   private DimRect box;
   private RectExtension padding;
   private RectExtension margin;
+  private int zIndex;
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
 
@@ -35,9 +39,13 @@ public abstract class ElementBase implements IElement {
     this.box = null;
     this.padding = new RectExtension(context.dimFactory.zeroGui());
     this.margin = new RectExtension(context.dimFactory.zeroGui());
+    this.zIndex = 0;
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
   }
+
+  @Override
+  public IElement getParent() { return this.parent; }
 
   @Override
   public void onCreate() { }
@@ -97,6 +105,21 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
+  public final void render() {
+    if (this.context.debugLayout) {
+      RendererHelpers.renderRectWithCutout(1000, this.getBox(), this.getCollisionBox(), Colour.RED.withAlpha(0.1f));
+      RendererHelpers.renderRectWithCutout(1000, this.getCollisionBox(), this.getContentBox(), Colour.GREEN.withAlpha(0.1f));
+      RendererHelpers.renderRect(1000, this.getContentBox(), Colour.BLUE.withAlpha(0.2f));
+    }
+
+    this.renderElement();
+  }
+
+  /** You should never call super.render() from this method, as it will cause an infinite loop.
+   * If you need to render a base element, use super.renderElement() instead. */
+  protected abstract void renderElement();
+
+  @Override
   public IElement setPadding(RectExtension padding) {
     this.padding = padding;
     return this;
@@ -116,6 +139,17 @@ public abstract class ElementBase implements IElement {
   @Override
   public RectExtension getMargin() {
     return this.margin == null ? new RectExtension(this.context.dimFactory.zeroGui()) : this.margin;
+  }
+
+  @Override
+  public int getZIndex() {
+    return this.zIndex;
+  }
+
+  @Override
+  public IElement setZIndex(int zIndex) {
+    this.zIndex = zIndex;
+    return this;
   }
 
   @Override

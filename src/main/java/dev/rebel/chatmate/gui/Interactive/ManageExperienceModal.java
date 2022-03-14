@@ -79,11 +79,11 @@ public class ManageExperienceModal extends ContainerElement {
   }
 
   @Override
-  public void render() {
+  public void renderElement() {
     Colour backgroundTop = new Colour(64, 64, 64, 127); // light gray
     Colour backgroundBottom = new Colour(32, 32, 32, 127); // dark gray
-    RendererHelpers.renderRect(this.getBox(), backgroundTop, backgroundBottom, this.context.dimFactory.fromGui(1), null, null);
+    RendererHelpers.renderRect(this.getZIndex(), this.getBox(), backgroundTop, backgroundBottom, this.context.dimFactory.fromGui(1), null, null);
 
-    super.render();
+    super.renderElement();
   }
 }

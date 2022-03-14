@@ -33,6 +33,49 @@ public class LabelElement extends SingleElement {
     this.colour = new Colour(Color.WHITE);
   }
 
+  public LabelElement setText(String text) {
+    this.text = text;
+    this.onInvalidateSize();
+    return this;
+  }
+
+  public String getText() {
+    return this.text;
+  }
+
+  public LabelElement setAlignment(TextAlignment alignment) {
+    this.alignment = alignment;
+    this.onInvalidateSize();
+    return this;
+  }
+
+  public LabelElement setOverflow(TextOverflow overflow) {
+    this.overflow = overflow;
+    this.onInvalidateSize();
+    return this;
+  }
+
+  public LabelElement setLinePadding(Dim linePadding) {
+    this.linePadding = linePadding;
+    this.onInvalidateSize();
+    return this;
+  }
+
+  public LabelElement setLayoutMode(LayoutMode layoutMode) {
+    this.layoutMode = layoutMode;
+    return this;
+  }
+
+  public LabelElement setColour(Colour colour) {
+    this.colour = colour;
+    return this;
+  }
+
+  @Override
+  public List<IElement> getChildren() {
+    return null;
+  }
+
   @Override
   public DimPoint calculateSize(Dim maxWidth) {
     FontRenderer font = this.context.fontRenderer;
@@ -80,7 +123,7 @@ public class LabelElement extends SingleElement {
   }
 
   @Override
-  public void render() {
+  public void renderElement() {
     FontRenderer font = this.context.fontRenderer;
     DimFactory factory = this.context.dimFactory;
 
@@ -104,44 +147,6 @@ public class LabelElement extends SingleElement {
       font.drawStringWithShadow(line, this.getContentBoxX(x).getGui(), y.getGui(), this.colour.toInt());
       y = y.plus(fontHeight).plus(this.linePadding);
     }
-  }
-
-  public LabelElement setText(String text) {
-    this.text = text;
-    this.onInvalidateSize();
-    return this;
-  }
-
-  public String getText() {
-    return this.text;
-  }
-
-  public LabelElement setAlignment(TextAlignment alignment) {
-    this.alignment = alignment;
-    this.onInvalidateSize();
-    return this;
-  }
-
-  public LabelElement setOverflow(TextOverflow overflow) {
-    this.overflow = overflow;
-    this.onInvalidateSize();
-    return this;
-  }
-
-  public LabelElement setLinePadding(Dim linePadding) {
-    this.linePadding = linePadding;
-    this.onInvalidateSize();
-    return this;
-  }
-
-  public LabelElement setLayoutMode(LayoutMode layoutMode) {
-    this.layoutMode = layoutMode;
-    return this;
-  }
-
-  public LabelElement setColour(Colour colour) {
-    this.colour = colour;
-    return this;
   }
 
   /** How should the text fill the Label's content box? */

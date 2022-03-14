@@ -3,11 +3,8 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 
-/** A single element with no children. */
+/** A single element which does not automatically manage its childrens' layout. Intended for standalone elements. */
 public abstract class SingleElement extends ElementBase {
   protected boolean visible;
 
@@ -21,7 +18,7 @@ public abstract class SingleElement extends ElementBase {
   public abstract DimPoint calculateSize(Dim maxWidth);
 
   @Override
-  public abstract void render();
+  public abstract void renderElement();
 
   @Override
   public boolean getVisible() {

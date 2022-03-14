@@ -7,8 +7,12 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
+import dev.rebel.chatmate.services.util.Collections;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 public class ButtonElement extends SingleElement {
   private static final ResourceLocation BUTTON_TEXTURES = new ResourceLocation("textures/gui/widgets.png");
@@ -59,6 +63,11 @@ public class ButtonElement extends SingleElement {
   }
 
   @Override
+  public List<IElement> getChildren() {
+    return Collections.list(this.label);
+  }
+
+  @Override
   public DimPoint calculateSize(Dim maxWidth) {
     maxWidth = Dim.min(getContentBoxWidth(maxWidth), this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
 
@@ -93,7 +102,7 @@ public class ButtonElement extends SingleElement {
   }
 
   @Override
-  public void render() {
+  public void renderElement() {
     int hoverState = !this.enabled ? 0 : this.hovered ? 2 : 1; // 0 if disabled, 1 if normal, 2 if hovering
 
     this.context.minecraft.getTextureManager().bindTexture(BUTTON_TEXTURES);

@@ -53,4 +53,8 @@ public class Collections {
     }
     return result;
   }
+
+  public static <T> List<T> list(T... items) {
+    return new ArrayList<>(Arrays.asList(items));
+  }
 }

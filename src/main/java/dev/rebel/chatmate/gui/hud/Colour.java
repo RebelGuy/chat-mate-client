@@ -4,6 +4,19 @@ import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 
 public class Colour {
+  public static final Colour WHITE = new Colour(Color.WHITE);
+  public static final Colour BLACK = new Colour(Color.BLACK);
+  public static final Colour RED = new Colour(Color.RED);
+  public static final Colour BLUE = new Colour(Color.BLUE);
+  public static final Colour CYAN = new Colour(Color.CYAN);
+  public static final Colour DKGREY = new Colour(Color.DKGREY);
+  public static final Colour GREEN = new Colour(Color.GREEN);
+  public static final Colour GREY = new Colour(Color.GREY);
+  public static final Colour LTGREY = new Colour(Color.LTGREY);
+  public static final Colour ORANGE = new Colour(Color.ORANGE);
+  public static final Colour PURPLE = new Colour(Color.PURPLE);
+  public static final Colour YELLOW = new Colour(Color.YELLOW);
+
   public final int red;
   public final int green;
   public final int blue;
@@ -67,6 +80,15 @@ public class Colour {
     }
 
     return toInt(this.red, this.green, this.blue, alpha);
+  }
+
+  public Colour withAlpha(int alpha) {
+    return new Colour(this.red, this.green, this.blue, alpha);
+  }
+
+  public Colour withAlpha(float alpha) {
+    int alphaInt = (int)(alpha * 255);
+    return this.withAlpha(alphaInt);
   }
 
   private static int toInt(int red, int green, int blue, int alpha) {

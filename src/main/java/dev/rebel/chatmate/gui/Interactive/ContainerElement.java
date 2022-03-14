@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-/** An element that contains other element and is responsible for their relative layout. */
+/** An element that contains other elements and is responsible for their relative layout. */
 public abstract class ContainerElement extends ElementBase {
   private final LayoutMode mode;
 
@@ -42,6 +42,11 @@ public abstract class ContainerElement extends ElementBase {
     this.children.clear();
     this.childrenRelBoxes.clear();
     return this;
+  }
+
+  @Override
+  public List<IElement> getChildren() {
+    return this.children;
   }
 
   @Override
@@ -181,7 +186,7 @@ public abstract class ContainerElement extends ElementBase {
   }
 
   @Override
-  public void render() {
+  public void renderElement() {
     for (IElement element : this.children) {
       element.render();
     }
