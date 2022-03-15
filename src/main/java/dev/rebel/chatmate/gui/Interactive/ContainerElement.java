@@ -4,14 +4,11 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 /** An element that contains other elements and is responsible for their relative layout. */
 public abstract class ContainerElement extends ElementBase {
@@ -47,81 +44,6 @@ public abstract class ContainerElement extends ElementBase {
   @Override
   public List<IElement> getChildren() {
     return this.children;
-  }
-
-  @Override
-  public boolean onMouseDown(MouseEventData.In in) {
-    for (IElement element : this.children) {
-      if (propagateMouseEvent(in, element, element::onMouseDown)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  @Override
-  public boolean onMouseMove(MouseEventData.In in) {
-    for (IElement element : this.children) {
-      if (propagateMouseEvent(in, element, element::onMouseMove)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  @Override
-  public boolean onMouseUp(MouseEventData.In in) {
-    for (IElement element : this.children) {
-      if (propagateMouseEvent(in, element, element::onMouseUp)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  @Override
-  public boolean onMouseScroll(MouseEventData.In in) {
-    for (IElement element : this.children) {
-      if (propagateMouseEvent(in, element, element::onMouseScroll)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  @Override
-  public boolean onKeyDown(KeyboardEventData.In in) {
-    for (IElement element : this.children) {
-      if (element.onKeyDown(in)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /** Dispatches the event to the element, if eligible. */
-  protected boolean propagateMouseEvent(MouseEventData.In in, IElement element, Function<MouseEventData.In, Boolean> dispatcher) {
-    if (!element.getVisible()) {
-      return false;
-    }
-
-    DimRect rect = getCollisionBox(element);
-    if (rect == null) {
-      return false;
-    }
-
-    Dim x = in.mousePositionData.x;
-    Dim y = in.mousePositionData.y;
-    if (rect.checkCollision(new DimPoint(x, y))) {
-      return dispatcher.apply(in);
-    }
-
-    return false;
   }
 
   @Override

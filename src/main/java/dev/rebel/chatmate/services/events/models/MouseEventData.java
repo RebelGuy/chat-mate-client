@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services.events.models;
 
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
@@ -61,10 +62,12 @@ public class MouseEventData extends EventData<In, Out, Options> {
       /** The rounded position of the mouse in GUI coordinates (possibly scaled) */
       public final Dim x;
       public final Dim y;
+      public final DimPoint point;
 
       public MousePositionData(Dim x, Dim y) {
         this.x = x.copy();
         this.y = y.copy();
+        this.point = new DimPoint(x, y);
       }
 
       public boolean Equals(MousePositionData other) {

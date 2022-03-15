@@ -58,11 +58,6 @@ public class ButtonElement extends SingleElement {
   }
 
   @Override
-  public boolean onMouseMove(In in) {
-    return super.onMouseMove(in);
-  }
-
-  @Override
   public List<IElement> getChildren() {
     return Collections.list(this.label);
   }

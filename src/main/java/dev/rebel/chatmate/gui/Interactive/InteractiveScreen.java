@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
@@ -125,26 +126,27 @@ public class InteractiveScreen extends Screen implements IElement {
   // note: the mouse location does not need to be translated for the root element, because it is assumed to be positioned
   // at 0,0
   private MouseEventData.Out _onMouseDown(MouseEventData.In in) {
-    boolean handled = this.mainElement != null && this.mainElement.onMouseDown(in);
+    boolean handled = this.propagateMouseEvent(EventType.MOUSE_DOWN, in);
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
   private MouseEventData.Out _onMouseMove(MouseEventData.In in) {
-    boolean handled = this.mainElement != null && this.mainElement.onMouseMove(in);
+    boolean handled = this.propagateMouseEvent(EventType.MOUSE_MOVE, in);
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
   private MouseEventData.Out _onMouseUp(MouseEventData.In in) {
-    boolean handled = this.mainElement != null && this.mainElement.onMouseUp(in);
+    boolean handled = this.propagateMouseEvent(EventType.MOUSE_UP, in);
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
   private MouseEventData.Out _onMouseScroll(MouseEventData.In in) {
-    boolean handled = this.mainElement != null && this.mainElement.onMouseScroll(in);
+    boolean handled = this.propagateMouseEvent(EventType.MOUSE_SCROLL, in);
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
   private KeyboardEventData.Out _onKeyDown(KeyboardEventData.In in) {
+    // inject some global key handling
     if (this.mainElement != null && in.isPressed(Keyboard.KEY_ESCAPE)) {
       this.mc.displayGuiScreen(this.parentScreen);
       if (this.mc.currentScreen == null) {
@@ -156,7 +158,8 @@ public class InteractiveScreen extends Screen implements IElement {
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     }
 
-    boolean handled = this.mainElement != null && this.mainElement.onKeyDown(in);
+    // now do the normal event propagation
+    boolean handled = this.propagateKeyboardEvent(EventType.KEY_DOWN, in);
     return new KeyboardEventData.Out(handled ? KeyboardHandlerAction.HANDLED : null);
   }
 
@@ -164,16 +167,98 @@ public class InteractiveScreen extends Screen implements IElement {
     this.context.debugLayout = !this.context.debugLayout;
   }
 
-  //region Empty or delegated IElement methods
-  @Override
-  public List<IElement> getChildren() {
-    return Collections.list(this.mainElement);
+  private boolean propagateMouseEvent(Events.EventType type, MouseEventData.In data) {
+    if (this.mainElement == null) {
+      return false;
+    }
+
+    // collect the focus while we're at it - if no element along the path accepts a focus, we will unfocus the currently focussed element.
+    List<IElement> elements = ElementHelpers.getElementsAtPoint(this, data.mousePositionData.point);
+    IElement target = Collections.last(elements);
+    InteractiveEvent<MouseEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target);
+    IElement newFocus = null;
+    for (IElement element : elements) {
+      if (element.getFocusable()) {
+        newFocus = element;
+      }
+
+      element.onEvent(type, captureEvent);
+      if (captureEvent.stoppedPropagation) {
+        break;
+      }
+    }
+
+    IElement oldFocus = context.focusedElement;
+    context.focusedElement = newFocus;
+    if (oldFocus != newFocus) {
+      FocusEventData focusData = new FocusEventData(oldFocus, newFocus);
+      if (oldFocus != null) {
+        InteractiveEvent<FocusEventData> blurEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, oldFocus);
+        oldFocus.onEvent(EventType.BLUR, blurEvent);
+      }
+      if (newFocus != null) {
+        InteractiveEvent<FocusEventData> focusEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, newFocus);
+        newFocus.onEvent(EventType.FOCUS, focusEvent);
+      }
+    }
+
+    if (captureEvent.stoppedPropagation) {
+      return true;
+    }
+
+    InteractiveEvent<MouseEventData.In> bubbleEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target);
+    for (IElement element : Collections.reverse(elements)) {
+      element.onEvent(type, bubbleEvent);
+      if (bubbleEvent.stoppedPropagation) {
+        break;
+      }
+    }
+
+    return bubbleEvent.stoppedPropagation;
   }
 
-  @Override
-  public IElement getParent() {
-    return null;
+  /** Propagates the keyboard event to the currently focused element. */
+  private boolean propagateKeyboardEvent(EventType type, KeyboardEventData.In data) {
+    IElement target = this.context.focusedElement;
+    if (this.mainElement == null || target == null) {
+      return false;
+    }
+
+    List<IElement> elements = ElementHelpers.findElementFromChild(target, this);
+    if (elements == null) {
+      System.out.println("Cannot find elements to propagate keyboard event");
+      return false;
+    }
+
+    InteractiveEvent<KeyboardEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target);
+    for (IElement element : Collections.reverse(elements)) {
+      element.onEvent(type, captureEvent);
+      if (captureEvent.stoppedPropagation) {
+        break;
+      }
+    }
+
+    if (captureEvent.stoppedPropagation) {
+      return true;
+    }
+
+    InteractiveEvent<KeyboardEventData.In> bubbleEvent = new InteractiveEvent<>(EventPhase.BUBBLE, data, target);
+    for (IElement element : elements) {
+      element.onEvent(type, bubbleEvent);
+      if (bubbleEvent.stoppedPropagation) {
+        break;
+      }
+    }
+
+    return bubbleEvent.stoppedPropagation;
   }
+
+  //region Empty or delegated IElement methods
+  @Override
+  public List<IElement> getChildren() { return Collections.list(this.mainElement); }
+
+  @Override
+  public IElement getParent() { return null; }
 
   @Override
   public void onCreate() { }
@@ -182,29 +267,7 @@ public class InteractiveScreen extends Screen implements IElement {
   public void onDispose() { }
 
   @Override
-  public boolean onMouseDown(MouseEventData.In in) {
-    return false;
-  }
-
-  @Override
-  public boolean onMouseMove(MouseEventData.In in) {
-    return false;
-  }
-
-  @Override
-  public boolean onMouseUp(MouseEventData.In in) {
-    return false;
-  }
-
-  @Override
-  public boolean onMouseScroll(MouseEventData.In in) {
-    return false;
-  }
-
-  @Override
-  public boolean onKeyDown(KeyboardEventData.In in) {
-    return false;
-  }
+  public void onEvent(EventType type, IEvent<?> event) { }
 
   @Override
   public DimPoint calculateSize(Dim maxWidth) { return null; }
@@ -225,9 +288,7 @@ public class InteractiveScreen extends Screen implements IElement {
   public void render() { }
 
   @Override
-  public boolean getVisible() {
-    return this.mainElement.getVisible();
-  }
+  public boolean getVisible() { return true; }
 
   @Override
   public InteractiveScreen setVisible(boolean visible) {
@@ -236,17 +297,13 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   @Override
-  public RectExtension getPadding() {
-    return new RectExtension(this.context.dimFactory.zeroGui());
-  }
+  public RectExtension getPadding() { return new RectExtension(this.context.dimFactory.zeroGui()); }
 
   @Override
   public InteractiveScreen setPadding(RectExtension padding) { return this; }
 
   @Override
-  public RectExtension getMargin() {
-    return new RectExtension(this.context.dimFactory.zeroGui());
-  }
+  public RectExtension getMargin() { return new RectExtension(this.context.dimFactory.zeroGui()); }
 
   @Override
   public InteractiveScreen setMargin(RectExtension margin) { return this; }
@@ -256,6 +313,12 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public IElement setZIndex(int zIndex) { return this; }
+
+  @Override
+  public boolean getFocusable() { return false; }
+
+  @Override
+  public IElement setFocusable(boolean focusable) { return null; }
 
   @Override
   public InteractiveScreen setHorizontalAlignment(HorizontalAlignment horizontalAlignment) { return null; }
@@ -279,6 +342,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final FontRenderer fontRenderer;
 
     public boolean debugLayout = false;
+    public @Nullable IElement focusedElement = null;
 
     public InteractiveContext(MouseEventService mouseEventService, KeyboardEventService keyboardEventService, DimFactory dimFactory, Minecraft minecraft, FontRenderer fontRenderer) {
       this.mouseEventService = mouseEventService;

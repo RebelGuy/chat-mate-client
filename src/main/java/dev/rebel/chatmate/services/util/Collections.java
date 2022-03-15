@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services.util;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,5 +57,15 @@ public class Collections {
 
   public static <T> List<T> list(T... items) {
     return new ArrayList<>(Arrays.asList(items));
+  }
+
+  public static @Nullable <T> T last(List<T> list) { return list.size() == 0 ? null : list.get(list.size() - 1); }
+
+  public static <T> List<T> reverse(List<T> list) {
+    List<T> result = new ArrayList<>();
+    for (int i = list.size() - 1; i >= 0; i--) {
+      result.add(list.get(i));
+    }
+    return result;
   }
 }

@@ -1,13 +1,13 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -22,11 +22,9 @@ public interface IElement {
   /** Called when the screen is being removed. */
   void onDispose();
 
-  boolean onMouseDown(MouseEventData.In in);
-  boolean onMouseMove(MouseEventData.In in);
-  boolean onMouseUp(MouseEventData.In in);
-  boolean onMouseScroll(MouseEventData.In in);
-  boolean onKeyDown(KeyboardEventData.In in);
+
+  // the event data is determined by the event type
+  void onEvent(EventType type, IEvent<?> event);
 
   void onInvalidateSize(); // to be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere.
   DimPoint calculateSize(Dim maxWidth); // this gives the maximum width that the child's full box can take up
@@ -46,6 +44,9 @@ public interface IElement {
 
   int getZIndex();
   IElement setZIndex(int zIndex);
+
+  boolean getFocusable();
+  IElement setFocusable(boolean focusable);
 
   // how the element should be horizontally positioned in the parent content box. relevant in the parent's setBox method.
   HorizontalAlignment getHorizontalAlignment();

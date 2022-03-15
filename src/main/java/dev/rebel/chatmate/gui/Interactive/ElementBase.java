@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -28,6 +30,7 @@ public abstract class ElementBase implements IElement {
   private RectExtension padding;
   private RectExtension margin;
   private int zIndex;
+  private boolean isFocusable;
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
 
@@ -40,6 +43,7 @@ public abstract class ElementBase implements IElement {
     this.padding = new RectExtension(context.dimFactory.zeroGui());
     this.margin = new RectExtension(context.dimFactory.zeroGui());
     this.zIndex = 0;
+    this.isFocusable = false;
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
   }
@@ -54,28 +58,8 @@ public abstract class ElementBase implements IElement {
   public void onDispose() { }
 
   @Override
-  public boolean onMouseDown(In in) {
-    return false;
-  }
+  public void onEvent(EventType type, IEvent<?> event) {
 
-  @Override
-  public boolean onMouseMove(In in) {
-    return false;
-  }
-
-  @Override
-  public boolean onMouseUp(In in) {
-    return false;
-  }
-
-  @Override
-  public boolean onMouseScroll(In in) {
-    return false;
-  }
-
-  @Override
-  public boolean onKeyDown(KeyboardEventData.In in) {
-    return false;
   }
 
   @Override
@@ -149,6 +133,17 @@ public abstract class ElementBase implements IElement {
   @Override
   public IElement setZIndex(int zIndex) {
     this.zIndex = zIndex;
+    return this;
+  }
+
+  @Override
+  public boolean getFocusable() {
+    return this.isFocusable;
+  }
+
+  @Override
+  public IElement setFocusable(boolean focusable) {
+    this.isFocusable = focusable;
     return this;
   }
 
