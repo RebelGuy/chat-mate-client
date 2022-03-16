@@ -10,6 +10,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.models.Line;
@@ -18,6 +19,7 @@ import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.util.Collections;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -175,16 +177,14 @@ public abstract class ElementBase implements IElement {
   @Override
   public final void render() {
     GlStateManager.pushMatrix();
+
+    GlStateManager.pushMatrix();
     GlStateManager.enableBlend();
     GlStateManager.disableLighting();
     this.renderElement();
     GlStateManager.popMatrix();
 
     if (this.context.debugElement == this) {
-      GlStateManager.enableBlend();
-      GlStateManager.disableLighting();
-
-      // todo: issues with layering. rects are hiding everything the mouse cursor and text. fix blending
       Dim borderWidth = this.context.dimFactory.fromScreen(1);
       Colour borderColour = Colour.BLACK.withAlpha(0.2f);
       RendererHelpers.renderRectWithCutout(1000, this.getBox(), this.getCollisionBox(), Colour.RED.withAlpha(0.1f), borderWidth, borderColour);
@@ -193,6 +193,7 @@ public abstract class ElementBase implements IElement {
 
       DimPoint mousePos = this.context.mousePosition;
       if (mousePos != null) {
+        mousePos = mousePos.setAnchor(DimAnchor.GUI);
         DimPoint screen = this.context.dimFactory.getMinecraftSize();
         RendererHelpers.drawLine(new Line(new DimPoint(ZERO, mousePos.getY()), new DimPoint(screen.getX(), mousePos.getY())), borderWidth, borderColour, false);
         RendererHelpers.drawLine(new Line(new DimPoint(mousePos.getX(), ZERO), new DimPoint(mousePos.getX(), screen.getY())), borderWidth, borderColour, false);
@@ -228,6 +229,8 @@ public abstract class ElementBase implements IElement {
         y += font.FONT_HEIGHT;
       }
     }
+
+    GlStateManager.popMatrix();
   }
 
   /** You should never call super.render() from this method, as it will cause an infinite loop.

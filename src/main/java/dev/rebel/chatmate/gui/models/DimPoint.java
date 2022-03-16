@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.models;
 
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
+
 public class DimPoint {
   private final Dim x;
   private final Dim y;
@@ -23,6 +25,10 @@ public class DimPoint {
 
   public DimPoint minus(DimPoint other) {
     return new DimPoint(this.x.minus(other.getX()), this.y.minus(other.getY()));
+  }
+
+  public DimPoint setAnchor(DimAnchor anchor) {
+    return new DimPoint(this.getX().setAnchor(anchor), this.getY().setAnchor(anchor));
   }
 
   @Override

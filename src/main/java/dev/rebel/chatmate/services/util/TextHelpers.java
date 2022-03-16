@@ -115,6 +115,18 @@ public class TextHelpers {
     return components.stream().map(IChatComponent::getFormattedText).collect(Collectors.toList());
   }
 
+  public static String float2Str(float num) {
+    String str = String.format("%.2f", num);
+    return trimRight(trimRight(str, '0'), '.');
+  }
+
+  public static String trimRight(String text, char toTrim) {
+    while (text.length() > 0 && text.charAt(text.length() - 1) == toTrim) {
+      text = text.substring(0, text.length() - 1);
+    }
+    return text;
+  }
+
   private static boolean isEndOfWord(char[] text, int i) {
     return i == text.length - 1 || !isWordSeparator(text[i]) && isWordSeparator(text[i + 1]);
   }

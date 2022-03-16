@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraftforge.fml.client.config.GuiUtils;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.Color;
 
 import javax.annotation.Nullable;
@@ -42,7 +43,7 @@ public class RendererHelpers {
       bottomColour = topColour;
     }
 
-    drawGradientRect(zLevel, x, y, x + w, y + h, topColour.toSafeInt(), bottomColour.toSafeInt());
+    drawGradientRect(zLevel, x, y, x + w, y + h, topColour, bottomColour);
 
     if (borderWidth != null) {
       if (borderTopColour == null) {
@@ -51,14 +52,12 @@ public class RendererHelpers {
       if (borderBottomColour == null) {
         borderBottomColour = borderTopColour;
       }
-      final int borderColorStart = borderTopColour.toSafeInt();
-      final int borderColorEnd = borderBottomColour.toSafeInt();
       float thickness = borderWidth.getGui();
 
-      drawGradientRect(zLevel, x - thickness, y - thickness, x, y + h + thickness, borderColorStart, borderColorEnd); // left
-      drawGradientRect(zLevel, x + w, y - thickness, x + w + thickness, y + h + thickness, borderColorStart, borderColorEnd); // right
-      drawGradientRect(zLevel, x - thickness, y - thickness, x + w + thickness, y, borderColorStart, borderColorStart); // top
-      drawGradientRect(zLevel, x - thickness, y + h, x + w + thickness, y + h + thickness, borderColorEnd, borderColorEnd); // bottom
+      drawGradientRect(zLevel, x - thickness, y - thickness, x, y + h + thickness, borderTopColour, borderBottomColour); // left
+      drawGradientRect(zLevel, x + w, y - thickness, x + w + thickness, y + h + thickness, borderTopColour, borderBottomColour); // right
+      drawGradientRect(zLevel, x - thickness, y - thickness, x + w + thickness, y, borderTopColour, borderTopColour); // top
+      drawGradientRect(zLevel, x - thickness, y + h, x + w + thickness, y + h + thickness, borderBottomColour, borderBottomColour); // bottom
     }
   }
 
@@ -120,11 +119,12 @@ public class RendererHelpers {
 
     List<Line> linesToDraw = line.getOutline(lineWidth, includeCaps);
 
+    GlStateManager.pushMatrix();
     GlStateManager.disableTexture2D();
     GlStateManager.enableBlend();
     GlStateManager.disableAlpha();
-    GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-    GlStateManager.shadeModel(7425);
+    GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+    GlStateManager.depthMask(false);
 
     Tessellator tessellator = Tessellator.getInstance();
     WorldRenderer worldrenderer = tessellator.getWorldRenderer();
@@ -135,31 +135,32 @@ public class RendererHelpers {
     }
     tessellator.draw();
 
-    GlStateManager.shadeModel(7424);
     GlStateManager.disableBlend();
     GlStateManager.enableAlpha();
     GlStateManager.enableTexture2D();
+    GlStateManager.popMatrix();
   }
 
   /**
    * Stolen from GuiUtils (and amusingly also Gui.java), but modified for float coords.
    */
-  private static void drawGradientRect(int zLevel, float left, float top, float right, float bottom, int startColor, int endColor)
+  private static void drawGradientRect(int zLevel, float left, float top, float right, float bottom, Colour startColor, Colour endColor)
   {
-    float startAlpha = (float)(startColor >> 24 & 255) / 255.0F;
-    float startRed = (float)(startColor >> 16 & 255) / 255.0F;
-    float startGreen = (float)(startColor >> 8 & 255) / 255.0F;
-    float startBlue = (float)(startColor & 255) / 255.0F;
-    float endAlpha = (float)(endColor >> 24 & 255) / 255.0F;
-    float endRed = (float)(endColor >> 16 & 255) / 255.0F;
-    float endGreen = (float)(endColor >> 8 & 255) / 255.0F;
-    float endBlue = (float)(endColor & 255) / 255.0F;
+    float startAlpha = (float)startColor.alpha / 255.0F;
+    float startRed = (float)startColor.red / 255.0F;
+    float startGreen = (float)startColor.green / 255.0F;
+    float startBlue = (float)startColor.blue / 255.0F;
+    float endAlpha = (float)endColor.alpha / 255.0F;
+    float endRed = (float)endColor.red / 255.0F;
+    float endGreen = (float)endColor.green / 255.0F;
+    float endBlue = (float)endColor.blue / 255.0F;
 
-    GlStateManager.disableTexture2D();
+    GlStateManager.pushMatrix();
     GlStateManager.enableBlend();
+    GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
     GlStateManager.disableAlpha();
-    GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-    GlStateManager.shadeModel(7425);
+    GlStateManager.disableTexture2D();
+    GlStateManager.depthMask(false); // this ensures we can draw multiple transparent things on top of each other
 
     Tessellator tessellator = Tessellator.getInstance();
     WorldRenderer worldrenderer = tessellator.getWorldRenderer();
@@ -170,9 +171,9 @@ public class RendererHelpers {
     worldrenderer.pos(right, bottom, zLevel).color(endRed, endGreen, endBlue, endAlpha).endVertex();
     tessellator.draw();
 
-    GlStateManager.shadeModel(7424);
     GlStateManager.disableBlend();
     GlStateManager.enableAlpha();
     GlStateManager.enableTexture2D();
+    GlStateManager.popMatrix();
   }
 }

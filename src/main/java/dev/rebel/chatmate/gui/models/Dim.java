@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.models;
 
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.TextHelpers;
 
 import java.util.List;
 import java.util.Objects;
@@ -32,6 +33,10 @@ public class Dim {
 
   public Dim setGui(float guiValue) {
     return new Dim(this.scaleFactor, this.anchor).withValue(guiValue * this.getConversionFactor(DimAnchor.GUI, this.anchor));
+  }
+
+  public Dim setAnchor(DimAnchor anchor) {
+    return new Dim(this.scaleFactor, anchor).withValue(this.value * this.getConversionFactor(this.anchor, anchor));
   }
 
   public Dim plus(Dim other) {
@@ -115,7 +120,7 @@ public class Dim {
 
   @Override
   public String toString() {
-    return String.format("%.2f (%s)", this.value, this.anchor);
+    return String.format("%s (%s)", TextHelpers.float2Str(this.value), this.anchor);
   }
 
   public enum DimAnchor { SCREEN, GUI }
