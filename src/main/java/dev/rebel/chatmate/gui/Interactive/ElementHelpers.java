@@ -68,9 +68,14 @@ public class ElementHelpers {
   }
 
   public static void renderDebugInfo(IElement element, InteractiveContext context) {
-    Dim borderWidth = context.dimFactory.fromScreen(1);
+    IElement parent = element.getParent();
     Dim ZERO = context.dimFactory.zeroGui();
+
+    Dim borderWidth = context.dimFactory.fromScreen(1);
     Colour borderColour = Colour.BLACK.withAlpha(0.2f);
+    if (parent != null) {
+      RendererHelpers.renderRectWithCutout(1000, getContentBox(parent), element.getBox(), Colour.YELLOW.withAlpha(0.1f), borderWidth, borderColour);
+    }
     RendererHelpers.renderRectWithCutout(1000, element.getBox(), getCollisionBox(element), Colour.RED.withAlpha(0.1f), borderWidth, borderColour);
     RendererHelpers.renderRectWithCutout(1000, getCollisionBox(element), getContentBox(element), Colour.GREEN.withAlpha(0.1f), borderWidth, borderColour);
     RendererHelpers.renderRect(1000, getContentBox(element), Colour.BLUE.withAlpha(0.2f), borderWidth, borderColour);
@@ -88,9 +93,11 @@ public class ElementHelpers {
     lines.add("Content: " + getContentBox(element).toString());
     lines.add("Padding: " + element.getPadding().toString());
     lines.add("Margin: " + element.getMargin().toString());
+    lines.add("Hor Algn: " + element.getHorizontalAlignment());
+    lines.add("Vert Algn: " + element.getVerticalAlignment());
+    lines.add("Focus: " + (element.getFocusable() ? context.focusedElement == element ? "Yes" : "No" : "n/a"));
     lines.add("");
 
-    IElement parent = element.getParent();
     List<IElement> siblings = parent == null ? Collections.list() : Collections.without(parent.getChildren(), element);
     lines.add(String.format("%s (with %d %s)", element.getClass().getSimpleName(), siblings.size(), siblings.size() == 1 ? "sibling" : "siblings"));
 
