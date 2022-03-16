@@ -9,6 +9,8 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.services.McChatService;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 
 public class ManageExperienceModal extends ContainerElement {
   private final PublicUser user;
@@ -45,9 +47,11 @@ public class ManageExperienceModal extends ContainerElement {
         .setMode(SizingMode.PARENT_FULL);
 
     this.closeButton = new ButtonElement(context, this)
-        .setText("Close");
+        .setText("Close")
+        .setOnClick(this::onClose);
     this.submitButton = new ButtonElement(context, this)
-        .setText("Submit");
+        .setText("Submit")
+        .setOnClick(this::onSubmit);
 
     this.footer = (SideBySideElement)new SideBySideElement(context, this)
         .setElementPadding(this.width.over(2))
@@ -55,6 +59,14 @@ public class ManageExperienceModal extends ContainerElement {
         .addElement(this.submitButton, 1)
         .setPadding(new Layout.RectExtension(ZERO, context.dimFactory.fromGui(4)));
 
+  }
+
+  private void onSubmit() {
+
+  }
+
+  private void onClose() {
+    super.onCloseScreen();
   }
 
   @Override

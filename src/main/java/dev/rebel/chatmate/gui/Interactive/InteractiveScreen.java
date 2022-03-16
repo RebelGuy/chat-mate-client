@@ -66,6 +66,14 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   @Override
+  public void onCloseScreen() {
+    this.mc.displayGuiScreen(this.parentScreen);
+    if (this.mc.currentScreen == null) {
+      this.mc.setIngameFocus();
+    }
+  }
+
+  @Override
   protected void onScreenSizeUpdated() {
     this.recalculateLayout();
   }
@@ -146,21 +154,22 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private KeyboardEventData.Out _onKeyDown(KeyboardEventData.In in) {
-    // inject some global key handling
+    // now do the normal event propagation
+    boolean handled = this.propagateKeyboardEvent(EventType.KEY_DOWN, in);
+    if (handled) {
+      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+    }
+
+    // fallback key handling
     if (this.mainElement != null && in.isPressed(Keyboard.KEY_ESCAPE)) {
-      this.mc.displayGuiScreen(this.parentScreen);
-      if (this.mc.currentScreen == null) {
-        this.mc.setIngameFocus();
-      }
+      this.onCloseScreen();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     } else if (in.isPressed(Keyboard.KEY_F3)) {
       this.toggleDebug();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     }
 
-    // now do the normal event propagation
-    boolean handled = this.propagateKeyboardEvent(EventType.KEY_DOWN, in);
-    return new KeyboardEventData.Out(handled ? KeyboardHandlerAction.HANDLED : null);
+    return new KeyboardEventData.Out(null);
   }
 
   private void toggleDebug() {
@@ -173,6 +182,8 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     // collect the focus while we're at it - if no element along the path accepts a focus, we will unfocus the currently focussed element.
+    boolean refocus = type == EventType.MOUSE_DOWN;
+
     List<IElement> elements = ElementHelpers.getElementsAtPoint(this, data.mousePositionData.point);
     IElement target = Collections.last(elements);
     InteractiveEvent<MouseEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target);
@@ -189,8 +200,8 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     IElement oldFocus = context.focusedElement;
-    context.focusedElement = newFocus;
-    if (oldFocus != newFocus) {
+    if (refocus && oldFocus != newFocus) {
+      context.focusedElement = newFocus;
       FocusEventData focusData = new FocusEventData(oldFocus, newFocus);
       if (oldFocus != null) {
         InteractiveEvent<FocusEventData> blurEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, oldFocus);
@@ -206,7 +217,7 @@ public class InteractiveScreen extends Screen implements IElement {
       return true;
     }
 
-    InteractiveEvent<MouseEventData.In> bubbleEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target);
+    InteractiveEvent<MouseEventData.In> bubbleEvent = new InteractiveEvent<>(EventPhase.BUBBLE, data, target);
     for (IElement element : Collections.reverse(elements)) {
       element.onEvent(type, bubbleEvent);
       if (bubbleEvent.stoppedPropagation) {

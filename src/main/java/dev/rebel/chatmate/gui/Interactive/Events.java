@@ -42,20 +42,22 @@ public class Events {
     /** Does not have an affect when the EventPhase is TARGET. */
     void stopPropagation();
     EventPhase getPhase();
-    /** Equal to the element receiving the event when the EventPhase is TARGET. */
+    /** The element to which the event is propagating to/from. If the EventPhase is TARGET, it is equal to the element receiving the event. */
     IElement getTarget();
   }
 
   public enum EventPhase {
     CAPTURE, // the event is currently on its way propagating downwards
     BUBBLE, // the event is currently on its way propagating upwards
-    TARGET // the event is at its target and does not propagate.
+    TARGET // the event is at its target and does not propagate (i.e. it fires only for this element - calling stopPropagate() has no effect)
   }
 
   public enum EventType {
     MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, MOUSE_SCROLL, // MouseEventData.In
     KEY_DOWN, // KeyboardEventData.In
     FOCUS, BLUR // FocusEventData
+
+    // if you add more events, be sure to update the onEvent handler of the ElementBase class
   }
 
   public static class FocusEventData {

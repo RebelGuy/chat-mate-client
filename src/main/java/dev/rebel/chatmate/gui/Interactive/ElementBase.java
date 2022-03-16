@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.EventPhase;
 import dev.rebel.chatmate.gui.Interactive.Events.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
@@ -11,6 +13,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 
 import javax.swing.*;
@@ -49,7 +52,7 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
-  public IElement getParent() { return this.parent; }
+  public final IElement getParent() { return this.parent; }
 
   @Override
   public void onCreate() { }
@@ -58,12 +61,89 @@ public abstract class ElementBase implements IElement {
   public void onDispose() { }
 
   @Override
-  public void onEvent(EventType type, IEvent<?> event) {
+  public final void onEvent(EventType type, IEvent<?> event) {
+    if (event.getPhase() == EventPhase.TARGET) {
+      switch (type) {
+        case FOCUS:
+          break;
+        case BLUR:
+          break;
+        default:
+          throw new RuntimeException("Invalid event type at TARGET phase: " + type);
+      }
+    } else if (event.getPhase() == EventPhase.CAPTURE) {
+      this.onEventCapture(type, event);
+    } else if (event.getPhase() == EventPhase.BUBBLE) {
+      this.onEventBubble(type, event);
+    } else {
+      throw new RuntimeException("Invalid event phase: " + event.getPhase());
+    }
 
+    // todo: look at how we could do onEnter and onExit events. definitely want the target element to use same logic as for click, and maybe also include the previous-next element in the data (ie. the before-after target elements)
   }
 
+  private void onEventCapture(EventType type, IEvent<?> event) {
+    switch (type) {
+      case MOUSE_DOWN:
+        this.onCaptureMouseDown((IEvent<MouseEventData.In>)event);
+        break;
+      case MOUSE_MOVE:
+        this.onCaptureMouseMove((IEvent<MouseEventData.In>)event);
+        break;
+      case MOUSE_UP:
+        this.onCaptureMouseUp((IEvent<MouseEventData.In>)event);
+        break;
+      case MOUSE_SCROLL:
+        this.onCaptureMouseScroll((IEvent<MouseEventData.In>)event);
+        break;
+      case KEY_DOWN:
+        this.onCaptureKeyDown((IEvent<KeyboardEventData.In>)event);
+        break;
+      default:
+        throw new RuntimeException("Invalid event type at CAPTURE phase: " + type);
+    }
+  }
+
+  private void onEventBubble(EventType type, IEvent<?> event) {
+    switch (type) {
+      case MOUSE_DOWN:
+        this.onMouseDown((IEvent<MouseEventData.In>)event);
+        break;
+      case MOUSE_MOVE:
+        this.onMouseMove((IEvent<MouseEventData.In>)event);
+        break;
+      case MOUSE_UP:
+        this.onMouseUp((IEvent<MouseEventData.In>)event);
+        break;
+      case MOUSE_SCROLL:
+        this.onMouseScroll((IEvent<MouseEventData.In>)event);
+        break;
+      case KEY_DOWN:
+        this.onKeyDown((IEvent<KeyboardEventData.In>)event);
+        break;
+      default:
+        throw new RuntimeException("Invalid event type at BUBBLE phase: " + type);
+    }
+  }
+
+  public void onMouseDown(IEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseDown(IEvent<MouseEventData.In> e) {}
+  public void onMouseMove(IEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseMove(IEvent<MouseEventData.In> e) {}
+  public void onMouseUp(IEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseUp(IEvent<MouseEventData.In> e) {}
+  public void onMouseScroll(IEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseScroll(IEvent<MouseEventData.In> e) {}
+  public void onKeyDown(IEvent<KeyboardEventData.In> e) {}
+  public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {}
+  public void onFocus(IEvent<FocusEventData> e) {}
+  public void onBlur(IEvent<FocusEventData> e) {}
+
   @Override
-  public void onInvalidateSize() {
+  public final void onCloseScreen() { this.parent.onCloseScreen(); }
+
+  @Override
+  public final void onInvalidateSize() {
     this.parent.onInvalidateSize();
   }
 
@@ -74,7 +154,7 @@ public abstract class ElementBase implements IElement {
   protected abstract DimPoint setLastCalculatedSize(DimPoint size);
 
   @Override
-  public DimPoint getLastCalculatedSize() {
+  public final DimPoint getLastCalculatedSize() {
     return this.lastCalculatedSize;
   }
 
@@ -84,7 +164,7 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
-  public DimRect getBox() {
+  public final DimRect getBox() {
     return this.box;
   }
 
@@ -104,72 +184,72 @@ public abstract class ElementBase implements IElement {
   protected abstract void renderElement();
 
   @Override
-  public IElement setPadding(RectExtension padding) {
+  public final IElement setPadding(RectExtension padding) {
     this.padding = padding;
     return this;
   }
 
   @Override
-  public RectExtension getPadding() {
+  public final RectExtension getPadding() {
     return this.padding == null ? new RectExtension(this.context.dimFactory.zeroGui()) : this.padding;
   }
 
   @Override
-  public IElement setMargin(RectExtension margin) {
+  public final IElement setMargin(RectExtension margin) {
     this.margin = margin;
     return this;
   }
 
   @Override
-  public RectExtension getMargin() {
+  public final RectExtension getMargin() {
     return this.margin == null ? new RectExtension(this.context.dimFactory.zeroGui()) : this.margin;
   }
 
   @Override
-  public int getZIndex() {
+  public final int getZIndex() {
     return this.zIndex;
   }
 
   @Override
-  public IElement setZIndex(int zIndex) {
+  public final IElement setZIndex(int zIndex) {
     this.zIndex = zIndex;
     return this;
   }
 
   @Override
-  public boolean getFocusable() {
+  public final boolean getFocusable() {
     return this.isFocusable;
   }
 
   @Override
-  public IElement setFocusable(boolean focusable) {
+  public final IElement setFocusable(boolean focusable) {
     this.isFocusable = focusable;
     return this;
   }
 
   @Override
-  public IElement setHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
+  public final IElement setHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
     this.horizontalAlignment = horizontalAlignment;
     return this;
   }
 
   @Override
-  public HorizontalAlignment getHorizontalAlignment() {
+  public final HorizontalAlignment getHorizontalAlignment() {
     return this.horizontalAlignment;
   }
 
   @Override
-  public IElement setVerticalAlignment(VerticalAlignment verticalAlignment) {
+  public final IElement setVerticalAlignment(VerticalAlignment verticalAlignment) {
     this.verticalAlignment = verticalAlignment;
     return this;
   }
 
   @Override
-  public VerticalAlignment getVerticalAlignment() {
+  public final VerticalAlignment getVerticalAlignment() {
     return this.verticalAlignment;
   }
 
-  protected boolean checkCollision(DimPoint point) {
+  protected final boolean checkCollision(DimPoint point) {
     DimRect box = this.getBox();
     if (box == null) {
       return false;
@@ -178,30 +258,30 @@ public abstract class ElementBase implements IElement {
     return this.getMargin().applySubtractive(box).checkCollision(point);
   }
 
-  protected Dim getContentBoxX(Dim fullBoxX) {
+  protected final Dim getContentBoxX(Dim fullBoxX) {
     return fullBoxX.plus(this.margin.left).plus(this.padding.left);
   }
 
-  protected Dim getContentBoxY(Dim fullBoxY) {
+  protected final Dim getContentBoxY(Dim fullBoxY) {
     return fullBoxY.plus(this.margin.top).plus(this.padding.top);
   }
 
-  protected Dim getContentBoxWidth(Dim fullBoxWidth) {
+  protected final Dim getContentBoxWidth(Dim fullBoxWidth) {
     return fullBoxWidth.minus(this.padding.left).minus(this.padding.right).minus(this.margin.left).minus(this.margin.right);
   }
 
-  protected DimPoint getFullBoxSize(DimPoint contentBoxSize) {
+  protected final DimPoint getFullBoxSize(DimPoint contentBoxSize) {
     return new DimPoint(
       contentBoxSize.getX().plus(this.padding.left).plus(this.padding.right).plus(this.margin.left).plus(this.margin.right),
       contentBoxSize.getY().plus(this.padding.top).plus(this.padding.bottom).plus(this.margin.top).plus(this.margin.bottom)
     );
   }
 
-  protected DimRect getContentBox() {
+  protected final DimRect getContentBox() {
     return getContentBox(this);
   }
 
-  protected DimRect getCollisionBox() { return getCollisionBox(this); }
+  protected final DimRect getCollisionBox() { return getCollisionBox(this); }
 
   protected static DimRect getContentBox(IElement element) {
     return element.getPadding().plus(element.getMargin()).applySubtractive(element.getBox());
@@ -215,7 +295,7 @@ public abstract class ElementBase implements IElement {
     return element.getBox();
   }
 
-  protected DimRect alignChild(IElement child) {
+  protected final DimRect alignChild(IElement child) {
     return alignElementInBox(child.getLastCalculatedSize(), this.getContentBox(), child.getHorizontalAlignment(), child.getVerticalAlignment());
   }
 

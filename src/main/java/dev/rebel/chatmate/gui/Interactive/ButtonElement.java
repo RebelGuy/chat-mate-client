@@ -1,12 +1,14 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.util.Collections;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ResourceLocation;
@@ -28,6 +30,7 @@ public class ButtonElement extends SingleElement {
   private LayoutMode layoutMode;
   private boolean hovered;
   private boolean enabled;
+  private @Nullable Runnable onClick;
 
   public ButtonElement(InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
@@ -54,7 +57,22 @@ public class ButtonElement extends SingleElement {
 
   public ButtonElement setEnabled(boolean enabled) {
     this.enabled = enabled;
+    this.setFocusable(enabled);
     return this;
+  }
+
+  public ButtonElement setOnClick(@Nullable Runnable onClick) {
+    this.onClick = onClick;
+    return this;
+  }
+
+  @Override
+  public void onMouseDown(IEvent<MouseEventData.In> e) {
+    MouseEventData.In data = e.getData();
+    if (data.isClicked(MouseButton.LEFT_BUTTON) && this.enabled && this.onClick != null) {
+      this.onClick.run();
+      e.stopPropagation();
+    }
   }
 
   @Override
