@@ -26,6 +26,7 @@ public abstract class ContainerElement extends ElementBase {
 
   protected ContainerElement addElement(IElement element) {
     this.children.add(element);
+    element.setParent(this);
     return this;
   }
 

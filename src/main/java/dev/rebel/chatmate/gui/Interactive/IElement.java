@@ -14,6 +14,7 @@ import java.util.List;
 
 public interface IElement {
   IElement getParent();
+  IElement setParent(IElement parent);
   @Nullable List<IElement> getChildren();
 
   /** Called when the screen is first initialised. */

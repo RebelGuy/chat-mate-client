@@ -120,6 +120,10 @@ public class InteractiveScreen extends Screen implements IElement {
     // events have fired, so recalculate sizes and then render
     // this.mainElement.calculateSize(this.context.dimFactory.getMinecraftSize().getX());
     this.mainElement.render();
+
+    if (this.context.debugElement == this) {
+      ElementHelpers.renderDebugInfo(this, this.context);
+    }
   }
 
   @Override
@@ -144,7 +148,7 @@ public class InteractiveScreen extends Screen implements IElement {
     // if we are debugging and are in "discovery mode", select the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
       IElement element = Collections.last(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
-      if (element != null && element != this) {
+      if (element != null) {
         this.debugElementSelected = true;
         this.context.debugElement = element;
         return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
@@ -165,7 +169,7 @@ public class InteractiveScreen extends Screen implements IElement {
     // if we are debugging and haven't selected an element, enter "discovery mode" by temp-debugging the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
       IElement element = Collections.last(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
-      if (element != null && element != this) {
+      if (element != null) {
         this.context.debugElement = element;
         return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
       }
@@ -211,6 +215,24 @@ public class InteractiveScreen extends Screen implements IElement {
     } else if (in.isPressed(Keyboard.KEY_F3)) {
       this.toggleDebug();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+    } else if (this.debugModeEnabled && this.debugElementSelected && this.context.debugElement != null) {
+      if (in.isPressed(Keyboard.KEY_UP) && this.context.debugElement.getParent() != null) {
+        // go to parent
+        this.context.debugElement = this.context.debugElement.getParent();
+        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      } else if (in.isPressed(Keyboard.KEY_DOWN) && Collections.any(this.context.debugElement.getChildren())) {
+        // go to first child
+        this.context.debugElement = Collections.first(this.context.debugElement.getChildren());
+        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      } else if (this.context.debugElement.getParent() != null && (in.isPressed(Keyboard.KEY_LEFT) || in.isPressed(Keyboard.KEY_RIGHT))) {
+        List<IElement> siblings = this.context.debugElement.getParent().getChildren();
+        if (Collections.size(siblings) > 1) {
+          int currentIndex = siblings.indexOf(this.context.debugElement);
+          int delta = in.isPressed(Keyboard.KEY_LEFT) ? -1 : 1;
+          this.context.debugElement = Collections.elementAt(siblings, currentIndex + delta);
+          return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+        }
+      }
     }
 
     return new KeyboardEventData.Out(null);
@@ -316,6 +338,9 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public IElement getParent() { return null; }
+
+  @Override
+  public IElement setParent(IElement parent) { return null; }
 
   @Override
   public void onCreate() { }

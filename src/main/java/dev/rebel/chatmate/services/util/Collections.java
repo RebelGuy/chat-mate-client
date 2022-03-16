@@ -59,7 +59,24 @@ public class Collections {
     return new ArrayList<>(Arrays.asList(items));
   }
 
-  public static @Nullable <T> T last(List<T> list) { return list.size() == 0 ? null : list.get(list.size() - 1); }
+  public static @Nullable <T> T first(@Nullable List<T> list) { return (list == null || list.size() == 0) ? null : list.get(0); }
+
+  public static @Nullable <T> T last(@Nullable List<T> list) { return (list == null || list.size() == 0) ? null : list.get(list.size() - 1); }
+
+  public static <T> boolean any(@Nullable List<T> list) { return list != null && list.size() != 0; }
+
+  public static <T> int size(@Nullable List<T> list) { return list == null ? 0 : list.size(); }
+
+  public static <T> T elementAt(List<T> list, int index) {
+    int N = list.size();
+    if (index < 0) {
+      return elementAt(list, index + N);
+    } else if (index > N - 1) {
+      return elementAt(list, index - N);
+    } else {
+      return list.get(index);
+    }
+  }
 
   public static <T> List<T> reverse(List<T> list) {
     List<T> result = new ArrayList<>();
