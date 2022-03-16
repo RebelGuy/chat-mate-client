@@ -55,6 +55,11 @@ public class Layout {
       Dim newHeight = rect.getHeight().minus(this.top).minus(this.bottom);
       return new DimRect(newX, newY, newWidth, newHeight);
     }
+
+    @Override
+    public String toString() {
+      return String.format("l=%s, r=%s, t=%s, b=%s", this.left.toString(), this.right.toString(), this.top.toString(), this.bottom.toString());
+    }
   }
 
   public enum HorizontalAlignment {

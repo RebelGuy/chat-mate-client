@@ -29,7 +29,7 @@ import java.util.function.Function;
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
 // the correct way would have been to split IElement up into two interfaces, but it doesn't really matter.
 public class InteractiveScreen extends Screen implements IElement {
-  private final InteractiveContext context;
+  private InteractiveContext context;
   private final @Nullable GuiScreen parentScreen;
 
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseDown = this::_onMouseDown;
@@ -39,6 +39,8 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> onKeyDown = this::_onKeyDown;
 
   private IElement mainElement = null;
+  private boolean debugModeEnabled = false;
+  private boolean debugElementSelected = false;
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen) {
     super();
@@ -128,32 +130,74 @@ public class InteractiveScreen extends Screen implements IElement {
       // it is very important that we remove the reference to the mainElement, otherwise
       // this screen will never be garbage collected since mainElement holds a reference to it
       this.mainElement = null;
+      this.context = null;
     }
   }
 
   // note: the mouse location does not need to be translated for the root element, because it is assumed to be positioned
   // at 0,0
   private MouseEventData.Out _onMouseDown(MouseEventData.In in) {
+    if (this.mainElement == null) {
+      return new MouseEventData.Out(null);
+    }
+
+    // if we are debugging and are in "discovery mode", select the element under the cursor
+    if (this.debugModeEnabled && !this.debugElementSelected) {
+      IElement element = Collections.last(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
+      if (element != null && element != this) {
+        this.debugElementSelected = true;
+        this.context.debugElement = element;
+        return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
+      }
+    }
+
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_DOWN, in);
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
   private MouseEventData.Out _onMouseMove(MouseEventData.In in) {
+    if (this.mainElement == null) {
+      return new MouseEventData.Out(null);
+    }
+
+    this.context.mousePosition = in.mousePositionData.point;
+
+    // if we are debugging and haven't selected an element, enter "discovery mode" by temp-debugging the element under the cursor
+    if (this.debugModeEnabled && !this.debugElementSelected) {
+      IElement element = Collections.last(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
+      if (element != null && element != this) {
+        this.context.debugElement = element;
+        return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
+      }
+    }
+
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_MOVE, in);
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
   private MouseEventData.Out _onMouseUp(MouseEventData.In in) {
+    if (this.mainElement == null) {
+      return new MouseEventData.Out(null);
+    }
+
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_UP, in);
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
   private MouseEventData.Out _onMouseScroll(MouseEventData.In in) {
+    if (this.mainElement == null) {
+      return new MouseEventData.Out(null);
+    }
+
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_SCROLL, in);
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
   private KeyboardEventData.Out _onKeyDown(KeyboardEventData.In in) {
+    if (this.mainElement == null) {
+      return new KeyboardEventData.Out(null);
+    }
+
     // now do the normal event propagation
     boolean handled = this.propagateKeyboardEvent(EventType.KEY_DOWN, in);
     if (handled) {
@@ -173,7 +217,9 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private void toggleDebug() {
-    this.context.debugLayout = !this.context.debugLayout;
+    this.debugModeEnabled = !this.debugModeEnabled;
+    this.debugElementSelected = false;
+    this.context.debugElement = null;
   }
 
   private boolean propagateMouseEvent(Events.EventType type, MouseEventData.In data) {
@@ -352,8 +398,10 @@ public class InteractiveScreen extends Screen implements IElement {
     public final Minecraft minecraft;
     public final FontRenderer fontRenderer;
 
-    public boolean debugLayout = false;
+    /** The element that we want to debug. */
+    public @Nullable IElement debugElement = null;
     public @Nullable IElement focusedElement = null;
+    public @Nullable DimPoint mousePosition = null;
 
     public InteractiveContext(MouseEventService mouseEventService, KeyboardEventService keyboardEventService, DimFactory dimFactory, Minecraft minecraft, FontRenderer fontRenderer) {
       this.mouseEventService = mouseEventService;

@@ -27,8 +27,8 @@ public class RendererHelpers {
   }
 
   /** Draws a coloured rect. */
-  public static void renderRect(int zLevel, DimRect rect, Colour colour) {
-    renderRect(zLevel, rect, colour, null, null, null, null);
+  public static void renderRect(int zLevel, DimRect rect, Colour colour, @Nullable Dim borderWidth, @Nullable Colour borderColour) {
+    renderRect(zLevel, rect, colour, colour, borderWidth, borderColour, borderColour);
   }
 
   /** Draws a coloured rect with an optional top-to-bottom gradient, and an optional exterior border (default black) */
@@ -63,15 +63,15 @@ public class RendererHelpers {
   }
 
   /** Assumes that the cutout rect is strictly contained by the main rect. */
-  public static void renderRectWithCutout(int zLevel, DimRect mainRect, DimRect cutoutRect, Colour colour) {
+  public static void renderRectWithCutout(int zLevel, DimRect mainRect, DimRect cutoutRect, Colour colour, @Nullable Dim borderWidth, @Nullable Colour borderColour) {
     // ----
     // |  |
     // ----
 
-    renderRect(zLevel, new DimRect(mainRect.getX(), mainRect.getY(), mainRect.getWidth(), cutoutRect.getY().minus(mainRect.getY())), colour); // top
-    renderRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getBottom(), mainRect.getWidth(), mainRect.getBottom().minus(cutoutRect.getBottom())), colour); // bottom
-    renderRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getY(), cutoutRect.getX().minus(mainRect.getX()), cutoutRect.getHeight()), colour); // left
-    renderRect(zLevel, new DimRect(cutoutRect.getRight(), cutoutRect.getY(), mainRect.getRight().minus(cutoutRect.getRight()), cutoutRect.getHeight()), colour); // right
+    renderRect(zLevel, new DimRect(mainRect.getX(), mainRect.getY(), mainRect.getWidth(), cutoutRect.getY().minus(mainRect.getY())), colour, borderWidth, borderColour); // top
+    renderRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getBottom(), mainRect.getWidth(), mainRect.getBottom().minus(cutoutRect.getBottom())), colour, borderWidth, borderColour); // bottom
+    renderRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getY(), cutoutRect.getX().minus(mainRect.getX()), cutoutRect.getHeight()), colour, borderWidth, borderColour); // left
+    renderRect(zLevel, new DimRect(cutoutRect.getRight(), cutoutRect.getY(), mainRect.getRight().minus(cutoutRect.getRight()), cutoutRect.getHeight()), colour, borderWidth, borderColour); // right
   }
 
   /** Stolen from GUI. */
@@ -97,7 +97,7 @@ public class RendererHelpers {
     float width = rect.getWidth().getGui();
     float height = rect.getHeight().getGui();
 
-    float a = 0.00390625F;
+    float a = 0.00390625F; // 1/256
     float b = 0.00390625F;
     Tessellator lvt_9_1_ = Tessellator.getInstance();
     WorldRenderer lvt_10_1_ = lvt_9_1_.getWorldRenderer();

@@ -129,14 +129,16 @@ public class ButtonElement extends SingleElement {
     DimPoint size = this.getContentBox().getSize();
 
     // draw left half of button
-    DimRect rect1 = new DimRect(pos, new DimPoint(size.getX().over(2), size.getY()));
+    Dim leftWidth = size.getX().over(2).ceil(); // has to be an int
+    DimRect rect1 = new DimRect(pos, new DimPoint(leftWidth, size.getY()));
     int u1 = 0;
     int v1 = 46 + hoverState * 20;
     RendererHelpers.drawTexturedModalRect(rect1, 0, u1, v1);
 
     // draw right half of button (assumes the button is not larger than 200)
-    DimRect rect2 = new DimRect(pos.getX().plus(size.getX().over(2)), pos.getY(), size.getX().over(2), size.getY());
-    int u2 = MAX_WIDTH_GUI - (int)size.getX().over(2).getGui();
+    Dim rightWidth = size.getX().minus(leftWidth);
+    DimRect rect2 = new DimRect(pos.getX().plus(rightWidth), pos.getY(), rightWidth, size.getY());
+    int u2 = MAX_WIDTH_GUI - (int)rightWidth.getGui();
     int v2 = 46 + hoverState * 20;
     RendererHelpers.drawTexturedModalRect(rect2, 0, u2, v2);
 

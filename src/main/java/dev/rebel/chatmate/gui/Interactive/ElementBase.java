@@ -12,11 +12,15 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.models.Line;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
+import dev.rebel.chatmate.services.util.Collections;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.renderer.GlStateManager;
 
-import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 // a note about box size terminology:
 // the full box includes contents, surrounded by padding, surrounded by margin. it is the box used when calculating any sort of layout.
@@ -170,13 +174,60 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final void render() {
-    if (this.context.debugLayout) {
-      RendererHelpers.renderRectWithCutout(1000, this.getBox(), this.getCollisionBox(), Colour.RED.withAlpha(0.1f));
-      RendererHelpers.renderRectWithCutout(1000, this.getCollisionBox(), this.getContentBox(), Colour.GREEN.withAlpha(0.1f));
-      RendererHelpers.renderRect(1000, this.getContentBox(), Colour.BLUE.withAlpha(0.2f));
-    }
-
+    GlStateManager.pushMatrix();
+    GlStateManager.enableBlend();
+    GlStateManager.disableLighting();
     this.renderElement();
+    GlStateManager.popMatrix();
+
+    if (this.context.debugElement == this) {
+      GlStateManager.enableBlend();
+      GlStateManager.disableLighting();
+
+      // todo: issues with layering. rects are hiding everything the mouse cursor and text. fix blending
+      Dim borderWidth = this.context.dimFactory.fromScreen(1);
+      Colour borderColour = Colour.BLACK.withAlpha(0.2f);
+      RendererHelpers.renderRectWithCutout(1000, this.getBox(), this.getCollisionBox(), Colour.RED.withAlpha(0.1f), borderWidth, borderColour);
+      RendererHelpers.renderRectWithCutout(1000, this.getCollisionBox(), this.getContentBox(), Colour.GREEN.withAlpha(0.1f), borderWidth, borderColour);
+      RendererHelpers.renderRect(1000, this.getContentBox(), Colour.BLUE.withAlpha(0.2f), borderWidth, borderColour);
+
+      DimPoint mousePos = this.context.mousePosition;
+      if (mousePos != null) {
+        DimPoint screen = this.context.dimFactory.getMinecraftSize();
+        RendererHelpers.drawLine(new Line(new DimPoint(ZERO, mousePos.getY()), new DimPoint(screen.getX(), mousePos.getY())), borderWidth, borderColour, false);
+        RendererHelpers.drawLine(new Line(new DimPoint(mousePos.getX(), ZERO), new DimPoint(mousePos.getX(), screen.getY())), borderWidth, borderColour, false);
+      }
+
+      List<String> lines = new ArrayList<>();
+      lines.add("Mouse: " + (mousePos == null ? "n/a" : mousePos.toString()));
+      lines.add("Content: " + this.getContentBox().toString());
+      lines.add("Padding: " + this.getPadding().toString());
+      lines.add("Margin: " + this.getMargin().toString());
+      lines.add("");
+
+      IElement parent = this.getParent();
+      List<IElement> siblings = Collections.without(parent.getChildren(), this);
+      lines.add(String.format("%s (with %d %s)", this.getClass().getSimpleName(), siblings.size(), siblings.size() == 1 ? "sibling" : "siblings"));
+
+      while (parent != null) {
+        List<IElement> children = parent.getChildren();
+        if (children == null) {
+          children = new ArrayList<>();
+        }
+
+        lines.add(String.format("%s (with %d %s)", parent.getClass().getSimpleName(), children.size(), children.size() == 1 ? "child" : "children"));
+        parent = parent.getParent();
+      }
+
+      FontRenderer font = this.context.fontRenderer;
+      int y = 0;
+      int left = (int)this.context.dimFactory.getMinecraftSize().getX().getGui();
+      for (String line : lines) {
+        int x = left - font.getStringWidth(line);
+        font.drawStringWithShadow(line, x, y, Colour.WHITE.toSafeInt());
+        y += font.FONT_HEIGHT;
+      }
+    }
   }
 
   /** You should never call super.render() from this method, as it will cause an infinite loop.

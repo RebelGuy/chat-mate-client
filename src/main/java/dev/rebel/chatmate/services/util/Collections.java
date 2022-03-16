@@ -68,4 +68,11 @@ public class Collections {
     }
     return result;
   }
+
+  public static <T> List<T> without(@Nullable List<T> list, @Nullable T itemToExclude) {
+    if (list == null) {
+      return new ArrayList<>();
+    }
+    return list.stream().filter(item -> item != itemToExclude).collect(Collectors.toList());
+  }
 }

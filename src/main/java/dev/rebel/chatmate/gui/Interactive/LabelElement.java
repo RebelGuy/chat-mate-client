@@ -144,7 +144,7 @@ public class LabelElement extends SingleElement {
         throw new RuntimeException("Invalid TextAlignment " + this.alignment);
       }
 
-      font.drawStringWithShadow(line, this.getContentBoxX(x).getGui(), y.getGui(), this.colour.toInt());
+      font.drawStringWithShadow(line, x.getGui(), y.getGui(), this.colour.toInt());
       y = y.plus(fontHeight).plus(this.linePadding);
     }
   }

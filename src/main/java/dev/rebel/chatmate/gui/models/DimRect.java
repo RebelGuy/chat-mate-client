@@ -70,4 +70,9 @@ public class DimRect {
 
     return new DimRect(x, y, right.minus(x), bottom.minus(y));
   }
+
+  @Override
+  public String toString() {
+    return String.format("{%s, %s}", this.getPosition().toString(), this.getSize().toString());
+  }
 }

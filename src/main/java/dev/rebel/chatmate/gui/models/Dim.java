@@ -62,6 +62,8 @@ public class Dim {
 
   public boolean gt(Dim other) { return this.value > this.getOtherValue(other); }
 
+  public Dim ceil() { return new Dim(this.scaleFactor, this.anchor).withValue((float)Math.ceil(this.value)); }
+
   public static Dim max(Dim a, Dim b) { return a.gte(b) ? a : b; }
 
   public static Dim max(List<Dim> items) {
