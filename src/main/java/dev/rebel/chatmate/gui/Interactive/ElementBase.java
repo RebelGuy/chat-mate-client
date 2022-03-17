@@ -14,21 +14,25 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 
 // a note about box size terminology:
-// the full box includes contents, surrounded by padding, surrounded by margin. it is the box used when calculating any sort of layout.
-// the collision box includes contents, surrounded by padding. it is the box used when checking for mouse pointer collisions with this element.
+// the full box includes contents, surrounded by padding, surrounded by border, surrounded by margin. it is the box used when calculating any sort of layout.
+// the collision box includes contents, surrounded by padding, surrounded by border. it is the box used when checking for mouse pointer collisions with this element.
+// the padding box includes contents, surrounded by padding. it is used to separate the contents from the border (though an element may not necessarily draw a physical border).
 // the content box includes contents only. this is where the element's contents are rendered into.
 
 public abstract class ElementBase implements IElement {
   protected final InteractiveContext context;
   protected IElement parent;
   protected final Dim ZERO;
+  protected final FontRenderer font;
 
   protected DimPoint lastCalculatedSize;
   private DimRect box;
   private RectExtension padding;
+  private RectExtension border;
   private RectExtension margin;
   private int zIndex;
   private boolean isFocusable;
@@ -40,6 +44,7 @@ public abstract class ElementBase implements IElement {
     this.context = context;
     this.parent = parent;
     this.ZERO = context.dimFactory.zeroGui();
+    this.font = context.fontRenderer;
 
     this.box = null;
     this.padding = new RectExtension(context.dimFactory.zeroGui());
@@ -216,6 +221,17 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
+  public final IElement setBorder(RectExtension border) {
+    this.border = border;
+    return this;
+  }
+
+  @Override
+  public final RectExtension getBorder() {
+    return this.border == null ? new RectExtension(this.context.dimFactory.zeroGui()) : this.border;
+  }
+
+  @Override
   public final IElement setMargin(RectExtension margin) {
     this.margin = margin;
     return this;
@@ -281,31 +297,14 @@ public abstract class ElementBase implements IElement {
     return this.sizingMode;
   }
 
-  protected final boolean checkCollision(DimPoint point) {
-    DimRect box = this.getBox();
-    if (box == null) {
-      return false;
-    }
-
-    return this.getMargin().applySubtractive(box).checkCollision(point);
-  }
-
-  protected final Dim getContentBoxX(Dim fullBoxX) {
-    return fullBoxX.plus(this.margin.left).plus(this.padding.left);
-  }
-
-  protected final Dim getContentBoxY(Dim fullBoxY) {
-    return fullBoxY.plus(this.margin.top).plus(this.padding.top);
-  }
-
   protected final Dim getContentBoxWidth(Dim fullBoxWidth) {
-    return fullBoxWidth.minus(this.padding.left).minus(this.padding.right).minus(this.margin.left).minus(this.margin.right);
+    return fullBoxWidth.minus(this.getPadding().getExtendedWidth()).minus(this.getBorder().getExtendedWidth()).minus(this.getMargin().getExtendedWidth());
   }
 
   protected final DimPoint getFullBoxSize(DimPoint contentBoxSize) {
     return new DimPoint(
-      contentBoxSize.getX().plus(this.padding.left).plus(this.padding.right).plus(this.margin.left).plus(this.margin.right),
-      contentBoxSize.getY().plus(this.padding.top).plus(this.padding.bottom).plus(this.margin.top).plus(this.margin.bottom)
+      contentBoxSize.getX().plus(this.getPadding().getExtendedWidth()).plus(this.getBorder().getExtendedWidth()).plus(this.getMargin().getExtendedWidth()),
+      contentBoxSize.getY().plus(this.getPadding().getExtendedHeight()).plus(this.getBorder().getExtendedHeight()).plus(this.getMargin().getExtendedHeight())
     );
   }
 
@@ -315,12 +314,24 @@ public abstract class ElementBase implements IElement {
 
   protected final DimRect getCollisionBox() { return getCollisionBox(this); }
 
+  protected final DimRect getBorderBox() { return getBorderBox(this); }
+
+  protected final DimRect getPaddingBox() { return getPaddingBox(this); }
+
   protected static DimRect getContentBox(IElement element) {
-    return element.getPadding().plus(element.getMargin()).applySubtractive(element.getBox());
+    return element.getPadding().plus(element.getBorder()).plus(element.getMargin()).applySubtractive(element.getBox());
+  }
+
+  protected static DimRect getPaddingBox(IElement element) {
+    return element.getMargin().plus(element.getBorder()).applySubtractive(element.getBox());
+  }
+
+  protected static DimRect getBorderBox(IElement element) {
+    return element.getMargin().applySubtractive(element.getBox());
   }
 
   protected static DimRect getCollisionBox(IElement element) {
-    return element.getMargin().applySubtractive(element.getBox());
+    return getBorderBox(element);
   }
 
   protected static DimRect getFullBox(IElement element) {
@@ -329,6 +340,10 @@ public abstract class ElementBase implements IElement {
 
   protected final DimRect alignChild(IElement child) {
     return alignElementInBox(child.getLastCalculatedSize(), this.getContentBox(), child.getHorizontalAlignment(), child.getVerticalAlignment());
+  }
+
+  protected final Dim gui(float guiValue) {
+    return this.context.dimFactory.fromGui(guiValue);
   }
 
   /** Lays out the size within the given box, using the provided alignment options.

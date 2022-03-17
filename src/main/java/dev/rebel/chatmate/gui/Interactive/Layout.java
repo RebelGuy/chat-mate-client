@@ -55,6 +55,10 @@ public class Layout {
       return new DimRect(newX, newY, newWidth, newHeight);
     }
 
+    public Dim getExtendedWidth() { return this.left.plus(this.right); }
+
+    public Dim getExtendedHeight() { return this.top.plus(this.bottom); }
+
     @Override
     public String toString() {
       return String.format("l=%s, r=%s, t=%s, b=%s", this.left.toString(), this.right.toString(), this.top.toString(), this.bottom.toString());

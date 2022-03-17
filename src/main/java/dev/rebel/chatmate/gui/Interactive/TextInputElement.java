@@ -2,8 +2,10 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.In.KeyModifier;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
@@ -23,15 +25,30 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/** Border: actually draws a border. Padding: space between text and border. */
 public class TextInputElement extends SingleElement {
   private String placeholderText = "";
   private String text = "";
+  private boolean isEnabled = true;
   private int maxStringLength = 64;
+  private final Dim textHeight;
+
+  private int scrollOffsetIndex; // if the text doesn't fit on the window, it scrolls to the right
+  private int cursorIndex;
+  private int selectionEndIndex; // this may be before or after the cursor
+  private int enabledColor = 14737632;
+  private int disabledColor = 7368816;
+  private Consumer<String> onTextChange;
+  private Predicate<String> validator = text -> true;
 
   public TextInputElement(InteractiveContext context, IElement parent) {
     super(context, parent);
 
     this.setFocusable(true);
+    this.setBorder(new Layout.RectExtension(gui(1)));
+    this.setPadding(new Layout.RectExtension(gui(4), gui(2)));
+
+    this.textHeight = gui(this.font.FONT_HEIGHT);
   }
 
   @Override
@@ -41,7 +58,11 @@ public class TextInputElement extends SingleElement {
 
   @Override
   public void onMouseDown(IEvent<MouseEventData.In> e) {
-    this.mouseClicked((int)e.getData().mousePositionData.x.getGui(), (int)e.getData().mousePositionData.y.getGui(), e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON ? 0 : -1);
+    if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
+      Dim relX = e.getData().mousePositionData.x.minus(this.getContentBox().getX());
+      String textBeforeCursor = this.font.trimStringToWidth(this.getVisibleText(), (int)relX.getGui());
+      this.setCursorIndex(this.scrollOffsetIndex + textBeforeCursor.length());
+    }
   }
 
   @Override
@@ -53,22 +74,13 @@ public class TextInputElement extends SingleElement {
 
   @Override
   public DimPoint calculateThisSize(Dim maxContentSize) {
-    return new DimPoint(maxContentSize, this.context.dimFactory.fromGui(this.context.fontRenderer.FONT_HEIGHT));
+    return new DimPoint(maxContentSize, this.textHeight);
   }
 
   @Override
   public void renderElement() {
     this.drawTextBox();
   }
-
-  private int lineScrollOffset; // if the text doesn't fit on the window, it scrolls to the right
-  private int cursorPosition;
-  private int selectionEnd;
-  private int enabledColor = 14737632;
-  private int disabledColor = 7368816;
-  private boolean isEnabled = true;
-  private Consumer<String> onTextChange;
-  private Predicate<String> validator = text -> true;
 
   public void setText(String newText) {
     if (this.validator.test(newText)) {
@@ -78,30 +90,20 @@ public class TextInputElement extends SingleElement {
         this.text = newText;
       }
 
-      this.setCursorPositionEnd();
+      this.setCursorPositionToEnd();
     }
   }
 
-  public String getText() {
-    return this.text;
+  public void setValidator(Predicate<String> validator) {
+    this.validator = validator;
   }
 
-  public String getSelectedText() {
-    int lvt_1_1_ = Math.min(this.cursorPosition, this.selectionEnd);
-    int lvt_2_1_ = Math.max(this.cursorPosition, this.selectionEnd);
-    return this.text.substring(lvt_1_1_, lvt_2_1_);
-  }
-
-  public void setValidator(Predicate<String> p_setValidator_1_) {
-    this.validator = p_setValidator_1_;
-  }
-
-  public void writeText(String textToAdd) {
-    // todo: adds text at the selection, overwriting the current selection (if any)
+  /** Adds text at the current cursor position, overwriting any selected text. */
+  private void writeText(String textToAdd) {
     String text = "";
     textToAdd = ChatAllowedCharacters.filterAllowedCharacters(textToAdd);
-    int selectionStart = Math.min(this.cursorPosition, this.selectionEnd);
-    int selectionEnd = Math.max(this.cursorPosition, this.selectionEnd);
+    int selectionStart = Math.min(this.cursorIndex, this.selectionEndIndex);
+    int selectionEnd = Math.max(this.cursorIndex, this.selectionEndIndex);
     int maxLengthToAdd = this.maxStringLength - this.text.length() - (selectionStart - selectionEnd);
     if (this.text.length() > 0) {
       text = text + this.text.substring(0, selectionStart);
@@ -122,7 +124,7 @@ public class TextInputElement extends SingleElement {
 
     if (this.validator.test(text)) {
       this.text = text;
-      this.moveCursorBy(selectionStart - this.selectionEnd + lengthToAdd);
+      this.moveCursorBy(selectionStart - this.selectionEndIndex + lengthToAdd);
       this.onTextChange.accept(this.text);
     }
   }
@@ -130,12 +132,12 @@ public class TextInputElement extends SingleElement {
   /** Deletes all the characters between the current cursor position and the given offset (may be negative) */
   public void deleteFromCursor(int offset) {
     if (this.text.length() != 0) {
-      if (this.selectionEnd != this.cursorPosition) {
+      if (this.selectionEndIndex != this.cursorIndex) {
         this.writeText("");
       } else {
         boolean backwards = offset < 0;
-        int start = backwards ? this.cursorPosition + offset : this.cursorPosition;
-        int end = backwards ? this.cursorPosition : this.cursorPosition + offset;
+        int start = backwards ? this.cursorIndex + offset : this.cursorIndex;
+        int end = backwards ? this.cursorIndex : this.cursorIndex + offset;
         String remainingText = "";
         if (start >= 0) {
           remainingText = this.text.substring(0, start);
@@ -157,23 +159,23 @@ public class TextInputElement extends SingleElement {
     }
   }
 
-  public void deleteWords(int wordOffset) {
+  private void deleteWords(int wordOffset) {
     if (this.text.length() != 0) {
-      if (this.selectionEnd != this.cursorPosition) {
+      if (this.selectionEndIndex != this.cursorIndex) {
         this.writeText("");
       } else {
-        this.deleteFromCursor(this.getNthWordFromCursor(wordOffset) - this.cursorPosition);
+        this.deleteFromCursor(this.getNthWordFromCursor(wordOffset) - this.cursorIndex);
       }
     }
   }
 
   /** Gets the offset of the start of the word. N may be negative. E.g. N = -1 gets the offset from the cursor to the start of the previous word. */
-  public int getNthWordFromCursor(int N) {
-    return this.getNthWordFromPos(N, this.getCursorPosition());
+  private int getNthWordFromCursor(int N) {
+    return this.getNthWordFromPos(N, this.cursorIndex);
   }
 
   /** Returns the offset from the position. */
-  public int getNthWordFromPos(int N, int pos) {
+  private int getNthWordFromPos(int N, int pos) {
     int currentPos = pos;
     boolean forwards = N >= 0;
 
@@ -202,29 +204,10 @@ public class TextInputElement extends SingleElement {
     return currentPos;
   }
 
-  public void moveCursorBy(int delta) {
-    this.setCursorPosition(this.selectionEnd + delta);
-  }
-
-  public void setCursorPosition(int newPosition) {
-    this.cursorPosition = newPosition;
-    int N = this.text.length();
-    this.cursorPosition = MathHelper.clamp_int(this.cursorPosition, 0, N);
-    this.setSelectionPos(this.cursorPosition);
-  }
-
-  public void setCursorPositionZero() {
-    this.setCursorPosition(0);
-  }
-
-  public void setCursorPositionEnd() {
-    this.setCursorPosition(this.text.length());
-  }
-
   public boolean textboxKeyTyped(KeyboardEventData.In data) {
     if (data.isKeyModifierActive(KeyModifier.CTRL) && data.isPressed(Keyboard.KEY_A)) {
-      this.setCursorPositionEnd();
-      this.setSelectionPos(0);
+      this.setCursorPositionToEnd();
+      this.setSelectionIndex(0);
       return true;
     } else if (data.isKeyModifierActive(KeyModifier.CTRL) && data.isPressed(Keyboard.KEY_C)) {
       this.context.clipboardService.setClipboardString(this.getSelectedText());
@@ -254,21 +237,21 @@ public class TextInputElement extends SingleElement {
           return true;
         case Keyboard.KEY_HOME:
           if (GuiScreen.isShiftKeyDown()) {
-            this.setSelectionPos(0);
+            this.setSelectionIndex(0);
           } else {
-            this.setCursorPositionZero();
+            this.setCursorPositionToStart();
           }
 
           return true;
         case Keyboard.KEY_LEFT:
           if (GuiScreen.isShiftKeyDown()) {
             if (GuiScreen.isCtrlKeyDown()) {
-              this.setSelectionPos(this.getNthWordFromPos(-1, this.getSelectionEnd()));
+              this.setSelectionIndex(this.getNthWordFromPos(-1, this.selectionEndIndex));
             } else {
-              this.setSelectionPos(this.getSelectionEnd() - 1);
+              this.setSelectionIndex(this.selectionEndIndex - 1);
             }
           } else if (GuiScreen.isCtrlKeyDown()) {
-            this.setCursorPosition(this.getNthWordFromCursor(-1));
+            this.setCursorIndex(this.getNthWordFromCursor(-1));
           } else {
             this.moveCursorBy(-1);
           }
@@ -277,12 +260,12 @@ public class TextInputElement extends SingleElement {
         case Keyboard.KEY_RIGHT:
           if (GuiScreen.isShiftKeyDown()) {
             if (GuiScreen.isCtrlKeyDown()) {
-              this.setSelectionPos(this.getNthWordFromPos(1, this.getSelectionEnd()));
+              this.setSelectionIndex(this.getNthWordFromPos(1, this.selectionEndIndex));
             } else {
-              this.setSelectionPos(this.getSelectionEnd() + 1);
+              this.setSelectionIndex(this.selectionEndIndex + 1);
             }
           } else if (GuiScreen.isCtrlKeyDown()) {
-            this.setCursorPosition(this.getNthWordFromCursor(1));
+            this.setCursorIndex(this.getNthWordFromCursor(1));
           } else {
             this.moveCursorBy(1);
           }
@@ -290,9 +273,9 @@ public class TextInputElement extends SingleElement {
           return true;
         case Keyboard.KEY_END:
           if (GuiScreen.isShiftKeyDown()) {
-            this.setSelectionPos(this.text.length());
+            this.setSelectionIndex(this.text.length());
           } else {
-            this.setCursorPositionEnd();
+            this.setCursorPositionToEnd();
           }
 
           return true;
@@ -318,106 +301,107 @@ public class TextInputElement extends SingleElement {
     }
   }
 
-  public void mouseClicked(int mouseX, int mouseY, int button) {
-    if (this.context.focusedElement == this && button == 0) {
-      int relX = mouseX - (int)this.getContentBox().getX().getGui();
-      boolean enableBackground = true;
-      if (enableBackground) {
-        relX -= 4;
-      }
-
-      String visibleText = this.context.fontRenderer.trimStringToWidth(this.text.substring(this.lineScrollOffset), this.getWidth());
-      this.setCursorPosition(this.context.fontRenderer.trimStringToWidth(visibleText, relX).length() + this.lineScrollOffset);
-    }
-  }
-
   public void drawTextBox() {
     if (this.getVisible()) {
-      boolean enableBackground = true;
-      int x = (int)this.getContentBox().getX().getGui();
-      int y = (int)this.getContentBox().getY().getGui();
-      int width = (int)this.getContentBox().getWidth().getGui();
-      int height = (int)this.getContentBox().getHeight().getGui();
-
-      // background
-      if (enableBackground) {
-        Gui.drawRect(x - 1, y - 1, x + width + 1, y + height + 1, -6250336);
-        Gui.drawRect(x, y, x + width, y + height, -16777216);
-      }
-
-      int color = this.isEnabled ? this.enabledColor : this.disabledColor;
-      int cursorStartIndex = this.cursorPosition - this.lineScrollOffset;
-      int cursorEndIndex = this.selectionEnd - this.lineScrollOffset;
-      String string = this.context.fontRenderer.trimStringToWidth(this.text.substring(this.lineScrollOffset), this.getWidth());
-      boolean cursorIsWithinRange = cursorStartIndex >= 0 && cursorStartIndex <= string.length();
-      boolean drawCursor = this.context.focusedElement == this && (new Date().getTime() % 1000 < 500) && cursorIsWithinRange;
-      int left = enableBackground ? x + 4 : x;
-      int y2 = enableBackground ? y + (height - 8) / 2 : y;
-      int stringX = left;
-      if (cursorEndIndex > string.length()) {
-        cursorEndIndex = string.length();
-      }
-
-      // draw part before cursor
-      if (string.length() > 0) {
-        String lvt_10_1_ = cursorIsWithinRange ? string.substring(0, cursorStartIndex) : string;
-        stringX = this.context.fontRenderer.drawStringWithShadow(lvt_10_1_, (float)left, (float)y2, color);
-      }
-
-      boolean interiorCursor = this.cursorPosition < this.text.length() || this.text.length() >= this.getMaxStringLength();
-      int x1 = stringX;
-      if (!cursorIsWithinRange) {
-        x1 = cursorStartIndex > 0 ? left + width : left;
-      } else if (interiorCursor) {
-        x1 = stringX - 1;
-        --stringX;
-      }
-
-      // draw part after cursor
-      if (string.length() > 0 && cursorIsWithinRange && cursorStartIndex < string.length()) {
-        this.context.fontRenderer.drawStringWithShadow(string.substring(cursorStartIndex), (float)stringX, (float)y2, color);
-      }
-
-      if (drawCursor) {
-        if (interiorCursor) {
-          // vertical bar
-          Gui.drawRect(x1, y2 - 1, x1 + 1, y2 + 1 + this.context.fontRenderer.FONT_HEIGHT, -3092272);
-        } else {
-          this.context.fontRenderer.drawStringWithShadow("_", (float)x1, (float)y2, color);
-        }
-      }
-
-      // if there is a selection, invert the colours
-      if (cursorEndIndex != cursorStartIndex) {
-        int x2 = left + this.context.fontRenderer.getStringWidth(string.substring(0, cursorEndIndex));
-        int cursorHeight = this.context.fontRenderer.FONT_HEIGHT;
-        this.invertRegionColours(x1, y2 - 1, x2 - 1, y2 + 1 + cursorHeight);
-      }
+      this.drawBorder();
+      this.drawBackground();
+      this.drawText();
     }
   }
 
-  private void invertRegionColours(int x1, int y1, int x2, int y2) {
-    int temp;
-    if (x1 < x2) {
+  private void drawBorder() {
+    Colour borderColour = new Colour(-6250336);
+    RendererHelpers.drawRect(this.getZIndex(), this.getBorderBox(), borderColour);
+  }
+
+  private void drawBackground() {
+    Colour backgroundColour = new Colour(-16777216);
+    RendererHelpers.drawRect(this.getZIndex(), this.getPaddingBox(), backgroundColour);
+  }
+
+  private void drawText() {
+    Dim left = this.getContentBox().getX();
+    Dim top = this.getContentBox().getY();
+    Dim width = this.getContentBox().getWidth();
+    Dim bottom = this.getContentBox().getBottom();
+    Dim right = this.getContentBox().getRight();
+
+    int color = this.isEnabled ? this.enabledColor : this.disabledColor;
+    int cursorStartIndex = this.cursorIndex - this.scrollOffsetIndex;
+    int cursorEndIndex = this.selectionEndIndex - this.scrollOffsetIndex;
+    String string = this.font.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), (int)width.getGui());
+    boolean cursorIsWithinRange = cursorStartIndex >= 0 && cursorStartIndex <= string.length();
+    boolean drawCursor = this.context.focusedElement == this && (new Date().getTime() % 1000 < 500) && cursorIsWithinRange;
+    Dim currentX = left;
+    if (cursorEndIndex > string.length()) {
+      cursorEndIndex = string.length();
+    }
+
+    // draw part before cursor
+    if (string.length() > 0) {
+      String visibleString = cursorIsWithinRange ? string.substring(0, cursorStartIndex) : string;
+      currentX = gui(this.font.drawStringWithShadow(visibleString, left.getGui(), top.getGui(), color));
+    }
+
+    boolean interiorCursor = this.cursorIndex < this.text.length() || this.text.length() >= this.maxStringLength;
+    Dim x1 = currentX;
+    if (!cursorIsWithinRange) {
+      x1 = cursorStartIndex > 0 ? right : left;
+    } else if (interiorCursor) {
+      currentX = currentX.minus(gui(1));
+      x1 = currentX;
+    }
+
+    // draw part after cursor
+    if (string.length() > 0 && cursorIsWithinRange && cursorStartIndex < string.length()) {
+      this.font.drawStringWithShadow(string.substring(cursorStartIndex), currentX.getGui(), top.getGui(), color);
+    }
+
+    if (drawCursor) {
+      this.drawCursor(interiorCursor, x1, top);
+    }
+
+    // if there is a selection, invert the colours
+    if (cursorEndIndex != cursorStartIndex) {
+      Dim leftPad = gui(this.font.getStringWidth(string.substring(0, cursorEndIndex)));
+      Dim x2 = left.plus(leftPad);
+      this.invertRegionColours(x1, top.minus(gui(1)), x2.minus(gui(1)), bottom.plus(gui(1)));
+    }
+  }
+
+  private void drawCursor(boolean interiorCursor, Dim left, Dim top) {
+    if (interiorCursor) {
+      // vertical bar
+      Colour cursorColour = new Colour(-3092272);
+      Dim one = gui(1);
+      RendererHelpers.drawRect(this.getZIndex(), new DimRect(left, top.minus(one), one, this.textHeight.plus(one)), cursorColour);
+    } else {
+      int color = this.isEnabled ? this.enabledColor : this.disabledColor;
+      this.font.drawStringWithShadow("_", left.getGui(), top.getGui(), color);
+    }
+  }
+
+  private void invertRegionColours(Dim x1, Dim y1, Dim x2, Dim y2) {
+    Dim temp;
+    if (x1.lt(x2)) {
       temp = x1;
       x1 = x2;
       x2 = temp;
     }
 
-    if (y1 < y2) {
+    if (y1.lt(y2)) {
       temp = y1;
       y1 = y2;
       y2 = temp;
     }
 
-    int x = (int)this.getContentBox().getX().getGui();
-    int width = (int)this.getContentBox().getX().getGui();
-    if (x2 > x + width) {
-      x2 = x + width;
+    Dim right = this.getContentBox().getRight();
+    if (x2.gt(right)) {
+      x2 = right;
     }
 
-    if (x1 > x + width) {
-      x1 = x + width;
+    if (x1.gt(right)) {
+      x1 = right;
     }
 
     Tessellator tessellator = Tessellator.getInstance();
@@ -427,28 +411,20 @@ public class TextInputElement extends SingleElement {
     GlStateManager.enableColorLogic();
     GlStateManager.colorLogicOp(5387);
     worldRenderer.begin(7, DefaultVertexFormats.POSITION);
-    worldRenderer.pos(x1, y2, 0.0D).endVertex();
-    worldRenderer.pos(x2, y2, 0.0D).endVertex();
-    worldRenderer.pos(x2, y1, 0.0D).endVertex();
-    worldRenderer.pos(x1, y1, 0.0D).endVertex();
+    worldRenderer.pos(x1.getGui(), y2.getGui(), 0.0D).endVertex();
+    worldRenderer.pos(x2.getGui(), y2.getGui(), 0.0D).endVertex();
+    worldRenderer.pos(x2.getGui(), y1.getGui(), 0.0D).endVertex();
+    worldRenderer.pos(x1.getGui(), y1.getGui(), 0.0D).endVertex();
     tessellator.draw();
     GlStateManager.disableColorLogic();
     GlStateManager.enableTexture2D();
   }
 
-  public void setMaxStringLength(int p_setMaxStringLength_1_) {
-    this.maxStringLength = p_setMaxStringLength_1_;
-    if (this.text.length() > p_setMaxStringLength_1_) {
-      this.text = this.text.substring(0, p_setMaxStringLength_1_);
+  public void setMaxStringLength(int maxStringLength) {
+    this.maxStringLength = maxStringLength;
+    if (this.text.length() > maxStringLength) {
+      this.text = this.text.substring(0, maxStringLength);
     }
-  }
-
-  public int getMaxStringLength() {
-    return this.maxStringLength;
-  }
-
-  public int getCursorPosition() {
-    return this.cursorPosition;
   }
 
   public void setTextColor(int p_setTextColor_1_) {
@@ -459,44 +435,72 @@ public class TextInputElement extends SingleElement {
     this.disabledColor = p_setDisabledTextColour_1_;
   }
 
-  public int getSelectionEnd() {
-    return this.selectionEnd;
-  }
-
-  public int getWidth() {
-    // todo: it appears that enabling the background adds a 4-wide padding around the actual input area
-    //return this.getEnableBackgroundDrawing() ? this.width - 8 : this.width;
-    return (int)this.getContentBox().getWidth().getGui();
-  }
-
-  public void setSelectionPos(int position) {
+  public void setSelectionIndex(int newIndex) {
     int length = this.text.length();
-    if (position > length) {
-      position = length;
+    if (newIndex > length) {
+      newIndex = length;
     }
 
-    if (position < 0) {
-      position = 0;
+    if (newIndex < 0) {
+      newIndex = 0;
     }
 
-    this.selectionEnd = position;
-    if (this.lineScrollOffset > length) {
-      this.lineScrollOffset = length;
+    this.selectionEndIndex = newIndex;
+    if (this.scrollOffsetIndex > length) {
+      this.scrollOffsetIndex = length;
     }
 
-    int width = this.getWidth();
-    String visibleText = this.context.fontRenderer.trimStringToWidth(this.text.substring(this.lineScrollOffset), width);
-    int maxIndex = visibleText.length() + this.lineScrollOffset;
-    if (position == this.lineScrollOffset) {
-      this.lineScrollOffset -= this.context.fontRenderer.trimStringToWidth(this.text, width, true).length();
+    String visibleText = this.getVisibleText();
+    int maxIndex = visibleText.length() + this.scrollOffsetIndex;
+    if (newIndex == this.scrollOffsetIndex) {
+      this.scrollOffsetIndex -= this.getVisibleTextReverse().length();
     }
 
-    if (position > maxIndex) {
-      this.lineScrollOffset += position - maxIndex;
-    } else if (position <= this.lineScrollOffset) {
-      this.lineScrollOffset -= this.lineScrollOffset - position;
+    if (newIndex > maxIndex) {
+      this.scrollOffsetIndex += newIndex - maxIndex;
+    } else if (newIndex <= this.scrollOffsetIndex) {
+      this.scrollOffsetIndex -= this.scrollOffsetIndex - newIndex;
     }
 
-    this.lineScrollOffset = MathHelper.clamp_int(this.lineScrollOffset, 0, length);
+    this.scrollOffsetIndex = MathHelper.clamp_int(this.scrollOffsetIndex, 0, length);
+  }
+
+  /** Gets the text that fits into the text box. */
+  private String getVisibleText() {
+    int width = (int)this.getContentBox().getWidth().getGui();
+    return this.font.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), width);
+  }
+
+  /** Gets the tail-end of the text that fits into the text box. */
+  private String getVisibleTextReverse() {
+    int width = (int)this.getContentBox().getWidth().getGui();
+    return this.font.trimStringToWidth(this.text, width, true);
+
+  }
+
+  /** Empty string if nothing is selected. */
+  private String getSelectedText() {
+    int indexStart = Math.min(this.cursorIndex, this.selectionEndIndex);
+    int indexEnd = Math.max(this.cursorIndex, this.selectionEndIndex);
+    return this.text.substring(indexStart, indexEnd);
+  }
+
+  private void moveCursorBy(int delta) {
+    this.setCursorIndex(this.selectionEndIndex + delta);
+  }
+
+  private void setCursorIndex(int newPosition) {
+    this.cursorIndex = newPosition;
+    int N = this.text.length();
+    this.cursorIndex = MathHelper.clamp_int(this.cursorIndex, 0, N);
+    this.setSelectionIndex(this.cursorIndex);
+  }
+
+  private void setCursorPositionToStart() {
+    this.setCursorIndex(0);
+  }
+
+  private void setCursorPositionToEnd() {
+    this.setCursorIndex(this.text.length());
   }
 }

@@ -42,6 +42,9 @@ public interface IElement {
   RectExtension getPadding();
   IElement setPadding(RectExtension padding);
 
+  RectExtension getBorder();
+  IElement setBorder(RectExtension border);
+
   RectExtension getMargin();
   IElement setMargin(RectExtension margin);
 

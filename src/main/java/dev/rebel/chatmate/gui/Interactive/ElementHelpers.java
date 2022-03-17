@@ -13,8 +13,8 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.rebel.chatmate.gui.Interactive.ElementBase.getCollisionBox;
-import static dev.rebel.chatmate.gui.Interactive.ElementBase.getContentBox;
+import static dev.rebel.chatmate.gui.Interactive.ElementBase.*;
+import static dev.rebel.chatmate.gui.Interactive.ElementBase.getBorderBox;
 
 public class ElementHelpers {
   /** Traverses the tree from the parent, keeping track of the path, and picking the first child whose bounds intersect the given point.
@@ -74,11 +74,12 @@ public class ElementHelpers {
     Dim borderWidth = context.dimFactory.fromScreen(1);
     Colour borderColour = Colour.BLACK.withAlpha(0.2f);
     if (parent != null) {
-      RendererHelpers.renderRectWithCutout(1000, getContentBox(parent), element.getBox(), Colour.YELLOW.withAlpha(0.1f), borderWidth, borderColour);
+      RendererHelpers.renderRectWithCutout(1000, getContentBox(parent), element.getBox(), Colour.YELLOW.withAlpha(0.2f), borderWidth, borderColour);
     }
-    RendererHelpers.renderRectWithCutout(1000, element.getBox(), getCollisionBox(element), Colour.RED.withAlpha(0.1f), borderWidth, borderColour);
-    RendererHelpers.renderRectWithCutout(1000, getCollisionBox(element), getContentBox(element), Colour.GREEN.withAlpha(0.1f), borderWidth, borderColour);
-    RendererHelpers.renderRect(1000, getContentBox(element), Colour.BLUE.withAlpha(0.2f), borderWidth, borderColour);
+    RendererHelpers.renderRectWithCutout(1000, element.getBox(), getBorderBox(element), Colour.RED.withAlpha(0.2f), borderWidth, borderColour);
+    RendererHelpers.renderRectWithCutout(1000, getBorderBox(element), getPaddingBox(element), Colour.ORANGE.withAlpha(0.2f), borderWidth, borderColour);
+    RendererHelpers.renderRectWithCutout(1000, getPaddingBox(element), getContentBox(element), Colour.GREEN.withAlpha(0.2f), borderWidth, borderColour);
+    RendererHelpers.drawRect(1000, getContentBox(element), Colour.BLUE.withAlpha(0.2f), borderWidth, borderColour);
 
     DimPoint mousePos = context.mousePosition;
     if (mousePos != null) {
@@ -92,6 +93,7 @@ public class ElementHelpers {
     lines.add("Mouse: " + (mousePos == null ? "n/a" : mousePos.toString()));
     lines.add("Content: " + getContentBox(element).toString());
     lines.add("Padding: " + element.getPadding().toString());
+    lines.add("Border: " + element.getBorder().toString());
     lines.add("Margin: " + element.getMargin().toString());
     lines.add("Hor Algn: " + element.getHorizontalAlignment());
     lines.add("Vert Algn: " + element.getVerticalAlignment());
@@ -99,7 +101,8 @@ public class ElementHelpers {
     lines.add("");
 
     List<IElement> siblings = parent == null ? Collections.list() : Collections.without(parent.getChildren(), element);
-    lines.add(String.format("%s (with %d %s)", element.getClass().getSimpleName(), siblings.size(), siblings.size() == 1 ? "sibling" : "siblings"));
+    int nChildren = Collections.size(element.getChildren());
+    lines.add(String.format("%s (with %d %s and %d %s)", element.getClass().getSimpleName(), nChildren, nChildren == 1 ? "child" : "children", siblings.size(), siblings.size() == 1 ? "sibling" : "siblings"));
 
     while (parent != null) {
       List<IElement> children = parent.getChildren();

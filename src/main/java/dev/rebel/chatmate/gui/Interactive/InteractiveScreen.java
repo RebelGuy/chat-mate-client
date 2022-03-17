@@ -214,6 +214,9 @@ public class InteractiveScreen extends Screen implements IElement {
     if (this.mainElement != null && in.isPressed(Keyboard.KEY_ESCAPE)) {
       this.onCloseScreen();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+    } else if (in.isPressed(Keyboard.KEY_F11)) {
+      this.context.minecraft.toggleFullscreen();
+      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     } else if (in.isPressed(Keyboard.KEY_F3)) {
       this.toggleDebug();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
@@ -385,6 +388,12 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public InteractiveScreen setPadding(RectExtension padding) { return this; }
+
+  @Override
+  public RectExtension getBorder() { return new RectExtension(this.context.dimFactory.zeroGui()); }
+
+  @Override
+  public InteractiveScreen setBorder(RectExtension border) { return this; }
 
   @Override
   public RectExtension getMargin() { return new RectExtension(this.context.dimFactory.zeroGui()); }

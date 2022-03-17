@@ -5,14 +5,11 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.models.Line;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraftforge.fml.client.config.GuiUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.Color;
 
@@ -28,12 +25,17 @@ public class RendererHelpers {
   }
 
   /** Draws a coloured rect. */
-  public static void renderRect(int zLevel, DimRect rect, Colour colour, @Nullable Dim borderWidth, @Nullable Colour borderColour) {
-    renderRect(zLevel, rect, colour, colour, borderWidth, borderColour, borderColour);
+  public static void drawRect(int zLevel, DimRect rect, Colour colour) {
+    drawRect(zLevel, rect, colour, null, null);
+  }
+
+  /** Draws a coloured rect with border. */
+  public static void drawRect(int zLevel, DimRect rect, Colour colour, @Nullable Dim borderWidth, @Nullable Colour borderColour) {
+    drawRect(zLevel, rect, colour, colour, borderWidth, borderColour, borderColour);
   }
 
   /** Draws a coloured rect with an optional top-to-bottom gradient, and an optional exterior border (default black) */
-  public static void renderRect(int zLevel, DimRect rect, Colour topColour, @Nullable Colour bottomColour, @Nullable Dim borderWidth, @Nullable Colour borderTopColour, @Nullable Colour borderBottomColour) {
+  public static void drawRect(int zLevel, DimRect rect, Colour topColour, @Nullable Colour bottomColour, @Nullable Dim borderWidth, @Nullable Colour borderTopColour, @Nullable Colour borderBottomColour) {
     float x = rect.getX().getGui();
     float y = rect.getY().getGui();
     float w = rect.getWidth().getGui();
@@ -67,10 +69,10 @@ public class RendererHelpers {
     // |  |
     // ----
 
-    renderRect(zLevel, new DimRect(mainRect.getX(), mainRect.getY(), mainRect.getWidth(), cutoutRect.getY().minus(mainRect.getY())), colour, borderWidth, borderColour); // top
-    renderRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getBottom(), mainRect.getWidth(), mainRect.getBottom().minus(cutoutRect.getBottom())), colour, borderWidth, borderColour); // bottom
-    renderRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getY(), cutoutRect.getX().minus(mainRect.getX()), cutoutRect.getHeight()), colour, borderWidth, borderColour); // left
-    renderRect(zLevel, new DimRect(cutoutRect.getRight(), cutoutRect.getY(), mainRect.getRight().minus(cutoutRect.getRight()), cutoutRect.getHeight()), colour, borderWidth, borderColour); // right
+    drawRect(zLevel, new DimRect(mainRect.getX(), mainRect.getY(), mainRect.getWidth(), cutoutRect.getY().minus(mainRect.getY())), colour, borderWidth, borderColour); // top
+    drawRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getBottom(), mainRect.getWidth(), mainRect.getBottom().minus(cutoutRect.getBottom())), colour, borderWidth, borderColour); // bottom
+    drawRect(zLevel, new DimRect(mainRect.getX(), cutoutRect.getY(), cutoutRect.getX().minus(mainRect.getX()), cutoutRect.getHeight()), colour, borderWidth, borderColour); // left
+    drawRect(zLevel, new DimRect(cutoutRect.getRight(), cutoutRect.getY(), mainRect.getRight().minus(cutoutRect.getRight()), cutoutRect.getHeight()), colour, borderWidth, borderColour); // right
   }
 
   /** Stolen from GUI. */
