@@ -158,11 +158,16 @@ public abstract class ElementBase implements IElement {
     this.parent.onInvalidateSize();
   }
 
-  /** Should be called after the onCalculateSize() method is complete.
-   * The reason this is abstract is to remind the element to update this property. */
-  // todo: this is actually kinda yucky - maybe the correct solution is to create some kind of wrapper class around each element,
-  // which can be used as an additional layer between parents calling methods on the child, and the child calling methods on (or passing data to) the parent.
-  protected abstract DimPoint setLastCalculatedSize(DimPoint size);
+  // add a wrapper around the calculation method so we can cache the calculated size
+  @Override
+  public final DimPoint calculateSize(Dim maxFullWidth) {
+    DimPoint size = this.onCalculateSize(maxFullWidth);
+    this.lastCalculatedSize = size;
+    return size;
+  }
+
+  /** Do not call this method, only implement it. Instead, call `calculateSize()`. */
+  protected abstract DimPoint onCalculateSize(Dim maxFullWidth);
 
   @Override
   public final DimPoint getLastCalculatedSize() {

@@ -80,14 +80,8 @@ public class ManageExperienceModal extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateSize(Dim maxWidth) {
-    return this.setLastCalculatedSize(super.calculateSize(Dim.min(maxWidth, this.width)));
-  }
-
-  @Override
-  protected DimPoint setLastCalculatedSize(DimPoint size) {
-    this.lastCalculatedSize = size;
-    return size;
+  public DimPoint onCalculateSize(Dim maxFullWidth) {
+    return super.calculateSize(Dim.min(maxFullWidth, this.width));
   }
 
   @Override

@@ -77,12 +77,12 @@ public class LabelElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateSize(Dim maxWidth) {
+  public DimPoint onCalculateSize(Dim maxFullWidth) {
     FontRenderer font = this.context.fontRenderer;
     DimFactory factory = this.context.dimFactory;
 
     Dim fontHeight = factory.fromGui(font.FONT_HEIGHT);
-    maxWidth = this.getContentBoxWidth(maxWidth);
+    maxFullWidth = this.getContentBoxWidth(maxFullWidth);
 
     Dim contentWidth;
     Dim contentHeight;
@@ -90,21 +90,21 @@ public class LabelElement extends SingleElement {
     if (this.overflow == TextOverflow.OVERFLOW) {
       this.lines.add(this.text);
       int width = font.getStringWidth(this.text);
-      contentWidth = Dim.min(factory.fromGui(width), maxWidth);
+      contentWidth = Dim.min(factory.fromGui(width), maxFullWidth);
       contentHeight = fontHeight;
 
     } else if (this.overflow == TextOverflow.TRUNCATE) {
       String text = this.text;
       int width = font.getStringWidth(text);
-      if (width > maxWidth.getGui()) {
-        text = font.trimStringToWidth(text, (int)maxWidth.getGui());
+      if (width > maxFullWidth.getGui()) {
+        text = font.trimStringToWidth(text, (int)maxFullWidth.getGui());
       }
       this.lines.add(text);
-      contentWidth = Dim.min(factory.fromGui(width), maxWidth);
+      contentWidth = Dim.min(factory.fromGui(width), maxFullWidth);
       contentHeight = fontHeight;
 
     } else if (this.overflow == TextOverflow.SPLIT) {
-      this.lines = TextHelpers.splitText(this.text, (int) maxWidth.getGui(), font);
+      this.lines = TextHelpers.splitText(this.text, (int) maxFullWidth.getGui(), font);
       int actualMaxWidth = Collections.max(this.lines.stream().map(font::getStringWidth));
       contentWidth = factory.fromGui(actualMaxWidth);
       contentHeight = fontHeight.times(this.lines.size()).plus(this.linePadding.times(this.lines.size() - 1));
@@ -113,13 +113,7 @@ public class LabelElement extends SingleElement {
       throw new RuntimeException("Invalid Overflow setting " + this.overflow);
     }
 
-    return this.setLastCalculatedSize(this.getFullBoxSize(new DimPoint(this.layoutMode == LayoutMode.FIT ? contentWidth : maxWidth, contentHeight)));
-  }
-
-  @Override
-  protected DimPoint setLastCalculatedSize(DimPoint size) {
-    this.lastCalculatedSize = size;
-    return size;
+    return this.getFullBoxSize(new DimPoint(this.layoutMode == LayoutMode.FIT ? contentWidth : maxFullWidth, contentHeight));
   }
 
   @Override

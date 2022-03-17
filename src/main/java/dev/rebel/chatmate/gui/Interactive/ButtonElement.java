@@ -81,28 +81,22 @@ public class ButtonElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateSize(Dim maxWidth) {
-    maxWidth = Dim.min(getContentBoxWidth(maxWidth), this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
+  public DimPoint onCalculateSize(Dim maxFullWidth) {
+    maxFullWidth = Dim.min(getContentBoxWidth(maxFullWidth), this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
 
-    DimPoint labelSize = this.label.calculateSize(maxWidth);
+    DimPoint labelSize = this.label.calculateSize(maxFullWidth);
 
     Dim width;
     if (this.layoutMode == LayoutMode.FIT) {
-      width = Dim.min(labelSize.getX(), maxWidth);
+      width = Dim.min(labelSize.getX(), maxFullWidth);
     } else if (this.layoutMode == LayoutMode.FULL_WIDTH) {
-      width = maxWidth;
+      width = maxFullWidth;
     } else {
       throw new RuntimeException("Invalid LayoutMode " + this.layoutMode);
     }
 
     Dim height = Dim.max(this.context.dimFactory.fromGui(MIN_WIDTH_GUI), labelSize.getY());
-    return this.setLastCalculatedSize(getFullBoxSize(new DimPoint(width, height)));
-  }
-
-  @Override
-  protected DimPoint setLastCalculatedSize(DimPoint size) {
-    this.lastCalculatedSize = size;
-    return size;
+    return getFullBoxSize(new DimPoint(width, height));
   }
 
   @Override

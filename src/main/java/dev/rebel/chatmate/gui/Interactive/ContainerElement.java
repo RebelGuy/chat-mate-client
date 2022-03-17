@@ -48,8 +48,8 @@ public abstract class ContainerElement extends ElementBase {
   }
 
   @Override
-  public DimPoint calculateSize(Dim maxWidth) {
-    maxWidth = this.getContentBoxWidth(maxWidth);
+  public DimPoint onCalculateSize(Dim maxFullWidth) {
+    maxFullWidth = this.getContentBoxWidth(maxFullWidth);
 
     Dim containerWidth = ZERO;
     Dim containerHeight = ZERO;
@@ -58,7 +58,7 @@ public abstract class ContainerElement extends ElementBase {
     Dim currentY = ZERO;
     List<Dim> heightsInCurrentLine = new ArrayList<>();
     for (IElement element : this.children) {
-      DimPoint size = element.calculateSize(maxWidth);
+      DimPoint size = element.calculateSize(maxFullWidth);
 
       if (this.mode == LayoutMode.BLOCK) {
         // one per line
@@ -71,7 +71,7 @@ public abstract class ContainerElement extends ElementBase {
 
       } else if (this.mode == LayoutMode.INLINE) {
         // try to fit multiple elements per line
-        if (currentX.plus(size.getX()).lte(maxWidth)) {
+        if (currentX.plus(size.getX()).lte(maxFullWidth)) {
           // add to line
           DimPoint position = new DimPoint(currentX, currentY);
           this.childrenRelBoxes.put(element, new DimRect(position, size));
@@ -85,7 +85,6 @@ public abstract class ContainerElement extends ElementBase {
           }
 
           currentX = ZERO;
-          currentY = currentY.plus(size.getY());
           DimPoint position = new DimPoint(currentX, currentY);
           this.childrenRelBoxes.put(element, new DimRect(position, size));
           heightsInCurrentLine.add(size.getY());

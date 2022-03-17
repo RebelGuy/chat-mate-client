@@ -48,14 +48,14 @@ public class SideBySideElement extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateSize(Dim maxWidth) {
+  public DimPoint onCalculateSize(Dim maxFullWidth) {
     // override default container layout engine.
     // we must ensure that everything fits on a single line.
-    maxWidth = this.getContentBoxWidth(maxWidth);
+    maxFullWidth = this.getContentBoxWidth(maxFullWidth);
 
     float totalBias = Collections.eliminate(this.elementBiases.values(), Float::sum);
     Dim totalPadding = this.elementPadding.times(this.elementBiases.size() - 1);
-    Dim availableWidth = maxWidth.minus(totalPadding);
+    Dim availableWidth = maxFullWidth.minus(totalPadding);
 
     Dim containerHeight = ZERO;
 
@@ -71,12 +71,6 @@ public class SideBySideElement extends ContainerElement {
       containerHeight = Dim.max(containerHeight, size.getY());
     }
 
-    return this.setLastCalculatedSize(this.getFullBoxSize(new DimPoint(maxWidth, containerHeight)));
-  }
-
-  @Override
-  protected DimPoint setLastCalculatedSize(DimPoint size) {
-    this.lastCalculatedSize = size;
-    return size;
+    return this.getFullBoxSize(new DimPoint(maxFullWidth, containerHeight));
   }
 }
