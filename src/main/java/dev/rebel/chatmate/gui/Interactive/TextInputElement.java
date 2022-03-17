@@ -52,8 +52,8 @@ public class TextInputElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxFullWidth) {
-    return this.getFullBoxSize(new DimPoint(maxFullWidth, this.context.dimFactory.fromGui(this.context.fontRenderer.FONT_HEIGHT)));
+  public DimPoint calculateThisSize(Dim maxContentSize) {
+    return new DimPoint(maxContentSize, this.context.dimFactory.fromGui(this.context.fontRenderer.FONT_HEIGHT));
   }
 
   @Override

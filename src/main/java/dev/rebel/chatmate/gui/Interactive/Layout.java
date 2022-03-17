@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimRect;
 
 public class Layout {
@@ -68,5 +67,10 @@ public class Layout {
 
   public enum VerticalAlignment {
     TOP, MIDDLE, BOTTOM
+  }
+
+  /** Desired behaviour for how an element should use the available space when calculating its size. */
+  public enum SizingMode {
+    FILL, MINIMISE, ANY
   }
 }

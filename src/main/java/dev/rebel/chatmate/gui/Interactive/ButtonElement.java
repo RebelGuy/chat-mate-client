@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -27,7 +28,6 @@ public class ButtonElement extends SingleElement {
   private static final int MIN_WIDTH_GUI = 20;
 
   private LabelElement label;
-  private LayoutMode layoutMode;
   private boolean hovered;
   private boolean enabled;
   private @Nullable Runnable onClick;
@@ -35,7 +35,6 @@ public class ButtonElement extends SingleElement {
   public ButtonElement(InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
 
-    this.layoutMode = LayoutMode.FIT;
     this.label = (LabelElement)new LabelElement(context, this)
         .setText("")
         .setAlignment(LabelElement.TextAlignment.CENTRE)
@@ -81,22 +80,20 @@ public class ButtonElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxFullWidth) {
-    maxFullWidth = Dim.min(getContentBoxWidth(maxFullWidth), this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
+  public DimPoint calculateThisSize(Dim maxContentSize) {
+    maxContentSize = Dim.min(maxContentSize, this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
 
-    DimPoint labelSize = this.label.calculateSize(maxFullWidth);
+    DimPoint labelSize = this.label.calculateSize(maxContentSize);
 
     Dim width;
-    if (this.layoutMode == LayoutMode.FIT) {
-      width = Dim.min(labelSize.getX(), maxFullWidth);
-    } else if (this.layoutMode == LayoutMode.FULL_WIDTH) {
-      width = maxFullWidth;
+    if (this.getSizingMode() == SizingMode.FILL) {
+      width = maxContentSize;
     } else {
-      throw new RuntimeException("Invalid LayoutMode " + this.layoutMode);
+      width = Dim.min(labelSize.getX(), maxContentSize);
     }
 
     Dim height = Dim.max(this.context.dimFactory.fromGui(MIN_WIDTH_GUI), labelSize.getY());
-    return getFullBoxSize(new DimPoint(width, height));
+    return new DimPoint(width, height);
   }
 
   @Override
@@ -144,10 +141,5 @@ public class ButtonElement extends SingleElement {
     }
     this.label.setColour(new Colour(j));
     this.label.render();
-  }
-
-  public enum LayoutMode {
-    FIT, // the element's width will be calculated to fit the text
-    FULL_WIDTH // the element's width will always take up 100% of the provided width
   }
 }

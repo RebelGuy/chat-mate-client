@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
+import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Screen;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -414,6 +415,12 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public VerticalAlignment getVerticalAlignment() { return null;}
+
+  @Override
+  public IElement setSizingMode(SizingMode sizingMode) { return null; }
+
+  @Override
+  public SizingMode getSizingMode() { return null; }
 
   //endregion
 

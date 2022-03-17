@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -29,6 +30,7 @@ public class SideBySideElement extends ContainerElement {
   }
 
   public SideBySideElement addElement(IElement element, float bias) {
+    element.setSizingMode(SizingMode.FILL);
     this.elementBiases.put(element, bias);
     super.addElement(element);
     return this;
@@ -48,14 +50,12 @@ public class SideBySideElement extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxFullWidth) {
+  public DimPoint calculateThisSize(Dim maxContentSize) {
     // override default container layout engine.
     // we must ensure that everything fits on a single line.
-    maxFullWidth = this.getContentBoxWidth(maxFullWidth);
-
     float totalBias = Collections.eliminate(this.elementBiases.values(), Float::sum);
     Dim totalPadding = this.elementPadding.times(this.elementBiases.size() - 1);
-    Dim availableWidth = maxFullWidth.minus(totalPadding);
+    Dim availableWidth = maxContentSize.minus(totalPadding);
 
     Dim containerHeight = ZERO;
 
@@ -71,6 +71,6 @@ public class SideBySideElement extends ContainerElement {
       containerHeight = Dim.max(containerHeight, size.getY());
     }
 
-    return this.getFullBoxSize(new DimPoint(maxFullWidth, containerHeight));
+    return new DimPoint(maxContentSize, containerHeight);
   }
 }

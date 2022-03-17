@@ -7,6 +7,7 @@ import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
+import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -33,6 +34,7 @@ public abstract class ElementBase implements IElement {
   private boolean isFocusable;
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
+  private SizingMode sizingMode;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     this.context = context;
@@ -46,6 +48,7 @@ public abstract class ElementBase implements IElement {
     this.isFocusable = false;
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
+    this.sizingMode = SizingMode.ANY;
   }
 
   @Override
@@ -153,14 +156,17 @@ public abstract class ElementBase implements IElement {
   /** Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
   @Override
   public final DimPoint calculateSize(Dim maxFullWidth) {
-    // add a wrapper around the calculation method so we can cache the calculated size
-    DimPoint size = this.calculateThisSize(maxFullWidth);
-    this.lastCalculatedSize = size;
-    return size;
+    // add a wrapper around the calculation method so we can cache the calculated size and provide a context for working
+    // with content units (rather than full units).
+    Dim contentWidth = getContentBoxWidth(maxFullWidth);
+    DimPoint size = this.calculateThisSize(contentWidth);
+    DimPoint fullSize = getFullBoxSize(size);
+    this.lastCalculatedSize = fullSize;
+    return fullSize;
   }
 
   /** Call this method ONLY in the context of `super` or `this`. For other elements, call `element.calculateSize()`. */
-  protected abstract DimPoint calculateThisSize(Dim maxFullWidth);
+  protected abstract DimPoint calculateThisSize(Dim maxContentSize);
 
   @Override
   public final DimPoint getLastCalculatedSize() {
@@ -262,6 +268,17 @@ public abstract class ElementBase implements IElement {
   @Override
   public final VerticalAlignment getVerticalAlignment() {
     return this.verticalAlignment;
+  }
+
+  @Override
+  public IElement setSizingMode(SizingMode sizingMode) {
+    this.sizingMode = sizingMode;
+    return this;
+  }
+
+  @Override
+  public SizingMode getSizingMode() {
+    return this.sizingMode;
   }
 
   protected final boolean checkCollision(DimPoint point) {

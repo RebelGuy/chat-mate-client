@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
@@ -49,7 +49,7 @@ public class ManageExperienceModal extends ContainerElement {
 
 
     this.divider = new HorizontalDivider(context, this)
-        .setMode(SizingMode.PARENT_FULL);
+        .setMode(FillMode.PARENT_FULL);
 
     this.closeButton = new ButtonElement(context, this)
         .setText("Close")
@@ -84,8 +84,8 @@ public class ManageExperienceModal extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxFullWidth) {
-    return super.calculateThisSize(Dim.min(maxFullWidth, this.width));
+  public DimPoint calculateThisSize(Dim maxContentSize) {
+    return super.calculateThisSize(Dim.min(maxContentSize, this.width));
   }
 
   @Override
