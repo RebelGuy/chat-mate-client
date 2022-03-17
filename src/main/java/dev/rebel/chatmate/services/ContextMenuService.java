@@ -12,7 +12,6 @@ import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 
 public class ContextMenuService {
   private final Minecraft minecraft;
@@ -22,6 +21,7 @@ public class ContextMenuService {
   private final McChatService mcChatService;
   private final MouseEventService mouseEventService;
   private final KeyboardEventService keyboardEventService;
+  private final ClipboardService clipboardService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -29,7 +29,8 @@ public class ContextMenuService {
                             ExperienceEndpointProxy experienceEndpointProxy,
                             McChatService mcChatService,
                             MouseEventService mouseEventService,
-                            KeyboardEventService keyboardEventService) {
+                            KeyboardEventService keyboardEventService,
+                            ClipboardService clipboardService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -37,6 +38,7 @@ public class ContextMenuService {
     this.mcChatService = mcChatService;
     this.mouseEventService = mouseEventService;
     this.keyboardEventService = keyboardEventService;
+    this.clipboardService = clipboardService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -51,7 +53,12 @@ public class ContextMenuService {
   }
 
   private void onModifyExperience(PublicUser user) {
-    InteractiveScreen.InteractiveContext context = new InteractiveScreen.InteractiveContext(this.mouseEventService, this.keyboardEventService, this.dimFactory, this.minecraft, this.minecraft.fontRendererObj);
+    InteractiveScreen.InteractiveContext context = new InteractiveScreen.InteractiveContext(this.mouseEventService,
+        this.keyboardEventService,
+        this.dimFactory,
+        this.minecraft,
+        this.minecraft.fontRendererObj,
+        this.clipboardService);
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
     IElement modal = new ManageExperienceModal(context, screen, user, this.experienceEndpointProxy, this.mcChatService);
     screen.setMainElement(modal);

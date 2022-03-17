@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -18,6 +19,8 @@ public class ManageExperienceModal extends ContainerElement {
   private final Dim width;
 
   private LabelElement title;
+  private SideBySideElement levelSbs;
+  private TextInputElement msgSbs;
   private HorizontalDivider divider;
   private ButtonElement closeButton;
   private ButtonElement submitButton;
@@ -41,6 +44,10 @@ public class ManageExperienceModal extends ContainerElement {
         .setLayoutMode(LabelElement.LayoutMode.FULL_WIDTH)
         .setMargin(new Layout.RectExtension(ZERO, ZERO, ZERO, context.dimFactory.fromGui(30)));
 
+    this.msgSbs = (TextInputElement)new TextInputElement(context, this)
+        .setMargin(new RectExtension(ZERO, context.dimFactory.fromGui(10)));
+
+
     this.divider = new HorizontalDivider(context, this)
         .setMode(SizingMode.PARENT_FULL);
 
@@ -50,13 +57,11 @@ public class ManageExperienceModal extends ContainerElement {
     this.submitButton = new ButtonElement(context, this)
         .setText("Submit")
         .setOnClick(this::onSubmit);
-
     this.footer = (SideBySideElement)new SideBySideElement(context, this)
         .setElementPadding(this.width.over(2))
         .addElement(this.closeButton, 1)
         .addElement(this.submitButton, 1)
-        .setPadding(new Layout.RectExtension(ZERO, context.dimFactory.fromGui(4)));
-
+        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO));
   }
 
   private void onSubmit() {
@@ -71,7 +76,8 @@ public class ManageExperienceModal extends ContainerElement {
   public void onCreate() {
     this.addElement(this.title);
 
-
+//    this.addElement(this.levelSbs);
+    this.addElement(this.msgSbs);
 
     this.addElement(this.divider);
     this.addElement(this.footer);

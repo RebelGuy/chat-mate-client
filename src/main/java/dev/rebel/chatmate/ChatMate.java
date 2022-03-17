@@ -87,7 +87,15 @@ public class ChatMate {
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config);
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, this.forgeEventService, this.mouseEventService, dimFactory);
-    ContextMenuService contextMenuService = new ContextMenuService(minecraft, dimFactory, contextMenuStore, experienceEndpointProxy, mcChatService, mouseEventService, keyboardEventService);
+    ClipboardService clipboardService = new ClipboardService();
+    ContextMenuService contextMenuService = new ContextMenuService(minecraft,
+        dimFactory,
+        contextMenuStore,
+        experienceEndpointProxy,
+        mcChatService,
+        mouseEventService,
+        keyboardEventService,
+        clipboardService);
     CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
     this.guiService = new GuiService(this.isDev,
         logService,

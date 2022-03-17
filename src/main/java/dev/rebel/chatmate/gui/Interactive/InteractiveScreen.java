@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.ClipboardService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
@@ -422,18 +423,25 @@ public class InteractiveScreen extends Screen implements IElement {
     public final DimFactory dimFactory;
     public final Minecraft minecraft;
     public final FontRenderer fontRenderer;
+    public final ClipboardService clipboardService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
     public @Nullable IElement focusedElement = null;
     public @Nullable DimPoint mousePosition = null;
 
-    public InteractiveContext(MouseEventService mouseEventService, KeyboardEventService keyboardEventService, DimFactory dimFactory, Minecraft minecraft, FontRenderer fontRenderer) {
+    public InteractiveContext(MouseEventService mouseEventService,
+                              KeyboardEventService keyboardEventService,
+                              DimFactory dimFactory,
+                              Minecraft minecraft,
+                              FontRenderer fontRenderer,
+                              ClipboardService clipboardService) {
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
       this.dimFactory = dimFactory;
       this.minecraft = minecraft;
       this.fontRenderer = fontRenderer;
+      this.clipboardService = clipboardService;
     }
   }
 }
