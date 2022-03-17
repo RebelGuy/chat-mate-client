@@ -8,20 +8,12 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.gui.models.Line;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
-
-import java.util.ArrayList;
-import java.util.List;
 
 // a note about box size terminology:
 // the full box includes contents, surrounded by padding, surrounded by margin. it is the box used when calculating any sort of layout.
@@ -158,16 +150,17 @@ public abstract class ElementBase implements IElement {
     this.parent.onInvalidateSize();
   }
 
-  // add a wrapper around the calculation method so we can cache the calculated size
+  /** Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
   @Override
   public final DimPoint calculateSize(Dim maxFullWidth) {
-    DimPoint size = this.onCalculateSize(maxFullWidth);
+    // add a wrapper around the calculation method so we can cache the calculated size
+    DimPoint size = this.calculateThisSize(maxFullWidth);
     this.lastCalculatedSize = size;
     return size;
   }
 
-  /** Do not call this method, only implement it. Instead, call `calculateSize()`. */
-  protected abstract DimPoint onCalculateSize(Dim maxFullWidth);
+  /** Call this method ONLY in the context of `super` or `this`. For other elements, call `element.calculateSize()`. */
+  protected abstract DimPoint calculateThisSize(Dim maxFullWidth);
 
   @Override
   public final DimPoint getLastCalculatedSize() {

@@ -9,8 +9,6 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.services.McChatService;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 
 public class ManageExperienceModal extends ContainerElement {
   private final PublicUser user;
@@ -80,8 +78,8 @@ public class ManageExperienceModal extends ContainerElement {
   }
 
   @Override
-  public DimPoint onCalculateSize(Dim maxFullWidth) {
-    return super.calculateSize(Dim.min(maxFullWidth, this.width));
+  public DimPoint calculateThisSize(Dim maxFullWidth) {
+    return super.calculateThisSize(Dim.min(maxFullWidth, this.width));
   }
 
   @Override

@@ -48,7 +48,7 @@ public class SideBySideElement extends ContainerElement {
   }
 
   @Override
-  public DimPoint onCalculateSize(Dim maxFullWidth) {
+  public DimPoint calculateThisSize(Dim maxFullWidth) {
     // override default container layout engine.
     // we must ensure that everything fits on a single line.
     maxFullWidth = this.getContentBoxWidth(maxFullWidth);

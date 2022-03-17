@@ -48,7 +48,7 @@ public abstract class ContainerElement extends ElementBase {
   }
 
   @Override
-  public DimPoint onCalculateSize(Dim maxFullWidth) {
+  public DimPoint calculateThisSize(Dim maxFullWidth) {
     maxFullWidth = this.getContentBoxWidth(maxFullWidth);
 
     Dim containerWidth = ZERO;

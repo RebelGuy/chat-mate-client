@@ -77,7 +77,7 @@ public class LabelElement extends SingleElement {
   }
 
   @Override
-  public DimPoint onCalculateSize(Dim maxFullWidth) {
+  public DimPoint calculateThisSize(Dim maxFullWidth) {
     FontRenderer font = this.context.fontRenderer;
     DimFactory factory = this.context.dimFactory;
 

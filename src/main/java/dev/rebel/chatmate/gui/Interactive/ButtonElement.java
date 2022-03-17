@@ -81,7 +81,7 @@ public class ButtonElement extends SingleElement {
   }
 
   @Override
-  public DimPoint onCalculateSize(Dim maxFullWidth) {
+  public DimPoint calculateThisSize(Dim maxFullWidth) {
     maxFullWidth = Dim.min(getContentBoxWidth(maxFullWidth), this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
 
     DimPoint labelSize = this.label.calculateSize(maxFullWidth);

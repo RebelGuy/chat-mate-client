@@ -44,7 +44,7 @@ public class HorizontalDivider extends SingleElement {
   }
 
   @Override
-  public DimPoint onCalculateSize(Dim maxFullWidth) {
+  public DimPoint calculateThisSize(Dim maxFullWidth) {
     // cheating a little - the maxWidth may actually be wider than this, but the important part is that we will the available width completely
     return new DimPoint(maxFullWidth, this.thickness);
   }
