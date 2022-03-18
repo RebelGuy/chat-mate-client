@@ -17,6 +17,9 @@ public class ManageExperienceModal extends ContainerElement {
   private final McChatService mcChatService;
 
   private final Dim width;
+  private final Dim borderSize;
+  private final Dim cornerRadius;
+  private final Dim shadowDistance;
 
   private LabelElement title;
   private SideBySideElement levelSbs;
@@ -32,8 +35,12 @@ public class ManageExperienceModal extends ContainerElement {
     this.experienceEndpointProxy = experienceEndpointProxy;
     this.mcChatService = mcChatService;
 
-    this.width = context.dimFactory.fromGui(200);
+    this.width = gui(200);
+    this.borderSize = gui(1);
+    this.cornerRadius = gui(5);
+    this.shadowDistance = gui(3);
     this.setPadding(new Layout.RectExtension(context.dimFactory.fromGui(10)));
+    this.setBorder(new RectExtension(this.borderSize));
     this.setHorizontalAlignment(HorizontalAlignment.CENTRE);
     this.setVerticalAlignment(VerticalAlignment.MIDDLE);
 
@@ -90,9 +97,8 @@ public class ManageExperienceModal extends ContainerElement {
 
   @Override
   public void renderElement() {
-    Colour backgroundTop = new Colour(64, 64, 64, 127); // light gray
-    Colour backgroundBottom = new Colour(32, 32, 32, 127); // dark gray
-    RendererHelpers.drawRect(this.getZIndex(), this.getBox(), backgroundTop, backgroundBottom, this.context.dimFactory.fromGui(1), null, null);
+    Colour background = new Colour(32, 32, 32, 127); // dark gray
+    RendererHelpers.drawRect(this.getZIndex(), this.getPaddingBox(), background, this.borderSize, Colour.BLACK, this.cornerRadius, this.shadowDistance);
 
     super.renderElement();
   }

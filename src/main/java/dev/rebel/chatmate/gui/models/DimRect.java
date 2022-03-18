@@ -45,6 +45,14 @@ public class DimRect {
     return new DimPoint(this.width, this.height);
   }
 
+  public DimPoint getTopLeft() { return new DimPoint(this.x, this.y); }
+
+  public DimPoint getTopRight() { return new DimPoint(this.getRight(), this.y); }
+
+  public DimPoint getBottomLeft() { return new DimPoint(this.x, this.getBottom()); }
+
+  public DimPoint getBottomRight() { return new DimPoint(this.getRight(), this.getBottom()); }
+
   /** Returns true if the point is contained within the rect, or touches its boundary. */
   public boolean checkCollision(DimPoint point) {
     return this.x.lte(point.getX())

@@ -66,7 +66,7 @@ public class HorizontalDivider extends SingleElement {
     }
 
     Line line = new Line(new DimPoint(x1, y), new DimPoint(x2, y));
-    RendererHelpers.drawLine(line, this.thickness, this.colour, false);
+    RendererHelpers.drawLine(this.getZIndex(), line, this.thickness, this.colour, this.colour, false);
   }
 
   public enum FillMode {

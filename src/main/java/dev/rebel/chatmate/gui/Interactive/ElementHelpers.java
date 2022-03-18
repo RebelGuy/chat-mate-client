@@ -85,8 +85,8 @@ public class ElementHelpers {
     if (mousePos != null) {
       mousePos = mousePos.setAnchor(DimAnchor.GUI);
       DimPoint screen = context.dimFactory.getMinecraftSize();
-      RendererHelpers.drawLine(new Line(new DimPoint(ZERO, mousePos.getY()), new DimPoint(screen.getX(), mousePos.getY())), borderWidth, borderColour, false);
-      RendererHelpers.drawLine(new Line(new DimPoint(mousePos.getX(), ZERO), new DimPoint(mousePos.getX(), screen.getY())), borderWidth, borderColour, false);
+      RendererHelpers.drawLine(1000, new Line(new DimPoint(ZERO, mousePos.getY()), new DimPoint(screen.getX(), mousePos.getY())), borderWidth, borderColour, borderColour, false);
+      RendererHelpers.drawLine(1000, new Line(new DimPoint(mousePos.getX(), ZERO), new DimPoint(mousePos.getX(), screen.getY())), borderWidth, borderColour, borderColour, false);
     }
 
     List<String> lines = new ArrayList<>();

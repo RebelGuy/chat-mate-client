@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.models;
 
+import dev.rebel.chatmate.services.util.Collections;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +23,7 @@ public class Line {
     return (float)(Math.atan2(y, x) + Math.PI);
   }
 
-  /** Gets the outline in counter-clockwise order. */
+  /** Gets the outline in counter-clockwise order, [from, from, to, to]. */
   public List<Line> getOutline(Dim padding, boolean includeCaps) {
     if (includeCaps) {
       throw new RuntimeException("NYI");
@@ -56,8 +58,16 @@ public class Line {
     return lines;
   }
 
+  public Line invert() {
+    return new Line(this.to, this.from);
+  }
+
   @Override
   public String toString() {
     return String.format("[%s, %s]", this.from.toString(), this.to.toString());
+  }
+
+  public static List<Line> reverse(List<Line> lines) {
+    return Collections.map(Collections.reverse(lines), line -> new Line(line.to, line.from));
   }
 }

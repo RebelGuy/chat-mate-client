@@ -55,6 +55,11 @@ public class Dim {
     return this.copy().withValue(this.value / other);
   }
 
+  /** Dim units cancel out - this is a ratio. */
+  public float over(Dim other) {
+    return this.value / this.getOtherValue(other);
+  }
+
   public Dim copy() {
     return new Dim(this.scaleFactor, this.anchor).withValue(this.value);
   }
@@ -69,6 +74,9 @@ public class Dim {
 
   public Dim ceil() { return new Dim(this.scaleFactor, this.anchor).withValue((float)Math.ceil(this.value)); }
 
+  /** Rounds to two decimal places. */
+  public Dim round() { return new Dim(this.scaleFactor, this.anchor).withValue((float)Math.round(this.value * 100) / 100.0f); }
+
   public static Dim max(Dim a, Dim b) { return a.gte(b) ? a : b; }
 
   public static Dim max(List<Dim> items) {
@@ -76,6 +84,8 @@ public class Dim {
   }
 
   public static Dim min(Dim a, Dim b) { return a.lte(b) ? a : b; }
+
+  public static boolean positive(Dim x) { return x != null && x.value > 0; }
 
   @Override
   public boolean equals(Object o) {
