@@ -24,7 +24,9 @@ import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
@@ -43,6 +45,7 @@ public class InteractiveScreen extends Screen implements IElement {
   private boolean requiresRecalculation = true;
 
   private IElement mainElement = null;
+  private Set<IElement> elementsUnderCursor = new HashSet<>();
   private boolean debugModeEnabled = false;
   private boolean debugElementSelected = false;
 
@@ -184,6 +187,21 @@ public class InteractiveScreen extends Screen implements IElement {
         return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
       }
     }
+
+    // fire MOUSE_ENTER/MOUSE_EXIT events
+    Set<IElement> newElements = new HashSet<>(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
+    Set<IElement> previousElements = this.elementsUnderCursor;
+    for (IElement prevElement : previousElements) {
+      if (!newElements.contains(prevElement)) {
+        prevElement.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, prevElement));
+      }
+    }
+    for (IElement newElement : newElements) {
+      if (!previousElements.contains(newElement)) {
+        newElement.onEvent(EventType.MOUSE_ENTER, new InteractiveEvent<>(EventPhase.TARGET, in, newElement));
+      }
+    }
+    this.elementsUnderCursor = newElements;
 
     this.recalculateLayout();
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_MOVE, in);

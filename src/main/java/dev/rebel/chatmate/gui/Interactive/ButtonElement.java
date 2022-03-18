@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.util.Collections;
 import net.minecraft.client.renderer.GlStateManager;
@@ -72,6 +73,16 @@ public class ButtonElement extends SingleElement {
       this.onClick.run();
       e.stopPropagation();
     }
+  }
+
+  @Override
+  public void onMouseEnter(IEvent<In> e) {
+    this.hovered = true;
+  }
+
+  @Override
+  public void onMouseExit(IEvent<In> e) {
+    this.hovered = false;
   }
 
   @Override

@@ -81,6 +81,12 @@ public abstract class ElementBase implements IElement {
           break;
         case BLUR:
           break;
+        case MOUSE_ENTER:
+          this.onMouseEnter((IEvent<MouseEventData.In>)event);
+          break;
+        case MOUSE_EXIT:
+          this.onMouseExit((IEvent<MouseEventData.In>)event);
+          break;
         default:
           throw new RuntimeException("Invalid event type at TARGET phase: " + type);
       }
@@ -151,6 +157,8 @@ public abstract class ElementBase implements IElement {
   public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {}
   public void onFocus(IEvent<FocusEventData> e) {}
   public void onBlur(IEvent<FocusEventData> e) {}
+  public void onMouseEnter(IEvent<MouseEventData.In> e) {}
+  public void onMouseExit(IEvent<MouseEventData.In> e) {}
 
   @Override
   public final void onCloseScreen() { this.parent.onCloseScreen(); }

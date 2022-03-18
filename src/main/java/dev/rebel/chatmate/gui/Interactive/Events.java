@@ -53,7 +53,7 @@ public class Events {
   }
 
   public enum EventType {
-    MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, MOUSE_SCROLL, // MouseEventData.In
+    MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, MOUSE_SCROLL, MOUSE_ENTER, MOUSE_EXIT, // MouseEventData.In
     KEY_DOWN, // KeyboardEventData.In
     FOCUS, BLUR // FocusEventData
 
