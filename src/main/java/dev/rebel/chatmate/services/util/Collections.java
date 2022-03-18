@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -53,6 +54,18 @@ public class Collections {
       result.add(mapper.apply(items.get(i), i));
     }
     return result;
+  }
+
+  public static <T> List<T> filter(List<T> list, Predicate<T> filter) {
+    return list.stream().filter(filter).collect(Collectors.toList());
+  }
+
+  public static <T> List<T> trim(List<T> list, @Nullable Integer maxItems) {
+    if (maxItems == null || list.size() <= maxItems) {
+      return list;
+    } else {
+      return list.subList(0, maxItems);
+    }
   }
 
   public static <T> List<T> list(T... items) {

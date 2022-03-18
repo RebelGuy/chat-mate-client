@@ -1,10 +1,13 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.models.Line;
 import dev.rebel.chatmate.services.util.Collections;
 import net.minecraft.client.gui.FontRenderer;
@@ -32,7 +35,7 @@ public class ElementHelpers {
       // was most likely added last is picked. in the future, we could use z indexes for a more robust solution.
       boolean foundMatch = false;
       for (IElement child : Collections.reverse(children)) {
-        if (getCollisionBox(child).checkCollision(point)) {
+        if (child.getVisible() && getCollisionBox(child).checkCollision(point)) {
           result.add(child);
           foundMatch = true;
           parent = child;
@@ -65,6 +68,42 @@ public class ElementHelpers {
         child = parent;
       }
     }
+  }
+
+  /** Lays out the size within the given box, using the provided alignment options.
+   * Note: If the size is larger than the provided box, it will NOT be contained entirely. */
+  protected static DimRect alignElementInBox(DimPoint size, DimRect box, HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment) {
+    Dim x;
+    switch (horizontalAlignment) {
+      case LEFT:
+        x = box.getX();
+        break;
+      case CENTRE:
+        x = box.getX().plus(box.getWidth().minus(size.getX()).over(2));
+        break;
+      case RIGHT:
+        x = box.getRight().minus(size.getX());
+        break;
+      default:
+        throw new RuntimeException("Invalid HorizontalAlignment " + horizontalAlignment);
+    }
+
+    Dim y;
+    switch (verticalAlignment) {
+      case TOP:
+        y = box.getY();
+        break;
+      case MIDDLE:
+        y = box.getY().plus(box.getHeight().minus(size.getY()).over(2));
+        break;
+      case BOTTOM:
+        y = box.getBottom().minus(size.getY());
+        break;
+      default:
+        throw new RuntimeException("Invalid VerticalAlignment " + verticalAlignment);
+    }
+
+    return new DimRect(new DimPoint(x, y), size);
   }
 
   public static void renderDebugInfo(IElement element, InteractiveContext context) {

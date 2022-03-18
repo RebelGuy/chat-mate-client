@@ -31,6 +31,11 @@ public class DimPoint {
     return new DimPoint(this.getX().setAnchor(anchor), this.getY().setAnchor(anchor));
   }
 
+  /** Scales the values by the given number. */
+  public DimPoint scale(float scale) {
+    return new DimPoint(this.x.times(scale), this.y.times(scale));
+  }
+
   @Override
   public String toString() {
     return String.format("(%s, %s)", this.x.toString(), this.y.toString());

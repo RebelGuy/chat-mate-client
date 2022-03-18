@@ -17,6 +17,8 @@ import dev.rebel.chatmate.services.events.models.MouseEventData;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 
+import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBox;
+
 // a note about box size terminology:
 // the full box includes contents, surrounded by padding, surrounded by border, surrounded by margin. it is the box used when calculating any sort of layout.
 // the collision box includes contents, surrounded by padding, surrounded by border. it is the box used when checking for mouse pointer collisions with this element.
@@ -212,6 +214,7 @@ public abstract class ElementBase implements IElement {
   @Override
   public final IElement setPadding(RectExtension padding) {
     this.padding = padding;
+    this.onInvalidateSize();
     return this;
   }
 
@@ -223,6 +226,7 @@ public abstract class ElementBase implements IElement {
   @Override
   public final IElement setBorder(RectExtension border) {
     this.border = border;
+    this.onInvalidateSize();
     return this;
   }
 
@@ -234,6 +238,7 @@ public abstract class ElementBase implements IElement {
   @Override
   public final IElement setMargin(RectExtension margin) {
     this.margin = margin;
+    this.onInvalidateSize();
     return this;
   }
 
@@ -250,6 +255,7 @@ public abstract class ElementBase implements IElement {
   @Override
   public final IElement setZIndex(int zIndex) {
     this.zIndex = zIndex;
+    this.onInvalidateSize();
     return this;
   }
 
@@ -261,12 +267,14 @@ public abstract class ElementBase implements IElement {
   @Override
   public final IElement setFocusable(boolean focusable) {
     this.isFocusable = focusable;
+    this.onInvalidateSize();
     return this;
   }
 
   @Override
   public final IElement setHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
     this.horizontalAlignment = horizontalAlignment;
+    this.onInvalidateSize();
     return this;
   }
 
@@ -278,6 +286,7 @@ public abstract class ElementBase implements IElement {
   @Override
   public final IElement setVerticalAlignment(VerticalAlignment verticalAlignment) {
     this.verticalAlignment = verticalAlignment;
+    this.onInvalidateSize();
     return this;
   }
 
@@ -289,6 +298,7 @@ public abstract class ElementBase implements IElement {
   @Override
   public IElement setSizingMode(SizingMode sizingMode) {
     this.sizingMode = sizingMode;
+    this.onInvalidateSize();
     return this;
   }
 
@@ -344,41 +354,5 @@ public abstract class ElementBase implements IElement {
 
   protected final Dim gui(float guiValue) {
     return this.context.dimFactory.fromGui(guiValue);
-  }
-
-  /** Lays out the size within the given box, using the provided alignment options.
-   * Note: If the size is larger than the provided box, it will NOT be contained entirely. */
-  protected static DimRect alignElementInBox(DimPoint size, DimRect box, HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment) {
-    Dim x;
-    switch (horizontalAlignment) {
-      case LEFT:
-        x = box.getX();
-        break;
-      case CENTRE:
-        x = box.getX().plus(box.getWidth().minus(size.getX()).over(2));
-        break;
-      case RIGHT:
-        x = box.getRight().minus(size.getX());
-        break;
-      default:
-        throw new RuntimeException("Invalid HorizontalAlignment " + horizontalAlignment);
-    }
-
-    Dim y;
-    switch (verticalAlignment) {
-      case TOP:
-        y = box.getY();
-        break;
-      case MIDDLE:
-        y = box.getY().plus(box.getHeight().minus(size.getY()).over(2));
-        break;
-      case BOTTOM:
-        y = box.getBottom().minus(size.getY());
-        break;
-      default:
-        throw new RuntimeException("Invalid VerticalAlignment " + verticalAlignment);
-    }
-
-    return new DimRect(new DimPoint(x, y), size);
   }
 }

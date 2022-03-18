@@ -40,6 +40,8 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseScroll = this::_onMouseScroll;
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> onKeyDown = this::_onKeyDown;
 
+  private boolean requiresRecalculation = true;
+
   private IElement mainElement = null;
   private boolean debugModeEnabled = false;
   private boolean debugElementSelected = false;
@@ -66,7 +68,7 @@ public class InteractiveScreen extends Screen implements IElement {
     if (this.mainElement == null) {
       return;
     }
-    this.recalculateLayout();
+    this.requiresRecalculation = true;
   }
 
   @Override
@@ -96,6 +98,11 @@ public class InteractiveScreen extends Screen implements IElement {
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   private void recalculateLayout() {
+    if (!this.requiresRecalculation) {
+      return;
+    }
+    this.requiresRecalculation = false;
+
     DimFactory factory = this.context.dimFactory;
     Dim maxX = factory.getMinecraftSize().getX();
     Dim maxY = factory.getMinecraftSize().getY();
@@ -108,7 +115,7 @@ public class InteractiveScreen extends Screen implements IElement {
     // now that we know our actual dimensions, pass the full rect down and let the children re-position (but they should
     // not do any resizing as that would invalidate the final box).
     DimRect screenRect = new DimRect(factory.zeroGui(), factory.zeroGui(), maxX, maxY);
-    DimRect mainRect = ElementBase.alignElementInBox(mainSize, screenRect, this.mainElement.getHorizontalAlignment(), this.mainElement.getVerticalAlignment());
+    DimRect mainRect = ElementHelpers.alignElementInBox(mainSize, screenRect, this.mainElement.getHorizontalAlignment(), this.mainElement.getVerticalAlignment());
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
   }
@@ -119,8 +126,7 @@ public class InteractiveScreen extends Screen implements IElement {
       throw new RuntimeException("Please set the MainElement before displaying the screen in Minecraft.");
     }
 
-    // events have fired, so recalculate sizes and then render
-    // this.mainElement.calculateSize(this.context.dimFactory.getMinecraftSize().getX());
+    this.recalculateLayout();
     this.mainElement.render();
 
     if (this.context.debugElement == this) {
@@ -157,7 +163,9 @@ public class InteractiveScreen extends Screen implements IElement {
       }
     }
 
+    this.recalculateLayout();
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_DOWN, in);
+    this.recalculateLayout();
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
@@ -177,7 +185,9 @@ public class InteractiveScreen extends Screen implements IElement {
       }
     }
 
+    this.recalculateLayout();
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_MOVE, in);
+    this.recalculateLayout();
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
@@ -186,7 +196,9 @@ public class InteractiveScreen extends Screen implements IElement {
       return new MouseEventData.Out(null);
     }
 
+    this.recalculateLayout();
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_UP, in);
+    this.recalculateLayout();
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
@@ -195,7 +207,9 @@ public class InteractiveScreen extends Screen implements IElement {
       return new MouseEventData.Out(null);
     }
 
+    this.recalculateLayout();
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_SCROLL, in);
+    this.recalculateLayout();
     return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
   }
 
@@ -205,7 +219,9 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     // now do the normal event propagation
+    this.recalculateLayout();
     boolean handled = this.propagateKeyboardEvent(EventType.KEY_DOWN, in);
+    this.recalculateLayout();
     if (handled) {
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     }
@@ -240,6 +256,7 @@ public class InteractiveScreen extends Screen implements IElement {
       }
     }
 
+    this.recalculateLayout();
     return new KeyboardEventData.Out(null);
   }
 

@@ -146,5 +146,22 @@ public class EndpointProxy {
     }
   }
 
+  public static String getApiErrorMessage(Throwable e) {
+    String msg;
+    if (e instanceof ConnectException) {
+      msg = "Unable to connect.";
+    } else if (e instanceof ChatMateApiException) {
+      ChatMateApiException error = (ChatMateApiException)e;
+      msg = error.apiResponseError.message;
+      if (msg == null) {
+        msg = error.apiResponseError.errorType;
+      }
+    } else {
+      msg = "Something went wrong.";
+    }
+
+    return msg;
+  }
+
   public enum Method { GET, POST }
 }

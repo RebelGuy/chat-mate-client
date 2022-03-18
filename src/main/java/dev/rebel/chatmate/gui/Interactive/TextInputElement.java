@@ -82,6 +82,11 @@ public class TextInputElement extends SingleElement {
     this.drawTextBox();
   }
 
+  public TextInputElement onTextChange(Consumer<String> onTextChange) {
+    this.onTextChange = onTextChange;
+    return this;
+  }
+
   public void setText(String newText) {
     if (this.validator.test(newText)) {
       if (newText.length() > this.maxStringLength) {
@@ -94,8 +99,9 @@ public class TextInputElement extends SingleElement {
     }
   }
 
-  public void setValidator(Predicate<String> validator) {
+  public TextInputElement setValidator(Predicate<String> validator) {
     this.validator = validator;
+    return this;
   }
 
   /** Adds text at the current cursor position, overwriting any selected text. */

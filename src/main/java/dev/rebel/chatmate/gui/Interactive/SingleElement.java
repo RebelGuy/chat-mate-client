@@ -28,6 +28,7 @@ public abstract class SingleElement extends ElementBase {
   @Override
   public SingleElement setVisible(boolean visible) {
     this.visible = visible;
+    this.onInvalidateSize();
     return this;
   }
 }

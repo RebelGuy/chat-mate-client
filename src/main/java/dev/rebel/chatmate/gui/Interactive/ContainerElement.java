@@ -4,6 +4,7 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.util.Collections;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,6 +43,10 @@ public abstract class ContainerElement extends ElementBase {
     return this;
   }
 
+  protected List<IElement> getVisibleChildren() {
+    return Collections.filter(this.children, IElement::getVisible);
+  }
+
   @Override
   public List<IElement> getChildren() {
     return this.children;
@@ -55,7 +60,7 @@ public abstract class ContainerElement extends ElementBase {
     Dim currentX = ZERO;
     Dim currentY = ZERO;
     List<Dim> heightsInCurrentLine = new ArrayList<>();
-    for (IElement element : this.children) {
+    for (IElement element : this.getVisibleChildren()) {
       DimPoint size = element.calculateSize(maxContentSize);
 
       if (this.mode == LayoutMode.BLOCK) {
@@ -108,7 +113,9 @@ public abstract class ContainerElement extends ElementBase {
   @Override
   public void renderElement() {
     for (IElement element : this.children) {
-      element.render();
+      if (element.getVisible()) {
+        element.render();
+      }
     }
   }
 

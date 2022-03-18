@@ -127,6 +127,10 @@ public class TextHelpers {
     return text;
   }
 
+  public static boolean isNullOrEmpty(String str) {
+    return str == null || str.trim().length() == 0;
+  }
+
   private static boolean isEndOfWord(char[] text, int i) {
     return i == text.length - 1 || !isWordSeparator(text[i]) && isWordSeparator(text[i + 1]);
   }

@@ -30,6 +30,15 @@ public class RendererHelpers {
     GlStateManager.popMatrix();
   }
 
+  /** Maps the render space such that (0, 0) will be rendered at the specified coordinates. onRender should only use relative coordinates to the translated space. */
+  public static void withMapping(DimPoint translation, float scale, Runnable onRender) {
+    GlStateManager.pushMatrix();
+    GlStateManager.translate(translation.getX().getGui(), translation.getY().getGui(), 0);
+    GlStateManager.scale(scale, scale, 1);
+    onRender.run();
+    GlStateManager.popMatrix();
+  }
+
   /** Draws a coloured rect. */
   public static void drawRect(int zLevel, DimRect rect, Colour colour) {
     drawRect(zLevel, rect, colour, null, null);

@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static dev.rebel.chatmate.models.Styles.*;
+import static dev.rebel.chatmate.proxy.EndpointProxy.getApiErrorMessage;
 import static dev.rebel.chatmate.services.util.ChatHelpers.joinComponents;
 import static dev.rebel.chatmate.services.util.ChatHelpers.styledTextWithMask;
 
@@ -130,19 +131,7 @@ public class McChatService {
   }
 
   public void printError(Throwable e) {
-    String msg;
-    if (e instanceof ConnectException) {
-      msg = "Unable to connect.";
-    } else if (e instanceof ChatMateApiException) {
-      ChatMateApiException error = (ChatMateApiException)e;
-      msg = error.apiResponseError.message;
-      if (msg == null) {
-        msg = error.apiResponseError.errorType;
-      }
-    } else {
-      msg = "Something went wrong.";
-    }
-
+    String msg = getApiErrorMessage(e);
     IChatComponent message = this.messageService.getErrorMessage(msg);
     this.minecraftProxyService.printChatMessage("Error", message);
   }

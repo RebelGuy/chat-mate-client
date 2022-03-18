@@ -39,7 +39,7 @@ public class ButtonElement extends SingleElement {
         .setText("")
         .setAlignment(LabelElement.TextAlignment.CENTRE)
         .setOverflow(LabelElement.TextOverflow.TRUNCATE)
-        .setLayoutMode(LabelElement.LayoutMode.FIT)
+        .setSizingMode(SizingMode.MINIMISE)
         .setHorizontalAlignment(HorizontalAlignment.CENTRE)
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .setPadding(new Layout.RectExtension(context.dimFactory.fromGui(4))); // make sure the text doesn't touch the border

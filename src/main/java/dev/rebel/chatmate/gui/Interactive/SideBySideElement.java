@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -29,7 +30,7 @@ public class SideBySideElement extends ContainerElement {
     return this;
   }
 
-  public SideBySideElement addElement(IElement element, float bias) {
+  public SideBySideElement addElement(float bias, IElement element) {
     element.setSizingMode(SizingMode.FILL);
     this.elementBiases.put(element, bias);
     super.addElement(element);
@@ -59,6 +60,7 @@ public class SideBySideElement extends ContainerElement {
 
     Dim containerHeight = ZERO;
 
+    // first pass - get sizes and position relatively
     Dim currentX = ZERO;
     for (IElement element : this.children) {
       Dim elementMaxWidth = availableWidth.times(this.elementBiases.get(element) / totalBias);
@@ -69,6 +71,16 @@ public class SideBySideElement extends ContainerElement {
 
       currentX = currentX.plus(elementMaxWidth.plus(this.elementPadding));
       containerHeight = Dim.max(containerHeight, size.getY());
+    }
+
+    // second pass - align correctly in available space
+    for (IElement element : this.children) {
+      Dim elementMaxWidth = availableWidth.times(this.elementBiases.get(element) / totalBias);
+      DimRect availableBox = new DimRect(ZERO, ZERO, elementMaxWidth, containerHeight);
+
+      DimRect relBox = this.childrenRelBoxes.get(element);
+      DimPoint modifiedPosition = ElementHelpers.alignElementInBox(relBox.getSize(), availableBox, element.getHorizontalAlignment(), element.getVerticalAlignment()).getPosition();
+      this.childrenRelBoxes.put(element, relBox.withTranslation(modifiedPosition));
     }
 
     return new DimPoint(maxContentSize, containerHeight);
