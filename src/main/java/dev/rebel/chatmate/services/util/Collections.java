@@ -57,6 +57,9 @@ public class Collections {
   }
 
   public static <T> List<T> filter(List<T> list, Predicate<T> filter) {
+    if (list == null) {
+      return new ArrayList<>();
+    }
     return list.stream().filter(filter).collect(Collectors.toList());
   }
 

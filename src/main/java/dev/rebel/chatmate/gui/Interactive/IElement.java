@@ -28,8 +28,10 @@ public interface IElement {
   // the event data is determined by the event type
   void onEvent(EventType type, IEvent<?> event);
 
-  void onCloseScreen(); // to be called when an element requests the screen to be closed
-  void onInvalidateSize(); // to be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere.
+  /** [Upwards] To be called when an element requests the screen to be closed. */
+  void onCloseScreen();
+  /** [Upwards] To be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere. */
+  void onInvalidateSize();
   DimPoint calculateSize(Dim maxWidth); // provides the maximum width that the child's full box can take up, and expects the size of the calculated full box to be returned
   DimPoint getLastCalculatedSize(); // full box size, for caching purposes only - any direct use should probably be avoided
   void setBox(DimRect box); // sets the full box of the element. if the element has any children, it is its responsibility to set the derived boxes of the children too.

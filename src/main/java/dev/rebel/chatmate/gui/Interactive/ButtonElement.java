@@ -18,7 +18,7 @@ import net.minecraft.util.ResourceLocation;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class ButtonElement extends SingleElement {
+public class ButtonElement extends InputElement {
   private static final ResourceLocation BUTTON_TEXTURES = new ResourceLocation("textures/gui/widgets.png");
 
   /** A button cannot physically be wider than this value, as it is limited by the texture width itself.
@@ -30,7 +30,6 @@ public class ButtonElement extends SingleElement {
 
   private LabelElement label;
   private boolean hovered;
-  private boolean enabled;
   private @Nullable Runnable onClick;
 
   public ButtonElement(InteractiveScreen.InteractiveContext context, IElement parent) {
@@ -45,19 +44,12 @@ public class ButtonElement extends SingleElement {
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .setPadding(new Layout.RectExtension(context.dimFactory.fromGui(4))); // make sure the text doesn't touch the border
 
-    this.enabled = true;
     this.hovered = false;
   }
 
   public ButtonElement setText(String text) {
     this.label.setText(text);
     this.onInvalidateSize();
-    return this;
-  }
-
-  public ButtonElement setEnabled(boolean enabled) {
-    this.enabled = enabled;
-    this.setFocusable(enabled);
     return this;
   }
 
@@ -69,7 +61,7 @@ public class ButtonElement extends SingleElement {
   @Override
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     MouseEventData.In data = e.getData();
-    if (data.isClicked(MouseButton.LEFT_BUTTON) && this.enabled && this.onClick != null) {
+    if (data.isClicked(MouseButton.LEFT_BUTTON) && this.getEnabled() && this.onClick != null) {
       this.onClick.run();
       e.stopPropagation();
     }
@@ -118,7 +110,7 @@ public class ButtonElement extends SingleElement {
 
   @Override
   public void renderElement() {
-    int hoverState = !this.enabled ? 0 : this.hovered ? 2 : 1; // 0 if disabled, 1 if normal, 2 if hovering
+    int hoverState = !this.getEnabled() ? 0 : this.hovered ? 2 : 1; // 0 if disabled, 1 if normal, 2 if hovering
 
     this.context.minecraft.getTextureManager().bindTexture(BUTTON_TEXTURES);
     GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -145,7 +137,7 @@ public class ButtonElement extends SingleElement {
     RendererHelpers.drawTexturedModalRect(rect2, 0, u2, v2);
 
     int j = 14737632;
-    if (!this.enabled) {
+    if (!this.getEnabled()) {
       j = 10526880;
     } else if (this.hovered) {
       j = 16777120;

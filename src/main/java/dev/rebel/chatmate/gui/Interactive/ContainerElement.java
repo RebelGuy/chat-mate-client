@@ -48,6 +48,16 @@ public abstract class ContainerElement extends ElementBase {
   }
 
   @Override
+  public void onCreate() {
+    this.children.forEach(IElement::onCreate);
+  }
+
+  @Override
+  public void onDispose() {
+    this.children.forEach(IElement::onCreate);
+  }
+
+  @Override
   public List<IElement> getChildren() {
     return this.children;
   }

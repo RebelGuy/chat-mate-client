@@ -78,8 +78,10 @@ public abstract class ElementBase implements IElement {
     if (event.getPhase() == EventPhase.TARGET) {
       switch (type) {
         case FOCUS:
+          this.onFocus((IEvent<FocusEventData>)event);
           break;
         case BLUR:
+          this.onBlur((IEvent<FocusEventData>)event);
           break;
         case MOUSE_ENTER:
           this.onMouseEnter((IEvent<MouseEventData.In>)event);

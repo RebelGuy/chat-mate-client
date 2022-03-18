@@ -259,12 +259,12 @@ public class InteractiveScreen extends Screen implements IElement {
         // go to parent
         this.context.debugElement = this.context.debugElement.getParent();
         return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-      } else if (in.isPressed(Keyboard.KEY_DOWN) && Collections.any(this.context.debugElement.getChildren())) {
+      } else if (in.isPressed(Keyboard.KEY_DOWN) && Collections.any(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible))) {
         // go to first child
-        this.context.debugElement = Collections.first(this.context.debugElement.getChildren());
+        this.context.debugElement = Collections.first(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible));
         return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
       } else if (this.context.debugElement.getParent() != null && (in.isPressed(Keyboard.KEY_LEFT) || in.isPressed(Keyboard.KEY_RIGHT))) {
-        List<IElement> siblings = this.context.debugElement.getParent().getChildren();
+        List<IElement> siblings = Collections.filter(this.context.debugElement.getParent().getChildren(), IElement::getVisible);
         if (Collections.size(siblings) > 1) {
           int currentIndex = siblings.indexOf(this.context.debugElement);
           int delta = in.isPressed(Keyboard.KEY_LEFT) ? -1 : 1;

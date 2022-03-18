@@ -139,12 +139,12 @@ public class ElementHelpers {
     lines.add("Focus: " + (element.getFocusable() ? context.focusedElement == element ? "Yes" : "No" : "n/a"));
     lines.add("");
 
-    List<IElement> siblings = parent == null ? Collections.list() : Collections.without(parent.getChildren(), element);
+    List<IElement> siblings = parent == null ? Collections.list() : Collections.filter(Collections.without(parent.getChildren(), element), IElement::getVisible);
     int nChildren = Collections.size(element.getChildren());
     lines.add(String.format("%s (with %d %s and %d %s)", element.getClass().getSimpleName(), nChildren, nChildren == 1 ? "child" : "children", siblings.size(), siblings.size() == 1 ? "sibling" : "siblings"));
 
     while (parent != null) {
-      List<IElement> children = parent.getChildren();
+      List<IElement> children = Collections.filter(parent.getChildren(), IElement::getVisible);
       if (children == null) {
         children = new ArrayList<>();
       }
