@@ -53,6 +53,8 @@ public class DimRect {
 
   public DimPoint getBottomRight() { return new DimPoint(this.getRight(), this.getBottom()); }
 
+  public DimPoint getCentre() { return new DimPoint(this.getX().plus(this.getWidth().over(2)), this.getY().plus(this.getHeight().over(2))); }
+
   /** Returns true if the point is contained within the rect, or touches its boundary. */
   public boolean checkCollision(DimPoint point) {
     return this.x.lte(point.getX())
