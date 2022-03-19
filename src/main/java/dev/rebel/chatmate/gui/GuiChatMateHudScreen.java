@@ -5,6 +5,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.ContextMenuService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
@@ -26,6 +27,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private final Minecraft minecraft;
   private final DimFactory dimFactory;
   private final GuiChatMateHud guiChatMateHud;
+  private final ContextMenuService contextMenuService;
   private final MouseEventService mouseEventService;
   
   private final Function<In, Out> onMouseDown = this::onMouseDown;
@@ -37,15 +39,16 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private Dim draggingComponentOffsetX = null;
   private Dim draggingComponentOffsetY = null;
 
-  public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, DimFactory dimFactory, GuiChatMateHud hud) {
+  public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, DimFactory dimFactory, GuiChatMateHud hud, ContextMenuService contextMenuService) {
     super();
 
     this.minecraft = minecraft;
     this.mouseEventService = mouseEventService;
     this.dimFactory = dimFactory;
     this.guiChatMateHud = hud;
+    this.contextMenuService = contextMenuService;
 
-    Options options = new Options(false, MouseButton.LEFT_BUTTON);
+    Options options = new Options(false, MouseButton.LEFT_BUTTON, MouseButton.RIGHT_BUTTON);
     this.mouseEventService.on(Events.MOUSE_DOWN, this.onMouseDown, options, this);
     this.mouseEventService.on(Events.MOUSE_MOVE, this.onMouseMove, options, this);
     this.mouseEventService.on(Events.MOUSE_UP, this.onMouseUp, options, this);
@@ -71,15 +74,20 @@ public class GuiChatMateHudScreen extends GuiScreen {
 
   private Out onMouseDown(In in) {
     MousePositionData position = in.mousePositionData;
-    for (IHudComponent component : this.getReverseComponents()) {
-      if (component.canTranslate() && containsPoint(component, new DimPoint(position.x, position.y))) {
-        this.draggingComponent = component;
 
-        // the position of the component is unlikely to be where we actually start the drag - calculate the offset
-        this.draggingComponentOffsetX = position.x.minus(component.getX());
-        this.draggingComponentOffsetY = position.y.minus(component.getY());
-        break;
+    if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
+      for (IHudComponent component : this.getReverseComponents()) {
+        if (component.canTranslate() && containsPoint(component, new DimPoint(position.x, position.y))) {
+          this.draggingComponent = component;
+
+          // the position of the component is unlikely to be where we actually start the drag - calculate the offset
+          this.draggingComponentOffsetX = position.x.minus(component.getX());
+          this.draggingComponentOffsetY = position.y.minus(component.getY());
+          return new Out(Out.MouseHandlerAction.HANDLED);
+        }
       }
+    } else if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
+      this.contextMenuService.showHudContext(in.mousePositionData.x, in.mousePositionData.y);
     }
     return new Out(null);
   }

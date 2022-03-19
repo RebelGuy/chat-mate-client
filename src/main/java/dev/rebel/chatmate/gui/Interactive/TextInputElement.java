@@ -10,7 +10,6 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.In.KeyModifier;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -20,10 +19,13 @@ import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.MathHelper;
 import org.lwjgl.input.Keyboard;
 
+import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 
 /** Border: actually draws a border. Padding: space between text and border. */
 public class TextInputElement extends InputElement {
@@ -40,6 +42,7 @@ public class TextInputElement extends InputElement {
   private int disabledColor = 7368816;
   private Consumer<String> onTextChange;
   private Predicate<String> validator = text -> true;
+  private @Nullable String suffix = null;
 
   public TextInputElement(InteractiveContext context, IElement parent) {
     super(context, parent);
@@ -73,6 +76,21 @@ public class TextInputElement extends InputElement {
   }
 
   @Override
+  public void onFocus(IEvent<Events.FocusEventData> e) {
+    if (e.getData().reason == Events.FocusReason.TAB) {
+      // select all when we tab into the field
+      this.cursorIndex = this.text.length();
+      this.selectionEndIndex = 0;
+    }
+  }
+
+  @Override
+  public void onBlur(IEvent<Events.FocusEventData> e) {
+    this.cursorIndex = 0;
+    this.selectionEndIndex = 0;
+  }
+
+  @Override
   public DimPoint calculateThisSize(Dim maxContentSize) {
     return new DimPoint(maxContentSize, this.textHeight);
   }
@@ -87,7 +105,14 @@ public class TextInputElement extends InputElement {
     return this;
   }
 
-  public void setText(String newText) {
+  /** Careful - not validated. */
+  public TextInputElement setText(String text) {
+    this.text = text;
+    return this;
+  }
+
+  /** Internal method for setting the text. */
+  private void setText_(String newText) {
     if (this.validator.test(newText)) {
       if (newText.length() > this.maxStringLength) {
         this.text = newText.substring(0, this.maxStringLength);
@@ -101,6 +126,11 @@ public class TextInputElement extends InputElement {
 
   public TextInputElement setValidator(Predicate<String> validator) {
     this.validator = validator;
+    return this;
+  }
+
+  public TextInputElement setSuffix(String suffix) {
+    this.suffix = suffix;
     return this;
   }
 
@@ -311,7 +341,8 @@ public class TextInputElement extends InputElement {
     if (this.getVisible()) {
       this.drawBorder();
       this.drawBackground();
-      this.drawText();
+      this.drawSuffix();
+      this.drawEditableText();
     }
   }
 
@@ -325,12 +356,24 @@ public class TextInputElement extends InputElement {
     RendererHelpers.drawRect(this.getZIndex(), this.getPaddingBox(), backgroundColour);
   }
 
-  private void drawText() {
+  private void drawSuffix() {
+    if (isNullOrEmpty(this.suffix)) {
+      return;
+    }
+
+    Dim suffixWidth = gui(this.font.getStringWidth(this.suffix));
+    Dim left = this.getContentBox().getRight().minus(suffixWidth);
+    Dim top = this.getContentBox().getY();
+    int color = this.disabledColor;
+    this.font.drawString(this.suffix, (int)left.getGui(), (int)top.getGui(), color);
+  }
+
+  private void drawEditableText() {
     Dim left = this.getContentBox().getX();
     Dim top = this.getContentBox().getY();
-    Dim width = this.getContentBox().getWidth();
+    Dim width = this.getEditableWidth();
     Dim bottom = this.getContentBox().getBottom();
-    Dim right = this.getContentBox().getRight();
+    Dim right = left.plus(width);
 
     int color = this.isEnabled ? this.enabledColor : this.disabledColor;
     int cursorStartIndex = this.cursorIndex - this.scrollOffsetIndex;
@@ -401,7 +444,7 @@ public class TextInputElement extends InputElement {
       y2 = temp;
     }
 
-    Dim right = this.getContentBox().getRight();
+    Dim right = this.getContentBox().getX().plus(this.getEditableWidth());
     if (x2.gt(right)) {
       x2 = right;
     }
@@ -473,7 +516,7 @@ public class TextInputElement extends InputElement {
 
   /** Gets the text that fits into the text box. */
   private String getVisibleText() {
-    int width = (int)this.getContentBox().getWidth().getGui();
+    int width = (int)this.getEditableWidth().getGui();
     return this.font.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), width);
   }
 
@@ -481,7 +524,6 @@ public class TextInputElement extends InputElement {
   private String getVisibleTextReverse() {
     int width = (int)this.getContentBox().getWidth().getGui();
     return this.font.trimStringToWidth(this.text, width, true);
-
   }
 
   /** Empty string if nothing is selected. */
@@ -508,5 +550,9 @@ public class TextInputElement extends InputElement {
 
   private void setCursorPositionToEnd() {
     this.setCursorIndex(this.text.length());
+  }
+
+  private Dim getEditableWidth() {
+    return this.getContentBox().getWidth().minus(gui(this.font.getStringWidth(this.suffix)));
   }
 }

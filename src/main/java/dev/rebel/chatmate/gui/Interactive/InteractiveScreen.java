@@ -99,7 +99,7 @@ public class InteractiveScreen extends Screen implements IElement {
     List<InputElement> autoFocusable = Collections.filter(ElementHelpers.getElementsOfType(this.mainElement, InputElement.class), InputElement::getAutoFocus);
     if (Collections.any(autoFocusable)) {
       InputElement toFocus = Collections.min(autoFocusable, InputElement::getTabIndex);
-      this.setFocussedElement(toFocus);
+      this.setFocussedElement(toFocus, FocusReason.AUTO);
     }
 
     // initial size calculations - required so that things like mouse events can be sent to the correct elements
@@ -108,7 +108,7 @@ public class InteractiveScreen extends Screen implements IElement {
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   private void recalculateLayout() {
-    if (!this.requiresRecalculation) {
+    if (!this.requiresRecalculation || this.mainElement == null) {
       return;
     }
     this.requiresRecalculation = false;
@@ -271,7 +271,7 @@ public class InteractiveScreen extends Screen implements IElement {
         int currentIndex = sorted.indexOf(this.context.focusedElement);
         int delta = in.isKeyModifierActive(KeyboardEventData.In.KeyModifier.SHIFT) ? -1 : 1;
         InputElement newFocus = Collections.elementAt(sorted, currentIndex + delta);
-        this.setFocussedElement(newFocus);
+        this.setFocussedElement(newFocus, FocusReason.TAB);
       }
 
     } else if (this.debugModeEnabled && this.debugElementSelected && this.context.debugElement != null) {
@@ -329,7 +329,7 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     if (refocus) {
-      this.setFocussedElement(newFocus);
+      this.setFocussedElement(newFocus, FocusReason.CLICK);
     }
 
     if (captureEvent.stoppedPropagation) {
@@ -348,11 +348,11 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   /** Sets the new focussed element and fires appropriate events. */
-  private void setFocussedElement(InputElement newFocus) {
+  private void setFocussedElement(InputElement newFocus, FocusReason reason) {
     InputElement oldFocus = this.context.focusedElement;
     if (oldFocus != newFocus) {
       this.context.focusedElement = newFocus;
-      FocusEventData focusData = new FocusEventData(oldFocus, newFocus);
+      FocusEventData focusData = new FocusEventData(oldFocus, newFocus, reason);
       if (oldFocus != null) {
         InteractiveEvent<FocusEventData> blurEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, oldFocus);
         oldFocus.onEvent(EventType.BLUR, blurEvent);

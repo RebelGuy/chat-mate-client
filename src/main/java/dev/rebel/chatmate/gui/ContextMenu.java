@@ -131,6 +131,10 @@ public class ContextMenu {
         effectiveMaxWidth = screenWidth - 4 - tooltipX;
       }
 
+      if (effectiveMaxWidth < 12) {
+        effectiveMaxWidth = 12;
+      }
+
       // first pass: get flush dimensions of the context menu
       String[][] optionLines = new String[this.options.length][];
       for (int i = 0; i < this.options.length; i++) {

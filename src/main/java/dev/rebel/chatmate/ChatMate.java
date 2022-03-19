@@ -88,6 +88,7 @@ public class ChatMate {
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config);
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, this.forgeEventService, this.mouseEventService, dimFactory);
     ClipboardService clipboardService = new ClipboardService();
+    CountdownHandler countdownHandler = new CountdownHandler(guiChatMateHud);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
@@ -96,7 +97,8 @@ public class ChatMate {
         mouseEventService,
         keyboardEventService,
         clipboardService,
-        soundService);
+        soundService,
+        countdownHandler);
     CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
     this.guiService = new GuiService(this.isDev,
         logService,
@@ -114,7 +116,7 @@ public class ChatMate {
         cursorService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
-      new CountdownCommand(new CountdownHandler(guiChatMateHud)),
+      new CountdownCommand(countdownHandler),
       new CounterCommand(new CounterHandler(this.keyBindingService, guiChatMateHud, dimFactory, minecraft)),
       new RanksCommand(new RanksHandler(mcChatService, experienceEndpointProxy)),
       new SearchCommand(new SearchHandler(userEndpointProxy, mcChatService))

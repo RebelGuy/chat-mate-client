@@ -126,8 +126,8 @@ public class TitleComponent implements IHudComponent {
   @Override
   public void onTranslate(Dim newX, Dim newY) {
     if (this.canTranslate) {
-      this.x = newX.plus(this.getWidth().over(2));
-      this.y = newY.minus(this.yOffsetTitle);
+      this.x = newX.setAnchor(DimAnchor.GUI).plus(this.getWidth().over(2));
+      this.y = newY.setAnchor(DimAnchor.GUI).minus(this.yOffsetTitle);
     }
   }
 

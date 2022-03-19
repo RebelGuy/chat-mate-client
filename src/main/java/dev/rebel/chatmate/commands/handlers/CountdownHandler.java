@@ -23,8 +23,8 @@ public class CountdownHandler {
     this.guiChatMateHud = guiChatMateHud;
   }
 
-  public void start(int duration, String title) {
-    if (duration <= 0) {
+  public void start(int durationSeconds, String title) {
+    if (durationSeconds <= 0) {
       return;
     }
 
@@ -32,7 +32,7 @@ public class CountdownHandler {
       this.stop();
     }
 
-    this.secondsRemaining = duration;
+    this.secondsRemaining = durationSeconds;
     this.title = title;
     this.timer = new Timer();
     this.timer.scheduleAtFixedRate(new TaskWrapper(this::updateCountdown), 0, 1000);

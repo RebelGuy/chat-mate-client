@@ -157,7 +157,7 @@ public class GuiService {
   private Boolean onOpenChatMateHud() {
     if (this.config.getHudEnabledEmitter().get()) {
       // key events don't fire when we are in a menu, so don't need to worry about closing this GUI when the key is pressed again
-      GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.mouseEventService, this.dimFactory, this.guiChatMateHud);
+      GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.mouseEventService, this.dimFactory, this.guiChatMateHud, this.contextMenuService);
       this.minecraft.displayGuiScreen(hudScreen);
       return true;
     } else {
