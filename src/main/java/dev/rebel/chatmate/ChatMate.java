@@ -115,7 +115,7 @@ public class ChatMate {
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(new CountdownHandler(guiChatMateHud)),
-      new CounterCommand(new CounterHandler(this.keyBindingService, this.renderService)),
+      new CounterCommand(new CounterHandler(this.keyBindingService, guiChatMateHud, dimFactory, minecraft)),
       new RanksCommand(new RanksHandler(mcChatService, experienceEndpointProxy)),
       new SearchCommand(new SearchHandler(userEndpointProxy, mcChatService))
     );

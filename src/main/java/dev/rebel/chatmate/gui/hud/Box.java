@@ -5,7 +5,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 
 public class Box {
-  private final DimFactory dimFactory;
+  protected final DimFactory dimFactory;
   protected Dim x;
   protected Dim y;
   protected Dim w;

@@ -63,6 +63,14 @@ public class DimRect {
         && this.y.plus(this.height).gte(point.getY());
   }
 
+  public boolean checkCollisionX(Dim x) {
+    return this.x.lte(x) && this.getRight().gte(x);
+  }
+
+  public boolean checkCollisionY(Dim y) {
+    return this.y.lte(y) && this.getBottom().gte(y);
+  }
+
   public DimRect withTranslation(DimPoint translation) {
     return new DimRect(this.getPosition().plus(translation), this.getSize());
   }
@@ -83,6 +91,15 @@ public class DimRect {
     Dim bottom = Dim.min(this.getBottom(), other.getBottom());
 
     return new DimRect(x, y, right.minus(x), bottom.minus(y));
+  }
+
+  public DimRect partial(float fromX, float toX, float fromY, float toY) {
+    return new DimRect(
+        this.x.plus(this.width.times(fromX)),
+        this.y.plus(this.height.times(fromY)),
+        this.width.times(toX - fromX),
+        this.height.times(toY - fromY)
+    );
   }
 
   @Override
