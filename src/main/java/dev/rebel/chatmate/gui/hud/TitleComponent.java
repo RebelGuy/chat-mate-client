@@ -141,6 +141,10 @@ public class TitleComponent implements IHudComponent {
     this.fadeOutTime = 0;
   }
 
+  public boolean hasExistingCountdown() {
+    return this.startTime != null;
+  }
+
   /** Starts displaying the title immediately. Resets the existing title, if one exists. */
   public void displayTitle(String title, String subTitle, long fadeInTime, long displayTime, long fadeOutTime) {
     if (isNullOrEmpty(title) && isNullOrEmpty(subTitle)) {

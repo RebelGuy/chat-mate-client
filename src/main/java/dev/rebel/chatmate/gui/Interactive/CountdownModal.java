@@ -13,6 +13,8 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 public class CountdownModal extends ModalElement {
   private final CountdownHandler countdownHandler;
 
+  private final ButtonElement deleteButton;
+
   private @Nullable Float hours = 0.0f;
   private @Nullable Float minutes = 0.0f;
   private @Nullable Float seconds = 0.0f;
@@ -68,7 +70,14 @@ public class CountdownModal extends ModalElement {
         ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
     );
 
-    super.setBody(new ListElement(context, this).addElement(titleElements).addElement(timeElements));
+    this.deleteButton = (ButtonElement)new ButtonElement(context, this)
+        .setText("Delete existing countdown")
+        .setOnClick(this::onDeleteCountdown)
+        .setVisible(this.countdownHandler.hasExistingCountdown())
+        .setMargin(new RectExtension(ZERO, gui(5)))
+        .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE);
+
+    super.setBody(new ListElement(context, this).addElement(titleElements).addElement(timeElements).addElement(this.deleteButton));
     super.setTitle("Set up Countdown");
   }
 
@@ -103,6 +112,11 @@ public class CountdownModal extends ModalElement {
     } catch (Exception ignored) {
       return null;
     }
+  }
+
+  private void onDeleteCountdown() {
+    this.countdownHandler.stop();
+    this.deleteButton.setVisible(this.countdownHandler.hasExistingCountdown());
   }
 
   @Override

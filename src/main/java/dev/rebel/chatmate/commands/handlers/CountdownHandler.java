@@ -43,6 +43,10 @@ public class CountdownHandler {
     this.resetState();
   }
 
+  public boolean hasExistingCountdown() {
+    return this.guiChatMateHud.getTitleComponent().hasExistingCountdown();
+  }
+
   private void resetState() {
     if (this.timer != null) {
       this.timer.cancel();
