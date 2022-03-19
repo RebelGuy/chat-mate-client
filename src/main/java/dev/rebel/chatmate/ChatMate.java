@@ -114,7 +114,7 @@ public class ChatMate {
         cursorService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
-      new CountdownCommand(new CountdownHandler(minecraft)),
+      new CountdownCommand(new CountdownHandler(guiChatMateHud)),
       new CounterCommand(new CounterHandler(this.keyBindingService, this.renderService)),
       new RanksCommand(new RanksHandler(mcChatService, experienceEndpointProxy)),
       new SearchCommand(new SearchHandler(userEndpointProxy, mcChatService))

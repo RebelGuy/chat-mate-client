@@ -1,13 +1,15 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.GuiChatMateHudScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.RenderContext;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 
 import java.util.Date;
@@ -23,9 +25,10 @@ public class TitleComponent implements IHudComponent {
   private final Dim yOffsetTitle;
   private final Dim yOffsetSubtitle;
 
-  private final FontRenderer font;
+  private final Minecraft minecraft;
 
   private final DimFactory dimFactory;
+  // x and y are used as an anchor around which the offsets are calculated. they are NOT the top-left corner or centre of the box.
   private Dim x;
   private Dim y;
   private float scale;
@@ -39,12 +42,11 @@ public class TitleComponent implements IHudComponent {
   protected long fadeOutTime = 0;
   private Long startTime = null;
 
-  public TitleComponent(DimFactory dimFactory, Minecraft minecraft, Dim x, Dim y, float scale, boolean canRescale, boolean canTranslate) {
+  public TitleComponent(DimFactory dimFactory, Minecraft minecraft, boolean canRescale, boolean canTranslate) {
     this.dimFactory = dimFactory;
-    this.font = minecraft.fontRendererObj;
-    this.x = x;
-    this.y = y;
-    this.scale = scale;
+    this.minecraft = minecraft;
+
+    this.resetPositionState();
     this.canRescale = canRescale;
     this.canTranslate = canTranslate;
 
@@ -52,32 +54,50 @@ public class TitleComponent implements IHudComponent {
     this.yOffsetSubtitle = dimFactory.fromGui(5 * this.subTitleScale);
   }
 
+  private void resetPositionState() {
+    DimPoint centre = dimFactory.getMinecraftRect().getCentre();
+    this.x = centre.getX().setAnchor(DimAnchor.GUI);
+    this.y = centre.getY().setAnchor(DimAnchor.GUI);
+    this.scale = 1;
+  }
+
   @Override
   public Dim getX() {
-    return this.x;
+    return this.x.minus(this.getWidth().over(2));
   }
 
   @Override
   public Dim getY() {
-    return this.y;
+    return this.y.plus(this.yOffsetTitle);
   }
 
   @Override
   public Dim getWidth() {
-    
+    if (this.getProgress().phase == TitlePhase.HIDDEN) {
+      return this.dimFactory.zeroGui();
+    }
 
-    return this.dimFactory.fromGui(this.texture.width * this.scale);
+    FontRenderer font = this.minecraft.fontRendererObj;
+    Dim titleWidth = this.dimFactory.fromGui(font.getStringWidth(this.title) * this.mainTitleScale);
+    Dim subtitleWidth = this.dimFactory.fromGui(font.getStringWidth(this.subTitle) * this.subTitleScale);
+
+    return Dim.max(titleWidth, subtitleWidth).times(this.scale);
   }
 
   @Override
   public Dim getHeight() {
-    Dim top = this.x.plus(this.dimFactory.fromGui(this.yOffsetTitle + this.mainTitleScale))
-    return this.dimFactory.fromGui(this.texture.height * this.scale);
+    if (this.getProgress().phase == TitlePhase.HIDDEN) {
+      return this.dimFactory.zeroGui();
+    }
+
+    Dim top = this.y.plus(this.yOffsetTitle);
+    Dim bottom = this.y.plus(this.yOffsetSubtitle).plus(this.dimFactory.fromGui(this.minecraft.fontRendererObj.FONT_HEIGHT * this.subTitleScale));
+    return bottom.minus(top).times(this.scale);
   }
 
   @Override
   public boolean canResizeBox() {
-    // false because it would distort the texture
+    // false because it would distort the text
     return false;
   }
 
@@ -86,20 +106,12 @@ public class TitleComponent implements IHudComponent {
 
   @Override
   public boolean canRescaleContent() {
-    return this.canRescale;
+    // it's a nightmare to work out because the box is not exactly centred at (x, y)
+    return false;
   }
 
   @Override
-  public void onRescaleContent(float newScale) {
-    if (this.canRescale && this.scale != newScale) {
-      float deltaScale = newScale - this.scale;
-      Dim deltaWidth = this.dimFactory.fromScreen(deltaScale * this.texture.width);
-      Dim deltaHeight = this.dimFactory.fromScreen(deltaScale * this.texture.height);
-      this.scale = newScale;
-      this.x = this.x.plus(deltaWidth.over(2));
-      this.y = this.y.plus(deltaHeight.over(2));
-    }
-  }
+  public void onRescaleContent(float newScale) { }
 
   @Override
   public float getContentScale() {
@@ -114,13 +126,13 @@ public class TitleComponent implements IHudComponent {
   @Override
   public void onTranslate(Dim newX, Dim newY) {
     if (this.canTranslate) {
-      this.x = newX;
-      this.y = newY;
+      this.x = newX.plus(this.getWidth().over(2));
+      this.y = newY.minus(this.yOffsetTitle);
     }
   }
 
   /** Clears the title and returns the component to its initial state. */
-  public void reset() {
+  public void clearTimerState() {
     this.title = null;
     this.subTitle = null;
     this.startTime = null;
@@ -132,7 +144,8 @@ public class TitleComponent implements IHudComponent {
   /** Starts displaying the title immediately. Resets the existing title, if one exists. */
   public void displayTitle(String title, String subTitle, long fadeInTime, long displayTime, long fadeOutTime) {
     if (isNullOrEmpty(title) && isNullOrEmpty(subTitle)) {
-      this.reset();
+      this.resetPositionState();
+      this.clearTimerState();
       return;
     }
 
@@ -146,9 +159,16 @@ public class TitleComponent implements IHudComponent {
 
   @Override
   public void render(RenderContext context) {
+    // don't draw if other screens are shown
+    GuiScreen screen = this.minecraft.currentScreen;
+    if (screen != null && !(screen instanceof GuiChatMateHudScreen)) {
+      return;
+    }
+
     TitleProgress progress = this.getProgress();
     if (progress.phase == TitlePhase.HIDDEN) {
-      this.reset();
+      this.clearTimerState();
+      this.resetPositionState();
       return;
     }
 
@@ -162,28 +182,26 @@ public class TitleComponent implements IHudComponent {
     }
     
     if (alpha > 4) {
-      DimPoint centre = this.dimFactory.getMinecraftRect().getCentre();
+      FontRenderer font = this.minecraft.fontRendererObj;
       int alphaComponent = alpha << 24 & -16777216;
       int colour = 16777215 | alphaComponent;
 
-      RendererHelpers.withTranslation(centre, () -> {
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+      GlStateManager.enableBlend();
+      GlStateManager.tryBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
-        GlStateManager.pushMatrix();
-        GlStateManager.scale(this.mainTitleScale, this.mainTitleScale, this.mainTitleScale);
-        float titleWidth = this.font.getStringWidth(this.title);
-        this.font.drawString(this.title, -titleWidth / 2, this.yOffsetTitle, colour, true);
-        GlStateManager.popMatrix();
-
-        GlStateManager.pushMatrix();
-        GlStateManager.scale(this.subTitleScale, this.subTitleScale, this.subTitleScale);
-        float subtitleWidth = this.font.getStringWidth(this.subTitle);
-        this.font.drawString(this.subTitle, -subtitleWidth / 2, this.yOffsetSubtitle, colour, true);
-        GlStateManager.popMatrix();
-
-        GlStateManager.disableBlend();
+      DimPoint titleTranslation = new DimPoint(this.x, this.y.plus(this.yOffsetTitle));
+      RendererHelpers.withMapping(titleTranslation, this.mainTitleScale, () -> {
+        float titleWidth = font.getStringWidth(this.title);
+        font.drawStringWithShadow(this.title, -titleWidth / 2, 0, colour);
       });
+
+      DimPoint subtitleTranslation = new DimPoint(this.x, this.y.plus(this.yOffsetSubtitle));
+      RendererHelpers.withMapping(subtitleTranslation, this.subTitleScale, () -> {
+        float subtitleWidth = font.getStringWidth(this.subTitle);
+        font.drawStringWithShadow(this.subTitle, -subtitleWidth / 2, 0, colour);
+      });
+
+      GlStateManager.disableBlend();
     }
   }
 
