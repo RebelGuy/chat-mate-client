@@ -53,9 +53,6 @@ public interface IElement {
   int getZIndex();
   IElement setZIndex(int zIndex);
 
-  boolean getFocusable();
-  IElement setFocusable(boolean focusable);
-
   // how the element should be horizontally positioned in the parent content box. relevant in the parent's setBox method.
   HorizontalAlignment getHorizontalAlignment();
   IElement setHorizontalAlignment(HorizontalAlignment horizontalAlignment);

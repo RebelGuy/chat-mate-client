@@ -37,7 +37,6 @@ public abstract class ElementBase implements IElement {
   private RectExtension border;
   private RectExtension margin;
   private int zIndex;
-  private boolean isFocusable;
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
   private SizingMode sizingMode;
@@ -52,7 +51,6 @@ public abstract class ElementBase implements IElement {
     this.padding = new RectExtension(context.dimFactory.zeroGui());
     this.margin = new RectExtension(context.dimFactory.zeroGui());
     this.zIndex = 0;
-    this.isFocusable = false;
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
     this.sizingMode = SizingMode.ANY;
@@ -265,18 +263,6 @@ public abstract class ElementBase implements IElement {
   @Override
   public final IElement setZIndex(int zIndex) {
     this.zIndex = zIndex;
-    this.onInvalidateSize();
-    return this;
-  }
-
-  @Override
-  public final boolean getFocusable() {
-    return this.isFocusable;
-  }
-
-  @Override
-  public final IElement setFocusable(boolean focusable) {
-    this.isFocusable = focusable;
     this.onInvalidateSize();
     return this;
   }

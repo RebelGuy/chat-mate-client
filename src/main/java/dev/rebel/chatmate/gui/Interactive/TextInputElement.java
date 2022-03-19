@@ -26,7 +26,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /** Border: actually draws a border. Padding: space between text and border. */
-public class TextInputElement extends SingleElement {
+public class TextInputElement extends InputElement {
   private String placeholderText = "";
   private String text = "";
   private boolean isEnabled = true;

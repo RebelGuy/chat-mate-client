@@ -62,6 +62,7 @@ public class ButtonElement extends InputElement {
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     MouseEventData.In data = e.getData();
     if (data.isClicked(MouseButton.LEFT_BUTTON) && this.getEnabled() && this.onClick != null) {
+      this.context.soundService.playButtonSound();
       this.onClick.run();
       e.stopPropagation();
     }

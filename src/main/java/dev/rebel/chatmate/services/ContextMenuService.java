@@ -22,6 +22,7 @@ public class ContextMenuService {
   private final MouseEventService mouseEventService;
   private final KeyboardEventService keyboardEventService;
   private final ClipboardService clipboardService;
+  private final SoundService soundService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -30,7 +31,8 @@ public class ContextMenuService {
                             McChatService mcChatService,
                             MouseEventService mouseEventService,
                             KeyboardEventService keyboardEventService,
-                            ClipboardService clipboardService) {
+                            ClipboardService clipboardService,
+                            SoundService soundService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -39,6 +41,7 @@ public class ContextMenuService {
     this.mouseEventService = mouseEventService;
     this.keyboardEventService = keyboardEventService;
     this.clipboardService = clipboardService;
+    this.soundService = soundService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -58,7 +61,8 @@ public class ContextMenuService {
         this.dimFactory,
         this.minecraft,
         this.minecraft.fontRendererObj,
-        this.clipboardService);
+        this.clipboardService,
+        this.soundService);
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
     IElement modal = new ManageExperienceModal(context, screen, user, this.experienceEndpointProxy, this.mcChatService);
     screen.setMainElement(modal);

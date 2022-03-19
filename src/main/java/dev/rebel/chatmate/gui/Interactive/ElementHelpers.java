@@ -15,6 +15,7 @@ import net.minecraft.client.gui.FontRenderer;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementBase.*;
 import static dev.rebel.chatmate.gui.Interactive.ElementBase.getBorderBox;
@@ -72,7 +73,7 @@ public class ElementHelpers {
 
   /** Lays out the size within the given box, using the provided alignment options.
    * Note: If the size is larger than the provided box, it will NOT be contained entirely. */
-  protected static DimRect alignElementInBox(DimPoint size, DimRect box, HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment) {
+  public static DimRect alignElementInBox(DimPoint size, DimRect box, HorizontalAlignment horizontalAlignment, VerticalAlignment verticalAlignment) {
     Dim x;
     switch (horizontalAlignment) {
       case LEFT:
@@ -106,6 +107,22 @@ public class ElementHelpers {
     return new DimRect(new DimPoint(x, y), size);
   }
 
+  /** Returns elements that are of, or inherit from, the given type. */
+  public static <E extends IElement> List<E> getElementsOfType(IElement parent, Class<E> elementClass) {
+    return (List<E>)flattenTree(parent).stream().filter(el -> elementClass.isAssignableFrom(el.getClass())).collect(Collectors.toList());
+  }
+
+  public static List<IElement> flattenTree(IElement parent) {
+    List<IElement> result = Collections.list(parent);
+    List<IElement> children = parent.getChildren();
+    if (Collections.any(children)) {
+      for (IElement child : children) {
+        result.addAll(flattenTree(child));
+      }
+    }
+    return result;
+  }
+
   public static void renderDebugInfo(IElement element, InteractiveContext context) {
     IElement parent = element.getParent();
     Dim ZERO = context.dimFactory.zeroGui();
@@ -136,7 +153,6 @@ public class ElementHelpers {
     lines.add("Margin: " + element.getMargin().toString());
     lines.add("Hor Algn: " + element.getHorizontalAlignment());
     lines.add("Vert Algn: " + element.getVerticalAlignment());
-    lines.add("Focus: " + (element.getFocusable() ? context.focusedElement == element ? "Yes" : "No" : "n/a"));
     lines.add("");
 
     List<IElement> siblings = parent == null ? Collections.list() : Collections.filter(Collections.without(parent.getChildren(), element), IElement::getVisible);

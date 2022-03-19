@@ -1,13 +1,8 @@
 package dev.rebel.chatmate.services.util;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +25,32 @@ public class Collections {
     return max;
   }
 
+  public static <T, N extends Comparable> T max(List<T> items, Function<T, N> valueGetter) {
+    T maxItem = null;
+    N maxValue = null;
+    for (T item : items) {
+      N thisValue = valueGetter.apply(item);
+      if (thisValue != null && (maxItem ==  null || thisValue.compareTo(maxValue) > 0)) {
+        maxItem = item;
+        maxValue = thisValue;
+      }
+    }
+    return maxItem;
+  }
+
+  public static <T, N extends Comparable> T min(List<T> items, Function<T, N> valueGetter) {
+    T minItem = null;
+    N minValue = null;
+    for (T item : items) {
+      N thisValue = valueGetter.apply(item);
+      if (thisValue != null && (minItem ==  null || thisValue.compareTo(minValue) < 0)) {
+        minItem = item;
+        minValue = thisValue;
+      }
+    }
+    return minItem;
+  }
+
   public static <T> T eliminate(Collection<T> items, BiFunction<T, T, T> eliminator) {
     T winner = null;
     for (T item : items) {
@@ -40,6 +61,10 @@ public class Collections {
       }
     }
     return winner;
+  }
+
+  public static <T> List<T> orderBy(List<T> items, ToDoubleFunction<T> valueGetter) {
+    return items.stream().sorted(Comparator.comparingDouble(valueGetter)).collect(Collectors.toList());
   }
 
   public static <T, R> List<R> map(List<T> items, Function<T, R> mapper) {

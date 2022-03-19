@@ -173,16 +173,6 @@ public class ElementReference implements IElement {
   }
 
   @Override
-  public boolean getFocusable() {
-    return this.underlyingElement == null ? false : this.underlyingElement.getFocusable();
-  }
-
-  @Override
-  public IElement setFocusable(boolean focusable) {
-    return this.underlyingElement == null ? this : this.underlyingElement.setFocusable(focusable);
-  }
-
-  @Override
   public Layout.HorizontalAlignment getHorizontalAlignment() {
     return this.underlyingElement == null ? Layout.HorizontalAlignment.LEFT : this.underlyingElement.getHorizontalAlignment();
   }

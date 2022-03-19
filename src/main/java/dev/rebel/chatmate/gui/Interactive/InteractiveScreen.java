@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.ClipboardService;
+import dev.rebel.chatmate.services.SoundService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
@@ -94,6 +95,12 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     this.mainElement.onCreate();
+
+    List<InputElement> autoFocusable = Collections.filter(ElementHelpers.getElementsOfType(this.mainElement, InputElement.class), InputElement::getAutoFocus);
+    if (Collections.any(autoFocusable)) {
+      InputElement toFocus = Collections.min(autoFocusable, InputElement::getTabIndex);
+      this.setFocussedElement(toFocus);
+    }
 
     // initial size calculations - required so that things like mouse events can be sent to the correct elements
     this.recalculateLayout();
@@ -254,6 +261,19 @@ public class InteractiveScreen extends Screen implements IElement {
     } else if (in.isPressed(Keyboard.KEY_F3)) {
       this.toggleDebug();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+
+    } else if (in.isPressed(Keyboard.KEY_TAB) && this.context.focusedElement != null) {
+      // focus onto the next element
+      List<InputElement> inputElements = ElementHelpers.getElementsOfType(this.mainElement, InputElement.class);
+      List<InputElement> focusable = Collections.filter(inputElements, InputElement::canTabFocus);
+      if (Collections.any(focusable)) {
+        List<InputElement> sorted = Collections.orderBy(focusable, InputElement::getTabIndex);
+        int currentIndex = sorted.indexOf(this.context.focusedElement);
+        int delta = in.isKeyModifierActive(KeyboardEventData.In.KeyModifier.SHIFT) ? -1 : 1;
+        InputElement newFocus = Collections.elementAt(sorted, currentIndex + delta);
+        this.setFocussedElement(newFocus);
+      }
+
     } else if (this.debugModeEnabled && this.debugElementSelected && this.context.debugElement != null) {
       if (in.isPressed(Keyboard.KEY_UP) && this.context.debugElement.getParent() != null) {
         // go to parent
@@ -295,10 +315,11 @@ public class InteractiveScreen extends Screen implements IElement {
     List<IElement> elements = ElementHelpers.getElementsAtPoint(this, data.mousePositionData.point);
     IElement target = Collections.last(elements);
     InteractiveEvent<MouseEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target);
-    IElement newFocus = null;
+    InputElement newFocus = null;
     for (IElement element : elements) {
-      if (element.getFocusable()) {
-        newFocus = element;
+      if (element instanceof InputElement) {
+        InputElement maybeNewFocus = (InputElement)element;
+        newFocus = maybeNewFocus.canFocus() ? maybeNewFocus : newFocus;
       }
 
       element.onEvent(type, captureEvent);
@@ -307,18 +328,8 @@ public class InteractiveScreen extends Screen implements IElement {
       }
     }
 
-    IElement oldFocus = context.focusedElement;
-    if (refocus && oldFocus != newFocus) {
-      context.focusedElement = newFocus;
-      FocusEventData focusData = new FocusEventData(oldFocus, newFocus);
-      if (oldFocus != null) {
-        InteractiveEvent<FocusEventData> blurEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, oldFocus);
-        oldFocus.onEvent(EventType.BLUR, blurEvent);
-      }
-      if (newFocus != null) {
-        InteractiveEvent<FocusEventData> focusEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, newFocus);
-        newFocus.onEvent(EventType.FOCUS, focusEvent);
-      }
+    if (refocus) {
+      this.setFocussedElement(newFocus);
     }
 
     if (captureEvent.stoppedPropagation) {
@@ -334,6 +345,23 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     return bubbleEvent.stoppedPropagation;
+  }
+
+  /** Sets the new focussed element and fires appropriate events. */
+  private void setFocussedElement(InputElement newFocus) {
+    InputElement oldFocus = this.context.focusedElement;
+    if (oldFocus != newFocus) {
+      this.context.focusedElement = newFocus;
+      FocusEventData focusData = new FocusEventData(oldFocus, newFocus);
+      if (oldFocus != null) {
+        InteractiveEvent<FocusEventData> blurEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, oldFocus);
+        oldFocus.onEvent(EventType.BLUR, blurEvent);
+      }
+      if (newFocus != null) {
+        InteractiveEvent<FocusEventData> focusEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, newFocus);
+        newFocus.onEvent(EventType.FOCUS, focusEvent);
+      }
+    }
   }
 
   /** Propagates the keyboard event to the currently focused element. */
@@ -443,12 +471,6 @@ public class InteractiveScreen extends Screen implements IElement {
   public IElement setZIndex(int zIndex) { return this; }
 
   @Override
-  public boolean getFocusable() { return false; }
-
-  @Override
-  public IElement setFocusable(boolean focusable) { return null; }
-
-  @Override
   public InteractiveScreen setHorizontalAlignment(HorizontalAlignment horizontalAlignment) { return null; }
 
   @Override
@@ -475,10 +497,11 @@ public class InteractiveScreen extends Screen implements IElement {
     public final Minecraft minecraft;
     public final FontRenderer fontRenderer;
     public final ClipboardService clipboardService;
+    public final SoundService soundService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
-    public @Nullable IElement focusedElement = null;
+    public @Nullable InputElement focusedElement = null;
     public @Nullable DimPoint mousePosition = null;
 
     public InteractiveContext(MouseEventService mouseEventService,
@@ -486,13 +509,15 @@ public class InteractiveScreen extends Screen implements IElement {
                               DimFactory dimFactory,
                               Minecraft minecraft,
                               FontRenderer fontRenderer,
-                              ClipboardService clipboardService) {
+                              ClipboardService clipboardService,
+                              SoundService soundService) {
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
       this.dimFactory = dimFactory;
       this.minecraft = minecraft;
       this.fontRenderer = fontRenderer;
       this.clipboardService = clipboardService;
+      this.soundService = soundService;
     }
   }
 }

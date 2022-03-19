@@ -44,7 +44,6 @@ public abstract class ModalElement extends ContainerElement {
     this.setBorder(new RectExtension(this.borderSize));
     this.setHorizontalAlignment(HorizontalAlignment.CENTRE);
     this.setVerticalAlignment(VerticalAlignment.MIDDLE);
-    this.setFocusable(true);
 
     this.title = (LabelElement)new LabelElement(context, this)
         .setAlignment(LabelElement.TextAlignment.CENTRE)

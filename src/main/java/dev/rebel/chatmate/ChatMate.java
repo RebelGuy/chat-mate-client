@@ -95,7 +95,8 @@ public class ChatMate {
         mcChatService,
         mouseEventService,
         keyboardEventService,
-        clipboardService);
+        clipboardService,
+        soundService);
     CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
     this.guiService = new GuiService(this.isDev,
         logService,

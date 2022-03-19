@@ -38,11 +38,14 @@ public class ManageExperienceModal extends ModalElement {
             new LabelElement(context, this)
                 .setText("Add level:")
                 .setOverflow(TextOverflow.TRUNCATE)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE))
-        .addElement(1,
+                .setVerticalAlignment(VerticalAlignment.MIDDLE)
+        ).addElement(1,
             new TextInputElement(context, this)
-                .onTextChange(this::onLevelChange))
-        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5)));
+                .onTextChange(this::onLevelChange)
+                .setTabIndex(0)
+                .setAutoFocus(true)
+        ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
+    );
 
     this.msgSbs = (SideBySideElement)new SideBySideElement(context, this)
         .setElementPadding(gui(10))
@@ -50,11 +53,13 @@ public class ManageExperienceModal extends ModalElement {
             new LabelElement(context, this)
                 .setText("Message:")
                 .setOverflow(TextOverflow.TRUNCATE)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE))
-        .addElement(1,
+                .setVerticalAlignment(VerticalAlignment.MIDDLE)
+        ).addElement(1,
             new TextInputElement(context, this)
-                .onTextChange(this::onMessageChange))
-        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5)));
+                .onTextChange(this::onMessageChange)
+                .setTabIndex(1)
+        ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
+    );
 
     super.setBody(new ListElement(context, this).addElement(this.levelSbs).addElement(this.msgSbs));
     super.setTitle("Manage Experience for " + user.userInfo.channelName);

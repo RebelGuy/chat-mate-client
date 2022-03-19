@@ -61,10 +61,10 @@ public class Events {
   }
 
   public static class FocusEventData {
-    public final @Nullable IElement fromFocus;
-    public final @Nullable IElement toFocus;
+    public final @Nullable InputElement fromFocus;
+    public final @Nullable InputElement toFocus;
 
-    public FocusEventData(@Nullable IElement fromFocus, @Nullable IElement toFocus) {
+    public FocusEventData(@Nullable InputElement fromFocus, @Nullable InputElement toFocus) {
       this.fromFocus = fromFocus;
       this.toFocus = toFocus;
     }
