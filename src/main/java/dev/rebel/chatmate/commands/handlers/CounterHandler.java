@@ -43,6 +43,10 @@ public class CounterHandler {
     }
   }
 
+  public boolean hasExistingCounter() {
+    return this.counter != null;
+  }
+
   private Boolean incrementCounter() {
     if (this.counter != null) {
       this.counter.increment();
@@ -73,7 +77,7 @@ public class CounterHandler {
       this.value = startValue;
       this.incrementValue = incrementValue;
       this.title = title == null ? "" : title + " ";
-      this.observableString = new Observable<>(this.title);
+      this.observableString = new Observable<>(this.getStringToRender());
 
       DimPoint centre = dimFactory.getMinecraftRect().getCentre();
       Dim x = centre.getX();

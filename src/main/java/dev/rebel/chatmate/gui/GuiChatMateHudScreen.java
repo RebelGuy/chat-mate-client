@@ -87,7 +87,10 @@ public class GuiChatMateHudScreen extends GuiScreen {
         }
       }
     } else if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
-      this.contextMenuService.showHudContext(in.mousePositionData.x, in.mousePositionData.y);
+      if (this.guiChatMateHud.hudComponents.stream().noneMatch(c -> containsPoint(c, in.mousePositionData.point))) {
+        // only show context menu if we right click empty space
+        this.contextMenuService.showHudContext(in.mousePositionData.x, in.mousePositionData.y);
+      }
     }
     return new Out(null);
   }

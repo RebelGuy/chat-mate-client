@@ -1,12 +1,10 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
+import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
-import dev.rebel.chatmate.gui.Interactive.CountdownModal;
-import dev.rebel.chatmate.gui.Interactive.IElement;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
-import dev.rebel.chatmate.gui.Interactive.ManageExperienceModal;
+import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
@@ -26,6 +24,7 @@ public class ContextMenuService {
   private final ClipboardService clipboardService;
   private final SoundService soundService;
   private final CountdownHandler countdownHandler;
+  private final CounterHandler counterHandler;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -36,7 +35,8 @@ public class ContextMenuService {
                             KeyboardEventService keyboardEventService,
                             ClipboardService clipboardService,
                             SoundService soundService,
-                            CountdownHandler countdownHandler) {
+                            CountdownHandler countdownHandler,
+                            CounterHandler counterHandler) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -47,6 +47,7 @@ public class ContextMenuService {
     this.clipboardService = clipboardService;
     this.soundService = soundService;
     this.countdownHandler = countdownHandler;
+    this.counterHandler = counterHandler;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -58,7 +59,8 @@ public class ContextMenuService {
 
   public void showHudContext(Dim x, Dim y) {
     this.store.showContextMenu(x, y,
-      new ContextMenuOption("Countdown settings", this::onCountdown)
+      new ContextMenuOption("Add countdown title", this::onCountdown),
+      new ContextMenuOption("Add counter component", this::onCounter)
     );
   }
 
@@ -78,6 +80,14 @@ public class ContextMenuService {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
     IElement modal = new CountdownModal(context, screen, this.countdownHandler);
+    screen.setMainElement(modal);
+    this.minecraft.displayGuiScreen(screen);
+  }
+
+  private void onCounter() {
+    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    IElement modal = new CounterModal(context, screen, this.counterHandler);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
   }
