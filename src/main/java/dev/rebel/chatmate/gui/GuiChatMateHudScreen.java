@@ -73,6 +73,12 @@ public class GuiChatMateHudScreen extends GuiScreen {
   // todo: draw a rect around a component when hovering over it, coloured bordered when dragging, etc
 
   private Out onMouseDown(In in) {
+    if (this.minecraft.currentScreen != this) {
+      // this can happen if we are not displaying, but another object references us (e.g. as a parent screen)
+      // so we haven't unsubscribed from the mouse events.
+      return new Out(null);
+    }
+
     MousePositionData position = in.mousePositionData;
 
     if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
@@ -96,6 +102,10 @@ public class GuiChatMateHudScreen extends GuiScreen {
   }
 
   private Out onMouseMove(In in) {
+    if (this.minecraft.currentScreen != this) {
+      return new Out(null);
+    }
+
     MousePositionData position = in.mousePositionData;
     if (in.isDragged(MouseButton.LEFT_BUTTON) && this.draggingComponent != null) {
       // note that we are not checking if the mouse is still hovering over the component
@@ -115,6 +125,10 @@ public class GuiChatMateHudScreen extends GuiScreen {
   }
 
   private Out onMouseScroll(In in) {
+    if (this.minecraft.currentScreen != this) {
+      return new Out(null);
+    }
+
     MousePositionData position = in.mousePositionData;
     for (IHudComponent component : this.getReverseComponents()) {
       if (component.canRescaleContent() && containsPoint(component, new DimPoint(position.x, position.y))) {

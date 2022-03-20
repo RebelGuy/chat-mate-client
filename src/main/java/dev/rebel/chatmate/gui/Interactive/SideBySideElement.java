@@ -32,7 +32,6 @@ public class SideBySideElement extends ContainerElement {
 
   public SideBySideElement addElement(float bias, IElement element) {
     element.setSizingMode(SizingMode.FILL);
-    element.setParent(this);
     this.elementBiases.put(element, bias);
     super.addElement(element);
     return this;

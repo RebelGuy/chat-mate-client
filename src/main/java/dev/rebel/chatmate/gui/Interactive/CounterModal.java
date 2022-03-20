@@ -30,44 +30,49 @@ public class CounterModal extends ModalElement {
                 .setText("Text:")
                 .setOverflow(TextOverflow.TRUNCATE)
                 .setVerticalAlignment(VerticalAlignment.MIDDLE)
-        ).addElement(3,
+            )
+        .addElement(3,
             new TextInputElement(context, this)
                 .onTextChange(this::onTextChange)
                 .setTabIndex(0)
                 .setAutoFocus(true)
-        ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
+            )
+        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
     );
 
     IElement valueElements = new SideBySideElement(context, this)
-        .setElementPadding(gui(15))
+        .setElementPadding(gui(40))
         .addElement(1,
-            new SideBySideElement(context, this).addElement(1,
-                new LabelElement(context, this)
-                    .setText("Start:")
-                    .setOverflow(TextOverflow.TRUNCATE)
-                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
-            ).addElement(0.5f,
-                new TextInputElement(context, this)
-                    .onTextChange(this::onStartValueChange)
-                    .setValidator(this::onValidateStartValue)
-                    .setText("0")
-                    .setTabIndex(1)
-            ).setElementPadding(gui(5))
-        ).addElement(1,
-            new SideBySideElement(context, this).addElement(1,
-                new LabelElement(context, this)
-                    .setText("Start:")
-                    .setOverflow(TextOverflow.TRUNCATE)
-                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
-            ).addElement(0.5f,
-                new TextInputElement(context, this)
-                    .onTextChange(this::onIncrementChange)
-                    .setValidator(this::onValidateIncrement)
-                    .setText("1")
-                    .setTabIndex(2)
-            ).setElementPadding(gui(5))
-        ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
-    );
+            new SideBySideElement(context, this)
+                .addElement(1,
+                    new LabelElement(context, this)
+                        .setText("Start:")
+                        .setOverflow(TextOverflow.TRUNCATE)
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                ).addElement(0.75f,
+                    new TextInputElement(context, this)
+                        .onTextChange(this::onStartValueChange)
+                        .setValidator(this::onValidateStartValue)
+                        .setText("0")
+                        .setTabIndex(1)
+                ).setElementPadding(gui(5))
+            )
+        .addElement(1,
+            new SideBySideElement(context, this)
+                .addElement(1,
+                    new LabelElement(context, this)
+                        .setText("Start:")
+                        .setOverflow(TextOverflow.TRUNCATE)
+                        .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                ).addElement(0.75f,
+                    new TextInputElement(context, this)
+                        .onTextChange(this::onIncrementChange)
+                        .setValidator(this::onValidateIncrement)
+                        .setText("1")
+                        .setTabIndex(2)
+                ).setElementPadding(gui(5))
+            )
+        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5)));
 
     this.deleteButton = (ButtonElement)new ButtonElement(context, this)
         .setText("Delete existing counter")

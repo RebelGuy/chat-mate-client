@@ -133,17 +133,18 @@ public abstract class ContainerElement extends ElementBase {
     for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
       DimPoint size = elementSize._2;
 
-      if (lineX.plus(size.getX()).gt(containerWidth)) {
+      if (currentLine.size() > 0 && lineX.plus(size.getX()).gt(containerWidth)) {
         // doesn't fit on line
         lines.add(currentLine);
         currentLine = Collections.list(elementSize);
-        lineX = ZERO;
+        lineX = size.getX();
       } else {
         // add to line
         currentLine.add(elementSize);
         lineX = lineX.plus(size.getX());
       }
     }
+    lines.add(currentLine);
 
     // second pass: lay out elements within their lines. similar to the BLOCK layout algorithm
     Dim currentY = ZERO;
