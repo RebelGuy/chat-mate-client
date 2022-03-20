@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.services.events.models.GuiScreenChanged;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
@@ -30,8 +31,14 @@ public class ContextMenuStore {
     this.dimFactory = dimFactory;
 
     this.forgeEventService.onRenderTick(this::onRender, null);
+    this.forgeEventService.onGuiScreenChanged(this::onGuiScreenChanged, null);
     this.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this::onMouseMove, new MouseEventData.Options(), null);
     this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this::onMouseDown, new MouseEventData.Options(), null);
+  }
+
+  private GuiScreenChanged.Out onGuiScreenChanged(GuiScreenChanged.In in) {
+    this.clearContextMenu();
+    return new GuiScreenChanged.Out();
   }
 
   private MouseEventData.Out onMouseDown(MouseEventData.In in) {
@@ -58,7 +65,6 @@ public class ContextMenuStore {
     this.latestPositionData = in.mousePositionData;
     return new MouseEventData.Out();
   }
-
 
   public void showContextMenu(Dim x, Dim y, ContextMenuOption... options) {
     this.currentMenu = new ContextMenu(x, y, options);

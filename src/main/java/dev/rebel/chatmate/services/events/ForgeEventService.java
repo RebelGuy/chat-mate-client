@@ -1,30 +1,20 @@
 package dev.rebel.chatmate.services.events;
 
-import dev.rebel.chatmate.gui.CustomGuiIngame;
-import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService.Events;
 import dev.rebel.chatmate.services.events.models.*;
-import dev.rebel.chatmate.services.events.models.EventData.EventIn;
-import dev.rebel.chatmate.services.events.models.EventData.EventOptions;
-import dev.rebel.chatmate.services.events.models.EventData.EventOut;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 import net.minecraftforge.fml.client.GuiModList;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 // why? because I would like to keep Forge event subscriptions centralised for an easier overview and for easier debugging.
@@ -54,6 +44,11 @@ public class ForgeEventService extends EventServiceBase<Events> {
   /** Fires when the GuiChat (GuiScreen) is shown. */
   public void onOpenChat(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
     this.addListener(Events.OpenChat, handler, options);
+  }
+
+  /** Fires after the minecraft.currentScreen has changed reference. Occurs AFTER any onOpen* events - it is read-only. */
+  public void onGuiScreenChanged(Function<GuiScreenChanged.In, GuiScreenChanged.Out> handler, @Nullable GuiScreenChanged.Options options) {
+    this.addListener(Events.GuiScreenChanged, handler, options);
   }
 
   public void onRenderGameOverlay(Function<RenderGameOverlay.In, RenderGameOverlay.Out> handler, @Nonnull RenderGameOverlay.Options options) {
@@ -87,6 +82,7 @@ public class ForgeEventService extends EventServiceBase<Events> {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(GuiOpenEvent event) {
+    GuiScreen originalScreen = this.minecraft.currentScreen;
     Events eventType;
     if (event.gui instanceof GuiModList) {
       eventType = Events.OpenGuiModList;
@@ -97,17 +93,27 @@ public class ForgeEventService extends EventServiceBase<Events> {
     } else if (event.gui instanceof GuiChat) {
       eventType = Events.OpenChat;
     } else {
-      return;
+      eventType = null;
     }
 
-    boolean guiReplaced = false;
-    for (EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options> handler : this.getListeners(eventType, OpenGui.class)) {
-      OpenGui.In eventIn = new OpenGui.In(event.gui, guiReplaced);
-      OpenGui.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+    if (eventType != null) {
+      boolean guiReplaced = false;
+      for (EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options> handler : this.getListeners(eventType, OpenGui.class)) {
+        OpenGui.In eventIn = new OpenGui.In(event.gui, guiReplaced);
+        OpenGui.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
 
-      if (eventOut != null && eventOut.shouldReplaceGui) {
-        guiReplaced = true;
-        event.gui = eventOut.gui;
+        if (eventOut != null && eventOut.shouldReplaceGui) {
+          guiReplaced = true;
+          event.gui = eventOut.gui;
+        }
+      }
+    }
+
+    GuiScreen newScreen = event.gui;
+    if (originalScreen != newScreen) {
+      for (EventHandler<GuiScreenChanged.In, GuiScreenChanged.Out, GuiScreenChanged.Options> handler : this.getListeners(Events.GuiScreenChanged, GuiScreenChanged.class)) {
+        GuiScreenChanged.In eventIn = new GuiScreenChanged.In(originalScreen, newScreen);
+        GuiScreenChanged.Out eventOut = this.safeDispatch(Events.GuiScreenChanged, handler, eventIn);
       }
     }
   }
@@ -227,6 +233,7 @@ public class ForgeEventService extends EventServiceBase<Events> {
     OpenGuiInGameMenu,
     OpenChatSettingsMenu,
     OpenChat,
+    GuiScreenChanged,
     RenderGameOverlay,
     RenderChatGameOverlay,
     RenderTick,

@@ -261,7 +261,6 @@ public class CustomGuiChat extends GuiChat {
 
   @Override
   public void onGuiClosed() {
-    this.contextMenuStore.clearContextMenu();
     this.cursorService.setCursor(CursorType.DEFAULT);
     super.onGuiClosed();
   }
