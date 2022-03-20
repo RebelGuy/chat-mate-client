@@ -39,29 +39,33 @@ public class CounterModal extends ModalElement {
     );
 
     IElement valueElements = new SideBySideElement(context, this)
-        .setElementPadding(gui(10))
+        .setElementPadding(gui(15))
         .addElement(1,
-            new LabelElement(context, this)
-                .setText("Start:")
-                .setOverflow(TextOverflow.TRUNCATE)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE)
-        ).addElement(0.5f,
-            new TextInputElement(context, this)
-                .onTextChange(this::onStartValueChange)
-                .setValidator(this::onValidateStartValue)
-                .setText("0")
-                .setTabIndex(1)
+            new SideBySideElement(context, this).addElement(1,
+                new LabelElement(context, this)
+                    .setText("Start:")
+                    .setOverflow(TextOverflow.TRUNCATE)
+                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
+            ).addElement(0.5f,
+                new TextInputElement(context, this)
+                    .onTextChange(this::onStartValueChange)
+                    .setValidator(this::onValidateStartValue)
+                    .setText("0")
+                    .setTabIndex(1)
+            ).setElementPadding(gui(5))
         ).addElement(1,
-            new LabelElement(context, this)
-                .setText("Start:")
-                .setOverflow(TextOverflow.TRUNCATE)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE)
-        ).addElement(0.5f,
-            new TextInputElement(context, this)
-                .onTextChange(this::onIncrementChange)
-                .setValidator(this::onValidateIncrement)
-                .setText("1")
-                .setTabIndex(2)
+            new SideBySideElement(context, this).addElement(1,
+                new LabelElement(context, this)
+                    .setText("Start:")
+                    .setOverflow(TextOverflow.TRUNCATE)
+                    .setVerticalAlignment(VerticalAlignment.MIDDLE)
+            ).addElement(0.5f,
+                new TextInputElement(context, this)
+                    .onTextChange(this::onIncrementChange)
+                    .setValidator(this::onValidateIncrement)
+                    .setText("1")
+                    .setTabIndex(2)
+            ).setElementPadding(gui(5))
         ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
     );
 

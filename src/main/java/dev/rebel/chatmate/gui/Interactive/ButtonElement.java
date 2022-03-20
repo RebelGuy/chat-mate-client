@@ -104,7 +104,6 @@ public class ButtonElement extends InputElement {
   public void setBox(DimRect box) {
     super.setBox(box);
 
-    DimRect contentBox = this.getContentBox();
     DimRect labelBox = this.alignChild(this.label);
     this.label.setBox(labelBox);
   }
