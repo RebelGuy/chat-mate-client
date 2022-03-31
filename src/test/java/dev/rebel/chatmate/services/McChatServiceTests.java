@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessageEmoji;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
@@ -14,9 +16,14 @@ import net.minecraft.util.ChatComponentText;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.invocation.Invocation;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -32,6 +39,9 @@ public class McChatServiceTests {
   @Mock ChatMateEventService mockChatMateEventService;
   @Mock MessageService mockMessageService;
   @Mock ImageService mockImageService;
+
+  @Mock Config mockConfig;
+  @Mock StatefulEmitter<Boolean> identifyPlatforms;
 
   @Mock FontRenderer mockFontRenderer;
 
@@ -51,6 +61,9 @@ public class McChatServiceTests {
       PublicUser user = i.getArgument(0);
       return new ContainerChatComponent(new ChatComponentText(user.userInfo.channelName), user);
     });
+
+    when(this.mockConfig.getIdentifyPlatforms()).thenReturn(this.identifyPlatforms);
+    when(this.identifyPlatforms.get()).thenReturn(false);
   }
 
   @Test
@@ -135,6 +148,24 @@ public class McChatServiceTests {
     verify(this.mockSoundService).playDing();
   }
 
+  @Test
+  public void addChat_identifyPlatformChanged_refreshesChat() {
+    // this is a weirdly structured test thanks to java.
+    // upon instantiation, the service will subscribe to the mock emitter's onChange function
+    McChatService service = this.setupService();
+
+    // since we are dealing with a void method, the only way to retrieve the input is
+    // using an ArgumentCaptor and verify()
+    ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
+    verify(this.identifyPlatforms).onChange(captor.capture());
+
+    // notify the subscriber that the value has changed to true
+    captor.getValue().accept(true);
+
+    // this should have triggered a chat refresh
+    verify(this.mockMinecraftProxyService).refreshChat();
+  }
+
   private static String getExpectedChatText(PublicUser author, String text) {
     return author.levelInfo.level + " VIEWER " + author.userInfo.channelName + " " + text;
   }
@@ -146,7 +177,14 @@ public class McChatServiceTests {
     // just return the input
     when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArgument(0));
 
-    return new McChatService(this.mockMinecraftProxyService, this.mockLogService, this.mockFilterService, this.mockSoundService, this.mockChatMateEventService, this.mockMessageService, this.mockImageService);
+    return new McChatService(this.mockMinecraftProxyService,
+        this.mockLogService,
+        this.mockFilterService,
+        this.mockSoundService,
+        this.mockChatMateEventService,
+        this.mockMessageService,
+        this.mockImageService,
+        this.mockConfig);
   }
 
   // The below methods should be used for mock data creation. It sets all
@@ -156,6 +194,7 @@ public class McChatServiceTests {
     return new PublicChatItem() {{
       author = msgAuthor;
       messageParts = messages;
+      platform = ChatPlatform.Youtube;
     }};
   }
 

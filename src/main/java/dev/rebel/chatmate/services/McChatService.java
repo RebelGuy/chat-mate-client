@@ -3,6 +3,7 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.models.ChatMateApiException;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart.MessagePartType;
@@ -34,6 +35,7 @@ public class McChatService {
   private final ChatMateEventService chatMateEventService;
   private final MessageService messageService;
   private final ImageService imageService;
+  private final Config config;
 
   public McChatService(MinecraftProxyService minecraftProxyService,
                        LogService logService,
@@ -41,7 +43,8 @@ public class McChatService {
                        SoundService soundService,
                        ChatMateEventService chatMateEventService,
                        MessageService messageService,
-                       ImageService imageService) {
+                       ImageService imageService,
+                       Config config) {
     this.minecraftProxyService = minecraftProxyService;
     this.logService = logService;
     this.filterService = filterService;
@@ -49,8 +52,10 @@ public class McChatService {
     this.chatMateEventService = chatMateEventService;
     this.messageService = messageService;
     this.imageService = imageService;
+    this.config = config;
 
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
+    this.config.getIdentifyPlatforms().onChange(_value -> this.minecraftProxyService.refreshChat());
   }
 
   public void printStreamChatItem(PublicChatItem item) {
@@ -61,7 +66,7 @@ public class McChatService {
     try {
       Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
-      IChatComponent rank = styledText("VIEWER", VIEWER_RANK_STYLE);
+      IChatComponent rank = new ViewerTagComponent(this.config, item.platform); // todo: check that rank instanceof ContainerComponent is true, otherwise we have a problem
       IChatComponent player = this.messageService.getUserComponent(item.author);
       McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
 

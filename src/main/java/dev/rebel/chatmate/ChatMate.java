@@ -81,7 +81,14 @@ public class ChatMate {
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy);
     MessageService messageService = new MessageService(logService, minecraftProxyService);
     ImageService imageService = new ImageService(minecraft);
-    this.mcChatService = new McChatService(minecraftProxyService, logService, filterService, soundService, chatMateEventService, messageService, imageService);
+    this.mcChatService = new McChatService(minecraftProxyService,
+        logService,
+        filterService,
+        soundService,
+        chatMateEventService,
+        messageService,
+        imageService,
+        config);
     StatusService statusService = new StatusService(this.config, chatMateEndpointProxy);
 
     this.renderService = new RenderService(minecraft, this.forgeEventService);
