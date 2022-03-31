@@ -66,7 +66,7 @@ public class McChatService {
     try {
       Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
-      IChatComponent rank = new ViewerTagComponent(this.config, item.platform); // todo: check that rank instanceof ContainerComponent is true, otherwise we have a problem
+      IChatComponent rank = new ViewerTagComponent(this.config, item.platform);
       IChatComponent player = this.messageService.getUserComponent(item.author);
       McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
 

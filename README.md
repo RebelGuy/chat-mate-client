@@ -53,6 +53,12 @@ behaviour (i.e. `cancel` the event) and use `CustomGuiNewChat.drawChat()` instea
 never has a chance to interact with its private `GuiNewChat` object (which remains to be the default implementation).
 
 # Change Log
+## v1.12 - The Twitch Update [1/4/2022]
+- Added configuration for identifying platform-specific information
+  - The status indicator and viewer count is split into two
+  - `VIEWER` ranks are split into `YOUTUBE` and `TWITCH` ranks
+- Bug fixes and visual improvements
+
 ## v1.11 - The Modal Update [20/3/2022]
 - Created a brand new, fully fledged HTML-inspired layout engine
   - Automatic layout calculations
