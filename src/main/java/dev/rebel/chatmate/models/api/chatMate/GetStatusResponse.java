@@ -8,11 +8,12 @@ import dev.rebel.chatmate.proxy.ApiResponseBase;
 public class GetStatusResponse extends ApiResponseBase<GetStatusResponseData> {
   @Override
   public Integer GetExpectedSchema() {
-    return 1;
+    return 2;
   }
 
   public static class GetStatusResponseData {
     public PublicLivestreamStatus livestreamStatus;
-    public PublicApiStatus apiStatus;
+    public PublicApiStatus youtubeApiStatus;
+    public PublicApiStatus twitchApiStatus;
   }
 }

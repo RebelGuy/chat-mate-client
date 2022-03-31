@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.models.Config.ConfigType;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.EventHandler;
 import dev.rebel.chatmate.services.events.EventServiceBase;
@@ -9,6 +9,8 @@ import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import dev.rebel.chatmate.services.events.models.ConfigEventData.In;
 import dev.rebel.chatmate.services.events.models.ConfigEventData.Options;
 import dev.rebel.chatmate.services.events.models.ConfigEventData.Out;
+import dev.rebel.chatmate.services.events.models.EventData.EventIn;
+import dev.rebel.chatmate.services.events.models.EventData.EventOut;
 import dev.rebel.chatmate.services.util.Callback;
 
 import javax.annotation.Nullable;
@@ -20,11 +22,11 @@ public class Config extends EventServiceBase<ConfigType> {
   // Since config settings are stored locally, whenever you make changes to the Config that affect the serialised model,
   // you must also change the schema. This is an additive process, and existing serialised models must not be changed.
   // 1. Create new model version that extends `Version`
-  // 2. Update the generic type of ConfigPersistorService
+  // 2. Update the generic type of ConfigPersistorService set in ChatMate.java
   // 3. Bump the ConfigPersistorService.CURRENT_VERSION
   // 4. Add a new migration file
   // 5. Use the new migration file when loading the serialised config
-  private final ConfigPersistorService<SerialisedConfigV0> configPersistorService;
+  private final ConfigPersistorService<SerialisedConfigV1> configPersistorService;
 
   private final StatefulEmitter<Boolean> chatMateEnabled;
   public StatefulEmitter<Boolean> getChatMateEnabledEmitter() { return this.chatMateEnabled; }
@@ -44,8 +46,14 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Boolean> showLiveViewers;
   public StatefulEmitter<Boolean> getShowLiveViewersEmitter() { return this.showLiveViewers; }
 
+  private final StatefulEmitter<Boolean> identifyPlatforms;
+  public StatefulEmitter<Boolean> getIdentifyPlatforms() { return this.identifyPlatforms; }
+
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
+
+  /** Only used for holding onto wrapped callback functions when an onChange subscriber uses the automatic unsubscription feature. Write-only. */
+  private final Map<ConfigType, WeakHashMap<Object, Function<? extends EventIn, ? extends EventOut>>> weakHandlers;
 
   public Config(LogService logService, ConfigPersistorService configPersistorService) {
     super(ConfigType.class, logService);
@@ -58,7 +66,12 @@ public class Config extends EventServiceBase<ConfigType> {
     this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, true, this::onUpdate);
     this.showStatusIndicator = new StatefulEmitter<>(ConfigType.SHOW_STATUS_INDICATOR, true, this::onUpdate);
     this.showLiveViewers = new StatefulEmitter<>(ConfigType.SHOW_LIVE_VIEWERS, true, this::onUpdate);
+    this.identifyPlatforms = new StatefulEmitter<>(ConfigType.IDENTIFY_PLATFORMS, false, this::onUpdate);
 
+    this.weakHandlers = new WeakHashMap<>();
+    for (ConfigType type : ConfigType.class.getEnumConstants()) {
+      this.weakHandlers.put(type, new WeakHashMap<>());
+    }
     this.load();
   }
 
@@ -73,23 +86,26 @@ public class Config extends EventServiceBase<ConfigType> {
   }
 
   private void load() {
-    SerialisedConfigV0 loaded = this.configPersistorService.load();
+    SerialisedConfigV1 loaded = this.configPersistorService.load();
     if (loaded != null) {
       this.soundEnabled.set(loaded.soundEnabled);
       this.chatVerticalDisplacement.set(loaded.chatVerticalDisplacement);
       this.hudEnabled.set(loaded.hudEnabled);
       this.showStatusIndicator.set(loaded.showStatusIndicator);
       this.showLiveViewers.set(loaded.showLiveViewers);
+      this.identifyPlatforms.set(loaded.identifyPlatforms);
+      this.save();
     }
   }
 
   private void save() {
-    SerialisedConfigV0 serialisedConfig = new SerialisedConfigV0(
+    SerialisedConfigV1 serialisedConfig = new SerialisedConfigV1(
       this.soundEnabled.get(),
       this.chatVerticalDisplacement.get(),
       this.hudEnabled.get(),
       this.showStatusIndicator.get(),
-      this.showLiveViewers.get()
+      this.showLiveViewers.get(),
+      this.identifyPlatforms.get()
     );
     this.configPersistorService.save(serialisedConfig);
   }
@@ -124,7 +140,9 @@ public class Config extends EventServiceBase<ConfigType> {
 
     /** **NO LAMBDA** */
     public void onChange(Consumer<T> callback, @Nullable Options<T> options, Object key) {
+      // must hold on to a reference of the transformed callback
       Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
+      Config.this.weakHandlers.get(this.type).put(key, handler);
       Config.this.addListener(this.type, handler, options, key);
     }
 
@@ -162,6 +180,7 @@ public class Config extends EventServiceBase<ConfigType> {
     CHAT_VERTICAL_DISPLACEMENT,
     ENABLE_HUD,
     SHOW_STATUS_INDICATOR,
-    SHOW_LIVE_VIEWERS
+    SHOW_LIVE_VIEWERS,
+    IDENTIFY_PLATFORMS
   }
 }

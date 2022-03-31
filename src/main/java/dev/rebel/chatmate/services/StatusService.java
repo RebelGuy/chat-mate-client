@@ -35,13 +35,13 @@ public class StatusService {
     });
   }
 
-  public SimpleStatus getSimpleStatus() {
+  public SimpleStatus getYoutubeSimpleStatus() {
     GetStatusResponseData status = this.lastStatusResponse;
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.apiStatus.status == ApiStatus.Error) {
-      return SimpleStatus.YOUTUBE_UNREACHABLE;
+    } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
+      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -49,13 +49,66 @@ public class StatusService {
     }
   }
 
-  public @Nullable Integer getLiveViewerCount() {
+  public SimpleStatus getTwitchSimpleStatus() {
+    GetStatusResponseData status = this.lastStatusResponse;
+
+    if (status == null) {
+      return SimpleStatus.SERVER_UNREACHABLE;
+    } else if (status.twitchApiStatus.status == ApiStatus.Error) {
+      return SimpleStatus.PLATFORM_UNREACHABLE;
+    } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
+      return SimpleStatus.OK_LIVE;
+    } else {
+      return SimpleStatus.OK_OFFLINE;
+    }
+  }
+
+  public SimpleStatus getAggregateSimpleStatus() {
+    GetStatusResponseData status = this.lastStatusResponse;
+
+    if (status == null) {
+      return SimpleStatus.SERVER_UNREACHABLE;
+    } else if (status.youtubeApiStatus.status == ApiStatus.Error || status.twitchApiStatus.status == ApiStatus.Error) {
+      return SimpleStatus.PLATFORM_UNREACHABLE;
+    } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
+      return SimpleStatus.OK_LIVE;
+    } else {
+      return SimpleStatus.OK_OFFLINE;
+    }
+  }
+
+  public @Nullable Integer getYoutubeLiveViewerCount() {
     GetStatusResponseData status = this.lastStatusResponse;
 
     if (status == null) {
       return null;
     } else {
-      return status.livestreamStatus.liveViewers;
+      return status.livestreamStatus.youtubeLiveViewers;
+    }
+  }
+
+  public @Nullable Integer getTwitchLiveViewerCount() {
+    GetStatusResponseData status = this.lastStatusResponse;
+
+    if (status == null) {
+      return null;
+    } else {
+      return status.livestreamStatus.twitchLiveViewers;
+    }
+  }
+
+  public @Nullable Integer getTotalLiveViewerCount() {
+    Integer yt = this.getYoutubeLiveViewerCount();
+    Integer twitch = this.getTwitchLiveViewerCount();
+
+    if (yt == null && twitch == null) {
+      return null;
+    } else if (twitch == null) {
+      return yt;
+    } else if (yt == null) {
+      return twitch;
+    } else {
+      return yt + twitch;
     }
   }
 
@@ -87,7 +140,7 @@ public class StatusService {
 
   public enum SimpleStatus {
     SERVER_UNREACHABLE,
-    YOUTUBE_UNREACHABLE,
+    PLATFORM_UNREACHABLE,
     OK_OFFLINE,
     OK_LIVE
   }

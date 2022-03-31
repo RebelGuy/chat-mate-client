@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
@@ -58,7 +59,7 @@ public class ChatMate {
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
 
-    ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV0.class, logService, fileService);
+    ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV1.class, logService, fileService);
     this.config = new Config(logService, configPersistorService);
     this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);

@@ -1,6 +1,25 @@
 package dev.rebel.chatmate.models.configMigrations;
 
 public class SerialisedConfigVersions {
+  public static class SerialisedConfigV1 extends Version {
+    public boolean soundEnabled;
+    public int chatVerticalDisplacement;
+    public boolean hudEnabled;
+    public boolean showStatusIndicator;
+    public boolean showLiveViewers;
+    public boolean identifyPlatforms;
+
+    public SerialisedConfigV1(boolean soundEnabled, int chatVerticalDisplacement, boolean hudEnabled, boolean showStatusIndicator, boolean showLiveViewers, boolean identifyPlatforms) {
+      super(1);
+      this.soundEnabled = soundEnabled;
+      this.chatVerticalDisplacement = chatVerticalDisplacement;
+      this.hudEnabled = hudEnabled;
+      this.showStatusIndicator = showStatusIndicator;
+      this.showLiveViewers = showLiveViewers;
+      this.identifyPlatforms = identifyPlatforms;
+    }
+  }
+
   public static class SerialisedConfigV0 extends Version {
     public final boolean soundEnabled;
     public final int chatVerticalDisplacement;
@@ -19,7 +38,8 @@ public class SerialisedConfigVersions {
   }
 
   public abstract static class Version {
-    private final int schema;
+    // transient means that the property will not be serialised
+    private final transient int schema;
 
     public Version(int schema) {
       this.schema = schema;
