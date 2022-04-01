@@ -16,6 +16,8 @@ public class DigitReel {
   private final Minecraft minecraft;
   private final DimFactory dimFactory;
 
+  // all floats are in radians.
+  // e.g. to represent the number 10, the tens-reel moves by 0.1*(2*pi) radians, while the ones wheel moves by 1*(2*pi) radians.
   private float[] startRotation = new float[2];
   private float[] targetRotation = new float[2];
   private float currentFrac = 0;
@@ -31,7 +33,15 @@ public class DigitReel {
     char[] chars = text.toCharArray();
     float[] newTarget = new float[this.targetRotation.length];
     for (int i = 0; i < chars.length; i++) {
-      newTarget[i] = this.charToRotation(chars[i]);
+      // the base will be added to the normalised rotation for each digit, and it corresponds to the
+      // tens/hundeds, etc base value applied by the previous digit(s), i.e. how does the rotation compare to the
+      // rest of the reel
+      int base = 0;
+      for (int j = 0; j < i; j++) {
+        // newTarget[j] always exists already, and may have also applied a 10 multiplier so it is increasing the further right we go
+        base += 10 * newTarget[j] / 2 / PI;
+      }
+      newTarget[i] = this.charToRotation(chars[i], base);
     }
 
     // check if the target has updated
@@ -61,13 +71,13 @@ public class DigitReel {
   private float getRotation(float start, float target, float frac) {
     // the easing function is a trig function, where the y-axis denotes progress (from 0 to 1).
     float progress = (float)(0.5f - 0.5f * Math.cos(PI * frac));
-    float distance = this.cyclic.distance(start, target);
-    return this.cyclic.add(start, progress * distance);
+    float distance = target - start;
+    return start + progress * distance;
   }
 
   private float getSpeed(float start, float target, float frac) {
     float relSpeed = (float)(PI / 2 * Math.sin(PI * frac));
-    float distance = this.cyclic.distance(start, target);
+    float distance = target - start;
     return relSpeed * Math.abs(distance);
   }
 
@@ -77,12 +87,15 @@ public class DigitReel {
     this.currentFrac = Math.min(1, this.currentFrac + deltaFrac);
   }
 
-  private float charToRotation(char c) {
+  private float charToRotation(char c, int base) {
     if (!Character.isDigit(c)) {
       return 0;
     } else {
+      // originally, we didn't multiply the digit positions by the relevant factor of 10
+      // this looked odd, because digits were moving independently when in reality
+      // they should be moving coherently as part of a single number.
       float normalisedRotation = Character.getNumericValue(c) / 10.0f;
-      return this.cyclic.map(normalisedRotation);
+      return (normalisedRotation + base) * 2 * PI;
     }
   }
 
@@ -124,13 +137,13 @@ public class DigitReel {
 
       // show motion blur if fast enough
       boolean highSpeed = false;
-      float maxSpeed = PI * PI / 2;
+      float maxSpeed = PI * PI / 2; // this used to be the max speed when digits moved independently, but is now simply an imperial measure that "looks nice"
       float threshold = maxSpeed / 2;
       if (speed > threshold) {
         float alphaMultiplier = 0.5f;
         float blurOffsetMultiplier = 1;
-        float blur = (speed - threshold) / threshold; // normalised
-        float blurredScale = (1 - 0.2f * blur) * scale; // up to 80% narrower
+        float blur = Math.min(2, (speed - threshold) / threshold); // between 0 and 2 units
+        float blurredScale = Math.max(0.2f, (1 - 0.2f * blur) * scale); // up to 80% narrower
 
         if (speed > threshold / 2) {
           highSpeed = true;
