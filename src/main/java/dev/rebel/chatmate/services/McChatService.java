@@ -183,6 +183,11 @@ public class McChatService {
         components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData)));
         continue;
 
+      } else if (msg.type == MessagePartType.cheer) {
+        assert msg.cheerData != null;
+        text = String.format("[cheer with amount %d]", msg.cheerData.amount);
+        style = YT_CHAT_MESSAGE_CHEER_STYLE;
+
       } else throw new Exception("Invalid partial message type " + msg.type);
 
       // add space between components except when we have two text types after one another.

@@ -12,6 +12,7 @@ public class Styles {
   public static final ChatStyle VIEWER_NAME_STYLE = new ChatStyle().setColor(EnumChatFormatting.YELLOW).setBold(false);
   public static final ChatStyle YT_CHAT_MESSAGE_TEXT_STYLE = new ChatStyle().setColor(EnumChatFormatting.WHITE);
   public static final ChatStyle YT_CHAT_MESSAGE_EMOJI_STYLE = new ChatStyle().setColor(EnumChatFormatting.GRAY);
+  public static final ChatStyle YT_CHAT_MESSAGE_CHEER_STYLE = new ChatStyle().setColor(EnumChatFormatting.GRAY);
   public static final ChatStyle MENTION_TEXT_STYLE = new ChatStyle().setColor(EnumChatFormatting.GOLD);
 
   public static final ChatStyle LEVEL_0_TO_19 = new ChatStyle().setColor(EnumChatFormatting.GRAY);
