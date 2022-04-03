@@ -11,6 +11,7 @@ import scala.Tuple2;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public class ComponentHelpers {
   public static String getFormattedText(ChatComponentText component) {
@@ -89,6 +90,8 @@ public class ComponentHelpers {
   // note: this uses a slightly modified vanilla algorithm, and it is what does the actual work
   private static TrimmedComponent trimComponent(ChatComponentText component, int maxWidth, boolean isLineStart, FontRenderer font) {
     ChatStyle style = component.getChatStyle().createShallowCopy();
+    Function<String, String> styled = unstyled -> style.getFormattingCode() + unstyled;
+    Function<String, String> unstyled = styledText -> styledText.startsWith(style.getFormattingCode()) ? styledText.substring(style.getFormattingCode().length()) : styledText;
 
     String fullText = component.getUnformattedTextForChat();
     String text = fullText;
@@ -100,9 +103,10 @@ public class ComponentHelpers {
       leftOver = fullText.substring(newLine + 1);
     }
 
-    int textWidth = font.getStringWidth(text);
+    int textWidth = font.getStringWidth(styled.apply(text));
     if (textWidth > maxWidth) {
-      String maybeText = font.trimStringToWidth(text, maxWidth);
+      String maybeTextStyled = font.trimStringToWidth(styled.apply(text), maxWidth);
+      String maybeText = unstyled.apply(maybeTextStyled);
       String maybeLeftover = maybeText.length() < text.length() ? text.substring(maybeText.length()) : "";
 
       // try to split between words
@@ -111,7 +115,7 @@ public class ComponentHelpers {
 
         // trim away spaces where appropriate. we can do this only because we know this is the transition of one line
         // to the next
-        if (lastSpaceIndex >= 0 && font.getStringWidth(text.substring(0, lastSpaceIndex)) > 0) {
+        if (lastSpaceIndex >= 0 && font.getStringWidth(styled.apply(text.substring(0, lastSpaceIndex))) > 0) {
           maybeText = trimEnd(text.substring(0, lastSpaceIndex));
           maybeLeftover = trimStart(text.substring(lastSpaceIndex + 1));
         } else if (!text.trim().contains(" ") && !isLineStart) {
@@ -125,7 +129,7 @@ public class ComponentHelpers {
       leftOver = maybeLeftover + leftOver;
     }
 
-    int actualWidth = font.getStringWidth(text);
+    int actualWidth = font.getStringWidth(styled.apply(text));
     ChatComponentText trimmedComponent = null;
     if (actualWidth > 0) {
       trimmedComponent = new ChatComponentText(text);
