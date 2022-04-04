@@ -5,13 +5,15 @@ import dev.rebel.chatmate.models.publicObjects.PublicObject;
 
 public class PublicChatMateEvent extends PublicObject {
   @Override
-  public Integer GetExpectedSchema() { return 1; }
+  public Integer GetExpectedSchema() { return 2; }
 
   public ChatMateEventType type;
   public Long timestamp;
-  public PublicLevelUpData data;
+  public PublicLevelUpData levelUpData;
+  public PublicNewTwitchFollowerData newTwitchFollowerData;
 
   public enum ChatMateEventType {
-    @SerializedName("levelUp") LEVEL_UP
+    @SerializedName("levelUp") LEVEL_UP,
+    @SerializedName("newTwitchFollower") NEW_TWITCH_FOLLOWER
   }
 }

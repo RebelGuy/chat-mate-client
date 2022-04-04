@@ -10,7 +10,6 @@ import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
@@ -78,7 +77,7 @@ public class ChatMate {
     this.chatMateChatService = new ChatMateChatService(logService, this.config, chatEndpointProxy);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, this.config);
-    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy);
+    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy, logService);
     MessageService messageService = new MessageService(logService, minecraftProxyService);
     ImageService imageService = new ImageService(minecraft);
     this.mcChatService = new McChatService(minecraftProxyService,

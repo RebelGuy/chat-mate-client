@@ -201,6 +201,14 @@ public class MessageService {
     ));
   }
 
+  public IChatComponent getNewFollowerMessage(String displayName) {
+    List<IChatComponent> list = new ArrayList<>();
+    list.add(INFO_PREFIX);
+    list.add(styledText(displayName, VIEWER_NAME_STYLE));
+    list.add(styledText("has just followed on Twitch!", INFO_MSG_STYLE));
+    return joinComponents(" ", list);
+  }
+
   private IChatComponent getLargeLevelUpIntro(PublicUser user, int newLevel) {
     return pickRandom(INFO_MSG_STYLE,
         "My little rebels... I have news for you.",

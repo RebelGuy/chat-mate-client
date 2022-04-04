@@ -11,6 +11,7 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
+import dev.rebel.chatmate.services.events.models.NewTwitchFollowerEventData;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
@@ -55,6 +56,7 @@ public class McChatService {
     this.config = config;
 
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
+    this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower, null);
     this.config.getIdentifyPlatforms().onChange(_value -> this.minecraftProxyService.refreshChat());
   }
 
@@ -110,6 +112,24 @@ public class McChatService {
     }
 
     return new LevelUpEventData.Out();
+  }
+
+  public NewTwitchFollowerEventData.Out onNewTwitchFollower(NewTwitchFollowerEventData.In in) {
+    this.soundService.playLevelUp(1.75f);
+
+    if (!this.minecraftProxyService.canPrintChatMessage()) {
+      return new NewTwitchFollowerEventData.Out();
+    }
+
+    try {
+      IChatComponent message = this.messageService.getNewFollowerMessage(in.displayName);
+      this.minecraftProxyService.printChatMessage("New follower", message);
+
+    } catch (Exception e) {
+      this.logService.logError(this, String.format("Could not print new follower message for '%s'", in.displayName));
+    }
+
+    return new NewTwitchFollowerEventData.Out();
   }
 
   public void printLeaderboard(PublicRankedUser[] users, @Nullable Integer highlightIndex) {
