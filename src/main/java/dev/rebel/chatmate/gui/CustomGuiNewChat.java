@@ -3,7 +3,8 @@ package dev.rebel.chatmate.gui;
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.chat.*;
-import dev.rebel.chatmate.gui.hud.ImageComponent;
+import dev.rebel.chatmate.gui.models.AbstractChatLine;
+import dev.rebel.chatmate.gui.models.ChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
@@ -15,7 +16,6 @@ import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ChatComponentText;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.MathHelper;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -23,8 +23,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.Tuple2;
 
+import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
 
@@ -44,8 +46,8 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final ForgeEventService forgeEventService;
   private final DimFactory dimFactory;
   private final List<String> sentMessages = Lists.newArrayList();
-  private final List<ChatLine> chatLines = Lists.newArrayList(); // unrendered chat lines
-  private final List<ChatLine> drawnChatLines = Lists.newArrayList(); // rendered chat lines, where components may be broken up into multiple lines to fit into the GUI.
+  private final List<AbstractChatLine> abstractChatLines = Lists.newArrayList();
+  private final List<ChatLine> chatLines = Lists.newArrayList(); // rendered chat lines, where components may be broken up into multiple lines to fit into the GUI.
   private int scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
   private boolean isScrolled;
 
@@ -82,7 +84,7 @@ public class CustomGuiNewChat extends GuiNewChat {
       return;
     }
 
-    int lineCount = this.drawnChatLines.size();
+    int lineCount = this.chatLines.size();
     if (lineCount == 0) {
       return;
     }
@@ -98,8 +100,8 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     // for every line that is between the scroll position and
     int renderedLines = 0; // how many lines we have actually rendered
-    for (int i = 0; i + this.scrollPos < this.drawnChatLines.size() && i < maxLines; ++i) {
-      ChatLine line = this.drawnChatLines.get(i + this.scrollPos);
+    for (int i = 0; i + this.scrollPos < this.chatLines.size() && i < maxLines; ++i) {
+      ChatLine line = this.chatLines.get(i + this.scrollPos);
       if (line == null) {
         continue;
       }
@@ -252,8 +254,8 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Clears the chat. */
   @Override
   public void clearChatMessages() {
-    this.drawnChatLines.clear();
     this.chatLines.clear();
+    this.abstractChatLines.clear();
     this.sentMessages.clear();
   }
 
@@ -276,20 +278,20 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   /** Adds a new chat message. Automatically splits up the component's text based on its text width. */
   private void addComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
-    this.pushFullComponent(chatComponent, chatLineId, updateCounter);
-    this.pushDrawnComponent(chatComponent, chatLineId, updateCounter);
+    AbstractChatLine newLine = this.pushFullComponent(chatComponent, chatLineId, updateCounter);
+    this.pushDrawnComponent(newLine, chatComponent, chatLineId, updateCounter);
 
     // todo: replace with our own logger
     logger.info("[CHAT] " + chatComponent.getUnformattedText());
   }
 
-  private void pushFullComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
-    // indiscriminately add all component types
-    this.chatLines.add(0, new ChatLine(updateCounter, chatComponent, chatLineId));
+  private AbstractChatLine pushFullComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
+    AbstractChatLine newLine = new AbstractChatLine(updateCounter, chatComponent, chatLineId);
+    this.abstractChatLines.add(0, newLine);
 
     // purge entries at the top
-    while (this.chatLines.size() > MAX_LINES) {
-      ChatLine lastLine = this.chatLines.get(this.chatLines.size() - 1);
+    while (this.abstractChatLines.size() > MAX_LINES) {
+      AbstractChatLine lastLine = this.abstractChatLines.get(this.abstractChatLines.size() - 1);
       for (IChatComponent component : lastLine.getChatComponent()) {
         if (component instanceof ImageChatComponent) {
           // avoid memory leaks by unloading textures before removing the line
@@ -297,12 +299,14 @@ public class CustomGuiNewChat extends GuiNewChat {
           imageComponent.destroy(this.minecraft.getTextureManager());
         }
       }
-      this.chatLines.remove(this.chatLines.size() - 1);
+      this.abstractChatLines.remove(this.abstractChatLines.size() - 1);
     }
+
+    return newLine;
   }
 
   /** Adds the component to `drawnChatLines` after processing its contents. */
-  private void pushDrawnComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
+  private void pushDrawnComponent(AbstractChatLine parent, IChatComponent chatComponent, int chatLineId, int updateCounter) {
     boolean processContents = true;
     if (chatComponent instanceof PrecisionChatComponentText) {
       processContents = false;
@@ -313,20 +317,20 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     if (!processContents) {
       // push as-is
-      this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId));
+      this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId, parent));
 
     } else {
       int lineWidth = this.getLineWidth();
       List<IChatComponent> splitComponents = ComponentHelpers.splitText(chatComponent, lineWidth, this.minecraft.fontRendererObj);
       for (IChatComponent component : splitComponents) {
-        this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId));
+        this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId, parent));
       }
     }
   }
 
   /** Adds the ChatLine to the `drawnChatLines`. */
   private void pushDrawnChatLine(ChatLine line) {
-    this.drawnChatLines.add(0, line);
+    this.chatLines.add(0, line);
 
     // make sure we keep the same lines visible even as we push more lines to the bottom of the chat
     if (this.getChatOpen() && this.scrollPos > 0) {
@@ -335,8 +339,8 @@ public class CustomGuiNewChat extends GuiNewChat {
     }
 
     // purge entries at the top
-    while (this.drawnChatLines.size() > MAX_DRAWN_LINES) {
-      this.drawnChatLines.remove(this.drawnChatLines.size() - 1);
+    while (this.chatLines.size() > MAX_DRAWN_LINES) {
+      this.chatLines.remove(this.chatLines.size() - 1);
     }
   }
 
@@ -351,14 +355,14 @@ public class CustomGuiNewChat extends GuiNewChat {
     int initialScrollPos = this.scrollPos;
     boolean initialIsScrolled = this.isScrolled;
 
-    this.drawnChatLines.clear();
+    this.chatLines.clear();
     if (!keepScrollPos) {
       this.resetScroll();
     }
 
-    for (int i = this.chatLines.size() - 1; i >= 0; --i) {
-      ChatLine chatline = this.chatLines.get(i);
-      this.pushDrawnComponent(chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter());
+    for (int i = this.abstractChatLines.size() - 1; i >= 0; --i) {
+      AbstractChatLine chatline = this.abstractChatLines.get(i);
+      this.pushDrawnComponent(chatline, chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter());
     }
 
     if (keepScrollPos) {
@@ -391,7 +395,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   @Override
   public void scroll(int amount) {
     this.scrollPos += amount;
-    int i = this.drawnChatLines.size();
+    int i = this.chatLines.size();
 
     // clamp maximum
     if (this.scrollPos > i - this.getLineCount()) {
@@ -434,7 +438,7 @@ public class CustomGuiNewChat extends GuiNewChat {
       return null;
     }
 
-    int visibleLines = Math.min(this.getLineCount(), this.drawnChatLines.size());
+    int visibleLines = Math.min(this.getLineCount(), this.chatLines.size());
 
     int maxX = this.getLineWidth();
     int maxY = this.minecraft.fontRendererObj.FONT_HEIGHT * visibleLines + visibleLines + 1;
@@ -444,11 +448,11 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     // the line index at the current y-position
     int lineIndex = y / this.minecraft.fontRendererObj.FONT_HEIGHT + this.scrollPos;
-    if (lineIndex < 0 || lineIndex >= this.drawnChatLines.size()) {
+    if (lineIndex < 0 || lineIndex >= this.chatLines.size()) {
       return null;
     }
 
-    ChatLine chatline = this.drawnChatLines.get(lineIndex);
+    ChatLine chatline = this.chatLines.get(lineIndex);
 
     // walk from component to component until we first pass our desired x-position
     int lineX = 0;
@@ -496,16 +500,26 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   @Override
   public void deleteChatLine(int id) {
+    this.abstractChatLines.removeIf(line -> line.getChatLineID() == id);
     this.chatLines.removeIf(line -> line.getChatLineID() == id);
-    this.drawnChatLines.removeIf(line -> line.getChatLineID() == id);
   }
 
   /** Removes the component. Note that you must call `refreshChat` for the changes to come into effect. */
   public void deleteComponent(IChatComponent component) {
+    this.deleteLine(ln -> ln.getChatComponent() == component);
+  }
+
+  public void deleteLine(AbstractChatLine line) {
+    this.deleteLine(ln -> ln == line);
+  }
+
+  public void deleteLine(Predicate<AbstractChatLine> predicate) {
+    this.abstractChatLines.removeIf(predicate);
+
     int removed = 0;
     Iterator<ChatLine> chatLines = this.chatLines.iterator();
     while (chatLines.hasNext()) {
-      if (chatLines.next().getChatComponent() == component) {
+      if (predicate.test(chatLines.next().getParent())) {
         chatLines.remove();
         removed++;
       }
