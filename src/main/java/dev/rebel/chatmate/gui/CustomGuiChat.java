@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Sets;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.ContextMenuService;
@@ -68,10 +69,14 @@ public class CustomGuiChat extends GuiChat {
   }
 
   private MouseEventData.Out onMouseDown(MouseEventData.In in) {
+    CustomGuiNewChat chatGui = this.minecraftProxyService.getChatGUI();
+    chatGui.setSelectedLine(null);
+
     if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
       Dim x = in.mousePositionData.x;
       Dim y = in.mousePositionData.y;
-      IChatComponent component = this.minecraftProxyService.getChatGUI().getChatComponent(x, y);
+
+      IChatComponent component = chatGui.getChatComponent(x, y);
 
       if (component instanceof ContainerChatComponent) {
         ContainerChatComponent container = (ContainerChatComponent)component;
@@ -79,6 +84,12 @@ public class CustomGuiChat extends GuiChat {
           this.contextMenuService.showUserContext(x, y, (PublicUser)container.data);
           return new MouseEventData.Out(MouseEventData.Out.MouseHandlerAction.HANDLED);
         }
+      }
+
+      AbstractChatLine chatLine = chatGui.getAbstractChatLine(x, y);
+      if (chatLine != null) {
+        this.contextMenuService.showChatLineContext(x, y, chatLine);
+        chatGui.setSelectedLine(chatLine);
       }
     }
 
@@ -262,6 +273,7 @@ public class CustomGuiChat extends GuiChat {
   @Override
   public void onGuiClosed() {
     this.cursorService.setCursor(CursorType.DEFAULT);
+    this.minecraftProxyService.getChatGUI().setSelectedLine(null);
     super.onGuiClosed();
   }
 

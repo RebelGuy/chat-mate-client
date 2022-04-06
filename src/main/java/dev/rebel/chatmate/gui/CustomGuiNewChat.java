@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui;
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.chat.*;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.ChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -50,6 +51,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final List<ChatLine> chatLines = Lists.newArrayList(); // rendered chat lines, where components may be broken up into multiple lines to fit into the GUI.
   private int scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
   private boolean isScrolled;
+  private @Nullable AbstractChatLine selectedLine;
 
   public CustomGuiNewChat(Minecraft minecraft, LogService logService, Config config, ForgeEventService forgeEventService, DimFactory dimFactory) {
     super(minecraft);
@@ -126,7 +128,10 @@ public class CustomGuiNewChat extends GuiNewChat {
   private void drawLine(ChatLine line, int index, int opacity, int width) {
     int lineLeft = LEFT_PADDING;
     int lineBottom = -index * 9; // negative because we iterate from the bottom line to the top line
-    drawRect(0, lineBottom - 9, lineLeft + width + 4, lineBottom, opacity / 2 << 24);
+
+    boolean isSelected = line.getParent() == this.selectedLine;
+    Colour backgroundColour = isSelected ? new Colour(64, 64, 64, opacity / 2) : Colour.BLACK.withAlpha(opacity / 2);
+    drawRect(0, lineBottom - 9, lineLeft + width + 4, lineBottom, backgroundColour.toSafeInt());
     GlStateManager.enableBlend();
 
     // unpack the container
@@ -419,44 +424,19 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Gets the chat component at the screen position. */
   @Override
   public IChatComponent getChatComponent(int mouseX, int mouseY) {
-    if (!this.getChatOpen()) {
-      return null;
-    }
-
-    // 27 is a magic number
-    int bottom = 27 + this.config.getChatVerticalDisplacementEmitter().get();
-    int scaleFactor = new ScaledResolution(this.minecraft).getScaleFactor();
-    float chatScale = this.getChatScale();
-    int x = mouseX / scaleFactor;
-    int y = mouseY / scaleFactor - bottom;
-
-    int xOffset = LEFT + LEFT_PADDING; // start of the line should be x = 0
-    x = MathHelper.floor_float((float)x / chatScale) - xOffset;
-    y = MathHelper.floor_float((float)y / chatScale);
-
-    if (x < 0 || y < 0) {
-      return null;
-    }
-
-    int visibleLines = Math.min(this.getLineCount(), this.chatLines.size());
-
+    Tuple2<Integer, Integer> coords = this.mapInvertedScreenPositionIntoChat(mouseX, mouseY);
+    int x = coords._1;
+    int y = coords._2;
     int maxX = this.getLineWidth();
-    int maxY = this.minecraft.fontRendererObj.FONT_HEIGHT * visibleLines + visibleLines + 1;
-    if (x > maxX || y > maxY) {
+
+    ChatLine chatLine = this.getRenderedChatLine(x, y);
+    if (chatLine == null) {
       return null;
     }
-
-    // the line index at the current y-position
-    int lineIndex = y / this.minecraft.fontRendererObj.FONT_HEIGHT + this.scrollPos;
-    if (lineIndex < 0 || lineIndex >= this.chatLines.size()) {
-      return null;
-    }
-
-    ChatLine chatline = this.chatLines.get(lineIndex);
 
     // walk from component to component until we first pass our desired x-position
     int lineX = 0;
-    for (IChatComponent component : chatline.getChatComponent()) {
+    for (IChatComponent component : chatLine.getChatComponent()) {
       IChatComponent originalComponent = component;
 
       // unwrap if required
@@ -491,6 +471,74 @@ public class CustomGuiNewChat extends GuiNewChat {
     }
 
     return null;
+  }
+
+  /** Returns the abstract ChatLine at some y-value, if one exists. */
+  public @Nullable AbstractChatLine getAbstractChatLine(Dim x, Dim y) {
+    int mouseX = (int) x.getScreen();
+    int mouseY = this.minecraft.displayHeight - (int) y.getScreen() - 1;
+
+    Tuple2<Integer, Integer> coords = this.mapInvertedScreenPositionIntoChat(mouseX, mouseY);
+    int mappedX = coords._1;
+    int mappedY = coords._2;
+    ChatLine chatLine = this.getRenderedChatLine(mappedX, mappedY);
+
+    if (chatLine == null) {
+      return null;
+    } else {
+      return chatLine.getParent();
+    }
+  }
+
+  private @Nullable ChatLine getRenderedChatLine(int mappedX, int mappedY) {
+    if (!this.getChatOpen()) {
+      return null;
+    }
+
+    if (mappedX < 0 || mappedY < 0) {
+      return null;
+    }
+
+    int visibleLines = Math.min(this.getLineCount(), this.chatLines.size());
+
+    int maxX = this.getLineWidth();
+    int maxY = this.minecraft.fontRendererObj.FONT_HEIGHT * visibleLines + visibleLines + 1;
+    if (mappedX > maxX || mappedY > maxY) {
+      return null;
+    }
+
+    // the line index at the current y-position
+    int lineIndex = mappedY / this.minecraft.fontRendererObj.FONT_HEIGHT + this.scrollPos;
+    if (lineIndex < 0 || lineIndex >= this.chatLines.size()) {
+      return null;
+    }
+
+    return this.chatLines.get(lineIndex);
+  }
+
+  /** Given the mouse position (where 0,0 is the bottom left corner), returns the transformed coordinates within the chat window minus padding.
+   * That is, 0,0 in the new coordinates points to the position at which the chat text starts. */
+  private Tuple2<Integer, Integer> mapInvertedScreenPositionIntoChat(int mouseX, int mouseY) {
+    // 27 is a magic number
+    int bottom = 27 + this.config.getChatVerticalDisplacementEmitter().get();
+    int scaleFactor = new ScaledResolution(this.minecraft).getScaleFactor();
+    float chatScale = this.getChatScale();
+    int x = mouseX / scaleFactor;
+    int y = mouseY / scaleFactor - bottom;
+
+    int xOffset = LEFT + LEFT_PADDING; // start of the line should be x = 0
+    x = MathHelper.floor_float((float)x / chatScale) - xOffset;
+    y = MathHelper.floor_float((float)y / chatScale);
+
+    return new Tuple2<>(x, y);
+  }
+
+  public @Nullable AbstractChatLine getSelectedLine() {
+    return this.selectedLine;
+  }
+
+  public void setSelectedLine(@Nullable AbstractChatLine line) {
+    this.selectedLine = line;
   }
 
   @Override

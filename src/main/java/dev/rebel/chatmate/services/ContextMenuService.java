@@ -5,6 +5,7 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
@@ -25,6 +26,7 @@ public class ContextMenuService {
   private final SoundService soundService;
   private final CountdownHandler countdownHandler;
   private final CounterHandler counterHandler;
+  private final MinecraftProxyService minecraftProxyService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -36,7 +38,8 @@ public class ContextMenuService {
                             ClipboardService clipboardService,
                             SoundService soundService,
                             CountdownHandler countdownHandler,
-                            CounterHandler counterHandler) {
+                            CounterHandler counterHandler,
+                            MinecraftProxyService minecraftProxyService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -48,6 +51,7 @@ public class ContextMenuService {
     this.soundService = soundService;
     this.countdownHandler = countdownHandler;
     this.counterHandler = counterHandler;
+    this.minecraftProxyService = minecraftProxyService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -61,6 +65,12 @@ public class ContextMenuService {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Add countdown title", this::onCountdown),
       new ContextMenuOption("Add counter component", this::onCounter)
+    );
+  }
+
+  public void showChatLineContext(Dim x, Dim y, AbstractChatLine chatLine) {
+    this.store.showContextMenu(x, y,
+        new ContextMenuOption("Hide message", () -> this.onHideMessage(chatLine))
     );
   }
 
@@ -90,6 +100,10 @@ public class ContextMenuService {
     IElement modal = new CounterModal(context, screen, this.counterHandler);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
+  }
+
+  private void onHideMessage(AbstractChatLine chatLine) {
+    this.minecraftProxyService.getChatGUI().deleteLine(chatLine);
   }
 
   private InteractiveScreen.InteractiveContext createInteractiveContext() {

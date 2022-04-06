@@ -107,7 +107,8 @@ public class ChatMate {
         clipboardService,
         soundService,
         countdownHandler,
-        counterHandler);
+        counterHandler,
+        minecraftProxyService);
     CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
     this.guiService = new GuiService(this.isDev,
         logService,
