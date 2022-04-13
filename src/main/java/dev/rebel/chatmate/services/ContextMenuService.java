@@ -10,6 +10,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
+import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import net.minecraft.client.Minecraft;
@@ -19,6 +20,7 @@ public class ContextMenuService {
   private final DimFactory dimFactory;
   private final ContextMenuStore store;
   private final ExperienceEndpointProxy experienceEndpointProxy;
+  private final PunishmentEndpointProxy punishmentEndpointProxy;
   private final McChatService mcChatService;
   private final MouseEventService mouseEventService;
   private final KeyboardEventService keyboardEventService;
@@ -32,6 +34,7 @@ public class ContextMenuService {
                             DimFactory dimFactory,
                             ContextMenuStore store,
                             ExperienceEndpointProxy experienceEndpointProxy,
+                            PunishmentEndpointProxy punishmentEndpointProxy,
                             McChatService mcChatService,
                             MouseEventService mouseEventService,
                             KeyboardEventService keyboardEventService,
@@ -44,6 +47,7 @@ public class ContextMenuService {
     this.dimFactory = dimFactory;
     this.store = store;
     this.experienceEndpointProxy = experienceEndpointProxy;
+    this.punishmentEndpointProxy = punishmentEndpointProxy;
     this.mcChatService = mcChatService;
     this.mouseEventService = mouseEventService;
     this.keyboardEventService = keyboardEventService;

@@ -12,10 +12,7 @@ import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
-import dev.rebel.chatmate.proxy.ChatEndpointProxy;
-import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
-import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
-import dev.rebel.chatmate.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
@@ -69,6 +66,7 @@ public class ChatMate {
     ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, chatMateEndpointStore, apiPath);
     UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, chatMateEndpointStore, apiPath);
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, chatMateEndpointStore, apiPath);
+    PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, chatMateEndpointStore, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -101,6 +99,7 @@ public class ChatMate {
         dimFactory,
         contextMenuStore,
         experienceEndpointProxy,
+        punishmentEndpointProxy,
         mcChatService,
         mouseEventService,
         keyboardEventService,
