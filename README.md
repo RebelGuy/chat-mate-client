@@ -31,6 +31,14 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 
 Debug partial .minecraft folder: `chat-mate-client/run/`
 
+## Profiling
+Use the IntelliJ extension `VisualVM Launcher` from the Marketplace: `https://plugins.jetbrains.com/plugin/7115-visualvm-launcher/`.
+Start the profiling session by using the "Debug with VisualVM 'Minecraft Client'" configuration at the top. Download and extract
+VisualVM and copy the path of the executable in the `/bin` folder to the empty input field.
+
+Once started, Minecraft can be profiled within VisualVM via the `GradleStart` application. A partial snapshot can be 
+recorded within the `Sampler` tab.
+
 ## Custom Chat
 We use a custom implementation of the `GuiNewChat` gui object (this is what renders the chat lines,
 handles `IChatComponents`, etc). There is a couple of points to note on how this works:
