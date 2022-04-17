@@ -75,7 +75,7 @@ public class TableElement<T> extends ContainerElement {
       if (c.fitWidth) {
         // if all elements need less space, contract the column
         List<Dim> requestedWidths = Collections.map(this.getColumn(i), el -> el.calculateSize(maybeWidth).getX());
-        Dim desiredHeaderWidth = this.headerLabels.get(i).calculateWidthToFitLongestWord();
+        Dim desiredHeaderWidth = this.calculateDesiredHeaderWidth(i);
         Dim largestRequestedWidth = Dim.max(Dim.max(requestedWidths), desiredHeaderWidth);
         if (largestRequestedWidth.lt(maybeWidth)) {
           return largestRequestedWidth;
@@ -108,6 +108,13 @@ public class TableElement<T> extends ContainerElement {
       });
       return expandedWidths;
     }
+  }
+
+  private Dim calculateDesiredHeaderWidth(int i) {
+    LabelElement label = this.headerLabels.get(i);
+    Dim labelWidth = label.calculateWidthToFitLongestWord(); // inner width
+    Dim labelElementWidth = label.getFullBoxWidth(labelWidth);
+    return this.headerCells.get(i).getFullBoxWidth(labelElementWidth); // full outer width
   }
 
   private Dim getHeaderRowHeight(List<Dim> columnWidths) {
