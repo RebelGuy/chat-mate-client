@@ -59,7 +59,7 @@ public abstract class ContainerElement extends ElementBase {
 
   @Override
   public void onDispose() {
-    this.children.forEach(IElement::onCreate);
+    this.children.forEach(IElement::onDispose);
   }
 
   @Override
@@ -217,8 +217,7 @@ public abstract class ContainerElement extends ElementBase {
       if (relBox == null) {
         continue;
       }
-      // todo: add horizontal alignment mode that allows us to align items left, centre, or right
-      // and vertical alignment as well (for elements on the same line)
+
       element.setBox(relBox.withTranslation(contentBox.getPosition()));
     }
   }

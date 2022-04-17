@@ -120,7 +120,7 @@ public class CountdownModal extends ModalElement {
   }
 
   @Override
-  protected boolean validate() {
+  protected @Nullable Boolean validate() {
     return this.seconds != null && this.minutes != null && this.hours != null && this.getTotalSeconds() > 0;
   }
 

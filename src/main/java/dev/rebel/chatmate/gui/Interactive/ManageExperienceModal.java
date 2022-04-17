@@ -96,7 +96,7 @@ public class ManageExperienceModal extends ModalElement {
   }
 
   @Override
-  protected boolean validate() {
+  protected @Nullable Boolean validate() {
     return this.currentLevel != null && Math.abs(this.currentLevel) <= 100 && this.currentLevel != 0;
   }
 

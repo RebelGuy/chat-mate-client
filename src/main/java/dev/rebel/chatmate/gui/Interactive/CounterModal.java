@@ -137,7 +137,7 @@ public class CounterModal extends ModalElement {
   }
 
   @Override
-  protected boolean validate() {
+  protected @Nullable Boolean validate() {
     return this.incrementValue != null && this.startValue != null;
   }
 

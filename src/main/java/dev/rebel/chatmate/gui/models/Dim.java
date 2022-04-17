@@ -85,6 +85,10 @@ public class Dim {
 
   public static Dim min(Dim a, Dim b) { return a.lte(b) ? a : b; }
 
+  public static Dim sum(List<Dim> items) {
+    return Collections.eliminate(items, Dim::plus);
+  }
+
   public static boolean positive(Dim x) { return x != null && x.value > 0; }
 
   @Override

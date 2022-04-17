@@ -61,7 +61,8 @@ public class ContextMenuService {
   public void showUserContext(Dim x, Dim y, PublicUser user) {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Reveal on leaderboard", () -> this.onRevealOnLeaderboard(user)),
-      new ContextMenuOption("Manage experience", () -> this.onModifyExperience(user))
+      new ContextMenuOption("Manage experience", () -> this.onModifyExperience(user)),
+      new ContextMenuOption("Manage punishments", () -> this.onManagePunishments(user))
     );
   }
 
@@ -86,6 +87,14 @@ public class ContextMenuService {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
     IElement modal = new ManageExperienceModal(context, screen, user, this.experienceEndpointProxy, this.mcChatService);
+    screen.setMainElement(modal);
+    this.minecraft.displayGuiScreen(screen);
+  }
+
+  private void onManagePunishments(PublicUser user) {
+    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    IElement modal = new ManagePunishmentsModal(context, screen, user, this.punishmentEndpointProxy);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
   }

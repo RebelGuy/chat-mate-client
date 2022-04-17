@@ -15,6 +15,14 @@ public class Collections {
     return sum;
   }
 
+  public static <T> float sumFloat(List<T> items, Function<T, Float> mapper) {
+    float sum = 0;
+    for (float n: items.stream().map(mapper).collect(Collectors.toList())) {
+      sum += n;
+    }
+    return sum;
+  }
+
   public static <T extends Number & Comparable> T max(Stream<T> items) {
     T max = null;
     for (T item : items.collect(Collectors.toList())) {
@@ -25,7 +33,11 @@ public class Collections {
     return max;
   }
 
-  public static <T, N extends Comparable> T max(List<T> items, Function<T, N> valueGetter) {
+  public static <T extends Number & Comparable> T max(List<T> items) {
+    return max(items.stream());
+  }
+
+    public static <T, N extends Comparable> T max(List<T> items, Function<T, N> valueGetter) {
     T maxItem = null;
     N maxValue = null;
     for (T item : items) {

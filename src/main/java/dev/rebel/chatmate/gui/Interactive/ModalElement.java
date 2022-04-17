@@ -14,6 +14,7 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.In;
 import org.lwjgl.input.Keyboard;
 
+import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
@@ -71,9 +72,10 @@ public abstract class ModalElement extends ContainerElement {
     this.closeButton = new ButtonElement(context, this)
         .setText("Close")
         .setOnClick(this::onClose);
-    this.submitButton = new ButtonElement(context, this)
+    this.submitButton = (ButtonElement)new ButtonElement(context, this)
         .setText("Submit")
-        .setOnClick(this::onSubmit);
+        .setOnClick(this::onSubmit)
+        .setVisible(this.validate() != null);
     this.footer = (SideBySideElement)new SideBySideElement(context, this)
         .setElementPadding(this.width.over(2))
         .addElement(1, this.closeButton)
@@ -82,7 +84,9 @@ public abstract class ModalElement extends ContainerElement {
   }
 
   public ModalElement setBody(IElement bodyElement) {
+    this.bodyElement.onDispose();
     this.bodyElement.setUnderlyingElement(bodyElement);
+    this.bodyElement.onCreate();
     return this;
   }
 
@@ -91,8 +95,8 @@ public abstract class ModalElement extends ContainerElement {
     return this;
   }
 
-  /** Should return true if the modal's submit button can be pressed. */
-  protected abstract boolean validate();
+  /** Should return true/false if the modal's submit button can be pressed, or null to hide the submit button. */
+  protected abstract @Nullable Boolean validate();
 
   /** Called when the submit button is pressed and the validator returns true. Allows for async behaviour.
    * The Runnable should be called if submission was successful, the Consumer should be called if submission failed and provide an optional error message. */
@@ -121,7 +125,17 @@ public abstract class ModalElement extends ContainerElement {
     this.loading = loading;
     this.errorLabel.setVisible(false);
     this.closeButton.setEnabled(this, !this.loading);
-    this.submitButton.setEnabled(this, !loading && this.validate());
+    this.setSubmitButton();
+  }
+
+  private void setSubmitButton() {
+    @Nullable Boolean valid = this.validate();
+    if (valid == null) {
+      this.submitButton.setVisible(false);
+    } else {
+      this.submitButton.setVisible(true);
+      this.submitButton.setEnabled(this, !loading && valid);
+    }
   }
 
   private void onClose() {
@@ -160,7 +174,7 @@ public abstract class ModalElement extends ContainerElement {
     RendererHelpers.drawRect(this.getZIndex(), this.getPaddingBox(), background, this.borderSize, Colour.BLACK, this.cornerRadius, this.shadowDistance);
 
     this.closeButton.setEnabled(this, !this.loading);
-    this.submitButton.setEnabled(this, !loading && this.validate());
+    this.setSubmitButton();
 
     super.renderElement();
   }

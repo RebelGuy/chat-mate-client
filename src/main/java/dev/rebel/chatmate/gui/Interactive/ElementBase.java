@@ -26,10 +26,13 @@ import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBo
 // the content box includes contents only. this is where the element's contents are rendered into.
 
 public abstract class ElementBase implements IElement {
+  private static int ID = 0;
+
   protected final InteractiveContext context;
   protected IElement parent;
   protected final Dim ZERO;
   protected final FontRenderer font;
+  protected String name;
 
   protected DimPoint lastCalculatedSize;
   private DimRect box;
@@ -42,6 +45,8 @@ public abstract class ElementBase implements IElement {
   private SizingMode sizingMode;
 
   public ElementBase(InteractiveContext context, IElement parent) {
+    ID++;
+    this.name = String.format("%s-%d", this.getClass().getSimpleName(), ID);
     this.context = context;
     this.parent = parent;
     this.ZERO = context.dimFactory.zeroGui();
@@ -168,7 +173,7 @@ public abstract class ElementBase implements IElement {
     this.parent.onInvalidateSize();
   }
 
-  /** Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
+  /** Should return the full size. Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
   @Override
   public final DimPoint calculateSize(Dim maxFullWidth) {
     // add a wrapper around the calculation method so we can cache the calculated size and provide a context for working
@@ -180,7 +185,7 @@ public abstract class ElementBase implements IElement {
     return fullSize;
   }
 
-  /** Call this method ONLY in the context of `super` or `this`. For other elements, call `element.calculateSize()`. */
+  /** Should return the content size. Call this method ONLY in the context of `super` or `this`. For other elements, call `element.calculateSize()`. */
   protected abstract DimPoint calculateThisSize(Dim maxContentSize);
 
   @Override
@@ -312,6 +317,10 @@ public abstract class ElementBase implements IElement {
       contentBoxSize.getX().plus(this.getPadding().getExtendedWidth()).plus(this.getBorder().getExtendedWidth()).plus(this.getMargin().getExtendedWidth()),
       contentBoxSize.getY().plus(this.getPadding().getExtendedHeight()).plus(this.getBorder().getExtendedHeight()).plus(this.getMargin().getExtendedHeight())
     );
+  }
+
+  protected final Dim getFullBoxWidth(Dim contentBoxWidth) {
+    return this.getFullBoxSize(new DimPoint(contentBoxWidth, ZERO)).getX();
   }
 
   protected final DimRect getContentBox() {

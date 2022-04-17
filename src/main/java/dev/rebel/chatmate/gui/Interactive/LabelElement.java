@@ -95,6 +95,13 @@ public class LabelElement extends SingleElement {
     return null;
   }
 
+  /** Returns the full box width that would be required to contain the longest word of this label on a single line. */
+  public Dim calculateWidthToFitLongestWord() {
+    List<Integer> widths = Collections.map(Collections.list(this.text.split(" ")), this.context.fontRenderer::getStringWidth);
+    Dim maxWidth = this.context.dimFactory.fromGui(this.fontScale * Collections.max(widths));
+    return super.getFullBoxWidth(maxWidth);
+  }
+
   @Override
   public DimPoint calculateThisSize(Dim maxContentSize) {
     FontRenderer font = this.context.fontRenderer;

@@ -102,13 +102,12 @@ public class InteractiveScreen extends Screen implements IElement {
       this.setFocussedElement(toFocus, FocusReason.AUTO);
     }
 
-    // initial size calculations - required so that things like mouse events can be sent to the correct elements
     this.recalculateLayout();
   }
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   private void recalculateLayout() {
-    if (!this.requiresRecalculation || this.mainElement == null) {
+    if (this.mainElement == null || !this.requiresRecalculation && this.mainElement.getBox() != null) {
       return;
     }
     this.requiresRecalculation = false;
