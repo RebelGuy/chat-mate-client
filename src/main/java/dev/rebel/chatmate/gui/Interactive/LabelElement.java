@@ -48,6 +48,7 @@ public class LabelElement extends SingleElement {
     return this.text;
   }
 
+  /** For multi-line text. To align the component itself within the parent, use the `setHorizontalAlignment` API. */
   public LabelElement setAlignment(TextAlignment alignment) {
     this.alignment = alignment;
     this.onInvalidateSize();
@@ -158,7 +159,7 @@ public class LabelElement extends SingleElement {
     FontRenderer font = this.context.fontRenderer;
     DimFactory factory = this.context.dimFactory;
 
-    Dim fontHeight = factory.fromGui(font.FONT_HEIGHT);
+    Dim fontHeight = factory.fromGui(font.FONT_HEIGHT).times(this.fontScale);
     DimRect box = this.getContentBox();
     Dim y = this.getContentBox().getY();
 

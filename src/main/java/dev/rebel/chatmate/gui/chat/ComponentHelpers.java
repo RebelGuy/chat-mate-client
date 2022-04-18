@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.chat;
 
 import com.google.common.collect.Lists;
+import dev.rebel.chatmate.services.util.TextHelpers;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
@@ -93,7 +94,7 @@ public class ComponentHelpers {
     Function<String, String> styled = unstyled -> style.getFormattingCode() + unstyled;
     Function<String, String> unstyled = styledText -> styledText.startsWith(style.getFormattingCode()) ? styledText.substring(style.getFormattingCode().length()) : styledText;
 
-    String fullText = component.getUnformattedTextForChat();
+    String fullText = TextHelpers.nonNull(component.getUnformattedTextForChat());
     String text = fullText;
     String leftOver = "";
 

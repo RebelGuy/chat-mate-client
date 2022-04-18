@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
 import dev.rebel.chatmate.gui.hud.Colour;
@@ -71,9 +72,9 @@ public class ManagePunishmentsModal extends ModalElement {
             this,
             Collections.list(getPunishmentsResponseData.punishments),
             Collections.list(
-                new Column("Type", 1, true),
-                new Column("Message", 3, false),
-                new Column("Active", 1, true)),
+                new Column("Type", 0.5f, 1.5f, true),
+                new Column("Message", 0.5f, 3, false),
+                new Column("Active", 0.5f, 1, true)),
             this::getPunishmentRow
         ).setMinHeight(gui(100))
         .setSizingMode(SizingMode.FILL)
@@ -82,9 +83,9 @@ public class ManagePunishmentsModal extends ModalElement {
 
   private List<IElement> getPunishmentRow(PublicPunishment punishment) {
     return Collections.list(
-        new LabelElement(this.context, this).setText(punishment.type.toString()).setAlignment(TextAlignment.CENTRE).setOverflow(TextOverflow.TRUNCATE),
-        new LabelElement(this.context, this).setText(punishment.message).setAlignment(TextAlignment.LEFT).setOverflow(TextOverflow.TRUNCATE),
-        new LabelElement(this.context, this).setText(punishment.isActive.toString()).setAlignment(TextAlignment.CENTRE).setOverflow(TextOverflow.TRUNCATE)
+        new LabelElement(this.context, this).setText(punishment.type.toString()).setOverflow(TextOverflow.TRUNCATE).setFontScale(0.5f).setHorizontalAlignment(HorizontalAlignment.LEFT),
+        new LabelElement(this.context, this).setText(punishment.message).setOverflow(TextOverflow.SPLIT).setFontScale(0.5f).setHorizontalAlignment(HorizontalAlignment.LEFT).setSizingMode(SizingMode.FILL),
+        new LabelElement(this.context, this).setText(punishment.isActive.toString()).setOverflow(TextOverflow.TRUNCATE).setFontScale(0.5f).setHorizontalAlignment(HorizontalAlignment.LEFT)
     );
   }
 

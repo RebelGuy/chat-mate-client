@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -7,6 +8,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -21,6 +23,7 @@ public class TableElement<T> extends ContainerElement {
   private final Function<T, List<IElement>> getRow;
   private final List<LabelElement> headerLabels;
   private final List<WrapperElement> headerCells;
+  private final HorizontalDivider headerDivider;
   private final List<List<WrapperElement>> rows;
   /** Normalised sizings. */
   private final List<Column> columns;
@@ -35,6 +38,7 @@ public class TableElement<T> extends ContainerElement {
 
     this.headerLabels = Collections.map(columns, c -> new LabelElement(context, this)
         .setText(c.header)
+        .setFontScale(c.fontScale)
         .setOverflow(TextOverflow.SPLIT)
         .setAlignment(TextAlignment.CENTRE));
     this.headerCells = Collections.map(this.headerLabels, h -> (WrapperElement)new WrapperElement(context, this, h)
@@ -42,6 +46,9 @@ public class TableElement<T> extends ContainerElement {
         .setHorizontalAlignment(HorizontalAlignment.CENTRE)
         .setPadding(this.cellPadding)
     );
+    this.headerDivider = new HorizontalDivider(context, this)
+        .setMode(FillMode.PARENT_CONTENT)
+        .setColour(Colour.WHITE);
 
     this.rows = Collections.map(items, item -> Collections.map(getRow.apply(item), cell ->
         (WrapperElement)new WrapperElement(context, this, cell)
@@ -51,7 +58,7 @@ public class TableElement<T> extends ContainerElement {
     ));
 
     float sum = Collections.sumFloat(columns, c -> c.width);
-    this.columns = Collections.map(columns, c -> new Column(c.header, c.width / sum, c.fitWidth));
+    this.columns = Collections.map(columns, c -> new Column(c.header, c.fontScale, c.width / sum, c.fitWidth));
 
     this.minHeight = ZERO;
   }
@@ -59,6 +66,7 @@ public class TableElement<T> extends ContainerElement {
   @Override
   public void onCreate() {
     this.headerCells.forEach(super::addElement);
+    super.addElement(this.headerDivider);
     this.rows.forEach(row -> row.forEach(super::addElement));
 
     super.onCreate();
@@ -132,8 +140,12 @@ public class TableElement<T> extends ContainerElement {
   @Override
   public DimPoint calculateThisSize(Dim maxWidth) {
     List<Dim> columnWidths = this.getColumnWidths(maxWidth);
+    Dim tableWidth = Dim.sum(columnWidths);
     Dim headerRowHeight = this.getHeaderRowHeight(columnWidths);
     List<Dim> rowHeights = this.getRowHeights(columnWidths);
+
+    DimPoint dividerSize = this.headerDivider.calculateSize(tableWidth);
+    this.childrenRelBoxes.put(this.headerDivider, new DimRect(new DimPoint(ZERO, headerRowHeight), dividerSize));
 
     Dim y = ZERO;
     for (int r = -1; r < rowHeights.size(); r++) {
@@ -155,18 +167,20 @@ public class TableElement<T> extends ContainerElement {
     }
 
     Dim height = Dim.max(this.minHeight, Dim.sum(rowHeights).plus(headerRowHeight));
-    return new DimPoint(Dim.sum(columnWidths), height);
+    return new DimPoint(tableWidth, height);
   }
 
   public static class Column {
     private final String header;
+    public final float fontScale;
     /** The proportional width to aim for. */
     public final float width;
     /** If true, column will not expand if there is extra room in the table. */
     public final boolean fitWidth;
 
-    public Column(String header, float width, boolean fitWidth) {
+    public Column(String header, float fontScale, float width, boolean fitWidth) {
       this.header = header;
+      this.fontScale = fontScale;
       this.width = width;
       this.fitWidth = fitWidth;
     }

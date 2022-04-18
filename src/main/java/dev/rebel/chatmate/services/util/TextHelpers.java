@@ -14,6 +14,9 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 public class TextHelpers {
   // custom implementation of String.indexOf that allows for a custom matching filter
   public static int indexOf(String text, WordFilter word, int startAt) {
@@ -129,6 +132,10 @@ public class TextHelpers {
 
   public static boolean isNullOrEmpty(String str) {
     return str == null || str.trim().length() == 0;
+  }
+
+  public static @Nonnull String nonNull(@Nullable String str) {
+    return str == null ? "" : str;
   }
 
   private static boolean isEndOfWord(char[] text, int i) {
