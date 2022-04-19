@@ -13,7 +13,7 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 public class CounterModal extends ModalElement {
   private final CounterHandler counterHandler;
 
-  private final ButtonElement deleteButton;
+  private ButtonElement deleteButton;
 
   private @Nullable String text = null;
   private @Nullable Integer startValue = 0;
@@ -21,7 +21,13 @@ public class CounterModal extends ModalElement {
 
   public CounterModal(InteractiveScreen.InteractiveContext context, InteractiveScreen parent, CounterHandler counterHandler) {
     super(context, parent);
+    this.name = "CounterModal";
     this.counterHandler = counterHandler;
+  }
+
+  @Override
+  public void onInitialise() {
+    super.onInitialise();
 
     IElement titleElements = new SideBySideElement(context, this)
         .setElementPadding(gui(10))

@@ -20,6 +20,7 @@ public class ElementReference implements IElement {
 
   private IElement parent;
   private @Nullable IElement underlyingElement;
+  private boolean initialised;
 
   public ElementReference(InteractiveScreen.InteractiveContext context, IElement parent) {
     this.context = context;
@@ -33,11 +34,17 @@ public class ElementReference implements IElement {
   }
 
   public ElementReference setUnderlyingElement(IElement element) {
+    if (this.underlyingElement == element) {
+      return this;
+    }
+
+    this.initialised = false;
+    this.underlyingElement = element;
+    this.parent.onInvalidateSize();
+
     if (element != null) {
       element.setParent(this);
     }
-    this.underlyingElement = element;
-    this.parent.onInvalidateSize();
     return this;
   }
 
@@ -59,17 +66,10 @@ public class ElementReference implements IElement {
   }
 
   @Override
-  public void onCreate() {
-    if (this.underlyingElement != null) {
-      this.underlyingElement.onCreate();
-    }
-  }
-
-  @Override
-  public void onDispose() {
-    if (this.underlyingElement != null) {
-      this.underlyingElement.onDispose();
-    }
+  public void onInitialise() {
+    // note that, realistically, this will never be called. we don't want to relay this to the underlying element, though,
+    // because we have no way of checking whether it has been initialised already. leave it up to its default ElementBase
+    // implementation to handle.
   }
 
   @Override
@@ -118,7 +118,7 @@ public class ElementReference implements IElement {
     }
 
     if (this.context.debugElement == this) {
-      ElementHelpers.renderDebugInfo(this, this.context);
+      ElementHelpers.renderDebugInfo(this.underlyingElement, this.context);
     }
   }
 
@@ -200,5 +200,10 @@ public class ElementReference implements IElement {
   @Override
   public IElement setSizingMode(Layout.SizingMode sizingMode) {
     return this.underlyingElement == null ? this : this.underlyingElement.setSizingMode(sizingMode);
+  }
+
+  @Override
+  public <T extends IElement> T cast() {
+    return this.underlyingElement == null ? null : (T)this.underlyingElement;
   }
 }

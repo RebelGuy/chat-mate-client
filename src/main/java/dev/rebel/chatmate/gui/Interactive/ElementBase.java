@@ -43,6 +43,8 @@ public abstract class ElementBase implements IElement {
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
   private SizingMode sizingMode;
+  private boolean initialised;
+  protected boolean visible;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     ID++;
@@ -59,6 +61,8 @@ public abstract class ElementBase implements IElement {
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
     this.sizingMode = SizingMode.ANY;
+    this.initialised = false;
+    this.visible = true;
   }
 
   @Override
@@ -71,10 +75,23 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
-  public void onCreate() { }
+  public void onInitialise() { }
+
+  protected final boolean isInitialised() { return this.initialised; }
 
   @Override
-  public void onDispose() { }
+  public boolean getVisible() {
+    return this.visible;
+  }
+
+  @Override
+  public IElement setVisible(boolean visible) {
+    if (this.visible != visible) {
+      this.visible = visible;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
 
   @Override
   public final void onEvent(EventType type, IEvent<?> event) {
@@ -102,8 +119,6 @@ public abstract class ElementBase implements IElement {
     } else {
       throw new RuntimeException("Invalid event phase: " + event.getPhase());
     }
-
-    // todo: look at how we could do onEnter and onExit events. definitely want the target element to use same logic as for click, and maybe also include the previous-next element in the data (ie. the before-after target elements)
   }
 
   private void onEventCapture(EventType type, IEvent<?> event) {
@@ -168,6 +183,7 @@ public abstract class ElementBase implements IElement {
   @Override
   public final void onCloseScreen() { this.parent.onCloseScreen(); }
 
+  // todo: move this into the context as a callback method instead. it's confusing that this is a mandatory bubble-up callback
   @Override
   public final void onInvalidateSize() {
     this.parent.onInvalidateSize();
@@ -176,6 +192,8 @@ public abstract class ElementBase implements IElement {
   /** Should return the full size. Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
   @Override
   public final DimPoint calculateSize(Dim maxFullWidth) {
+    initialiseIfRequired();
+
     // add a wrapper around the calculation method so we can cache the calculated size and provide a context for working
     // with content units (rather than full units).
     Dim contentWidth = getContentBoxWidth(maxFullWidth);
@@ -193,6 +211,8 @@ public abstract class ElementBase implements IElement {
     return this.lastCalculatedSize;
   }
 
+  // todo: ideally this should be final, but an element might want to hook into this so they can deal with the new rect in some way.
+  // since it is easy to forget to call `super.setBox`, make a onBoxSet() virtual method instead.
   @Override
   public void setBox(DimRect box) {
     this.box = box;
@@ -205,6 +225,11 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final void render() {
+    initialiseIfRequired();
+    if (!this.visible) {
+      return;
+    }
+
     GlStateManager.pushMatrix();
 
     GlStateManager.pushMatrix();
@@ -223,6 +248,13 @@ public abstract class ElementBase implements IElement {
   /** You should never call super.render() from this method, as it will cause an infinite loop.
    * If you need to render a base element, use super.renderElement() instead. */
   protected abstract void renderElement();
+
+  private void initialiseIfRequired() {
+    if (!this.initialised) {
+      this.initialised = true;
+      this.onInitialise();
+    }
+  }
 
   @Override
   public final IElement setPadding(RectExtension padding) {
@@ -306,6 +338,11 @@ public abstract class ElementBase implements IElement {
   @Override
   public SizingMode getSizingMode() {
     return this.sizingMode;
+  }
+
+  @Override
+  public final <T extends IElement> T cast() {
+    return (T)this;
   }
 
   protected final Dim getContentBoxWidth(Dim fullBoxWidth) {

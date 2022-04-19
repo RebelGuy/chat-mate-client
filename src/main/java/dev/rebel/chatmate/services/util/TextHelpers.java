@@ -138,6 +138,10 @@ public class TextHelpers {
     return str == null ? "" : str;
   }
 
+  public static String toSentenceCase(String str) {
+    return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+  }
+
   private static boolean isEndOfWord(char[] text, int i) {
     return i == text.length - 1 || !isWordSeparator(text[i]) && isWordSeparator(text[i + 1]);
   }

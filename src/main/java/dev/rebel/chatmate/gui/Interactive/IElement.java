@@ -18,12 +18,9 @@ public interface IElement {
   IElement setParent(IElement parent);
   @Nullable List<IElement> getChildren();
 
-  /** Called when the screen is first initialised. */
-  void onCreate();
-
-  /** Called when the screen is being removed. */
-  void onDispose();
-
+  /** Called automatically at some point before the first render or `calculateThisSize` call. If implementing, ALWAYS
+   * call `super.onInitialise()` to prevent null-reference exceptions or similar errors from occurring. */
+  void onInitialise();
 
   // the event data is determined by the event type
   void onEvent(EventType type, IEvent<?> event);
@@ -63,4 +60,7 @@ public interface IElement {
 
   SizingMode getSizingMode();
   IElement setSizingMode(SizingMode sizingMode);
+
+  /** Convenience method that automatically casts an element back to its original class type after chaining methods during instantiation. */
+  <T extends IElement> T cast();
 }

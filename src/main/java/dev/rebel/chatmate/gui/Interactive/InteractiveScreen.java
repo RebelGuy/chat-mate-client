@@ -94,8 +94,6 @@ public class InteractiveScreen extends Screen implements IElement {
       throw new RuntimeException("Please set the MainElement before displaying the screen in Minecraft.");
     }
 
-    this.mainElement.onCreate();
-
     List<InputElement> autoFocusable = Collections.filter(ElementHelpers.getElementsOfType(this.mainElement, InputElement.class), InputElement::getAutoFocus);
     if (Collections.any(autoFocusable)) {
       InputElement toFocus = Collections.min(autoFocusable, InputElement::getTabIndex);
@@ -146,8 +144,6 @@ public class InteractiveScreen extends Screen implements IElement {
   @Override
   public void onGuiClosed() {
     if (this.mainElement != null) {
-      this.mainElement.onDispose();
-
       // it is very important that we remove the reference to the mainElement, otherwise
       // this screen will never be garbage collected since mainElement holds a reference to it
       this.mainElement = null;
@@ -410,10 +406,7 @@ public class InteractiveScreen extends Screen implements IElement {
   public IElement setParent(IElement parent) { return null; }
 
   @Override
-  public void onCreate() { }
-
-  @Override
-  public void onDispose() { }
+  public void onInitialise() { }
 
   @Override
   public void onEvent(EventType type, IEvent<?> event) { }
@@ -486,6 +479,9 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public SizingMode getSizingMode() { return null; }
+
+  @Override
+  public <T extends IElement> T cast() { return null; }
 
   //endregion
 

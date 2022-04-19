@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
@@ -12,9 +13,13 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.util.Collections;
 
+import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TableElement<T> extends ContainerElement {
@@ -25,8 +30,10 @@ public class TableElement<T> extends ContainerElement {
   private final List<WrapperElement> headerCells;
   private final HorizontalDivider headerDivider;
   private final List<List<WrapperElement>> rows;
+  private List<Dim> itemHeights;
   /** Normalised sizings. */
   private final List<Column> columns;
+  private @Nullable Consumer<T> onClickItem;
 
   private Dim minHeight;
 
@@ -64,17 +71,37 @@ public class TableElement<T> extends ContainerElement {
   }
 
   @Override
-  public void onCreate() {
+  public void onInitialise() {
+    super.onInitialise();
+
     this.headerCells.forEach(super::addElement);
     super.addElement(this.headerDivider);
     this.rows.forEach(row -> row.forEach(super::addElement));
-
-    super.onCreate();
   }
 
   public TableElement<T> setMinHeight(Dim minHeight) {
     this.minHeight = minHeight;
     return this;
+  }
+
+  public TableElement<T> setOnClickItem(Consumer<T> onClickItem) {
+    this.onClickItem = onClickItem;
+    return this;
+  }
+
+  @Override
+  public void onMouseDown(IEvent<In> e) {
+    if (this.onClickItem == null || Collections.size(this.itemHeights) == 0) {
+      return;
+    }
+
+    Dim mouseY = e.getData().mousePositionData.y;
+    for (int i = this.items.size(); i >= 0; i--) {
+      if (this.itemHeights.get(i).lte(mouseY)) {
+        this.onClickItem.accept(this.items.get(i));
+        return;
+      }
+    }
   }
 
   private List<Dim> getColumnWidths(Dim maxRowWidth) {
@@ -143,6 +170,7 @@ public class TableElement<T> extends ContainerElement {
     Dim tableWidth = Dim.sum(columnWidths);
     Dim headerRowHeight = this.getHeaderRowHeight(columnWidths);
     List<Dim> rowHeights = this.getRowHeights(columnWidths);
+    this.itemHeights = new ArrayList<>();
 
     DimPoint dividerSize = this.headerDivider.calculateSize(tableWidth);
     this.childrenRelBoxes.put(this.headerDivider, new DimRect(new DimPoint(ZERO, headerRowHeight), dividerSize));
@@ -161,6 +189,10 @@ public class TableElement<T> extends ContainerElement {
         this.childrenRelBoxes.put(cell, relBox.withTranslation(new DimPoint(x, y)));
 
         x = x.plus(box.getWidth());
+      }
+
+      if (r >= 0) {
+        this.itemHeights.add(y);
       }
 
       y = y.plus(height);

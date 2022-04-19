@@ -8,7 +8,6 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.util.Tuple;
 import scala.Tuple2;
 
 import java.util.ArrayList;
@@ -20,19 +19,34 @@ import java.util.Map;
 public abstract class ContainerElement extends ElementBase {
   private final LayoutMode mode;
 
+  /** Subset of `this.children`. */
+  protected final List<IElement> initialChildren;
   protected final List<IElement> children;
   protected final Map<IElement, DimRect> childrenRelBoxes;
 
   public ContainerElement(InteractiveContext context, IElement parent, LayoutMode mode) {
     super(context, parent);
     this.mode = mode;
+    this.initialChildren = new ArrayList<>();
     this.children = new ArrayList<>();
     this.childrenRelBoxes = new HashMap<>();
+  }
+
+  @Override
+  public void onInitialise() {
+    this.clear();
+    this.children.addAll(this.initialChildren);
   }
 
   protected ContainerElement addElement(IElement element) {
     this.children.add(element);
     element.setParent(this);
+
+    // If this is chained directly to the instantiation of the element, the child will be considered an "initial child"
+    // and is NOT cleared when this container element is initialised.
+    if (!super.isInitialised()) {
+      this.initialChildren.add(element);
+    }
     return this;
   }
 
@@ -50,16 +64,6 @@ public abstract class ContainerElement extends ElementBase {
 
   protected List<IElement> getVisibleChildren() {
     return Collections.filter(this.children, IElement::getVisible);
-  }
-
-  @Override
-  public void onCreate() {
-    this.children.forEach(IElement::onCreate);
-  }
-
-  @Override
-  public void onDispose() {
-    this.children.forEach(IElement::onDispose);
   }
 
   @Override
@@ -224,13 +228,9 @@ public abstract class ContainerElement extends ElementBase {
 
   @Override
   public ContainerElement setVisible(boolean visible) {
+    super.setVisible(visible);
     this.children.forEach(el -> el.setVisible(visible));
     return this;
-  }
-
-  @Override
-  public boolean getVisible() {
-    return this.children.stream().anyMatch(IElement::getVisible);
   }
 
   /** Used for the automatic layout algorithm. */

@@ -20,8 +20,8 @@ public class ManageExperienceModal extends ModalElement {
   private final ExperienceEndpointProxy experienceEndpointProxy;
   private final McChatService mcChatService;
 
-  private final SideBySideElement levelSbs;
-  private final SideBySideElement msgSbs;
+  private SideBySideElement levelSbs;
+  private SideBySideElement msgSbs;
 
   private @Nullable Float currentLevel = null;
   private String currentMessage = null;
@@ -31,6 +31,11 @@ public class ManageExperienceModal extends ModalElement {
     this.user = user;
     this.experienceEndpointProxy = experienceEndpointProxy;
     this.mcChatService = mcChatService;
+  }
+
+  @Override
+  public void onInitialise() {
+    super.onInitialise();
 
     this.levelSbs = (SideBySideElement)new SideBySideElement(context, this)
         .setElementPadding(gui(10))
@@ -45,7 +50,7 @@ public class ManageExperienceModal extends ModalElement {
                 .setTabIndex(0)
                 .setAutoFocus(true)
         ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
-    );
+        );
 
     this.msgSbs = (SideBySideElement)new SideBySideElement(context, this)
         .setElementPadding(gui(10))
@@ -59,7 +64,7 @@ public class ManageExperienceModal extends ModalElement {
                 .onTextChange(this::onMessageChange)
                 .setTabIndex(1)
         ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
-    );
+        );
 
     super.setBody(new ListElement(context, this).addElement(this.levelSbs).addElement(this.msgSbs));
     super.setTitle("Manage Experience for " + user.userInfo.channelName);
