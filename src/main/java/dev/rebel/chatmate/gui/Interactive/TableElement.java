@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.Interactive.State.AnimatedBool;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -18,7 +19,8 @@ import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.util.Collections;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
+import java.lang.reflect.Field;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -156,7 +158,7 @@ public class TableElement<T> extends ContainerElement {
     private final @Nullable HorizontalDivider headerDivider; // for headers
     private final List<WrapperElement> cells;
 
-    private boolean hovering = false;
+    private final State<RowState> state = new State<>(RowState.initialState());
 
     /** Create a new content row. */
     public RowElement(InteractiveContext context, IElement parent, T item, List<IElement> rawContents) {
@@ -247,7 +249,7 @@ public class TableElement<T> extends ContainerElement {
     @Override
     public void onMouseEnter(IEvent<In> e) {
       if (!this.isHeader) {
-        this.hovering = true;
+        this.state.setState(s -> s.hovering.set(true));
       }
 
       if (this.item != null) {
@@ -257,17 +259,28 @@ public class TableElement<T> extends ContainerElement {
 
     @Override
     public void onMouseExit(IEvent<In> e) {
-      this.hovering = false;
+      this.state.setState(s -> s.hovering.set(false));
       this.context.cursorService.setCursor(CursorType.DEFAULT);
     }
 
     @Override
     public void renderElement() {
-      if (this.hovering) {
-        RendererHelpers.drawRect(0, this.getBox(), Colour.LTGREY.withAlpha(16), null, null, gui(2));
+      float hoveringIntensity = this.state.getState().hovering.getFrac();
+      if (hoveringIntensity > 0) {
+        RendererHelpers.drawRect(0, this.getBox(), Colour.LTGREY.withAlpha(0.1f * hoveringIntensity), null, null, gui(2));
       }
 
       super.renderElement();
+    }
+  }
+
+  private static class RowState {
+    public AnimatedBool hovering;
+
+    public static RowState initialState() {
+      return new RowState() {{
+        hovering = new AnimatedBool(100L, false);
+      }};
     }
   }
 }
