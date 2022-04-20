@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.ClipboardService;
+import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.SoundService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
@@ -493,6 +494,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final FontRenderer fontRenderer;
     public final ClipboardService clipboardService;
     public final SoundService soundService;
+    public final CursorService cursorService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -505,7 +507,8 @@ public class InteractiveScreen extends Screen implements IElement {
                               Minecraft minecraft,
                               FontRenderer fontRenderer,
                               ClipboardService clipboardService,
-                              SoundService soundService) {
+                              SoundService soundService,
+                              CursorService cursorService) {
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
       this.dimFactory = dimFactory;
@@ -513,6 +516,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.fontRenderer = fontRenderer;
       this.clipboardService = clipboardService;
       this.soundService = soundService;
+      this.cursorService = cursorService;
     }
   }
 }

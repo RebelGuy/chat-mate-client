@@ -76,6 +76,9 @@ public abstract class ContainerElement extends ElementBase {
     // note: the parent is responsible for the vertical/horizontal position of this container within itself.
     // we only need to set the relative positions of elements within the box that will be provided to us.
     List<Tuple2<IElement, DimPoint>> elementSizes = Collections.map(this.getVisibleChildren(), el -> new Tuple2<>(el, el.calculateSize(maxWidth)));
+    if (elementSizes.size() == 0) {
+      return new DimPoint(ZERO, ZERO);
+    }
 
     if (this.mode == LayoutMode.BLOCK) {
       return this.calculateBlockSize(elementSizes, maxWidth);

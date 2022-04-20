@@ -20,7 +20,6 @@ public class ElementReference implements IElement {
 
   private IElement parent;
   private @Nullable IElement underlyingElement;
-  private boolean initialised;
 
   public ElementReference(InteractiveScreen.InteractiveContext context, IElement parent) {
     this.context = context;
@@ -38,12 +37,11 @@ public class ElementReference implements IElement {
       return this;
     }
 
-    this.initialised = false;
     this.underlyingElement = element;
     this.parent.onInvalidateSize();
 
     if (element != null) {
-      element.setParent(this);
+      element.setParent(this.parent);
     }
     return this;
   }
