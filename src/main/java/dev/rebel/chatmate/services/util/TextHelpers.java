@@ -1,7 +1,10 @@
 package dev.rebel.chatmate.services.util;
 
+import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -134,12 +137,50 @@ public class TextHelpers {
     return str == null || str.trim().length() == 0;
   }
 
-  public static @Nonnull String nonNull(@Nullable String str) {
-    return str == null ? "" : str;
+  /** Returns the first non-null string, and otherwise an empty string. */
+  public static @Nonnull String nonNull(@Nullable String... str) {
+    if (str != null && str.length > 0) {
+      for (@Nullable String thisStr : str) {
+        if (thisStr != null) {
+          return thisStr;
+        }
+      }
+    }
+
+    return "";
   }
 
   public static String toSentenceCase(String str) {
     return str.substring(0, 1).toUpperCase() + str.substring(1).toLowerCase();
+  }
+
+  public static String dateToDayAccuracy(Long timestamp) {
+    return new SimpleDateFormat("dd/MM/yyyy").format(new Date(timestamp));
+  }
+
+  public static String dateToSecondAccuracy(Long timestamp) {
+    return new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date(timestamp));
+  }
+
+  public static String approximateDuration(long durationMs) {
+    int value;
+    String unit;
+    long seconds = (durationMs) / 1000;
+    if (seconds < 60) {
+      value = (int)seconds;
+      unit = "second";
+    } else if (seconds < 60 * 60) {
+      value = (int)seconds / 60;
+      unit = "minute";
+    } else if (seconds < 60 * 60 * 24) {
+      value = (int)seconds / (60 * 60);
+      unit = "hour";
+    } else {
+      value = (int)seconds / (60 * 60 * 24);
+      unit = "day";
+    }
+
+    return String.format("%d %s%s", value, unit, value == 1 ? "" : "s");
   }
 
   private static boolean isEndOfWord(char[] text, int i) {

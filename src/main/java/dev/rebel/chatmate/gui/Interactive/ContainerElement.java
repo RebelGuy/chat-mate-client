@@ -39,6 +39,10 @@ public abstract class ContainerElement extends ElementBase {
   }
 
   protected ContainerElement addElement(IElement element) {
+    if (element == null) {
+      return this;
+    }
+
     this.children.add(element);
     element.setParent(this);
 
@@ -46,6 +50,8 @@ public abstract class ContainerElement extends ElementBase {
     // and is NOT cleared when this container element is initialised.
     if (!super.isInitialised()) {
       this.initialChildren.add(element);
+    } else {
+      this.onInvalidateSize();
     }
     return this;
   }
@@ -53,12 +59,14 @@ public abstract class ContainerElement extends ElementBase {
   protected ContainerElement removeElement(IElement element) {
     this.children.remove(element);
     this.childrenRelBoxes.remove(element);
+    this.onInvalidateSize();
     return this;
   }
 
   protected ContainerElement clear() {
     this.children.clear();
     this.childrenRelBoxes.clear();
+    this.onInvalidateSize();
     return this;
   }
 
@@ -172,7 +180,7 @@ public abstract class ContainerElement extends ElementBase {
         if (element.getHorizontalAlignment() == HorizontalAlignment.LEFT) {
           xOffset = ZERO;
         } else if (element.getHorizontalAlignment() == HorizontalAlignment.CENTRE) {
-          xOffset = freeWidth.minus(size.getX()).over(2);
+          xOffset = freeWidth.over(2);
         } else if (element.getHorizontalAlignment() == HorizontalAlignment.RIGHT) {
           xOffset = freeWidth;
         } else {

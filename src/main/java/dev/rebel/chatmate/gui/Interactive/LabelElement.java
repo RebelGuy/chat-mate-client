@@ -48,7 +48,7 @@ public class LabelElement extends SingleElement {
     return this.text;
   }
 
-  /** For multi-line text. To align the component itself within the parent, use the `setHorizontalAlignment` API. */
+  /** For multi-line text, or where the sizing mode is FILL. To align the component itself within the parent, use the `setHorizontalAlignment` API. */
   public LabelElement setAlignment(TextAlignment alignment) {
     this.alignment = alignment;
     this.onInvalidateSize();

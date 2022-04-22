@@ -170,12 +170,15 @@ public class ElementHelpers {
     }
 
     FontRenderer font = context.fontRenderer;
-    int y = 0;
-    int left = (int)context.dimFactory.getMinecraftSize().getX().getGui();
-    for (String line : lines) {
-      int x = left - font.getStringWidth(line);
-      font.drawStringWithShadow(line, x, y, Colour.WHITE.toSafeInt());
-      y += font.FONT_HEIGHT;
-    }
+    float scale = 0.5f;
+    RendererHelpers.withMapping(new DimPoint(ZERO, ZERO), scale, () -> {
+      float y = 0;
+      float right = context.dimFactory.getMinecraftSize().getX().getGui();
+      for (String line : lines) {
+        float x = right / scale - (float)font.getStringWidth(line);
+        font.drawStringWithShadow(line, x, y, Colour.WHITE.toSafeInt());
+        y += font.FONT_HEIGHT;
+      }
+    });
   }
 }

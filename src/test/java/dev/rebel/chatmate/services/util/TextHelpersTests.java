@@ -42,4 +42,21 @@ public class TextHelpersTests {
 
     Assert.assertEquals("Hello world§", extractedFormatting.unformattedText);
   }
+
+  @Test
+  public void approximateDuration() {
+    long second = 1000L;
+    long minute = second * 60L;
+    long hour = minute * 60L;
+    long day = hour * 24L;
+
+    Assert.assertEquals("0 seconds", TextHelpers.approximateDuration(0));
+    Assert.assertEquals("1 second", TextHelpers.approximateDuration(second));
+    Assert.assertEquals("1 minute", TextHelpers.approximateDuration(minute));
+    Assert.assertEquals("1 hour", TextHelpers.approximateDuration(hour));
+    Assert.assertEquals("2 hours", TextHelpers.approximateDuration(hour * 2 + minute * 59 + second * 59));
+    Assert.assertEquals("1 day", TextHelpers.approximateDuration(day));
+    Assert.assertEquals("1 day", TextHelpers.approximateDuration(day + hour + minute + second));
+    Assert.assertEquals("2 days", TextHelpers.approximateDuration(day * 2));
+  }
 }
