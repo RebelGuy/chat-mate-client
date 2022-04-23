@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.Events.EventType;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -33,7 +34,7 @@ public interface IElement {
   DimPoint getLastCalculatedSize(); // full box size, for caching purposes only - any direct use should probably be avoided
   void setBox(DimRect box); // sets the full box of the element. if the element has any children, it is its responsibility to set the derived boxes of the children too.
   DimRect getBox();
-  void render(); // called every frame. if the element has any children, it is its responsibility to render them too.
+  void render(); // render the element to the screen renderer. called every frame. if the element has any children, it is its responsibility to render them too.
 
   boolean getVisible();
   IElement setVisible(boolean visible);
@@ -48,6 +49,7 @@ public interface IElement {
   IElement setMargin(RectExtension margin);
 
   int getZIndex();
+  int getEffectiveZIndex();
   IElement setZIndex(int zIndex);
 
   // how the element should be horizontally positioned in the parent content box. relevant in the parent's setBox method.

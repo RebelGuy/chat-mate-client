@@ -5,6 +5,7 @@ import dev.rebel.chatmate.gui.Interactive.Events.EventType;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
@@ -230,19 +231,13 @@ public abstract class ElementBase implements IElement {
       return;
     }
 
-    GlStateManager.pushMatrix();
-
-    GlStateManager.pushMatrix();
-    GlStateManager.enableBlend();
-    GlStateManager.disableLighting();
-    this.renderElement();
-    GlStateManager.popMatrix();
-
-    if (this.context.debugElement == this) {
-      ElementHelpers.renderDebugInfo(this, this.context);
-    }
-
-    GlStateManager.popMatrix();
+    this.context.renderer.render(this, () -> {
+      GlStateManager.pushMatrix();
+      GlStateManager.enableBlend();
+      GlStateManager.disableLighting();
+      this.renderElement();
+      GlStateManager.popMatrix();
+    });
   }
 
   /** You should never call super.render() from this method, as it will cause an infinite loop.
@@ -295,6 +290,11 @@ public abstract class ElementBase implements IElement {
   @Override
   public final int getZIndex() {
     return this.zIndex;
+  }
+
+  @Override
+  public final int getEffectiveZIndex() {
+    return this.zIndex + this.parent.getEffectiveZIndex();
   }
 
   @Override

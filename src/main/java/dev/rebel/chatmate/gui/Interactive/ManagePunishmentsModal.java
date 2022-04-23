@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.DropdownMenu.Anchor;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -56,17 +57,28 @@ public class ManagePunishmentsModal extends ModalElement {
   private class PunishmentList extends ContainerElement {
     private final LabelElement titleLabel;
     private final ButtonElement createNewPunishmentButton;
+    private final DropdownMenu createNewPunishmentDropdown;
     private final ElementReference listReference;
 
     public PunishmentList(InteractiveContext context, IElement parent) {
       super(context, parent, LayoutMode.INLINE);
 
       this.titleLabel = new LabelElement(context, this).setText("All Punishments");
+
       this.createNewPunishmentButton = new ButtonElement(context, this)
           .setText("Create new")
-          .setOnClick(this::onCreateNewPunishment)
           .setHorizontalAlignment(HorizontalAlignment.RIGHT)
           .cast();
+      this.createNewPunishmentDropdown = new DropdownMenu(context, this.createNewPunishmentButton)
+          .addOption("Mute", () -> this.onCreateNewPunishment(PunishmentType.MUTE))
+          .addOption("Timeout", () -> this.onCreateNewPunishment(PunishmentType.TIMEOUT))
+          .addOption("Ban", () -> this.onCreateNewPunishment(PunishmentType.BAN))
+          .setAnchor(Anchor.LEFT)
+          .setBorder(new RectExtension(gui(1)))
+          .setSizingMode(SizingMode.FILL)
+          .cast();
+      this.createNewPunishmentButton.setOnClick(this.createNewPunishmentDropdown::toggleExpanded);
+
       this.listReference = new ElementReference(context, this).setUnderlyingElement(
           new LabelElement(context, this)
               .setText("Loading punishments...")
@@ -82,6 +94,7 @@ public class ManagePunishmentsModal extends ModalElement {
 
       super.addElement(this.titleLabel);
       super.addElement(this.createNewPunishmentButton);
+      super.addElement(this.createNewPunishmentDropdown);
       super.addElement(this.listReference);
     }
 
@@ -139,8 +152,8 @@ public class ManagePunishmentsModal extends ModalElement {
       ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
     }
 
-    private void onCreateNewPunishment() {
-      ManagePunishmentsModal.super.setBody(new PunishmentCreate(this.context, ManagePunishmentsModal.this));
+    private void onCreateNewPunishment(PunishmentType type) {
+      ManagePunishmentsModal.super.setBody(new PunishmentCreate(this.context, ManagePunishmentsModal.this, type));
     }
   }
 
@@ -302,7 +315,7 @@ public class ManagePunishmentsModal extends ModalElement {
   }
 
   private class PunishmentCreate extends ContainerElement {
-    public PunishmentCreate(InteractiveContext context, IElement parent) {
+    public PunishmentCreate(InteractiveContext context, IElement parent, PunishmentType type) {
       super(context, parent, LayoutMode.INLINE);
     }
 

@@ -83,6 +83,10 @@ public class Dim {
     return Collections.eliminate(items, Dim::max);
   }
 
+  public static Dim max(Dim... items) {
+    return Dim.max(Collections.list(items));
+  }
+
   public static Dim min(Dim a, Dim b) { return a.lte(b) ? a : b; }
 
   public static Dim sum(List<Dim> items) {

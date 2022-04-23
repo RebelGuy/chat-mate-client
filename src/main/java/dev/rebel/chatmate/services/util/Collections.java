@@ -112,6 +112,12 @@ public class Collections {
     return new ArrayList<>(Arrays.asList(items));
   }
 
+  public static <T> List<T> list(Iterable<T> collection) {
+    List<T> list = new ArrayList<>();
+    collection.forEach(list::add);
+    return list;
+  }
+
   public static @Nullable <T> T first(@Nullable List<T> list) { return (list == null || list.size() == 0) ? null : list.get(0); }
 
   public static @Nullable <T> T last(@Nullable List<T> list) { return (list == null || list.size() == 0) ? null : list.get(list.size() - 1); }

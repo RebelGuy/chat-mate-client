@@ -26,10 +26,10 @@ import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
@@ -135,10 +135,13 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     this.recalculateLayout();
-    this.mainElement.render();
 
-    if (this.context.debugElement == this) {
-      ElementHelpers.renderDebugInfo(this, this.context);
+    this.context.renderer.clear();
+    this.mainElement.render();
+    this.context.renderer.execute();
+
+    if (this.context.debugElement != null) {
+      ElementHelpers.renderDebugInfo(this.context.debugElement, this.context);
     }
   }
 
@@ -461,6 +464,9 @@ public class InteractiveScreen extends Screen implements IElement {
   public int getZIndex() { return 0; }
 
   @Override
+  public int getEffectiveZIndex() { return 0; }
+
+  @Override
   public IElement setZIndex(int zIndex) { return this; }
 
   @Override
@@ -487,6 +493,7 @@ public class InteractiveScreen extends Screen implements IElement {
   //endregion
 
   public static class InteractiveContext {
+    public final ScreenRenderer renderer;
     public final MouseEventService mouseEventService;
     public final KeyboardEventService keyboardEventService;
     public final DimFactory dimFactory;
@@ -501,7 +508,8 @@ public class InteractiveScreen extends Screen implements IElement {
     public @Nullable InputElement focusedElement = null;
     public @Nullable DimPoint mousePosition = null;
 
-    public InteractiveContext(MouseEventService mouseEventService,
+    public InteractiveContext(ScreenRenderer renderer,
+                              MouseEventService mouseEventService,
                               KeyboardEventService keyboardEventService,
                               DimFactory dimFactory,
                               Minecraft minecraft,
@@ -509,6 +517,7 @@ public class InteractiveScreen extends Screen implements IElement {
                               ClipboardService clipboardService,
                               SoundService soundService,
                               CursorService cursorService) {
+      this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
       this.dimFactory = dimFactory;
@@ -517,6 +526,81 @@ public class InteractiveScreen extends Screen implements IElement {
       this.clipboardService = clipboardService;
       this.soundService = soundService;
       this.cursorService = cursorService;
+    }
+  }
+
+  // This manages the render order of elements to simulate x indexes. For some reason, OpenGL ignores z values when
+  // translating or rendering, otherwise we would just use the built-in functionality.
+  public static class ScreenRenderer {
+    // importantly, renderables within a layer are ordered
+    private Map<Integer, List<Runnable>> collectedRenders;
+    private Set<Runnable> completedRenders;
+
+    public ScreenRenderer() {
+      this.clear();
+    }
+
+    public void clear() {
+      this.collectedRenders = new HashMap<>();
+      this.completedRenders = new HashSet<>();
+    }
+
+    public void render(IElement element, Runnable onRender) {
+      int zIndex = element.getEffectiveZIndex();
+      if (!this.collectedRenders.containsKey(zIndex)) {
+        this.collectedRenders.put(zIndex, new ArrayList<>());
+      }
+      this.collectedRenders.get(zIndex).add(onRender);
+    }
+
+    public void execute() {
+      // we don't have all render methods of all elements initially, so it's not possible to render an element very early
+      // that is supposed to be rendered on top of everything else. it works best when siblings have differing z indexes.
+      //
+      // note that the overall render order is still unchanged, we are merely enhancing it.
+
+      // algorithm: always exhaust the list of lowest z index elements, then move on to the next layer, etc, constantly
+      // checking whether there are new lower-layer elements to be rendered (though we wouldn't expect there to be any
+      // since the effective z index is additive).
+      @Nullable Runnable renderable;
+      while (true) {
+        renderable = getNextRenderable();
+        if (renderable == null) {
+          break;
+        }
+        renderable.run();
+        this.completedRenders.add(renderable);
+      }
+
+      this.clear();
+    }
+
+    private @Nullable Runnable getNextRenderable() {
+      @Nullable Runnable result = null;
+      while (result == null) {
+        if (this.collectedRenders.size() == 0) {
+          return null;
+        }
+
+        int zIndex = this.getLowestZIndex();
+        List<Runnable> list = Collections.filter(this.collectedRenders.get(zIndex), r -> !this.completedRenders.contains(r));
+        if (list.size() <= 1) {
+          this.collectedRenders.remove(zIndex);
+        }
+        if (list.size() == 0) {
+          return null;
+        }
+        result = list.remove(0);
+        if (list.size() > 0) {
+          this.collectedRenders.put(zIndex, list);
+        }
+      }
+
+      return result;
+    }
+
+    private int getLowestZIndex() {
+      return Collections.min(Collections.list(this.collectedRenders.keySet()), i -> i);
     }
   }
 }

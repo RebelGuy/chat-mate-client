@@ -50,7 +50,7 @@ public class State<TState> {
 
       this.prevValue = initialValue;
       this.value = initialValue;
-      this.prevTime = timestamp();
+      this.prevTime = 0L;
     }
 
     public void set(T newValue) {

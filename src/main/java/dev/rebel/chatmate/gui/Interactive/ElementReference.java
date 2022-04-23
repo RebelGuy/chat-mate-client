@@ -166,6 +166,11 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public int getEffectiveZIndex() {
+    return this.underlyingElement == null ? this.parent.getEffectiveZIndex() : this.underlyingElement.getEffectiveZIndex();
+  }
+
+  @Override
   public IElement setZIndex(int zIndex) {
     return this.underlyingElement == null ? this : this.underlyingElement.setZIndex(zIndex);
   }
