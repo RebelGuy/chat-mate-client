@@ -410,4 +410,8 @@ public abstract class ElementBase implements IElement {
   protected final Dim gui(float guiValue) {
     return this.context.dimFactory.fromGui(guiValue);
   }
+
+  protected final Dim screen(float screenValue) {
+    return this.context.dimFactory.fromScreen(screenValue);
+  }
 }

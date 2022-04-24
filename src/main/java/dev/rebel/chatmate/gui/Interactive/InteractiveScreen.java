@@ -12,6 +12,7 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.ClipboardService;
 import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.SoundService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
@@ -24,13 +25,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
-import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
@@ -532,6 +530,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final ClipboardService clipboardService;
     public final SoundService soundService;
     public final CursorService cursorService;
+    public final MinecraftProxyService minecraftProxyService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -546,7 +545,8 @@ public class InteractiveScreen extends Screen implements IElement {
                               FontRenderer fontRenderer,
                               ClipboardService clipboardService,
                               SoundService soundService,
-                              CursorService cursorService) {
+                              CursorService cursorService,
+                              MinecraftProxyService minecraftProxyService) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -556,6 +556,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.clipboardService = clipboardService;
       this.soundService = soundService;
       this.cursorService = cursorService;
+      this.minecraftProxyService = minecraftProxyService;
     }
   }
 

@@ -63,6 +63,16 @@ public class State<TState> {
       this.prevTime = timestamp();
     }
 
+    public void setImmediate(T newValue) {
+      if (this.value == newValue) {
+        return;
+      }
+
+      this.prevValue = this.value;
+      this.value = newValue;
+      this.prevTime = 0L;
+    }
+
     public T get() {
       return this.value;
     }
@@ -92,6 +102,12 @@ public class State<TState> {
       } else {
         return 1 - frac;
       }
+    }
+
+    /** Returns the new value. */
+    public boolean flip() {
+      super.set(!super.value);
+      return super.value;
     }
   }
 }

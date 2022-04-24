@@ -183,7 +183,7 @@ public abstract class ModalElement extends ContainerElement {
   @Override
   public void renderElement() {
     Colour background = new Colour(0, 0, 0, 127); // dark gray
-    RendererHelpers.drawRect(this.getZIndex(), this.getPaddingBox(), background, this.borderSize, Colour.BLACK, this.cornerRadius, this.shadowDistance);
+    RendererHelpers.drawRect(this.getZIndex(), this.getPaddingBox(), background, this.borderSize, Colour.BLACK, this.cornerRadius, this.shadowDistance, Colour.BLACK);
 
     this.closeButton.setEnabled(this, !this.loading);
     this.setSubmitButton();

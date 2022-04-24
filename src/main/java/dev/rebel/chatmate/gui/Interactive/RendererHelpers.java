@@ -46,21 +46,21 @@ public class RendererHelpers {
 
   /** Draws a coloured rect with single-coloured border. */
   public static void drawRect(int zLevel, DimRect rect, Colour colour, @Nullable Dim borderWidth, @Nullable Colour borderColour) {
-    drawRect(zLevel, rect, colour, borderWidth, borderColour, borderColour, null, null);
+    drawRect(zLevel, rect, colour, borderWidth, borderColour, borderColour, null, null, null);
   }
 
   /** Draws a coloured rect with single-coloured border and rounded corners. */
   public static void drawRect(int zLevel, DimRect rect, Colour colour, @Nullable Dim borderWidth, @Nullable Colour borderColour, @Nullable Dim cornerRadius) {
-    drawRect(zLevel, rect, colour, borderWidth, borderColour, borderColour, cornerRadius, null);
+    drawRect(zLevel, rect, colour, borderWidth, borderColour, borderColour, cornerRadius, null, null);
   }
 
   /** Draws a coloured rect with single-coloured border, rounded corners, and a shadow. */
-  public static void drawRect(int zLevel, DimRect rect, Colour colour, @Nullable Dim borderWidth, @Nullable Colour borderColour, @Nullable Dim cornerRadius, @Nullable Dim shadowDistance) {
-    drawRect(zLevel, rect, colour, borderWidth, borderColour, borderColour, cornerRadius, shadowDistance);
+  public static void drawRect(int zLevel, DimRect rect, Colour colour, @Nullable Dim borderWidth, @Nullable Colour borderColour, @Nullable Dim cornerRadius, @Nullable Dim shadowDistance, @Nullable Colour shadowColour) {
+    drawRect(zLevel, rect, colour, borderWidth, borderColour, borderColour, cornerRadius, shadowDistance, shadowColour);
   }
 
   /** Draws a coloured rect with many available options. */
-  public static void drawRect(int zLevel, DimRect rect, Colour topColour, @Nullable Dim borderWidth, @Nullable Colour borderInnerColour, @Nullable Colour borderOuterColour, @Nullable Dim cornerRadius, @Nullable Dim shadowDistance) {
+  public static void drawRect(int zLevel, DimRect rect, Colour topColour, @Nullable Dim borderWidth, @Nullable Colour borderInnerColour, @Nullable Colour borderOuterColour, @Nullable Dim cornerRadius, @Nullable Dim shadowDistance, @Nullable Colour shadowColour) {
     drawGradientRect(zLevel, rect, topColour, topColour, GradientDirection.VERTICAL, cornerRadius);
 
     // draw shadow before border to give the border a chance to overlap
@@ -79,7 +79,10 @@ public class RendererHelpers {
         shadowRect = new RectExtension(cornerRadius.setScreen(1)).applySubtractive(shadowRect);
       }
 
-      drawRectOutline(zLevel, shadowRect, shadowDistance, Colour.BLACK.withAlpha(0.5f), Colour.BLACK.withAlpha(0), shadowCornerRadius);
+      if (shadowColour == null) {
+        shadowColour = Colour.BLACK;
+      }
+      drawRectOutline(zLevel, shadowRect, shadowDistance, shadowColour.withAlpha(0.5f), shadowColour.withAlpha(0), shadowCornerRadius);
     }
 
     if (borderWidth != null && borderWidth.getGui() > 0) {

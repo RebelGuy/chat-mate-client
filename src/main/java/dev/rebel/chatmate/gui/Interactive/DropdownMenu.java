@@ -226,7 +226,7 @@ public class DropdownMenu extends ContainerElement {
     Dim cornerRadius = gui(0);
     Dim shadowDistance = gui(1);
     DimRect paddingBox = super.getMargin().plus(super.getBorder()).applySubtractive(this.dropdownBox);
-    RendererHelpers.drawRect(0, paddingBox, background, borderSize, Colour.BLACK, cornerRadius, shadowDistance);
+    RendererHelpers.drawRect(0, paddingBox, background, borderSize, Colour.BLACK, cornerRadius, shadowDistance, Colour.BLACK);
 
     this.highlightLabelAtPosition(this.context.mousePosition);
     super.renderElement();

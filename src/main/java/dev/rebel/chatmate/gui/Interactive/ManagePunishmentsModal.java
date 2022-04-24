@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
+import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.models.api.punishment.BanUserRequest;
 import dev.rebel.chatmate.models.api.punishment.BanUserResponse.BanUserResponseData;
@@ -21,10 +22,12 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.EndpointProxy;
 import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
 import dev.rebel.chatmate.services.util.Collections;
+import net.minecraft.util.IChatComponent;
 
 import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -349,6 +352,7 @@ public class ManagePunishmentsModal extends ModalElement {
     private final LabelElement titleLabel;
     private final TextInputElement punishmentReasonInputElement;
     private final IElement timeElements;
+    private final CheckboxInputElement clearChatCheckbox;
 
     private @Nullable Float days = 0.0f;
     private @Nullable Float hours = 0.0f;
@@ -414,6 +418,13 @@ public class ManagePunishmentsModal extends ModalElement {
                   .setTabIndex(4)
           ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
       );
+
+      this.clearChatCheckbox = new CheckboxInputElement(context, this)
+          .setChecked(false)
+          .setLabel("Clear all chat messages")
+          .setTabIndex(5)
+          .setMargin(new RectExtension(ZERO, gui(4)))
+          .cast();
     }
 
     @Override
@@ -421,12 +432,13 @@ public class ManagePunishmentsModal extends ModalElement {
       super.onInitialise();
 
       ManagePunishmentsModal.this.setCloseText("Go back");
-      ManagePunishmentsModal.this.setSubmitText("Finalise " + this.punishmentType());
+      ManagePunishmentsModal.this.setSubmitText("Submit");
 
       super.addElement(this.titleLabel);
 
       super.addElement(this.punishmentReasonInputElement);
       super.addElement(this.timeElements);
+      super.addElement(this.clearChatCheckbox);
     }
 
     private Boolean onBack() {
@@ -509,6 +521,20 @@ public class ManagePunishmentsModal extends ModalElement {
 
     private void onPunishmentCreated(PublicPunishment punishment, Runnable callback) {
       callback.run();
+      if (this.clearChatCheckbox.getChecked()) {
+        super.context.minecraftProxyService.getChatGUI().deleteLine(line -> {
+          IChatComponent component = line.getChatComponent();
+          if (!(component instanceof ContainerChatComponent)) {
+            return false;
+          }
+          ContainerChatComponent container = (ContainerChatComponent) component;
+          if (!(container.data instanceof PublicUser)) {
+            return false;
+          }
+          PublicUser user = (PublicUser) container.data;
+          return Objects.equals(user.id, ManagePunishmentsModal.this.user.id);
+        });
+      }
       ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
     }
 
