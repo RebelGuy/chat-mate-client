@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.gui.StateManagement.AnimatedSelection;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
@@ -11,6 +12,9 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
+import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.services.events.MouseEventService.Events;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
@@ -46,22 +50,48 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final Config config;
   private final ForgeEventService forgeEventService;
   private final DimFactory dimFactory;
+  private final MouseEventService mouseEventService;
+  private final ContextMenuStore contextMenuStore;
+
   private final List<String> sentMessages = Lists.newArrayList();
   private final List<AbstractChatLine> abstractChatLines = Lists.newArrayList();
   private final List<ChatLine> chatLines = Lists.newArrayList(); // rendered chat lines, where components may be broken up into multiple lines to fit into the GUI.
+  private final AnimatedSelection<AbstractChatLine> selectedLine;
+  private final AnimatedSelection<AbstractChatLine> hoveredLine;
+
   private int scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
   private boolean isScrolled;
-  private @Nullable AbstractChatLine selectedLine;
 
-  public CustomGuiNewChat(Minecraft minecraft, LogService logService, Config config, ForgeEventService forgeEventService, DimFactory dimFactory) {
+  public CustomGuiNewChat(Minecraft minecraft,
+                          LogService logService,
+                          Config config,
+                          ForgeEventService forgeEventService,
+                          DimFactory dimFactory,
+                          MouseEventService mouseEventService,
+                          ContextMenuStore contextMenuStore) {
     super(minecraft);
     this.minecraft = minecraft;
     this.logService = logService;
     this.config = config;
     this.forgeEventService = forgeEventService;
     this.dimFactory = dimFactory;
+    this.mouseEventService = mouseEventService;
+    this.contextMenuStore = contextMenuStore;
+
+    this.hoveredLine = new AnimatedSelection<>(150L);
+    this.selectedLine = new AnimatedSelection<>(100L);
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
+    this.mouseEventService.on(Events.MOUSE_MOVE, this::onMouseMove, new MouseEventData.Options(), null);
+  }
+
+  private MouseEventData.Out onMouseMove(MouseEventData.In in) {
+    if (this.contextMenuStore.isShowingContextMenu()) {
+      this.hoveredLine.setSelected(null);
+    } else {
+      this.hoveredLine.setSelected(this.getAbstractChatLine(in.mousePositionData.x, in.mousePositionData.y));
+    }
+    return new MouseEventData.Out();
   }
 
   private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
@@ -129,8 +159,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     int lineLeft = LEFT_PADDING;
     int lineBottom = -index * 9; // negative because we iterate from the bottom line to the top line
 
-    boolean isSelected = line.getParent() == this.selectedLine;
-    Colour backgroundColour = isSelected ? new Colour(64, 64, 64, opacity / 2) : Colour.BLACK.withAlpha(opacity / 2);
+    Colour backgroundColour = this.getBackgroundColour(line, opacity);
     drawRect(0, lineBottom - 9, lineLeft + width + 4, lineBottom, backgroundColour.toSafeInt());
     GlStateManager.enableBlend();
 
@@ -156,6 +185,21 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     GlStateManager.disableAlpha();
     GlStateManager.disableBlend();
+  }
+
+  private Colour getBackgroundColour(ChatLine line, int chatOpacity) {
+    Colour standardBackground = Colour.BLACK.withAlpha(chatOpacity / 2);
+    Colour selectedColour = new Colour(64, 64, 64, chatOpacity / 2); // hovered colour is just half-opacity of this
+
+    AbstractChatLine abstractLine = line.getParent();
+    float hoveredFrac = this.hoveredLine.getFrac(abstractLine);
+    float selectedFrac = this.selectedLine.getFrac(abstractLine);
+
+    // this doesn't work 100% when deselecting a message while hovering over that message (it doesn't smoothly transition
+    // from selected to hovered, but overshoots to a darker colour first), but I can't figure it out and it's very subtle
+    // anyway. I guess a solution is to modify the AnimatedSelection to work with floats rather than booleans, and a value
+    // of 0.5 to represent hover, and 1 to represent selection.
+    return Colour.lerp(standardBackground, selectedColour, Math.min(1, hoveredFrac / 2 + selectedFrac));
   }
 
   /** Returns the width of the drawn component. */
@@ -534,11 +578,11 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   public @Nullable AbstractChatLine getSelectedLine() {
-    return this.selectedLine;
+    return this.selectedLine.getSelected();
   }
 
   public void setSelectedLine(@Nullable AbstractChatLine line) {
-    this.selectedLine = line;
+    this.selectedLine.setSelected(line);
   }
 
   @Override
