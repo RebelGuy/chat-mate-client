@@ -60,6 +60,18 @@ public abstract class ModalElement extends ContainerElement {
     return this;
   }
 
+  /** Do not call this from the constructor. */
+  public ModalElement setSubmitText(String submitText) {
+    this.submitButton.setText(submitText);
+    return this;
+  }
+
+  /** Do not call this from the constructor. */
+  public ModalElement setCloseText(String closeText) {
+    this.closeButton.setText(closeText);
+    return this;
+  }
+
   /** Should return true/false if the modal's submit button can be pressed, or null to hide the submit button. */
   protected abstract @Nullable Boolean validate();
 
@@ -104,8 +116,8 @@ public abstract class ModalElement extends ContainerElement {
   }
 
   private void onClose() {
+    this.errorLabel.setVisible(false);
     this.close();
-    super.onCloseScreen();
   }
 
   @Override

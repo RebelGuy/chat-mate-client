@@ -7,8 +7,11 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
 import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.models.api.punishment.BanUserRequest;
+import dev.rebel.chatmate.models.api.punishment.BanUserResponse.BanUserResponseData;
 import dev.rebel.chatmate.models.api.punishment.GetPunishmentsResponse.GetPunishmentsResponseData;
 import dev.rebel.chatmate.models.api.punishment.UnbanUserRequest;
 import dev.rebel.chatmate.models.api.punishment.UnbanUserResponse.UnbanUserResponseData;
@@ -22,7 +25,9 @@ import dev.rebel.chatmate.services.util.Collections;
 import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static dev.rebel.chatmate.services.util.TextHelpers.*;
 
@@ -31,6 +36,14 @@ public class ManagePunishmentsModal extends ModalElement {
 
   private final PublicUser user;
   private final PunishmentEndpointProxy punishmentEndpointProxy;
+
+  /** onSuccess and onError callback. */
+  private @Nullable BiConsumer<Runnable, Consumer<String>> onSubmit;
+  /** If it returns true, the default close behaviour is suppressed. */
+  private @Nullable Supplier<Boolean> onClose;
+  /** If it returns true, the submit button can be pressed. If it returns false, the submit button cannot be pressed.
+   * If it returns null, the submit button is not shown. */
+  private @Nullable Supplier<Boolean> onValidate;
 
   public ManagePunishmentsModal(InteractiveContext context, InteractiveScreen parent, PublicUser user, PunishmentEndpointProxy punishmentEndpointProxy) {
     super(context, parent);
@@ -49,10 +62,27 @@ public class ManagePunishmentsModal extends ModalElement {
   }
 
   @Override
-  protected @Nullable Boolean validate() { return null; }
+  protected @Nullable Boolean validate() {
+    if (this.onValidate == null) {
+      return null;
+    } else {
+      return this.onValidate.get();
+    }
+  }
 
   @Override
-  protected void submit(Runnable onSuccess, Consumer<String> onError) { }
+  protected void submit(Runnable onSuccess, Consumer<String> onError) {
+    if (this.onSubmit != null) {
+      this.onSubmit.accept(onSuccess, onError);
+    }
+  }
+
+  @Override
+  protected void close() {
+    if (this.onClose == null || !this.onClose.get()) {
+      super.onCloseScreen();
+    }
+  }
 
   private class PunishmentList extends ContainerElement {
     private final LabelElement titleLabel;
@@ -62,6 +92,10 @@ public class ManagePunishmentsModal extends ModalElement {
 
     public PunishmentList(InteractiveContext context, IElement parent) {
       super(context, parent, LayoutMode.INLINE);
+
+      ManagePunishmentsModal.this.onValidate = null;
+      ManagePunishmentsModal.this.onSubmit = null;
+      ManagePunishmentsModal.this.onClose = null;
 
       this.titleLabel = new LabelElement(context, this).setText("All Punishments");
 
@@ -91,6 +125,8 @@ public class ManagePunishmentsModal extends ModalElement {
     @Override
     public void onInitialise() {
       super.onInitialise();
+
+      ManagePunishmentsModal.this.setCloseText("Close");
 
       super.addElement(this.titleLabel);
       super.addElement(this.createNewPunishmentButton);
@@ -167,12 +203,12 @@ public class ManagePunishmentsModal extends ModalElement {
     private final @Nullable SideBySideElement revokedAtElement;
     private final @Nullable SideBySideElement revokedMessageElement;
     private final @Nullable TextInputElement revokePunishmentTextInputElement;
-    private final @Nullable ButtonElement revokePunishmentButton;
-
-    private LabelElement errorLabel;
 
     public PunishmentDetails(InteractiveContext context, IElement parent, PublicPunishment punishment) {
       super(context, parent, LayoutMode.INLINE);
+      ManagePunishmentsModal.this.onValidate = null;
+      ManagePunishmentsModal.this.onSubmit = null;
+      ManagePunishmentsModal.this.onClose = this::onBack;
 
       this.name = "PunishmentDetails";
       this.punishment = punishment;
@@ -214,16 +250,14 @@ public class ManagePunishmentsModal extends ModalElement {
       if (punishment.revokedAt == null) {
         this.revokedAtElement = null;
         this.revokedMessageElement = null;
-        this.revokePunishmentTextInputElement= new TextInputElement(context, this)
+        this.revokePunishmentTextInputElement = new TextInputElement(context, this)
             .setPlaceholder(toSentenceCase(this.getRevokeName()) + " reason")
             .setSizingMode(SizingMode.FILL)
-            .setPadding(new RectExtension(gui(4), ZERO))
+            .setPadding(new RectExtension(gui(4), gui(1)))
+            .setMargin(new RectExtension(ZERO, gui(4)))
             .cast();
-        this.revokePunishmentButton = new ButtonElement(context, this)
-            .setText(toSentenceCase(this.getRevokeName()))
-            .setOnClick(this::onRevokePunishment)
-            .setPadding(new RectExtension(ZERO, gui(4)))
-            .cast();
+        ManagePunishmentsModal.this.onValidate = () -> true; // nothing to validate
+        ManagePunishmentsModal.this.onSubmit = this::onRevokePunishment;
 
       } else {
         this.revokedAtElement = new SideBySideElement(context, this)
@@ -243,13 +277,15 @@ public class ManagePunishmentsModal extends ModalElement {
             ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(8)))
             .cast();
         this.revokePunishmentTextInputElement = null;
-        this.revokePunishmentButton = null;
       }
     }
 
     @Override
     public void onInitialise() {
       super.onInitialise();
+
+      ManagePunishmentsModal.this.setCloseText("Go back");
+      ManagePunishmentsModal.this.setSubmitText(toSentenceCase(this.getRevokeName()));
 
       super.addElement(this.titleLabel);
       super.addElement(this.statusLabel);
@@ -260,45 +296,36 @@ public class ManagePunishmentsModal extends ModalElement {
       super.addElement(this.revokedMessageElement);
 
       super.addElement(this.revokePunishmentTextInputElement);
-      super.addElement(this.revokePunishmentButton);
     }
 
-    private void onRevokePunishment() {
-      super.removeElement(this.errorLabel);
-      this.revokePunishmentButton.setEnabled(this, false);
+    private Boolean onBack() {
+      ManagePunishmentsModal.this.setBody(new PunishmentList(context, parent));
+      return true;
+    }
 
+    private void onRevokePunishment(Runnable onSuccess, Consumer<String> onError) {
       int userId = ManagePunishmentsModal.this.user.id;
       @Nullable String message = this.revokePunishmentTextInputElement.getText();
       if (this.punishment.type == PunishmentType.BAN) {
         UnbanUserRequest request = new UnbanUserRequest(userId, message);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.unbanUserAsync(request, this::onUnbanUser, this::onRevokePunishmentFailed);
+        ManagePunishmentsModal.this.punishmentEndpointProxy.unbanUserAsync(request, r -> this.onUnbanUser(r, onSuccess), r -> this.onRevokePunishmentFailed(r, onError));
       } else {
         throw new RuntimeException("Cannot revoke invalid punishment type " + this.punishment.type);
       }
     }
 
-    private void onRevokePunishmentFailed(Throwable error) {
-      this.revokePunishmentButton.setEnabled(this, true);
-
+    private void onRevokePunishmentFailed(Throwable error, Consumer<String> callback) {
       String errorMessage = EndpointProxy.getApiErrorMessage(error);
-      this.errorLabel = new LabelElement(this.context, this)
-          .setText(String.format("Failed to %s: %s", this.getRevokeName(), errorMessage))
-          .setOverflow(TextOverflow.SPLIT)
-          .setColour(Colour.RED)
-          .setSizingMode(SizingMode.FILL)
-          .setFontScale(0.75f)
-          .setAlignment(TextAlignment.CENTRE)
-          .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(4)))
-          .cast();
-      super.addElement(this.errorLabel);
+      callback.accept(String.format("Failed to %s: %s", this.getRevokeName(), errorMessage));
     }
 
-    private void onUnbanUser(UnbanUserResponseData unbanUserResponseData) {
-      this.onPunishmentUpdated(unbanUserResponseData.updatedPunishment);
+    private void onUnbanUser(UnbanUserResponseData unbanUserResponseData, Runnable callback) {
+      this.onPunishmentUpdated(unbanUserResponseData.updatedPunishment, callback);
     }
 
-    private void onPunishmentUpdated(PublicPunishment punishment) {
+    private void onPunishmentUpdated(PublicPunishment punishment, Runnable callback) {
       ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+      callback.run();
     }
 
     private String getRevokeName() {
@@ -315,14 +342,178 @@ public class ManagePunishmentsModal extends ModalElement {
   }
 
   private class PunishmentCreate extends ContainerElement {
+    private final static int MIN_DURATION_TIMEOUT_SECONDS = 60 * 5; // this is the minimum masterchat/youtube timeout period
+
+    private final PunishmentType type;
+
+    private final LabelElement titleLabel;
+    private final TextInputElement punishmentReasonInputElement;
+    private final IElement timeElements;
+
+    private @Nullable Float days = 0.0f;
+    private @Nullable Float hours = 0.0f;
+    private @Nullable Float minutes = 0.0f;
+
     public PunishmentCreate(InteractiveContext context, IElement parent, PunishmentType type) {
       super(context, parent, LayoutMode.INLINE);
+
+      ManagePunishmentsModal.this.onValidate = this::onValidate;
+      ManagePunishmentsModal.this.onSubmit = this::onCreatePunishment;
+      ManagePunishmentsModal.this.onClose = this::onBack;
+
+      this.type = type;
+
+      this.titleLabel = new LabelElement(context, this)
+          .setText(String.format("Create new %s", this.punishmentType()))
+          .setHorizontalAlignment(HorizontalAlignment.LEFT)
+          .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(4)))
+          .cast();
+
+      this.punishmentReasonInputElement = new TextInputElement(context, this)
+          .setPlaceholder(toSentenceCase(type + " reason"))
+          .setTabIndex(1)
+          .setSizingMode(SizingMode.FILL)
+          .setPadding(new RectExtension(gui(4), gui(1)))
+          .setMargin(new RectExtension(ZERO, gui(4)))
+          .cast();
+
+      this.timeElements = new SideBySideElement(context, this)
+          .setElementPadding(gui(10))
+          .addElement(1,
+              new ListElement(context, this)
+                  .addElement(
+                      new LabelElement(context, this)
+                          .setText("Duration:")
+                          .setOverflow(TextOverflow.TRUNCATE)
+                          .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                  ).addElement(
+                      new LabelElement(context, this)
+                          .setText(String.format("(leave blank for permanent %s)", this.punishmentType()))
+                          .setColour(Colour.LTGREY)
+                          .setFontScale(0.5f)
+                          .setOverflow(TextOverflow.TRUNCATE)
+                          .setVerticalAlignment(VerticalAlignment.MIDDLE)
+                  ).setPadding(new RectExtension(ZERO, ZERO, gui(1.5f), ZERO))
+          ).addElement(0.5f,
+              new TextInputElement(context, this)
+                  .onTextChange(this::onDaysChange)
+                  .setValidator(this::onValidateInput)
+                  .setSuffix("d")
+                  .setTabIndex(2)
+          ).addElement(0.5f,
+              new TextInputElement(context, this)
+                  .onTextChange(this::onHoursChange)
+                  .setValidator(this::onValidateInput)
+                  .setSuffix("h")
+                  .setTabIndex(3)
+          ).addElement(0.5f,
+              new TextInputElement(context, this)
+                  .onTextChange(this::onMinutesChange)
+                  .setValidator(this::onValidateInput)
+                  .setSuffix("m")
+                  .setTabIndex(4)
+          ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
+      );
     }
 
     @Override
     public void onInitialise() {
       super.onInitialise();
+
+      ManagePunishmentsModal.this.setCloseText("Go back");
+      ManagePunishmentsModal.this.setSubmitText("Finalise " + this.punishmentType());
+
+      super.addElement(this.titleLabel);
+
+      super.addElement(this.punishmentReasonInputElement);
+      super.addElement(this.timeElements);
+    }
+
+    private Boolean onBack() {
+      ManagePunishmentsModal.this.setBody(new PunishmentList(context, parent));
+      return true;
+    }
+
+    private Boolean onValidate() {
+      if (this.days == null || this.hours == null || this.minutes == null) {
+        return false;
+      }
+
+      int totalSeconds = this.getTotalSeconds();
+      if (totalSeconds == 0) {
+        return true;
+      } else if (this.type == PunishmentType.TIMEOUT) {
+        return totalSeconds >= MIN_DURATION_TIMEOUT_SECONDS;
+      } else {
+        return true;
+      }
+    }
+
+    private int getTotalSeconds() {
+      return (int)(this.days * 24 * 3600 + this.hours * 3600 + this.minutes * 60);
+    }
+
+    private void onMinutesChange(String maybeMinutes) {
+      this.minutes = this.tryGetValidTime(maybeMinutes);
+    }
+
+    private void onHoursChange(String maybeHours) {
+      this.hours = this.tryGetValidTime(maybeHours);
+    }
+
+    private void onDaysChange(String maybeDays) {
+      this.days = this.tryGetValidTime(maybeDays);
+    }
+
+    private boolean onValidateInput(String maybeTime) {
+      return this.tryGetValidTime(maybeTime) != null;
+    }
+
+    private @Nullable Float tryGetValidTime(String maybeTime) {
+      if (isNullOrEmpty(maybeTime)) {
+        return 0.0f;
+      }
+
+      try {
+        float time = Float.parseFloat(maybeTime);
+        return time < 0 ? null : time;
+      } catch (Exception ignored) {
+        return null;
+      }
+    }
+
+    private void onCreatePunishment(Runnable onSuccess, Consumer<String> onError) {
+      int userId = ManagePunishmentsModal.this.user.id;
+      @Nullable String message = this.punishmentReasonInputElement.getText();
+      int durationSeconds = this.getTotalSeconds(); // if zero, is permanent
+      if (this.type == PunishmentType.BAN) {
+        BanUserRequest request = new BanUserRequest(userId, message);
+        ManagePunishmentsModal.this.punishmentEndpointProxy.banUserAsync(request, r -> this.onBanUser(r, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
+      } else {
+        throw new RuntimeException("Cannot create invalid punishment type " + this.punishmentType());
+      }
+    }
+
+    private void onCreatePunishmentFailed(Throwable error, Consumer<String> callback) {
+      String errorMessage = EndpointProxy.getApiErrorMessage(error);
+      callback.accept(String.format("Failed to %s user: %s", this.punishmentType(), errorMessage));
+    }
+
+    private void onBanUser(BanUserResponseData banUserResponseData, Runnable callback) {
+      this.onPunishmentCreated(banUserResponseData.newPunishment, callback);
+    }
+
+//    private void onTimeoutUser(TimeoutUserResponseData timeoutUserResponseData) {
+//
+//    }
+
+    private void onPunishmentCreated(PublicPunishment punishment, Runnable callback) {
+      callback.run();
+      ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+    }
+
+    private String punishmentType() {
+      return this.type.toString().toLowerCase();
     }
   }
 }
-

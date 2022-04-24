@@ -384,7 +384,7 @@ public class TextInputElement extends InputElement {
     Dim left = this.getContentBox().getRight().minus(suffixWidth);
     Dim top = this.getContentBox().getY();
     int color = this.disabledColor;
-    this.font.drawString(this.suffix, (int)left.getGui(), (int)top.getGui(), color);
+    this.font.drawString(this.suffix, left.getGui(), top.getGui(), color, false);
   }
 
   private void drawPlaceholder() {
@@ -393,9 +393,9 @@ public class TextInputElement extends InputElement {
     }
 
     Dim left = this.getContentBox().getX();
-    Dim top = this.getContentBox().getY().plus(gui(1)); // add 1 because for some reason italic text is shifted up a little
+    Dim top = this.getContentBox().getY();
     int color = this.disabledColor;
-    this.font.drawString("§o" + this.placeholder, (int)left.getGui(), (int)top.getGui(), color);
+    this.font.drawString("§o" + this.placeholder, left.getGui(), top.getGui(), color, false);
   }
 
   private void drawEditableText() {

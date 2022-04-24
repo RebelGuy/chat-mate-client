@@ -67,7 +67,7 @@ public class CounterModal extends ModalElement {
             new SideBySideElement(context, this)
                 .addElement(1,
                     new LabelElement(context, this)
-                        .setText("Start:")
+                        .setText("Increment:")
                         .setOverflow(TextOverflow.TRUNCATE)
                         .setVerticalAlignment(VerticalAlignment.MIDDLE)
                 ).addElement(0.75f,
