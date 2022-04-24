@@ -15,15 +15,17 @@ import net.minecraft.client.gui.FontRenderer;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementBase.*;
 import static dev.rebel.chatmate.gui.Interactive.ElementBase.getBorderBox;
 
 public class ElementHelpers {
+
   /** Traverses the tree from the parent, keeping track of the path, and picking the first child whose bounds intersect the given point.
    * Returns if a child has no children of its own, or if none of the children intersect the point. */
-  public static List<IElement> getElementsAtPoint(IElement parent, DimPoint point) {
+  public static List<IElement> getElementsAtPointStrict(IElement parent, DimPoint point) {
     List<IElement> result = Collections.list(parent);
 
     while (true) {
@@ -35,7 +37,7 @@ public class ElementHelpers {
       // reversing the order of the children ensures that, if two children are drawn at the same position, the one that
       // was most likely added last is picked. in the future, we could use z indexes for a more robust solution.
       boolean foundMatch = false;
-      for (IElement child : Collections.reverse(children)) {
+      for (IElement child : orderDescendingByZIndex(Collections.reverse(children))) {
         if (child.getVisible() && getCollisionBox(child).checkCollision(point)) {
           result.add(child);
           foundMatch = true;
@@ -48,6 +50,51 @@ public class ElementHelpers {
         return result;
       }
     }
+  }
+
+  /** Returns the list of elements present on the highest z-layer, in inverse order in which they appear in the list of children of their parent. */
+  public static List<IElement> raycast(IElement parent, DimPoint point) {
+    List<IElement> elements = getElementsAtPoint(parent, point);
+    if (elements.size() == 0) {
+      return elements;
+    }
+
+    int zIndex = Collections.first(elements).getEffectiveZIndex();
+    return Collections.filter(elements, el -> el.getEffectiveZIndex() == zIndex);
+  }
+
+
+  /** Returns all elements at the given point, ordered from the largest zIndex to the lowest, then in reverse by their position within the list of children of their parent. */
+  public static List<IElement> getElementsAtPoint(IElement parent, DimPoint point) {
+    List<IElement> children = getAllChildren(parent);
+    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getBox() != null && getCollisionBox(el).checkCollision(point));
+    return orderDescendingByZIndex(Collections.reverse(childrenAtPoint));
+  }
+
+  /** Returns all elements at the given point, ordered from the largest zIndex to the lowest, then in the original position within the list of children of their parent. */
+  public static List<IElement> getElementsAtPointInverted(IElement parent, DimPoint point) {
+    List<IElement> children = getAllChildren(parent);
+    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getBox() != null && getCollisionBox(el).checkCollision(point));
+    return orderDescendingByZIndex(childrenAtPoint);
+  }
+
+  public static List<IElement> getAllChildren(IElement parent) {
+    List<IElement> result = Collections.list(parent);
+
+    List<IElement> children = parent.getChildren();
+    if (Collections.any(children)) {
+      children.forEach(el -> result.addAll(getAllChildren(el)));
+    }
+
+    return result;
+  }
+
+  /** For each layer, from highest to lowest, returns the element in the same order as they appear in the list of children of their parents. */
+  public static List<IElement> orderDescendingByZIndex(List<IElement> orderedElements) {
+    // reverse ordered elements since we will be reversing the final list again
+    Map<Integer, List<IElement>> groups = Collections.groupBy(Collections.reverse(orderedElements), IElement::getEffectiveZIndex);
+    List<IElement> orderedAscending = Collections.collapseGroups(groups, g -> g);
+    return Collections.reverse(orderedAscending);
   }
 
   public static @Nullable List<IElement> findElementFromChild(IElement child, IElement toFind) {
@@ -153,6 +200,7 @@ public class ElementHelpers {
     lines.add("Margin: " + element.getMargin().toString());
     lines.add("Hor Algn: " + element.getHorizontalAlignment());
     lines.add("Vert Algn: " + element.getVerticalAlignment());
+    lines.add(String.format("Z-index: %d (%d)", element.getZIndex(), element.getEffectiveZIndex()));
     lines.add("");
 
     List<IElement> siblings = parent == null ? Collections.list() : Collections.filter(Collections.without(parent.getChildren(), element), IElement::getVisible);

@@ -136,6 +136,9 @@ public abstract class ElementBase implements IElement {
       case MOUSE_SCROLL:
         this.onCaptureMouseScroll((IEvent<MouseEventData.In>)event);
         break;
+      case MOUSE_ENTER:
+        this.onCaptureMouseEnter((IEvent<MouseEventData.In>)event);
+        break;
       case KEY_DOWN:
         this.onCaptureKeyDown((IEvent<KeyboardEventData.In>)event);
         break;
@@ -178,7 +181,12 @@ public abstract class ElementBase implements IElement {
   public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {}
   public void onFocus(IEvent<FocusEventData> e) {}
   public void onBlur(IEvent<FocusEventData> e) {}
+  /** Target-only - this cannot be cancelled. */
   public void onMouseEnter(IEvent<MouseEventData.In> e) {}
+  /** The onCaptureMouseEnter event is special - if cancelled, all downstream elements to which we didn't get to yet
+   * will receive the MOUSE_EXIT event. */
+  public void onCaptureMouseEnter(IEvent<MouseEventData.In> e) {}
+  /** This doesn't bubble, it is target-only. there is no way to cancel this. */
   public void onMouseExit(IEvent<MouseEventData.In> e) {}
 
   @Override
@@ -216,6 +224,11 @@ public abstract class ElementBase implements IElement {
   // since it is easy to forget to call `super.setBox`, make a onBoxSet() virtual method instead.
   @Override
   public void setBox(DimRect box) {
+    this.box = box;
+  }
+
+  /** Directly sets the underlying box of the element, bypassing any hooks. */
+  protected final void setBoxUnsafe(DimRect box) {
     this.box = box;
   }
 

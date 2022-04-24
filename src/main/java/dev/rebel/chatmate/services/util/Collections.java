@@ -79,6 +79,26 @@ public class Collections {
     return items.stream().sorted(Comparator.comparingDouble(valueGetter)).collect(Collectors.toList());
   }
 
+  public static <T, G> Map<G, List<T>> groupBy(List<T> items, Function<T, G> groupGetter) {
+    Map<G, List<T>> groups = new HashMap<>();
+    for (T item : items) {
+      G thisGroup = groupGetter.apply(item);
+      if (!groups.containsKey(thisGroup)) {
+        groups.put(thisGroup, new ArrayList<>());
+      }
+      groups.get(thisGroup).add(item);
+    }
+    return groups;
+  }
+
+  public static <T, G> List<T> collapseGroups(Map<G, List<T>> groups, ToDoubleFunction<G> sorter) {
+    List<T> list = new ArrayList<>();
+    for (G group : Collections.orderBy(Collections.list(groups.keySet()), sorter)) {
+      list.addAll(groups.get(group));
+    }
+    return list;
+  }
+
   public static <T, R> List<R> map(List<T> items, Function<T, R> mapper) {
     // dumb
     return items.stream().map(mapper).collect(Collectors.toList());
@@ -120,9 +140,25 @@ public class Collections {
 
   public static @Nullable <T> T first(@Nullable List<T> list) { return (list == null || list.size() == 0) ? null : list.get(0); }
 
+  public static @Nullable <T> T first(@Nullable List<T> list, Predicate<T> predicate) {
+    if (list == null || list.size() == 0) {
+      return null;
+    } else {
+      return Collections.first(Collections.filter(list, predicate));
+    }
+  }
+
   public static @Nullable <T> T last(@Nullable List<T> list) { return (list == null || list.size() == 0) ? null : list.get(list.size() - 1); }
 
   public static <T> boolean any(@Nullable List<T> list) { return list != null && list.size() != 0; }
+
+  public static <T> boolean any(@Nullable List<T> list, Predicate<T> predicate) {
+    if (list == null || list.size() == 0) {
+      return false;
+    } else {
+      return Collections.filter(list, predicate).size() > 0;
+    }
+  }
 
   public static <T> int size(@Nullable List<T> list) { return list == null ? 0 : list.size(); }
 

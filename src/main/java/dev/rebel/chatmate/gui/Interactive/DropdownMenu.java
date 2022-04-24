@@ -10,6 +10,7 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import scala.Tuple2;
 
@@ -37,6 +38,9 @@ public class DropdownMenu extends ContainerElement {
   private DimPoint optionsSize;
   private @Nullable Anchor anchor;
   private SizingMode sizingMode;
+
+  /** The full box of the visible dropdown menu. */
+  private DimRect dropdownBox;
 
   public DropdownMenu(InteractiveContext context, IElement anchor) {
     super(context, anchor, LayoutMode.BLOCK);
@@ -88,15 +92,55 @@ public class DropdownMenu extends ContainerElement {
 
   @Override
   public void onCaptureMouseDown(IEvent<In> e) {
-    e.stopPropagation();
+    DimPoint point = e.getData().mousePositionData.point;
+    if (!this.expanded || getCollisionBox(this.anchorElement).checkCollision(point)) {
+      return;
+    }
 
     for (Tuple2<LabelElement, Runnable> option : this.options) {
       LabelElement label = option._1;
-      if (label.getContentBox().checkCollision(e.getData().mousePositionData.point)) {
+      if (label.getCollisionBox().checkCollision(point)) {
         option._2.run();
-        this.setExpanded(false);
-        return;
+        break;
       }
+    }
+
+    this.setExpanded(false);
+    e.stopPropagation();
+  }
+
+  @Override
+  public void onCaptureMouseMove(IEvent<In> e) {
+    if (this.expanded && !getCollisionBox(this.anchorElement).checkCollision(e.getData().mousePositionData.point)) {
+      e.stopPropagation();
+    }
+  }
+
+  @Override
+  public void onCaptureMouseEnter(IEvent<In> e) {
+    if (this.expanded && !getCollisionBox(this.anchorElement).checkCollision(e.getData().mousePositionData.point)) {
+      e.stopPropagation();
+    }
+  }
+
+  @Override
+  public void onCaptureMouseScroll(IEvent<In> e) {
+    if (this.expanded && !getCollisionBox(this.anchorElement).checkCollision(e.getData().mousePositionData.point)) {
+      e.stopPropagation();
+    }
+  }
+
+  @Override
+  public void onCaptureMouseUp(IEvent<In> e) {
+    if (this.expanded && !getCollisionBox(this.anchorElement).checkCollision(e.getData().mousePositionData.point)) {
+      e.stopPropagation();
+    }
+  }
+
+  @Override
+  public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {
+    if (this.expanded) {
+      e.stopPropagation();
     }
   }
 
@@ -120,6 +164,11 @@ public class DropdownMenu extends ContainerElement {
 
   @Override
   public void setBox(DimRect box) {
+    if (!this.expanded) {
+      super.setBox(box);
+      return;
+    }
+
     // since we have provided a size of zero, we need to override the box completely
     Anchor effectiveAnchor;
     if (this.anchor == null) {
@@ -150,8 +199,20 @@ public class DropdownMenu extends ContainerElement {
     }
     Dim y = this.anchorElement.getBox().getBottom();
 
-    box = new DimRect(new DimPoint(x, y), super.getFullBoxSize(size));
-    super.setBox(box);
+    this.dropdownBox = new DimRect(new DimPoint(x, y), super.getFullBoxSize(size));
+    super.setBox(this.dropdownBox); // the "official" box for rendering the content
+    super.setBoxUnsafe(this.context.dimFactory.getMinecraftRect()); // hack: stop any input events from propagating to lower elements
+  }
+
+  private void highlightLabelAtPosition(DimPoint position) {
+    for (Tuple2<LabelElement, Runnable> option : this.options) {
+      LabelElement label = option._1;
+      if (label.getContentBox().checkCollision(position)) {
+        label.setColour(Colour.LTGREY);
+      } else {
+        label.setColour(Colour.WHITE);
+      }
+    }
   }
 
   @Override
@@ -164,8 +225,10 @@ public class DropdownMenu extends ContainerElement {
     Dim borderSize = Dim.max(this.getBorder().left, this.getBorder().right, this.getBorder().top, this.getBorder().bottom);
     Dim cornerRadius = gui(0);
     Dim shadowDistance = gui(1);
-    RendererHelpers.drawRect(0, this.getPaddingBox(), background, borderSize, Colour.BLACK, cornerRadius, shadowDistance);
+    DimRect paddingBox = super.getMargin().plus(super.getBorder()).applySubtractive(this.dropdownBox);
+    RendererHelpers.drawRect(0, paddingBox, background, borderSize, Colour.BLACK, cornerRadius, shadowDistance);
 
+    this.highlightLabelAtPosition(this.context.mousePosition);
     super.renderElement();
   }
 

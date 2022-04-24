@@ -24,6 +24,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
+import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -47,7 +48,9 @@ public class InteractiveScreen extends Screen implements IElement {
   private boolean requiresRecalculation = true;
 
   private IElement mainElement = null;
-  private Set<IElement> elementsUnderCursor = new HashSet<>();
+  private List<IElement> elementsUnderCursor = new ArrayList<>();
+  private IElement blockingElement = null;
+  private List<IElement> blockedElementsUnderCursor = new ArrayList<>();  // contains the list of elements that this element blocks, if any
   private boolean debugModeEnabled = false;
   private boolean debugElementSelected = false;
 
@@ -164,7 +167,7 @@ public class InteractiveScreen extends Screen implements IElement {
 
     // if we are debugging and are in "discovery mode", select the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
-      IElement element = Collections.last(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
+      IElement element = Collections.first(ElementHelpers.raycast(this, in.mousePositionData.point));
       if (element != null) {
         this.debugElementSelected = true;
         this.context.debugElement = element;
@@ -187,7 +190,7 @@ public class InteractiveScreen extends Screen implements IElement {
 
     // if we are debugging and haven't selected an element, enter "discovery mode" by temp-debugging the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
-      IElement element = Collections.last(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
+      IElement element = Collections.first(ElementHelpers.raycast(this, in.mousePositionData.point));
       if (element != null) {
         this.context.debugElement = element;
         return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
@@ -195,19 +198,46 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     // fire MOUSE_ENTER/MOUSE_EXIT events
-    Set<IElement> newElements = new HashSet<>(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
-    Set<IElement> previousElements = this.elementsUnderCursor;
+    // if an element blocks the sequence propagation, then the blocked elements will be treated as if for a MOUSE_EXIT event.
+    // they will be added back as soon as the blocking element is no longer included in the new elements.
+    List<IElement> newElements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
+    List<IElement> newOrExistingEntered = new ArrayList<>();
+    List<IElement> previousElements = this.elementsUnderCursor;
+    List<IElement> blocked = this.blockingElement != null && newElements.contains(this.blockingElement) ? this.blockedElementsUnderCursor : new ArrayList<>();
+    List<IElement> newBlocked = new ArrayList<>();
+    IElement newBlocking = null;
+    for (IElement newElement : newElements) {
+      boolean isBlocked = Collections.any(blocked, el -> el == newElement);
+      if (!isBlocked) {
+        newOrExistingEntered.add(newElement);
+        InteractiveEvent<MouseEventData.In> event = new InteractiveEvent<>(EventPhase.CAPTURE, in, newElement);
+        newElement.onEvent(EventType.MOUSE_ENTER, event);
+
+        // go as far as we can or until propagation has stopped
+        // all remaining elements are now blocked
+        if (event.stoppedPropagation) {
+          newBlocked = Collections.filter(newElements, el -> !newOrExistingEntered.contains(el));
+          newBlocking = newElement;
+          break;
+        }
+      }
+    }
     for (IElement prevElement : previousElements) {
-      if (!newElements.contains(prevElement)) {
+      if (!newOrExistingEntered.contains(prevElement)) {
+        // state change from entered to exited
         prevElement.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, prevElement));
       }
     }
-    for (IElement newElement : newElements) {
+    for (IElement newElement : Collections.reverse(newOrExistingEntered)) { // reverse
       if (!previousElements.contains(newElement)) {
+        // state change from exited to entered
         newElement.onEvent(EventType.MOUSE_ENTER, new InteractiveEvent<>(EventPhase.TARGET, in, newElement));
       }
     }
-    this.elementsUnderCursor = newElements;
+
+    this.elementsUnderCursor = newOrExistingEntered;
+    this.blockedElementsUnderCursor = newBlocked;
+    this.blockingElement = newBlocking;
 
     this.recalculateLayout();
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_MOVE, in);

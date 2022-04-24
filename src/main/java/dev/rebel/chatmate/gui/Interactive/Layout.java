@@ -59,6 +59,16 @@ public class Layout {
 
     public Dim getExtendedHeight() { return this.top.plus(this.bottom); }
 
+    /** Creates an extension that, when applied additively to the first rect, will result in the second rect. */
+    public static RectExtension extendTo(DimRect from, DimRect to) {
+      return new RectExtension(
+          from.getX().minus(to.getX()),
+          to.getRight().minus(from.getRight()),
+          from.getY().minus(to.getY()),
+          to.getBottom().minus(from.getBottom())
+      );
+    }
+
     @Override
     public String toString() {
       return String.format("l=%s, r=%s, t=%s, b=%s", this.left.toString(), this.right.toString(), this.top.toString(), this.bottom.toString());

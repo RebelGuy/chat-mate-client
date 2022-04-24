@@ -115,8 +115,8 @@ public class ElementReference implements IElement {
       this.underlyingElement.render();
     }
 
-    if (this.context.debugElement == this) {
-      ElementHelpers.renderDebugInfo(this.underlyingElement, this.context);
+    if (this.context.debugElement == this && this.underlyingElement != null) {
+      this.context.debugElement = this.underlyingElement;
     }
   }
 
