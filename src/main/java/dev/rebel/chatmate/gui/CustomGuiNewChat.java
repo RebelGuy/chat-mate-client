@@ -546,7 +546,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     int visibleLines = Math.min(this.getLineCount(), this.chatLines.size());
 
     int maxX = this.getLineWidth();
-    int maxY = this.minecraft.fontRendererObj.FONT_HEIGHT * visibleLines + visibleLines + 1;
+    int maxY = this.minecraft.fontRendererObj.FONT_HEIGHT * visibleLines + 1;
     if (mappedX > maxX || mappedY > maxY) {
       return null;
     }
