@@ -5,9 +5,11 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
@@ -29,6 +31,7 @@ public class ContextMenuService {
   private final CountdownHandler countdownHandler;
   private final CounterHandler counterHandler;
   private final MinecraftProxyService minecraftProxyService;
+  private final CursorService cursorService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -42,7 +45,8 @@ public class ContextMenuService {
                             SoundService soundService,
                             CountdownHandler countdownHandler,
                             CounterHandler counterHandler,
-                            MinecraftProxyService minecraftProxyService) {
+                            MinecraftProxyService minecraftProxyService,
+                            CursorService cursorService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -56,6 +60,7 @@ public class ContextMenuService {
     this.countdownHandler = countdownHandler;
     this.counterHandler = counterHandler;
     this.minecraftProxyService = minecraftProxyService;
+    this.cursorService = cursorService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -120,12 +125,15 @@ public class ContextMenuService {
   }
 
   private InteractiveScreen.InteractiveContext createInteractiveContext() {
-    return new InteractiveScreen.InteractiveContext(this.mouseEventService,
+    return new InteractiveScreen.InteractiveContext(new ScreenRenderer(),
+        this.mouseEventService,
         this.keyboardEventService,
         this.dimFactory,
         this.minecraft,
         this.minecraft.fontRendererObj,
         this.clipboardService,
-        this.soundService);
+        this.soundService,
+        this.cursorService,
+        minecraftProxyService);
   }
 }
