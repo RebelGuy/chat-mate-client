@@ -352,7 +352,7 @@ public class ManagePunishmentsModal extends ModalElement {
 
     private final LabelElement titleLabel;
     private final TextInputElement punishmentReasonInputElement;
-    private final @Nullable IElement timeElements; // only for timeouts
+    private final @Nullable IElement timeElements; // only for timeouts and mutes
     private final CheckboxInputElement clearChatCheckbox;
 
     private @Nullable Float days = 0.0f;
@@ -382,7 +382,7 @@ public class ManagePunishmentsModal extends ModalElement {
           .setMargin(new RectExtension(ZERO, gui(4)))
           .cast();
 
-      if (this.type == PunishmentType.TIMEOUT) {
+      if (this.type == PunishmentType.TIMEOUT || this.type == PunishmentType.MUTE) {
         this.timeElements = new SideBySideElement(context, this)
             .setElementPadding(gui(10))
             .addElement(1,
@@ -394,7 +394,8 @@ public class ManagePunishmentsModal extends ModalElement {
                             .setVerticalAlignment(VerticalAlignment.MIDDLE)
                     ).addElement(
                         new LabelElement(context, this)
-                            .setText("(must be at least 5 minutes)")
+                            .setText(this.type == PunishmentType.TIMEOUT ? "(must be at least 5 minutes)"
+                                    : String.format("(leave blank for indefinite %s)", this.punishmentType()))
                             .setColour(Colour.LTGREY)
                             .setFontScale(0.5f)
                             .setOverflow(TextOverflow.TRUNCATE)
@@ -452,7 +453,7 @@ public class ManagePunishmentsModal extends ModalElement {
     }
 
     private Boolean onValidate() {
-      if (this.type != PunishmentType.TIMEOUT) {
+      if (this.type != PunishmentType.TIMEOUT && this.type != PunishmentType.MUTE) {
         return true;
       }
 
@@ -461,7 +462,8 @@ public class ManagePunishmentsModal extends ModalElement {
       }
 
       int totalSeconds = this.getTotalSeconds();
-      return totalSeconds >= MIN_DURATION_TIMEOUT_SECONDS;
+      int minSeconds = this.type == PunishmentType.TIMEOUT ? MIN_DURATION_TIMEOUT_SECONDS : 0;
+      return totalSeconds >= minSeconds;
     }
 
     private int getTotalSeconds() {
@@ -508,7 +510,8 @@ public class ManagePunishmentsModal extends ModalElement {
         TimeoutUserRequest request = new TimeoutUserRequest(userId, message, durationSeconds);
         ManagePunishmentsModal.this.punishmentEndpointProxy.timeoutUserAsync(request, r -> this.onPunishmentCreated(r.newPunishment, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
       } else if (this.type == PunishmentType.MUTE) {
-        MuteUserRequest request = new MuteUserRequest(userId, message);
+        int durationSeconds = this.getTotalSeconds();
+        MuteUserRequest request = new MuteUserRequest(userId, message, durationSeconds);
         ManagePunishmentsModal.this.punishmentEndpointProxy.muteUserAsync(request, r -> this.onPunishmentCreated(r.newPunishment, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
       } else {
         throw new RuntimeException("Cannot create invalid punishment type " + this.punishmentType());
