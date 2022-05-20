@@ -5,7 +5,7 @@ import dev.rebel.chatmate.models.publicObjects.PublicObject;
 
 public class PublicChatMateEvent extends PublicObject {
   @Override
-  public Integer GetExpectedSchema() { return 2; }
+  public Integer GetExpectedSchema() { return 3; }
 
   public ChatMateEventType type;
   public Long timestamp;
