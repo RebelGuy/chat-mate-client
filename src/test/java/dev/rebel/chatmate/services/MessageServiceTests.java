@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
+import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import net.minecraft.client.gui.FontRenderer;
@@ -63,7 +64,10 @@ public class MessageServiceTests {
   @Test
   public void getUserComponent_UsesTrimmedName() {
     PublicUser user = new PublicUser() {{
-      userInfo = new PublicChannelInfo() {{ channelName = " Test channel ! "; }};
+      userInfo = new PublicChannelInfo() {{
+        channelName = " Test channel ! ";
+        activePunishments = new PublicPunishment[0];
+      }};
     }};
 
     IChatComponent result = this.messageService.getUserComponent(user);
@@ -76,12 +80,14 @@ public class MessageServiceTests {
     when(this.fontRenderer.getStringWidth("x")).thenReturn(0);
     PublicUser user = new PublicUser() {{
       id = 5;
-      userInfo = new PublicChannelInfo() {{ channelName = "x"; }};
+      userInfo = new PublicChannelInfo() {{
+        channelName = "x";
+        activePunishments = new PublicPunishment[0];
+      }};
     }};
 
     IChatComponent result = this.messageService.getUserComponent(user);
 
     Assert.assertEquals("User 5", result.getUnformattedText());
-
   }
 }

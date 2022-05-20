@@ -12,6 +12,7 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
 import dev.rebel.chatmate.services.events.models.NewTwitchFollowerEventData;
+import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
@@ -21,6 +22,7 @@ import net.minecraft.util.*;
 import javax.annotation.Nullable;
 import java.net.ConnectException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static dev.rebel.chatmate.models.Styles.*;
@@ -65,6 +67,13 @@ public class McChatService {
       return;
     }
 
+    if (item.author.activePunishments.length > 0) {
+      String name = item.author.userInfo.channelName;
+      String punishments = String.join(",", Collections.map(Collections.list(item.author.activePunishments), p -> p.type.toString()));
+      this.logService.logDebug(this, String.format("Ignoring chat message from user '%s' because of the following active punishments: %s", name, punishments));
+      return;
+    }
+
     try {
       Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
@@ -87,7 +96,7 @@ public class McChatService {
         this.soundService.playDing();
       }
     } catch (Exception e) {
-      this.logService.logError(this, String.format("Could not print YouTube chat message with id '%s': %s", item.id, e.getMessage()));
+      this.logService.logError(this, String.format("Could not print %s chat message with id '%s': %s", item.platform, item.id, e.getMessage()));
     }
   }
 

@@ -6,9 +6,12 @@ import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
+import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
+import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment.PunishmentType;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
+import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
 import net.minecraft.client.gui.FontRenderer;
@@ -259,6 +262,21 @@ public class MessageService {
     // make sure we don't try to print an empty user name
     if (this.minecraftProxyService.getChatFontRenderer().getStringWidth(unstyledName) == 0) {
       unstyledName = "User " + user.id;
+    }
+
+    for (PublicPunishment punishment : user.activePunishments) {
+      String prefix;
+      if (punishment.type == PunishmentType.MUTE) {
+        prefix = "\uD83D\uDCE2"; // 📢
+      } else if (punishment.type == PunishmentType.TIMEOUT) {
+        prefix = "\uD83D\uDD52"; // 🕒
+      } else if (punishment.type == PunishmentType.BAN) {
+        prefix = "\uD83D\uDEAB"; // 🚫
+      } else {
+        throw EnumHelpers.<PunishmentType>assertUnreachable(punishment.type);
+      }
+
+      unstyledName = prefix + unstyledName;
     }
 
     return new ContainerChatComponent(styledText(unstyledName, style), user);
