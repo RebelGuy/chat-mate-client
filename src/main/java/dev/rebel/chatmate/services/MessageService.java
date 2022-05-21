@@ -10,6 +10,7 @@ import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
 import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment.PunishmentType;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers;
@@ -121,7 +122,7 @@ public class MessageService {
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
-    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE)));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, entry.user.userInfo.channelName, true)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
@@ -131,12 +132,23 @@ public class MessageService {
     return new PrecisionChatComponentText(list);
   }
 
-  public IChatComponent getUserMessage(PublicUser user, int messageWidth) {
-    PrecisionLayout layout = new PrecisionLayout(new PrecisionValue(8), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
-    IChatComponent component = this.getUserComponent(user);
+  public IChatComponent getChannelNamesMessage(PublicUserNames userNames, int messageWidth) {
+    // since different users may share the same channel name, it is helpful to also show each user's current level
+    FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
+    assert fontRenderer != null;
+    String level = String.valueOf(userNames.user.levelInfo.level);
+    int levelNumberWidth = fontRenderer.getStringWidth("444");
+    PrecisionLayout levelLayout = new PrecisionLayout(new PrecisionValue(4), new PrecisionValue(levelNumberWidth), PrecisionAlignment.RIGHT);
+
+    // todo: at the moment we are only showing the default channel name, but in the future it is possible that a single user
+    // has multiple channels so then we must print a list
+    PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(4 + levelNumberWidth + 4), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
+    ChatStyle style = userNames.youtubeChannelNames.length > 0 ? YOUTUBE_CHANNEL_STYLE : TWITCH_CHANNEL_STYLE;
+    IChatComponent component = this.getUserComponent(userNames.user, style, userNames.user.userInfo.channelName, true);
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
-    list.add(new Tuple2<>(layout, component));
+    list.add(new Tuple2<>(levelLayout, styledText(level, getLevelStyle(userNames.user.levelInfo.level))));
+    list.add(new Tuple2<>(nameLayout, component));
     return new PrecisionChatComponentText(list);
   }
 
@@ -252,11 +264,11 @@ public class MessageService {
   }
 
   public IChatComponent getUserComponent(PublicUser user) {
-    return this.getUserComponent(user, VIEWER_NAME_STYLE);
+    return this.getUserComponent(user, VIEWER_NAME_STYLE, user.userInfo.channelName, true);
   }
 
-  public IChatComponent getUserComponent(PublicUser user, ChatStyle style) {
-    ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(user.userInfo.channelName);
+  public IChatComponent getUserComponent(PublicUser user, ChatStyle style, String channelName, boolean showPunishmentPrefix) {
+    ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(channelName);
     String unstyledName = extractedFormatting.unformattedText.trim();
 
     // make sure we don't try to print an empty user name
@@ -264,19 +276,21 @@ public class MessageService {
       unstyledName = "User " + user.id;
     }
 
-    for (PublicPunishment punishment : user.activePunishments) {
-      String prefix;
-      if (punishment.type == PunishmentType.MUTE) {
-        prefix = "\uD83D\uDCE2"; // 📢
-      } else if (punishment.type == PunishmentType.TIMEOUT) {
-        prefix = "\uD83D\uDD52"; // 🕒
-      } else if (punishment.type == PunishmentType.BAN) {
-        prefix = "\uD83D\uDEAB"; // 🚫
-      } else {
-        throw EnumHelpers.<PunishmentType>assertUnreachable(punishment.type);
-      }
+    if (showPunishmentPrefix) {
+      for (PublicPunishment punishment : user.activePunishments) {
+        String prefix;
+        if (punishment.type == PunishmentType.MUTE) {
+          prefix = "\uD83D\uDCE2"; // 📢
+        } else if (punishment.type == PunishmentType.TIMEOUT) {
+          prefix = "\uD83D\uDD52"; // 🕒
+        } else if (punishment.type == PunishmentType.BAN) {
+          prefix = "\uD83D\uDEAB"; // 🚫
+        } else {
+          throw EnumHelpers.<PunishmentType>assertUnreachable(punishment.type);
+        }
 
-      unstyledName = prefix + unstyledName;
+        unstyledName = prefix + unstyledName;
+      }
     }
 
     return new ContainerChatComponent(styledText(unstyledName, style), user);

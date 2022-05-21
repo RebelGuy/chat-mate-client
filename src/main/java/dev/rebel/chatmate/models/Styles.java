@@ -10,6 +10,8 @@ import java.util.function.Supplier;
 public class Styles {
   public static final ChatStyle VIEWER_RANK_STYLE = new ChatStyle().setColor(EnumChatFormatting.DARK_PURPLE).setBold(true);
   public static final ChatStyle VIEWER_NAME_STYLE = new ChatStyle().setColor(EnumChatFormatting.YELLOW).setBold(false);
+  public static final ChatStyle YOUTUBE_CHANNEL_STYLE = new ChatStyle().setColor(EnumChatFormatting.RED).setBold(false);
+  public static final ChatStyle TWITCH_CHANNEL_STYLE = new ChatStyle().setColor(EnumChatFormatting.DARK_PURPLE).setBold(false);
   public static final ChatStyle YT_CHAT_MESSAGE_TEXT_STYLE = new ChatStyle().setColor(EnumChatFormatting.WHITE);
   public static final ChatStyle YT_CHAT_MESSAGE_EMOJI_STYLE = new ChatStyle().setColor(EnumChatFormatting.GRAY);
   public static final ChatStyle YT_CHAT_MESSAGE_CHEER_STYLE = new ChatStyle().setColor(EnumChatFormatting.GRAY);

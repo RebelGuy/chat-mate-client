@@ -14,15 +14,13 @@ import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollDa
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import dev.rebel.chatmate.services.events.models.Tick;
+import dev.rebel.chatmate.services.util.Collections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import org.lwjgl.input.Mouse;
 
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public class MouseEventService extends EventServiceBase<Events> {
@@ -164,7 +162,10 @@ public class MouseEventService extends EventServiceBase<Events> {
   /** Returns true if the event has been swallowed. */
   private boolean dispatchEvent(Events event, MousePositionData positionData, MouseButtonData buttonData, @Nullable MouseScrollData scrollData) {
     boolean handled = false;
-    for (EventHandler<In, Out, Options> handler : this.getListeners(event, MouseEventData.class)) {
+
+    // to prevent collection concurrency issues (a listener may unsubscribe itself from the list), we first copy the list
+    List<EventHandler<In, Out, Options>> listeners = Collections.list(this.getListeners(event, MouseEventData.class));
+    for (EventHandler<In, Out, Options> handler : listeners) {
       Options options = handler.options;
       if (options.ignoreHandled && handled) {
         continue;
