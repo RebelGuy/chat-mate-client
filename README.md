@@ -60,6 +60,9 @@ Now, by listening to the chat render events fired by `GuiIngameForge`, we can pr
 behaviour (i.e. `cancel` the event) and use `CustomGuiNewChat.drawChat()` instead. As a result, the `GuiIngameForge`
 never has a chance to interact with its private `GuiNewChat` object (which remains to be the default implementation).
 
+## Misc
+List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
+
 # Change Log
 ## v1.12 - The Twitch Update [1/4/2022]
 - Added configuration for identifying platform-specific information

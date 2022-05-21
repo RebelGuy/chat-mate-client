@@ -280,11 +280,11 @@ public class MessageService {
       for (PublicPunishment punishment : user.activePunishments) {
         String prefix;
         if (punishment.type == PunishmentType.MUTE) {
-          prefix = "\uD83D\uDCE2"; // 📢
+          prefix = "♪ ";
         } else if (punishment.type == PunishmentType.TIMEOUT) {
-          prefix = "\uD83D\uDD52"; // 🕒
+          prefix = "◔ ";
         } else if (punishment.type == PunishmentType.BAN) {
-          prefix = "\uD83D\uDEAB"; // 🚫
+          prefix = "☠ ";
         } else {
           throw EnumHelpers.<PunishmentType>assertUnreachable(punishment.type);
         }

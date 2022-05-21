@@ -188,7 +188,7 @@ public class ManagePunishmentsModal extends ModalElement {
           new LabelElement(this.context, this).setText(dateStr).setOverflow(TextOverflow.TRUNCATE).setFontScale(FONT_SCALE).setHorizontalAlignment(HorizontalAlignment.LEFT),
           new LabelElement(this.context, this).setText(toSentenceCase(punishment.type.toString())).setOverflow(TextOverflow.TRUNCATE).setFontScale(FONT_SCALE).setHorizontalAlignment(HorizontalAlignment.LEFT),
           new LabelElement(this.context, this).setText(punishment.message).setOverflow(TextOverflow.SPLIT).setFontScale(FONT_SCALE).setHorizontalAlignment(HorizontalAlignment.LEFT).setSizingMode(SizingMode.FILL),
-          new LabelElement(this.context, this).setText(punishment.expirationTime != null ? "Yes" : "No").setOverflow(TextOverflow.TRUNCATE).setFontScale(FONT_SCALE),
+          new LabelElement(this.context, this).setText(punishment.expirationTime == null ? "Yes" : "No").setOverflow(TextOverflow.TRUNCATE).setFontScale(FONT_SCALE),
           new LabelElement(this.context, this).setText(punishment.isActive ? "Yes" : "No").setOverflow(TextOverflow.TRUNCATE).setFontScale(FONT_SCALE)
       );
     }
@@ -208,6 +208,7 @@ public class ManagePunishmentsModal extends ModalElement {
     private final LabelElement titleLabel;
     private final @Nullable LabelElement statusLabel;
     private final SideBySideElement issuedAtElement;
+    private final SideBySideElement expiresAtElement;
     private final SideBySideElement messageElement;
     private final @Nullable SideBySideElement revokedAtElement;
     private final @Nullable SideBySideElement revokedMessageElement;
@@ -246,6 +247,24 @@ public class ManagePunishmentsModal extends ModalElement {
           .addElement(2, new LabelElement(context, this)
               .setText(dateToSecondAccuracy(punishment.issuedAt))
           ).cast();
+
+      String expirationText;
+      if (punishment.expirationTime == null) {
+        expirationText = "Never";
+      } else if (!punishment.isActive) {
+        expirationText = dateToSecondAccuracy(punishment.expirationTime);
+      } else {
+        String remaining = approximateDuration(punishment.expirationTime - punishment.issuedAt);
+        expirationText = String.format("%s (in %s)", dateToSecondAccuracy(punishment.expirationTime), remaining);
+      }
+
+      this.expiresAtElement = new SideBySideElement(context, this)
+          .setElementPadding(gui(4))
+          .addElement(1, new LabelElement(context, this)
+              .setText(punishment.isActive ? "Expires at:" : "Expired at:"))
+          .addElement(2, new LabelElement(context, this)
+              .setText(expirationText)
+          ).cast();
       this.messageElement = new SideBySideElement(context, this)
           .setElementPadding(gui(4))
           .addElement(1, new LabelElement(context, this)
@@ -256,7 +275,7 @@ public class ManagePunishmentsModal extends ModalElement {
           ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(8)))
           .cast();
 
-      if (punishment.revokedAt == null) { // todo: this is not quite right. once merged in, use the "isActive" property instead
+      if (punishment.isActive) {
         this.revokedAtElement = null;
         this.revokedMessageElement = null;
         this.revokePunishmentTextInputElement = new TextInputElement(context, this)
@@ -268,7 +287,7 @@ public class ManagePunishmentsModal extends ModalElement {
         ManagePunishmentsModal.this.onValidate = () -> true; // nothing to validate
         ManagePunishmentsModal.this.onSubmit = this::onRevokePunishment;
 
-      } else {
+      } else if (punishment.revokedAt != null) {
         this.revokedAtElement = new SideBySideElement(context, this)
             .setElementPadding(gui(4))
             .addElement(1, new LabelElement(context, this)
@@ -286,6 +305,14 @@ public class ManagePunishmentsModal extends ModalElement {
             ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(8)))
             .cast();
         this.revokePunishmentTextInputElement = null;
+        ManagePunishmentsModal.this.onValidate = () -> null;
+
+      } else {
+        // punishment has expired
+        this.revokedAtElement = null;
+        this.revokedMessageElement = null;
+        this.revokePunishmentTextInputElement = null;
+        ManagePunishmentsModal.this.onValidate = () -> null;
       }
     }
 
@@ -299,6 +326,7 @@ public class ManagePunishmentsModal extends ModalElement {
       super.addElement(this.titleLabel);
       super.addElement(this.statusLabel);
       super.addElement(this.issuedAtElement);
+      super.addElement(this.expiresAtElement);
       super.addElement(this.messageElement);
 
       super.addElement(this.revokedAtElement);
@@ -534,17 +562,23 @@ public class ManagePunishmentsModal extends ModalElement {
       callback.run();
       if (this.clearChatCheckbox.getChecked()) {
         super.context.minecraftProxyService.getChatGUI().deleteLine(line -> {
-          // thanks, Java
-          IChatComponent component = line.getChatComponent();
-          if (!(component instanceof ContainerChatComponent)) {
-            return false;
+          for (IChatComponent component : line.getChatComponent()) {
+            // thanks, Java
+            if (!(component instanceof ContainerChatComponent)) {
+              continue;
+            }
+            ContainerChatComponent container = (ContainerChatComponent)component;
+            if (!(container.data instanceof PublicUser)) {
+              continue;
+            }
+
+            // as it stands, this is a bit hacky because it doesn't necessarily remove ONLY stream messages, but for now it works.
+            // to make this more future-proof, we would need to add some kind of type/tag to Abstract Lines for categorising them.
+            PublicUser user = (PublicUser)container.data;
+            return Objects.equals(user.id, ManagePunishmentsModal.this.user.id);
           }
-          ContainerChatComponent container = (ContainerChatComponent) component;
-          if (!(container.data instanceof PublicUser)) {
-            return false;
-          }
-          PublicUser user = (PublicUser) container.data;
-          return Objects.equals(user.id, ManagePunishmentsModal.this.user.id);
+
+          return false;
         });
       }
       ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
