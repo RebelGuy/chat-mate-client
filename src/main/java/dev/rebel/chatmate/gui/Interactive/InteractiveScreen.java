@@ -107,7 +107,13 @@ public class InteractiveScreen extends Screen implements IElement {
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   private void recalculateLayout() {
-    if (this.mainElement == null || !this.requiresRecalculation && this.mainElement.getBox() != null) {
+    if (this.mainElement == null) {
+      return;
+    }
+
+    this.context.renderer._executeSideEffects();
+
+    if (!this.requiresRecalculation && this.mainElement.getBox() != null) {
       return;
     }
     this.requiresRecalculation = false;
@@ -127,6 +133,7 @@ public class InteractiveScreen extends Screen implements IElement {
     DimRect mainRect = ElementHelpers.alignElementInBox(mainSize, screenRect, this.mainElement.getHorizontalAlignment(), this.mainElement.getVerticalAlignment());
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
+    this.context.renderer._executeSideEffects();
   }
 
   @Override
@@ -139,7 +146,8 @@ public class InteractiveScreen extends Screen implements IElement {
 
     this.context.renderer.clear();
     this.mainElement.render();
-    this.context.renderer.execute();
+    this.context.renderer._executeRender();
+    this.context.renderer._executeSideEffects();
 
     if (this.context.debugElement != null) {
       ElementHelpers.renderDebugInfo(this.context.debugElement, this.context);
@@ -566,9 +574,11 @@ public class InteractiveScreen extends Screen implements IElement {
     // importantly, renderables within a layer are ordered
     private Map<Integer, List<Runnable>> collectedRenders;
     private Set<Runnable> completedRenders;
+    private final List<Runnable> sideEffects;
 
     public ScreenRenderer() {
       this.clear();
+      this.sideEffects = java.util.Collections.synchronizedList(new ArrayList<>());
     }
 
     public void clear() {
@@ -584,7 +594,13 @@ public class InteractiveScreen extends Screen implements IElement {
       this.collectedRenders.get(zIndex).add(onRender);
     }
 
-    public void execute() {
+    /** Waits until the current render or layout-calculation cycle is complete before running the specified side effect.
+     *May run the side effect immediately. Note that you will need to manually invalidate your size if required. */
+    public void runSideEffect(Runnable sideEffect) {
+      this.sideEffects.add(sideEffect);
+    }
+
+    public void _executeRender() {
       // we don't have all render methods of all elements initially, so it's not possible to render an element very early
       // that is supposed to be rendered on top of everything else. it works best when siblings have differing z indexes.
       //
@@ -604,6 +620,15 @@ public class InteractiveScreen extends Screen implements IElement {
       }
 
       this.clear();
+    }
+
+    public void _executeSideEffects() {
+      List<Runnable> copy;
+      synchronized (this.sideEffects) {
+        copy = Collections.list(this.sideEffects);
+        this.sideEffects.clear();
+      }
+      copy.forEach(Runnable::run);
     }
 
     private @Nullable Runnable getNextRenderable() {

@@ -12,9 +12,7 @@ import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.models.api.punishment.*;
-import dev.rebel.chatmate.models.api.punishment.BanUserResponse.BanUserResponseData;
 import dev.rebel.chatmate.models.api.punishment.GetPunishmentsResponse.GetPunishmentsResponseData;
-import dev.rebel.chatmate.models.api.punishment.UnbanUserResponse.UnbanUserResponseData;
 import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
 import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment.PunishmentType;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
@@ -90,6 +88,7 @@ public class ManagePunishmentsModal extends ModalElement {
     private final LabelElement titleLabel;
     private final ButtonElement createNewPunishmentButton;
     private final DropdownMenu createNewPunishmentDropdown;
+    private final WrapperElement listWrapper;
     private final ElementReference listReference;
 
     public PunishmentList(InteractiveContext context, IElement parent) {
@@ -118,9 +117,14 @@ public class ManagePunishmentsModal extends ModalElement {
       this.listReference = new ElementReference(context, this).setUnderlyingElement(
           new LabelElement(context, this)
               .setText("Loading punishments...")
-              .setOverflow(TextOverflow.SPLIT)
-              .setHorizontalAlignment(HorizontalAlignment.CENTRE)
+              .setFontScale(0.75f)
+              .setSizingMode(SizingMode.FILL)
+              .setAlignment(TextAlignment.CENTRE)
       );
+      this.listWrapper = new WrapperElement(context, this, this.listReference)
+          .setMargin(new RectExtension(ZERO, gui(6)))
+          .cast();
+
       ManagePunishmentsModal.this.punishmentEndpointProxy.getPunishmentsAsync(ManagePunishmentsModal.this.user.id, null, this::onPunishmentsLoaded, this::onPunishmentsLoadError);
     }
 
@@ -133,7 +137,7 @@ public class ManagePunishmentsModal extends ModalElement {
       super.addElement(this.titleLabel);
       super.addElement(this.createNewPunishmentButton);
       super.addElement(this.createNewPunishmentDropdown);
-      super.addElement(this.listReference);
+      super.addElement(this.listWrapper);
     }
 
     private void onPunishmentsLoadError(Throwable error) {
@@ -142,7 +146,10 @@ public class ManagePunishmentsModal extends ModalElement {
               .setText("Failed to load punishments: " + EndpointProxy.getApiErrorMessage(error))
               .setOverflow(TextOverflow.SPLIT)
               .setColour(Colour.RED)
-              .setHorizontalAlignment(HorizontalAlignment.CENTRE)
+              .setFontScale(0.75f)
+              .setMaxLines(5)
+              .setSizingMode(SizingMode.FILL)
+              .setAlignment(TextAlignment.CENTRE)
       );
     }
 
@@ -151,9 +158,9 @@ public class ManagePunishmentsModal extends ModalElement {
       if (getPunishmentsResponseData.punishments.length == 0) {
         element = new LabelElement(this.context, this)
             .setText("No punishments to show.")
-            .setOverflow(TextOverflow.SPLIT)
-            .setColour(Colour.RED)
-            .setHorizontalAlignment(HorizontalAlignment.CENTRE);
+            .setFontScale(0.75f)
+            .setSizingMode(SizingMode.FILL)
+            .setAlignment(TextAlignment.CENTRE);
       } else {
         element = new TableElement<PublicPunishment>(
             this.context,

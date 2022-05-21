@@ -32,17 +32,25 @@ public class ElementReference implements IElement {
     this.underlyingElement = null;
   }
 
+  /** Schedules the provided element to be set. Note that the element will not be updated until the current render cycle is complete.
+   * When accessing this method from the main thread, and outside the render() method, the new element can be assumed to have been set immediately. */
   public ElementReference setUnderlyingElement(IElement element) {
     if (this.underlyingElement == element) {
       return this;
     }
 
-    this.underlyingElement = element;
-    this.parent.onInvalidateSize();
+    // we don't set the underlying element here directly because it is entirely possible that the underlying element is set on another thread,
+    // so just tell the InteractiveScreen to recalculate layouts, and update the underlying element later
+    this.context.renderer.runSideEffect(() -> {
+      this.underlyingElement = element;
 
-    if (element != null) {
-      element.setParent(this.parent);
-    }
+      if (this.underlyingElement != null) {
+        this.underlyingElement.setParent(this.parent);
+      }
+
+      this.parent.onInvalidateSize();
+    });
+
     return this;
   }
 
