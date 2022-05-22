@@ -575,10 +575,12 @@ public class InteractiveScreen extends Screen implements IElement {
     private Map<Integer, List<Runnable>> collectedRenders;
     private Set<Runnable> completedRenders;
     private final List<Runnable> sideEffects;
+    private boolean sideEffectsInProgress;
 
     public ScreenRenderer() {
       this.clear();
       this.sideEffects = java.util.Collections.synchronizedList(new ArrayList<>());
+      this.sideEffectsInProgress = false;
     }
 
     public void clear() {
@@ -595,9 +597,16 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     /** Waits until the current render or layout-calculation cycle is complete before running the specified side effect.
-     *May run the side effect immediately. Note that you will need to manually invalidate your size if required. */
+     * May run the side effect immediately. Note that you will need to manually invalidate your size if required. */
     public void runSideEffect(Runnable sideEffect) {
-      this.sideEffects.add(sideEffect);
+      synchronized (this.sideEffects) {
+        if (this.sideEffectsInProgress) {
+          // it is possible that running a side effect causes another side effect to be run - we can safely run it immediately
+          sideEffect.run();
+        } else {
+          this.sideEffects.add(sideEffect);
+        }
+      }
     }
 
     public void _executeRender() {
@@ -623,12 +632,16 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     public void _executeSideEffects() {
+      this.sideEffectsInProgress = true;
+
       List<Runnable> copy;
       synchronized (this.sideEffects) {
         copy = Collections.list(this.sideEffects);
         this.sideEffects.clear();
       }
       copy.forEach(Runnable::run);
+
+      this.sideEffectsInProgress = false;
     }
 
     private @Nullable Runnable getNextRenderable() {

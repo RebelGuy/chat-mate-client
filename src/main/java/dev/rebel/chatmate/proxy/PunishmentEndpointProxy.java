@@ -3,6 +3,7 @@ package dev.rebel.chatmate.proxy;
 import dev.rebel.chatmate.models.api.punishment.*;
 import dev.rebel.chatmate.models.api.punishment.BanUserResponse.BanUserResponseData;
 import dev.rebel.chatmate.models.api.punishment.GetPunishmentsResponse.GetPunishmentsResponseData;
+import dev.rebel.chatmate.models.api.punishment.GetSinglePunishmentResponse.GetSinglePunishmentResponseData;
 import dev.rebel.chatmate.models.api.punishment.MuteUserResponse.MuteUserResponseData;
 import dev.rebel.chatmate.models.api.punishment.RevokeTimeoutResponse.RevokeTimeoutResponseData;
 import dev.rebel.chatmate.models.api.punishment.TimeoutUserResponse.TimeoutUserResponseData;
@@ -18,6 +19,11 @@ import java.util.function.Consumer;
 public class PunishmentEndpointProxy extends EndpointProxy {
   public PunishmentEndpointProxy(LogService logService, ChatMateEndpointStore chatMateEndpointStore, String basePath) {
     super(logService, chatMateEndpointStore, basePath + "/punishment");
+  }
+
+  public void getSinglePunishmentAsync(int punishmentId, Consumer<GetSinglePunishmentResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    String url = String.format("/%d", punishmentId);
+    this.makeRequestAsync(Method.GET, url, GetSinglePunishmentResponse.class, callback, errorHandler);
   }
 
   public void getPunishmentsAsync(@Nullable Integer userId, @Nullable Boolean activeOnly, Consumer<GetPunishmentsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

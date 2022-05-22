@@ -9,6 +9,7 @@ public class PublicPunishment extends PublicObject {
   @Override
   public Integer GetExpectedSchema() { return 1; }
 
+  public Integer id;
   public PunishmentType type;
   public Long issuedAt;
   public Boolean isActive;

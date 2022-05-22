@@ -90,12 +90,14 @@ public abstract class ModalElement extends ContainerElement {
   }
 
   private void onSubmitError(String errorMessage) {
-    this.setLoading(false);
-    this.errorLabel.setText(isNullOrEmpty(errorMessage) ? "Something went wrong." : errorMessage).setVisible(true);
+    this.context.renderer.runSideEffect(() -> {
+      this.setLoading(false);
+      this.errorLabel.setText(isNullOrEmpty(errorMessage) ? "Something went wrong." : errorMessage).setVisible(true);
+    });
   }
 
   private void onSubmitSuccess() {
-    this.setLoading(false);
+    this.context.renderer.runSideEffect(() -> this.setLoading(false));
   }
 
   private void setLoading(boolean loading) {

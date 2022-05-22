@@ -4,11 +4,13 @@ import dev.rebel.chatmate.models.api.punishment.UnbanUserResponse.UnbanUserRespo
 import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
 import dev.rebel.chatmate.proxy.ApiResponseBase;
 
+import javax.annotation.Nullable;
+
 public class UnbanUserResponse extends ApiResponseBase<UnbanUserResponseData> {
   @Override
   public Integer GetExpectedSchema() { return 1; }
 
   public static class UnbanUserResponseData {
-    public PublicPunishment updatedPunishment;
+    public @Nullable PublicPunishment updatedPunishment;
   }
 }

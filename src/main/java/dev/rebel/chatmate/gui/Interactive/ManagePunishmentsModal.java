@@ -141,45 +141,49 @@ public class ManagePunishmentsModal extends ModalElement {
     }
 
     private void onPunishmentsLoadError(Throwable error) {
-      this.listReference.setUnderlyingElement(
-          new LabelElement(this.context, this)
-              .setText("Failed to load punishments: " + EndpointProxy.getApiErrorMessage(error))
-              .setOverflow(TextOverflow.SPLIT)
-              .setColour(Colour.RED)
-              .setFontScale(0.75f)
-              .setMaxLines(5)
-              .setSizingMode(SizingMode.FILL)
-              .setAlignment(TextAlignment.CENTRE)
-      );
+      this.context.renderer.runSideEffect(() -> {
+        this.listReference.setUnderlyingElement(
+            new LabelElement(this.context, this)
+                .setText("Failed to load punishments: " + EndpointProxy.getApiErrorMessage(error))
+                .setOverflow(TextOverflow.SPLIT)
+                .setColour(Colour.RED)
+                .setFontScale(0.75f)
+                .setMaxLines(5)
+                .setSizingMode(SizingMode.FILL)
+                .setAlignment(TextAlignment.CENTRE)
+        );
+      });
     }
 
     private void onPunishmentsLoaded(GetPunishmentsResponseData getPunishmentsResponseData) {
-      IElement element;
-      if (getPunishmentsResponseData.punishments.length == 0) {
-        element = new LabelElement(this.context, this)
-            .setText("No punishments to show.")
-            .setFontScale(0.75f)
-            .setSizingMode(SizingMode.FILL)
-            .setAlignment(TextAlignment.CENTRE);
-      } else {
-        element = new TableElement<PublicPunishment>(
-            this.context,
-            this,
-            Collections.list(getPunishmentsResponseData.punishments),
-            Collections.list(
-                new Column("Date", FONT_SCALE, 2, true),
-                new Column("Type", FONT_SCALE, 1.5f, true),
-                new Column("Message", FONT_SCALE, 3, false),
-                new Column("Perm", FONT_SCALE, 1, true),
-                new Column("Active", FONT_SCALE, 1, true)),
-            this::getPunishmentRow
-        ).setMinHeight(gui(50))
-            .setOnClickItem(this::onShowDetails)
-            .setSizingMode(SizingMode.FILL)
-            .setPadding(new RectExtension(ZERO, gui(4)));
-      }
+      this.context.renderer.runSideEffect(() -> {
+        IElement element;
+        if (getPunishmentsResponseData.punishments.length == 0) {
+          element = new LabelElement(this.context, this)
+              .setText("No punishments to show.")
+              .setFontScale(0.75f)
+              .setSizingMode(SizingMode.FILL)
+              .setAlignment(TextAlignment.CENTRE);
+        } else {
+          element = new TableElement<PublicPunishment>(
+              this.context,
+              this,
+              Collections.list(getPunishmentsResponseData.punishments),
+              Collections.list(
+                  new Column("Date", FONT_SCALE, 2, true),
+                  new Column("Type", FONT_SCALE, 1.5f, true),
+                  new Column("Message", FONT_SCALE, 3, false),
+                  new Column("Perm", FONT_SCALE, 1, true),
+                  new Column("Active", FONT_SCALE, 1, true)),
+              this::getPunishmentRow
+          ).setMinHeight(gui(50))
+              .setOnClickItem(this::onShowDetails)
+              .setSizingMode(SizingMode.FILL)
+              .setPadding(new RectExtension(ZERO, gui(4)));
+        }
 
-      this.listReference.setUnderlyingElement(element);
+        this.listReference.setUnderlyingElement(element);
+      });
     }
 
     private List<IElement> getPunishmentRow(PublicPunishment punishment) {
@@ -254,7 +258,7 @@ public class ManagePunishmentsModal extends ModalElement {
       } else if (!punishment.isActive) {
         expirationText = dateToSecondAccuracy(punishment.expirationTime);
       } else {
-        String remaining = approximateDuration(punishment.expirationTime - punishment.issuedAt);
+        String remaining = approximateDuration(punishment.expirationTime - new Date().getTime());
         expirationText = String.format("%s (in %s)", dateToSecondAccuracy(punishment.expirationTime), remaining);
       }
 
@@ -345,26 +349,50 @@ public class ManagePunishmentsModal extends ModalElement {
       @Nullable String message = this.revokePunishmentTextInputElement.getText();
       if (this.punishment.type == PunishmentType.BAN) {
         UnbanUserRequest request = new UnbanUserRequest(userId, message);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.unbanUserAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess), r -> this.onRevokePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.unbanUserAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
       } else if (this.punishment.type == PunishmentType.TIMEOUT) {
         RevokeTimeoutRequest request = new RevokeTimeoutRequest(userId, message);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.revokeTimeoutAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess), r -> this.onRevokePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.revokeTimeoutAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
       } else if (this.punishment.type == PunishmentType.MUTE) {
         UnmuteUserRequest request = new UnmuteUserRequest(userId, message);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.unmuteUserAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess), r -> this.onRevokePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.unmuteUserAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
       } else {
         throw new RuntimeException("Cannot revoke invalid punishment type " + this.punishment.type);
       }
     }
 
     private void onRevokePunishmentFailed(Throwable error, Consumer<String> callback) {
-      String errorMessage = EndpointProxy.getApiErrorMessage(error);
-      callback.accept(String.format("Failed to %s: %s", this.getRevokeName(), errorMessage));
+      this.context.renderer.runSideEffect(() -> {
+        String errorMessage = EndpointProxy.getApiErrorMessage(error);
+        callback.accept(String.format("Failed to %s: %s", this.getRevokeName(), errorMessage));
+      });
     }
 
-    private void onPunishmentUpdated(PublicPunishment punishment, Runnable callback) {
-      ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
-      callback.run();
+    private void onPunishmentUpdated(@Nullable PublicPunishment punishment, Runnable callback, Consumer<String> onError) {
+      if (punishment == null) {
+        // there was no active punishment for the user (it probably expired before we made the request) - refresh the current punishment details
+        ManagePunishmentsModal.this.punishmentEndpointProxy.getSinglePunishmentAsync(this.punishment.id, r -> this.onGetPunishment(r.punishment, callback), r -> this.onGetPunishmentFailed(r, onError));
+        return;
+      }
+
+      this.context.renderer.runSideEffect(() -> {
+        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+        callback.run();
+      });
+    }
+
+    private void onGetPunishmentFailed(Throwable error, Consumer<String> callback) {
+      this.context.renderer.runSideEffect(() -> {
+        String errorMessage = EndpointProxy.getApiErrorMessage(error);
+        callback.accept(String.format("Failed to %s and failed to refresh punishment: %s", this.getRevokeName(), errorMessage));
+      });
+    }
+
+    private void onGetPunishment(PublicPunishment punishment, Runnable callback) {
+      this.context.renderer.runSideEffect(() -> {
+        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+        callback.run();
+      });
     }
 
     private String getRevokeName() {
@@ -554,34 +582,38 @@ public class ManagePunishmentsModal extends ModalElement {
     }
 
     private void onCreatePunishmentFailed(Throwable error, Consumer<String> callback) {
-      String errorMessage = EndpointProxy.getApiErrorMessage(error);
-      callback.accept(String.format("Failed to %s user: %s", this.punishmentType(), errorMessage));
+      this.context.renderer.runSideEffect(() -> {
+        String errorMessage = EndpointProxy.getApiErrorMessage(error);
+        callback.accept(String.format("Failed to %s user: %s", this.punishmentType(), errorMessage));
+      });
     }
 
     private void onPunishmentCreated(PublicPunishment punishment, Runnable callback) {
-      callback.run();
-      if (this.clearChatCheckbox.getChecked()) {
-        super.context.minecraftProxyService.getChatGUI().deleteLine(line -> {
-          for (IChatComponent component : line.getChatComponent()) {
-            // thanks, Java
-            if (!(component instanceof ContainerChatComponent)) {
-              continue;
-            }
-            ContainerChatComponent container = (ContainerChatComponent)component;
-            if (!(container.data instanceof PublicUser)) {
-              continue;
+      this.context.renderer.runSideEffect(() -> {
+        if (this.clearChatCheckbox.getChecked()) {
+          super.context.minecraftProxyService.getChatGUI().deleteLine(line -> {
+            for (IChatComponent component : line.getChatComponent()) {
+              // thanks, Java
+              if (!(component instanceof ContainerChatComponent)) {
+                continue;
+              }
+              ContainerChatComponent container = (ContainerChatComponent) component;
+              if (!(container.data instanceof PublicUser)) {
+                continue;
+              }
+
+              // as it stands, this is a bit hacky because it doesn't necessarily remove ONLY stream messages, but for now it works.
+              // to make this more future-proof, we would need to add some kind of type/tag to Abstract Lines for categorising them.
+              PublicUser user = (PublicUser) container.data;
+              return Objects.equals(user.id, ManagePunishmentsModal.this.user.id);
             }
 
-            // as it stands, this is a bit hacky because it doesn't necessarily remove ONLY stream messages, but for now it works.
-            // to make this more future-proof, we would need to add some kind of type/tag to Abstract Lines for categorising them.
-            PublicUser user = (PublicUser)container.data;
-            return Objects.equals(user.id, ManagePunishmentsModal.this.user.id);
-          }
-
-          return false;
-        });
-      }
-      ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+            return false;
+          });
+        }
+        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+        callback.run();
+      });
     }
 
     private String punishmentType() {
