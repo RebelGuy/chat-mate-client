@@ -62,6 +62,7 @@ public abstract class ElementBase implements IElement {
 
     this.box = null;
     this.padding = new RectExtension(context.dimFactory.zeroGui());
+    this.border = new RectExtension(context.dimFactory.zeroGui());
     this.margin = new RectExtension(context.dimFactory.zeroGui());
     this.zIndex = 0;
     this.horizontalAlignment = HorizontalAlignment.LEFT;
@@ -284,8 +285,10 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final IElement setPadding(RectExtension padding) {
-    this.padding = padding;
-    this.onInvalidateSize();
+    if (!this.padding.equals(padding)) {
+      this.padding = padding;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -296,8 +299,10 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final IElement setBorder(RectExtension border) {
-    this.border = border;
-    this.onInvalidateSize();
+    if (!this.border.equals(border)) {
+      this.border = border;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -308,8 +313,10 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final IElement setMargin(RectExtension margin) {
-    this.margin = margin;
-    this.onInvalidateSize();
+    if (!this.margin.equals(margin)) {
+      this.margin = margin;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -330,15 +337,19 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final IElement setZIndex(int zIndex) {
-    this.zIndex = zIndex;
-    this.onInvalidateSize();
+    if (this.zIndex != zIndex) {
+      this.zIndex = zIndex;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
   @Override
   public final IElement setHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
-    this.horizontalAlignment = horizontalAlignment;
-    this.onInvalidateSize();
+    if (this.horizontalAlignment != horizontalAlignment) {
+      this.horizontalAlignment = horizontalAlignment;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -349,8 +360,10 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final IElement setVerticalAlignment(VerticalAlignment verticalAlignment) {
-    this.verticalAlignment = verticalAlignment;
-    this.onInvalidateSize();
+    if (this.verticalAlignment != verticalAlignment) {
+      this.verticalAlignment = verticalAlignment;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -361,14 +374,22 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public IElement setSizingMode(SizingMode sizingMode) {
-    this.sizingMode = sizingMode;
-    this.onInvalidateSize();
+    if (this.sizingMode != sizingMode) {
+      this.sizingMode = sizingMode;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
   @Override
   public SizingMode getSizingMode() {
     return this.sizingMode;
+  }
+
+  @Override
+  public IElement setName(String name) {
+    this.name = name;
+    return this;
   }
 
   @Override

@@ -66,6 +66,8 @@ public interface IElement {
   @Nullable String getTooltip();
   IElement setTooltip(@Nullable String text);
 
+  IElement setName(String name);
+
   /** Convenience method that automatically casts an element back to its original class type after chaining methods during instantiation. */
   <T extends IElement> T cast();
 }

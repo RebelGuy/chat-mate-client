@@ -56,12 +56,14 @@ public class InteractiveScreen extends Screen implements IElement {
   private List<IElement> blockedElementsUnderCursor = new ArrayList<>();  // contains the list of elements that this element blocks, if any
   private boolean debugModeEnabled = false;
   private boolean debugElementSelected = false;
+  private long refreshTimestamp; // for showing a quick tooltip after F5 is pressed
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen) {
     super();
 
     this.context = context;
     this.parentScreen = parentScreen;
+    this.refreshTimestamp = 0;
 
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(true), this);
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this.onMouseMove, new MouseEventData.Options(true), this);
@@ -302,6 +304,11 @@ public class InteractiveScreen extends Screen implements IElement {
     } else if (in.isPressed(Keyboard.KEY_F3)) {
       this.toggleDebug();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+    } else if (in.isPressed(Keyboard.KEY_F5)) {
+      // force a refresh
+      this.refreshTimestamp = new Date().getTime();
+      this.onInvalidateSize();
+      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
 
     } else if (in.isPressed(Keyboard.KEY_TAB) && this.context.focusedElement != null) {
       // focus onto the next element
@@ -456,10 +463,14 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     @Nullable String tooltip = null;
-    for (IElement element : Collections.reverse(candidates)) {
-      tooltip = element.getTooltip();
-      if (tooltip != null) {
-        break;
+    if (new Date().getTime() - this.refreshTimestamp < 2000L) {
+      tooltip = "Forced layout refresh";
+    } else {
+      for (IElement element : Collections.reverse(candidates)) {
+        tooltip = element.getTooltip();
+        if (tooltip != null) {
+          break;
+        }
       }
     }
 
@@ -567,6 +578,9 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public IElement setTooltip(@Nullable String text) { return null; }
+
+  @Override
+  public IElement setName(String name) { return null; }
 
   //endregion
 

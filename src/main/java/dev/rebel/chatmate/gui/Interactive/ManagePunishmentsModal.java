@@ -358,18 +358,19 @@ public class ManagePunishmentsModal extends ModalElement {
               .addElement(1, new LabelElement(context, this)
                   .setText(channelPunishment.channelName)
                   .setColour(channelPunishment.platform == Platform.YOUTUBE ? Colour.RED : Colour.PURPLE)
-              ).addElement(1, new WrapperElement(context, this,
+              ).addElement(1, new WrapperElement(context, this, // wrapper so text element size is flush to the text for a better tooltip experience
                   new LabelElement(context, this)
                       .setText(channelPunishment.error == null ? "SUCCESS" : "FAILURE")
                       .setColour(channelPunishment.error == null ? Colour.GREEN : Colour.RED)
                       .setTooltip(channelPunishment.error == null
                           ? String.format("Successfully %s %s for %s channel %d.", actionTypePast, punishmentType, platform, channelPunishment.channelId)
                           : String.format("Failed to %s %s for %s channel %d: %s", actionTypePresent, punishmentType, platform, channelPunishment.channelId, channelPunishment.error)
-                      )
-                  ).setSizingMode(SizingMode.FILL)
-                  .setHorizontalAlignment(HorizontalAlignment.RIGHT)
-              )
-          );
+                          )
+                      .setSizingMode(SizingMode.MINIMISE)
+                      .setHorizontalAlignment(HorizontalAlignment.RIGHT)
+                      .setName("ChannelPunishment")
+                  )
+              ));
         }
       }
     }

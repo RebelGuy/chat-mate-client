@@ -19,6 +19,10 @@ public class WrapperElement extends SingleElement {
     contents.setParent(this);
   }
 
+  public boolean compareContents(IElement element) {
+    return this.contents == element;
+  }
+
   @Override
   public @Nullable List<IElement> getChildren() {
     return Collections.list(this.contents);

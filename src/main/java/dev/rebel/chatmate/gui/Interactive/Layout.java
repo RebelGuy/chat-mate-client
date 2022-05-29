@@ -3,6 +3,8 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
 
+import java.util.Objects;
+
 public class Layout {
   /** fullBox - margin - padding */
   public static DimRect getContentRect(DimRect fullBox, RectExtension margin, RectExtension padding) {
@@ -72,6 +74,19 @@ public class Layout {
     @Override
     public String toString() {
       return String.format("l=%s, r=%s, t=%s, b=%s", this.left.toString(), this.right.toString(), this.top.toString(), this.bottom.toString());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      RectExtension other = (RectExtension)o;
+      return this.left.equals(other.left) && this.right.equals(other.right) && this.top.equals(other.top) && this.bottom.equals(other.bottom);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(this.left.hashCode(), this.right.hashCode(), this.top.hashCode(), this.bottom.hashCode());
     }
   }
 

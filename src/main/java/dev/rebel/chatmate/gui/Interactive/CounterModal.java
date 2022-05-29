@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 
@@ -48,7 +49,7 @@ public class CounterModal extends ModalElement {
 
     IElement valueElements = new SideBySideElement(context, this)
         .setElementPadding(gui(40))
-        .addElement(1,
+        .addElement(0.5f,
             new SideBySideElement(context, this)
                 .addElement(1,
                     new LabelElement(context, this)

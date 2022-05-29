@@ -118,7 +118,7 @@ public abstract class ContainerElement extends ElementBase {
       } else if (element.getHorizontalAlignment() == HorizontalAlignment.CENTRE) {
         relX = containerWidth.minus(size.getX()).over(2);
       } else if (element.getHorizontalAlignment() == HorizontalAlignment.RIGHT) {
-        relX = containerWidth;
+        relX = containerWidth.minus(size.getX());
       } else {
         throw new RuntimeException("Invalid horizontal layout " + element.getHorizontalAlignment());
       }
@@ -130,7 +130,8 @@ public abstract class ContainerElement extends ElementBase {
     return new DimPoint(containerWidth, currentY);
   }
 
-  private DimPoint calculateInlineSize(List<Tuple2<IElement, DimPoint>> elementSizes, Dim maxWidth) {
+  /** Given the children's box sizes, calculates this container size using the INLINE layout model. */
+  protected final DimPoint calculateInlineSize(List<Tuple2<IElement, DimPoint>> elementSizes, Dim maxWidth) {
     // place one or more elements per line.
     // similar to the BLOCK calculation, except we also position elements vertically within their line.
 

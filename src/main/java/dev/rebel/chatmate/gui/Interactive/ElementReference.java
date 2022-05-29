@@ -224,6 +224,11 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public IElement setName(String name) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setName(name);
+  }
+
+  @Override
   public <T extends IElement> T cast() {
     return this.underlyingElement == null ? null : (T)this.underlyingElement;
   }
