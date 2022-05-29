@@ -214,6 +214,16 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public @Nullable String getTooltip() {
+    return this.underlyingElement == null ? null : this.underlyingElement.getTooltip();
+  }
+
+  @Override
+  public IElement setTooltip(@Nullable String text) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setTooltip(text);
+  }
+
+  @Override
   public <T extends IElement> T cast() {
     return this.underlyingElement == null ? null : (T)this.underlyingElement;
   }

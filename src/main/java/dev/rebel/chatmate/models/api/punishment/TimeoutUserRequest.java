@@ -10,7 +10,7 @@ public class TimeoutUserRequest extends ApiRequestBase {
   public final Integer durationSeconds;
 
   public TimeoutUserRequest(int userId, @Nullable String message, int durationSeconds) {
-    super(1);
+    super(2);
     this.userId = userId;
     this.message = message;
     this.durationSeconds = durationSeconds;

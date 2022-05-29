@@ -63,6 +63,9 @@ public interface IElement {
   SizingMode getSizingMode();
   IElement setSizingMode(SizingMode sizingMode);
 
+  @Nullable String getTooltip();
+  IElement setTooltip(@Nullable String text);
+
   /** Convenience method that automatically casts an element back to its original class type after chaining methods during instantiation. */
   <T extends IElement> T cast();
 }

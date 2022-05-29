@@ -13,6 +13,8 @@ import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.models.api.punishment.*;
 import dev.rebel.chatmate.models.api.punishment.GetPunishmentsResponse.GetPunishmentsResponseData;
+import dev.rebel.chatmate.models.publicObjects.punishment.PublicChannelPunishment;
+import dev.rebel.chatmate.models.publicObjects.punishment.PublicChannelPunishment.Platform;
 import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
 import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment.PunishmentType;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
@@ -118,8 +120,8 @@ public class ManagePunishmentsModal extends ModalElement {
           new LabelElement(context, this)
               .setText("Loading punishments...")
               .setFontScale(0.75f)
-              .setSizingMode(SizingMode.FILL)
               .setAlignment(TextAlignment.CENTRE)
+              .setSizingMode(SizingMode.FILL)
       );
       this.listWrapper = new WrapperElement(context, this, this.listReference)
           .setMargin(new RectExtension(ZERO, gui(6)))
@@ -149,8 +151,8 @@ public class ManagePunishmentsModal extends ModalElement {
                 .setColour(Colour.RED)
                 .setFontScale(0.75f)
                 .setMaxLines(5)
-                .setSizingMode(SizingMode.FILL)
                 .setAlignment(TextAlignment.CENTRE)
+                .setSizingMode(SizingMode.FILL)
         );
       });
     }
@@ -162,8 +164,8 @@ public class ManagePunishmentsModal extends ModalElement {
           element = new LabelElement(this.context, this)
               .setText("No punishments to show.")
               .setFontScale(0.75f)
-              .setSizingMode(SizingMode.FILL)
-              .setAlignment(TextAlignment.CENTRE);
+              .setAlignment(TextAlignment.CENTRE)
+              .setSizingMode(SizingMode.FILL);
         } else {
           element = new TableElement<PublicPunishment>(
               this.context,
@@ -198,7 +200,7 @@ public class ManagePunishmentsModal extends ModalElement {
     }
 
     private void onShowDetails(PublicPunishment punishment) {
-      ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+      ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment, null));
     }
 
     private void onCreateNewPunishment(PunishmentType type) {
@@ -208,6 +210,7 @@ public class ManagePunishmentsModal extends ModalElement {
 
   private class PunishmentDetails extends ContainerElement {
     private final PublicPunishment punishment;
+    private final PublicChannelPunishment[] channelPunishments;
 
     private final LabelElement titleLabel;
     private final @Nullable LabelElement statusLabel;
@@ -217,8 +220,11 @@ public class ManagePunishmentsModal extends ModalElement {
     private final @Nullable SideBySideElement revokedAtElement;
     private final @Nullable SideBySideElement revokedMessageElement;
     private final @Nullable TextInputElement revokePunishmentTextInputElement;
+    private final @Nullable LabelElement channelPunishmentsHeader;
+    private final @Nullable ListElement channelPunishmentsList;
 
-    public PunishmentDetails(InteractiveContext context, IElement parent, PublicPunishment punishment) {
+    /** ChannelPunishments should be provided when displaying these punishment details in response to an API action, and otherwise should be null. */
+    public PunishmentDetails(InteractiveContext context, IElement parent, PublicPunishment punishment, @Nullable PublicChannelPunishment[] channelPunishments) {
       super(context, parent, LayoutMode.INLINE);
       ManagePunishmentsModal.this.onValidate = null;
       ManagePunishmentsModal.this.onSubmit = null;
@@ -226,6 +232,7 @@ public class ManagePunishmentsModal extends ModalElement {
 
       this.name = "PunishmentDetails";
       this.punishment = punishment;
+      this.channelPunishments = channelPunishments;
 
       String status = null;
       if (punishment.revokedAt != null) {
@@ -318,6 +325,53 @@ public class ManagePunishmentsModal extends ModalElement {
         this.revokePunishmentTextInputElement = null;
         ManagePunishmentsModal.this.onValidate = () -> null;
       }
+
+      if (this.channelPunishments == null) {
+        this.channelPunishmentsHeader = null;
+        this.channelPunishmentsList = null;
+
+      } else if (this.channelPunishments.length == 0) {
+        this.channelPunishmentsHeader = new LabelElement(context, this)
+            .setText("No external punishments were applied.")
+            .setColour(Colour.GREY);
+        this.channelPunishmentsList = null;
+
+      } else {
+        this.channelPunishmentsHeader = new LabelElement(context, this)
+            .setText("External Punishments:")
+            .setSizingMode(SizingMode.FILL)
+            .setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO))
+            .cast();
+
+        this.channelPunishmentsList = new ListElement(context, this)
+            .setSizingMode(SizingMode.FILL)
+            .setMargin(new RectExtension(ZERO, gui(6)))
+            .cast();
+
+        for (PublicChannelPunishment channelPunishment : this.channelPunishments) {
+          String platform = channelPunishment.platform == Platform.YOUTUBE ? "YouTube" : "Twitch";
+          String punishmentType = this.punishment.type.toString().toLowerCase();
+          String actionTypePast = this.punishment.isActive ? "applied" : "revoked";
+          String actionTypePresent = this.punishment.isActive ? "apply" : "revoke";
+          this.channelPunishmentsList.addElement(new SideBySideElement(context, this)
+              .setElementPadding(gui(4))
+              .addElement(1, new LabelElement(context, this)
+                  .setText(channelPunishment.channelName)
+                  .setColour(channelPunishment.platform == Platform.YOUTUBE ? Colour.RED : Colour.PURPLE)
+              ).addElement(1, new WrapperElement(context, this,
+                  new LabelElement(context, this)
+                      .setText(channelPunishment.error == null ? "SUCCESS" : "FAILURE")
+                      .setColour(channelPunishment.error == null ? Colour.GREEN : Colour.RED)
+                      .setTooltip(channelPunishment.error == null
+                          ? String.format("Successfully %s %s for %s channel %d.", actionTypePast, punishmentType, platform, channelPunishment.channelId)
+                          : String.format("Failed to %s %s for %s channel %d: %s", actionTypePresent, punishmentType, platform, channelPunishment.channelId, channelPunishment.error)
+                      )
+                  ).setSizingMode(SizingMode.FILL)
+                  .setHorizontalAlignment(HorizontalAlignment.RIGHT)
+              )
+          );
+        }
+      }
     }
 
     @Override
@@ -337,6 +391,9 @@ public class ManagePunishmentsModal extends ModalElement {
       super.addElement(this.revokedMessageElement);
 
       super.addElement(this.revokePunishmentTextInputElement);
+
+      super.addElement(this.channelPunishmentsHeader);
+      super.addElement(this.channelPunishmentsList);
     }
 
     private Boolean onBack() {
@@ -349,13 +406,13 @@ public class ManagePunishmentsModal extends ModalElement {
       @Nullable String message = this.revokePunishmentTextInputElement.getText();
       if (this.punishment.type == PunishmentType.BAN) {
         UnbanUserRequest request = new UnbanUserRequest(userId, message);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.unbanUserAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.unbanUserAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, r.channelPunishments, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
       } else if (this.punishment.type == PunishmentType.TIMEOUT) {
         RevokeTimeoutRequest request = new RevokeTimeoutRequest(userId, message);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.revokeTimeoutAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.revokeTimeoutAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, r.channelPunishments, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
       } else if (this.punishment.type == PunishmentType.MUTE) {
         UnmuteUserRequest request = new UnmuteUserRequest(userId, message);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.unmuteUserAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.unmuteUserAsync(request, r -> this.onPunishmentUpdated(r.updatedPunishment, null, onSuccess, onError), r -> this.onRevokePunishmentFailed(r, onError));
       } else {
         throw new RuntimeException("Cannot revoke invalid punishment type " + this.punishment.type);
       }
@@ -368,15 +425,15 @@ public class ManagePunishmentsModal extends ModalElement {
       });
     }
 
-    private void onPunishmentUpdated(@Nullable PublicPunishment punishment, Runnable callback, Consumer<String> onError) {
+    private void onPunishmentUpdated(@Nullable PublicPunishment punishment, @Nullable PublicChannelPunishment[] channelPunishments, Runnable callback, Consumer<String> onError) {
       if (punishment == null) {
         // there was no active punishment for the user (it probably expired before we made the request) - refresh the current punishment details
-        ManagePunishmentsModal.this.punishmentEndpointProxy.getSinglePunishmentAsync(this.punishment.id, r -> this.onGetPunishment(r.punishment, callback), r -> this.onGetPunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.getSinglePunishmentAsync(this.punishment.id, r -> this.onGetPunishment(r.punishment, channelPunishments, callback), r -> this.onGetPunishmentFailed(r, onError));
         return;
       }
 
       this.context.renderer.runSideEffect(() -> {
-        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment, channelPunishments));
         callback.run();
       });
     }
@@ -388,9 +445,9 @@ public class ManagePunishmentsModal extends ModalElement {
       });
     }
 
-    private void onGetPunishment(PublicPunishment punishment, Runnable callback) {
+    private void onGetPunishment(PublicPunishment punishment, PublicChannelPunishment[] channelPunishments, Runnable callback) {
       this.context.renderer.runSideEffect(() -> {
-        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment, channelPunishments));
         callback.run();
       });
     }
@@ -567,15 +624,15 @@ public class ManagePunishmentsModal extends ModalElement {
       @Nullable String message = this.punishmentReasonInputElement.getText();
       if (this.type == PunishmentType.BAN) {
         BanUserRequest request = new BanUserRequest(userId, message);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.banUserAsync(request, r -> this.onPunishmentCreated(r.newPunishment, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.banUserAsync(request, r -> this.onPunishmentCreated(r.newPunishment, r.channelPunishments, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
       } else if (this.type == PunishmentType.TIMEOUT) {
         int durationSeconds = this.getTotalSeconds();
         TimeoutUserRequest request = new TimeoutUserRequest(userId, message, durationSeconds);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.timeoutUserAsync(request, r -> this.onPunishmentCreated(r.newPunishment, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.timeoutUserAsync(request, r -> this.onPunishmentCreated(r.newPunishment, r.channelPunishments, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
       } else if (this.type == PunishmentType.MUTE) {
         int durationSeconds = this.getTotalSeconds();
         MuteUserRequest request = new MuteUserRequest(userId, message, durationSeconds);
-        ManagePunishmentsModal.this.punishmentEndpointProxy.muteUserAsync(request, r -> this.onPunishmentCreated(r.newPunishment, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
+        ManagePunishmentsModal.this.punishmentEndpointProxy.muteUserAsync(request, r -> this.onPunishmentCreated(r.newPunishment, null, onSuccess), r -> this.onCreatePunishmentFailed(r, onError));
       } else {
         throw new RuntimeException("Cannot create invalid punishment type " + this.punishmentType());
       }
@@ -588,7 +645,7 @@ public class ManagePunishmentsModal extends ModalElement {
       });
     }
 
-    private void onPunishmentCreated(PublicPunishment punishment, Runnable callback) {
+    private void onPunishmentCreated(PublicPunishment punishment, @Nullable PublicChannelPunishment[] channelPunishments, Runnable callback) {
       this.context.renderer.runSideEffect(() -> {
         if (this.clearChatCheckbox.getChecked()) {
           super.context.minecraftProxyService.getChatGUI().deleteLine(line -> {
@@ -611,7 +668,7 @@ public class ManagePunishmentsModal extends ModalElement {
             return false;
           });
         }
-        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment));
+        ManagePunishmentsModal.super.setBody(new PunishmentDetails(this.context, ManagePunishmentsModal.this, punishment, channelPunishments));
         callback.run();
       });
     }

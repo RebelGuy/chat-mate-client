@@ -10,6 +10,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
+import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -17,6 +19,8 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
+
+import javax.annotation.Nullable;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBox;
 
@@ -46,6 +50,7 @@ public abstract class ElementBase implements IElement {
   private SizingMode sizingMode;
   private boolean initialised;
   protected boolean visible;
+  private @Nullable String tooltip;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     ID++;
@@ -64,6 +69,8 @@ public abstract class ElementBase implements IElement {
     this.sizingMode = SizingMode.ANY;
     this.initialised = false;
     this.visible = true;
+
+    this.tooltip = null;
   }
 
   @Override
@@ -262,6 +269,17 @@ public abstract class ElementBase implements IElement {
       this.initialised = true;
       this.onInitialise();
     }
+  }
+
+  @Override
+  public final IElement setTooltip(@Nullable String text) {
+    this.tooltip = text;
+    return this;
+  }
+
+  @Override
+  public final @Nullable String getTooltip() {
+    return this.tooltip;
   }
 
   @Override

@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Screen;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -21,14 +22,18 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData.Out.KeyboardH
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.TextHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Function;
+
+import static dev.rebel.chatmate.gui.Interactive.RendererHelpers.drawTooltip;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
@@ -148,6 +153,7 @@ public class InteractiveScreen extends Screen implements IElement {
     this.mainElement.render();
     this.context.renderer._executeRender();
     this.context.renderer._executeSideEffects();
+    this.renderTooltip();
 
     if (this.context.debugElement != null) {
       ElementHelpers.renderDebugInfo(this.context.debugElement, this.context);
@@ -435,6 +441,36 @@ public class InteractiveScreen extends Screen implements IElement {
     return bubbleEvent.stoppedPropagation;
   }
 
+  /** Starting at the MOUSE_ENTER blocking element and working our way upwards, display the first non-null tooltip. */
+  private void renderTooltip() {
+    if (this.elementsUnderCursor.size() == 0) {
+      return;
+    }
+
+    List<IElement> candidates = new ArrayList<>();
+    for (IElement element : this.elementsUnderCursor) {
+      candidates.add(element);
+      if (element == this.blockingElement) {
+        break;
+      }
+    }
+
+    @Nullable String tooltip = null;
+    for (IElement element : Collections.reverse(candidates)) {
+      tooltip = element.getTooltip();
+      if (tooltip != null) {
+        break;
+      }
+    }
+
+    DimPoint mousePos = context.mousePosition;
+    if (tooltip == null || mousePos == null) {
+      return;
+    }
+
+    RendererHelpers.drawTooltip(context.dimFactory, context.fontRenderer, context.mousePosition, tooltip);
+  }
+
   //region Empty or delegated IElement methods
   @Override
   public List<IElement> getChildren() { return Collections.list(this.mainElement); }
@@ -525,6 +561,12 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public <T extends IElement> T cast() { return null; }
+
+  @Override
+  public @Nullable String getTooltip() { return null; }
+
+  @Override
+  public IElement setTooltip(@Nullable String text) { return null; }
 
   //endregion
 

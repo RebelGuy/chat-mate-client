@@ -18,7 +18,6 @@ public class LabelElement extends SingleElement {
   private String text;
   private TextAlignment alignment;
   private TextOverflow overflow;
-  private SizingMode sizingMode;
   private Dim linePadding;
   private Colour colour;
   private float fontScale;
@@ -31,7 +30,7 @@ public class LabelElement extends SingleElement {
     this.text = "";
     this.alignment = TextAlignment.LEFT;
     this.overflow = TextOverflow.TRUNCATE;
-    this.sizingMode = SizingMode.MINIMISE;
+    super.setSizingMode(SizingMode.MINIMISE);
     this.linePadding = context.dimFactory.fromGui(1);
     this.colour = new Colour(Color.WHITE);
     this.fontScale = 1.0f;
@@ -63,12 +62,6 @@ public class LabelElement extends SingleElement {
 
   public LabelElement setLinePadding(Dim linePadding) {
     this.linePadding = linePadding;
-    this.onInvalidateSize();
-    return this;
-  }
-
-  public LabelElement setSizingMode(SizingMode sizingMode) {
-    this.sizingMode = sizingMode;
     this.onInvalidateSize();
     return this;
   }
@@ -139,7 +132,7 @@ public class LabelElement extends SingleElement {
       throw new RuntimeException("Invalid Overflow setting " + this.overflow);
     }
 
-    return new DimPoint(this.sizingMode == SizingMode.FILL ? maxContentSize : contentWidth, contentHeight).scale(this.fontScale);
+    return new DimPoint(this.getSizingMode() == SizingMode.FILL ? maxContentSize : contentWidth, contentHeight).scale(this.fontScale);
   }
 
   private void addTextForRendering(String text) {

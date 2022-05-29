@@ -2,11 +2,10 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
-import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.gui.models.Line;
+import dev.rebel.chatmate.gui.models.*;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.TextHelpers;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
@@ -169,6 +168,41 @@ public class RendererHelpers {
     lvt_10_1_.pos(x + width, y, zLevel).tex((u + width) * a, v * b).endVertex();
     lvt_10_1_.pos(x, y, zLevel).tex(u * a, v * b).endVertex();
     lvt_9_1_.draw();
+  }
+
+  public static void drawTooltip(DimFactory df, FontRenderer font, DimPoint mousePos, String tooltip) {
+    Dim screenWidth = df.getMinecraftSize().getX();
+    RectExtension padding = new RectExtension(df.fromGui(3));
+    List<String> lines = TextHelpers.splitText(tooltip, (int)screenWidth.over(2).minus(padding.getExtendedWidth()).getGui(), font);
+    Dim contentWidth = Dim.max(Collections.map(lines, txt -> df.fromGui(font.getStringWidth(txt))));
+    Dim contentHeight = df.fromGui(font.FONT_HEIGHT * lines.size());
+    DimRect contentRect = new DimRect(df.zeroGui(), df.zeroGui(), contentWidth, contentHeight);
+    DimRect rect = padding.applyAdditive(contentRect);
+
+    // apply transformation
+    boolean left = screenWidth.over(2).lt(mousePos.getX()); // whether to display tooltip to the left of the mouse
+    DimPoint mouseOffset = new DimPoint(df.fromScreen(left ? -4 : 4), df.fromScreen(-4));
+    rect = rect.withTranslation(new DimPoint(df.zeroGui(), rect.getHeight().times(-1)))
+        .withTranslation(mousePos)
+        .withTranslation(mouseOffset);
+    if (left) {
+      rect = rect.withTranslation(new DimPoint(rect.getWidth().times(-1), df.zeroGui()));
+    }
+    contentRect = padding.applySubtractive(rect);
+
+    // render background
+    Colour colour = new Colour(0xF0100010);
+    Dim borderSize = df.fromGui(1);
+    Colour borderColour = new Colour(0x505000FF);
+    Dim cornerRadius = df.fromScreen(4);
+    drawRect(300, rect, colour, borderSize, borderColour, cornerRadius);
+
+    // render text
+    int y = 0;
+    for (String line : lines) {
+      font.drawString(line, contentRect.getX().getGui(), contentRect.getY().getGui() + y, Colour.WHITE.toInt(), false);
+      y += font.FONT_HEIGHT;
+    }
   }
 
   /** The drawn line is centred about the mathematical line of connecting `from` and `to`. If includeCaps is true, the width will extend beyond the coordinates. */
