@@ -64,6 +64,14 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.13 - The Punishment Update [30/5/2022]
+- Added fancy modal screens for:
+  - Displaying a list of the user's historic punishments
+  - Viewing punishment details
+  - Creating a new punishment
+  - Modifying an active punishment
+- New interactive features such as hover animations, tooltips, a checkbox element, centralised z-index and side effect handling, and many bugfixes
+
 ## v1.12 - The Twitch Update [1/4/2022]
 - Added configuration for identifying platform-specific information
   - The status indicator and viewer count is split into two

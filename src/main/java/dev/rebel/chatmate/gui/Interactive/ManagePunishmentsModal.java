@@ -370,7 +370,8 @@ public class ManagePunishmentsModal extends ModalElement {
                       .setHorizontalAlignment(HorizontalAlignment.RIGHT)
                       .setName("ChannelPunishment")
                   )
-              ));
+              )
+          );
         }
       }
     }
