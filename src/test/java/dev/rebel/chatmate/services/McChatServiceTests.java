@@ -7,6 +7,7 @@ import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessageEmoji;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessageText;
+import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
@@ -72,6 +73,19 @@ public class McChatServiceTests {
     when(this.mockMinecraftProxyService.canPrintChatMessage()).thenReturn(false);
 
     service.printStreamChatItem(null);
+
+    verify(this.mockMinecraftProxyService, never()).printChatMessage(anyString(), any());
+  }
+
+  @Test
+  public void addChat_ignoresIfUserHasActivePunishments() {
+    author1.activePunishments = new PublicPunishment[] {
+        new PublicPunishment() {{ type = PunishmentType.MUTE; }}
+    };
+    PublicChatItem item = createItem(author1, text1);
+    McChatService service = this.setupService();
+
+    service.printStreamChatItem(item);
 
     verify(this.mockMinecraftProxyService, never()).printChatMessage(anyString(), any());
   }
@@ -149,7 +163,7 @@ public class McChatServiceTests {
   }
 
   @Test
-  public void addChat_identifyPlatformChanged_refreshesChat() {
+  public void identifyPlatformChanged_refreshesChat() {
     // this is a weirdly structured test thanks to java.
     // upon instantiation, the service will subscribe to the mock emitter's onChange function
     McChatService service = this.setupService();
@@ -202,6 +216,7 @@ public class McChatServiceTests {
     return new PublicUser() {{
       userInfo = new PublicChannelInfo() {{ channelName = authorName; }};
       levelInfo = new PublicLevelInfo() {{ level = 0; levelProgress = 0.0f; }};
+      activePunishments = new PublicPunishment[0];
     }};
   }
 

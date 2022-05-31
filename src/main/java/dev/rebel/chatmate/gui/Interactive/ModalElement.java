@@ -14,23 +14,24 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.In;
 import org.lwjgl.input.Keyboard;
 
+import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 
 public abstract class ModalElement extends ContainerElement {
-  private Dim width;
+  protected Dim width;
   private final Dim borderSize;
   private final Dim cornerRadius;
   private final Dim shadowDistance;
 
-  private final LabelElement title;
-  private final ElementReference bodyElement;
-  private final LabelElement errorLabel;
-  private final HorizontalDivider divider;
-  private final ButtonElement closeButton;
-  private final ButtonElement submitButton;
-  private final SideBySideElement footer;
+  private LabelElement title;
+  private ElementReference bodyElement;
+  private LabelElement errorLabel;
+  private HorizontalDivider divider;
+  private ButtonElement closeButton;
+  private ButtonElement submitButton;
+  private SideBySideElement footer;
 
   private boolean loading = false;
 
@@ -45,54 +46,34 @@ public abstract class ModalElement extends ContainerElement {
     this.setHorizontalAlignment(HorizontalAlignment.CENTRE);
     this.setVerticalAlignment(VerticalAlignment.MIDDLE);
     this.setSizingMode(SizingMode.FILL);
-
-    this.title = (LabelElement)new LabelElement(context, this)
-        .setAlignment(LabelElement.TextAlignment.CENTRE)
-        .setOverflow(LabelElement.TextOverflow.SPLIT)
-        .setSizingMode(SizingMode.FILL)
-        .setMargin(new Layout.RectExtension(ZERO, ZERO, ZERO, context.dimFactory.fromGui(15)))
-        .setVisible(true);
-
-    this.bodyElement = new ElementReference(context, this);
-
-    this.errorLabel = (LabelElement)new LabelElement(context, this)
-        .setColour(Colour.RED)
-        .setFontScale(0.75f)
-        .setOverflow(TextOverflow.SPLIT)
-        .setSizingMode(SizingMode.FILL)
-        .setAlignment(TextAlignment.CENTRE)
-        .setMaxLines(5)
-        .setVisible(false)
-        .setPadding(new RectExtension(ZERO, gui(4)));
-
-    this.divider = new HorizontalDivider(context, this)
-        .setMode(FillMode.PARENT_FULL);
-
-    this.closeButton = new ButtonElement(context, this)
-        .setText("Close")
-        .setOnClick(this::onClose);
-    this.submitButton = new ButtonElement(context, this)
-        .setText("Submit")
-        .setOnClick(this::onSubmit);
-    this.footer = (SideBySideElement)new SideBySideElement(context, this)
-        .setElementPadding(this.width.over(2))
-        .addElement(1, this.closeButton)
-        .addElement(1, this.submitButton)
-        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO));
   }
 
+  /** Do not call this from the constructor. */
   public ModalElement setBody(IElement bodyElement) {
     this.bodyElement.setUnderlyingElement(bodyElement);
     return this;
   }
 
+  /** Do not call this from the constructor. */
   public ModalElement setTitle(String title) {
     this.title.setText(title);
     return this;
   }
 
-  /** Should return true if the modal's submit button can be pressed. */
-  protected abstract boolean validate();
+  /** Do not call this from the constructor. */
+  public ModalElement setSubmitText(String submitText) {
+    this.submitButton.setText(submitText);
+    return this;
+  }
+
+  /** Do not call this from the constructor. */
+  public ModalElement setCloseText(String closeText) {
+    this.closeButton.setText(closeText);
+    return this;
+  }
+
+  /** Should return true/false if the modal's submit button can be pressed, or null to hide the submit button. */
+  protected abstract @Nullable Boolean validate();
 
   /** Called when the submit button is pressed and the validator returns true. Allows for async behaviour.
    * The Runnable should be called if submission was successful, the Consumer should be called if submission failed and provide an optional error message. */
@@ -109,24 +90,36 @@ public abstract class ModalElement extends ContainerElement {
   }
 
   private void onSubmitError(String errorMessage) {
-    this.setLoading(false);
-    this.errorLabel.setText(isNullOrEmpty(errorMessage) ? "Something went wrong." : errorMessage).setVisible(true);
+    this.context.renderer.runSideEffect(() -> {
+      this.setLoading(false);
+      this.errorLabel.setText(isNullOrEmpty(errorMessage) ? "Something went wrong." : errorMessage).setVisible(true);
+    });
   }
 
   private void onSubmitSuccess() {
-    this.setLoading(false);
+    this.context.renderer.runSideEffect(() -> this.setLoading(false));
   }
 
   private void setLoading(boolean loading) {
     this.loading = loading;
     this.errorLabel.setVisible(false);
     this.closeButton.setEnabled(this, !this.loading);
-    this.submitButton.setEnabled(this, !loading && this.validate());
+    this.setSubmitButton();
+  }
+
+  private void setSubmitButton() {
+    @Nullable Boolean valid = this.validate();
+    if (valid == null) {
+      this.submitButton.setVisible(false);
+    } else {
+      this.submitButton.setVisible(true);
+      this.submitButton.setEnabled(this, !loading && valid);
+    }
   }
 
   private void onClose() {
+    this.errorLabel.setVisible(false);
     this.close();
-    super.onCloseScreen();
   }
 
   @Override
@@ -137,7 +130,44 @@ public abstract class ModalElement extends ContainerElement {
   }
 
   @Override
-  public void onCreate() {
+  public void onInitialise() {
+    super.onInitialise();
+
+    this.title = (LabelElement)new LabelElement(context, this)
+        .setAlignment(LabelElement.TextAlignment.CENTRE)
+        .setOverflow(LabelElement.TextOverflow.SPLIT)
+        .setSizingMode(SizingMode.FILL)
+        .setMargin(new Layout.RectExtension(ZERO, ZERO, ZERO, context.dimFactory.fromGui(15)))
+        .setVisible(true);
+
+    this.bodyElement = new ElementReference(context, this);
+
+    this.errorLabel = (LabelElement)new LabelElement(context, this)
+        .setColour(Colour.RED)
+        .setFontScale(0.75f)
+        .setOverflow(TextOverflow.SPLIT)
+        .setAlignment(TextAlignment.CENTRE)
+        .setMaxLines(5)
+        .setSizingMode(SizingMode.FILL)
+        .setVisible(false)
+        .setPadding(new RectExtension(ZERO, gui(4)));
+
+    this.divider = new HorizontalDivider(context, this)
+        .setMode(FillMode.PARENT_FULL);
+
+    this.closeButton = new ButtonElement(context, this)
+        .setText("Close")
+        .setOnClick(this::onClose);
+    this.submitButton = (ButtonElement)new ButtonElement(context, this)
+        .setText("Submit")
+        .setOnClick(this::onSubmit)
+        .setVisible(this.validate() != null);
+    this.footer = (SideBySideElement)new SideBySideElement(context, this)
+        .setElementPadding(this.width.over(2))
+        .addElement(1, this.closeButton)
+        .addElement(1, this.submitButton)
+        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO));
+
     this.addElement(this.title);
 
     this.addElement(this.bodyElement);
@@ -145,8 +175,6 @@ public abstract class ModalElement extends ContainerElement {
 
     this.addElement(this.divider);
     this.addElement(this.footer);
-
-    super.onCreate();
   }
 
   @Override
@@ -157,10 +185,10 @@ public abstract class ModalElement extends ContainerElement {
   @Override
   public void renderElement() {
     Colour background = new Colour(0, 0, 0, 127); // dark gray
-    RendererHelpers.drawRect(this.getZIndex(), this.getPaddingBox(), background, this.borderSize, Colour.BLACK, this.cornerRadius, this.shadowDistance);
+    RendererHelpers.drawRect(this.getZIndex(), this.getPaddingBox(), background, this.borderSize, Colour.BLACK, this.cornerRadius, this.shadowDistance, Colour.BLACK);
 
     this.closeButton.setEnabled(this, !this.loading);
-    this.submitButton.setEnabled(this, !loading && this.validate());
+    this.setSubmitButton();
 
     super.renderElement();
   }

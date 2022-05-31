@@ -5,10 +5,13 @@ import dev.rebel.chatmate.gui.Interactive.Events.EventType;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
+import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -16,6 +19,8 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
+
+import javax.annotation.Nullable;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBox;
 
@@ -26,10 +31,13 @@ import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBo
 // the content box includes contents only. this is where the element's contents are rendered into.
 
 public abstract class ElementBase implements IElement {
+  private static int ID = 0;
+
   protected final InteractiveContext context;
   protected IElement parent;
   protected final Dim ZERO;
   protected final FontRenderer font;
+  protected String name;
 
   protected DimPoint lastCalculatedSize;
   private DimRect box;
@@ -40,8 +48,13 @@ public abstract class ElementBase implements IElement {
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
   private SizingMode sizingMode;
+  private boolean initialised;
+  protected boolean visible;
+  private @Nullable String tooltip;
 
   public ElementBase(InteractiveContext context, IElement parent) {
+    ID++;
+    this.name = String.format("%s-%d", this.getClass().getSimpleName(), ID);
     this.context = context;
     this.parent = parent;
     this.ZERO = context.dimFactory.zeroGui();
@@ -49,11 +62,16 @@ public abstract class ElementBase implements IElement {
 
     this.box = null;
     this.padding = new RectExtension(context.dimFactory.zeroGui());
+    this.border = new RectExtension(context.dimFactory.zeroGui());
     this.margin = new RectExtension(context.dimFactory.zeroGui());
     this.zIndex = 0;
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
     this.sizingMode = SizingMode.ANY;
+    this.initialised = false;
+    this.visible = true;
+
+    this.tooltip = null;
   }
 
   @Override
@@ -66,10 +84,23 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
-  public void onCreate() { }
+  public void onInitialise() { }
+
+  protected final boolean isInitialised() { return this.initialised; }
 
   @Override
-  public void onDispose() { }
+  public boolean getVisible() {
+    return this.visible;
+  }
+
+  @Override
+  public IElement setVisible(boolean visible) {
+    if (this.visible != visible) {
+      this.visible = visible;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
 
   @Override
   public final void onEvent(EventType type, IEvent<?> event) {
@@ -97,8 +128,6 @@ public abstract class ElementBase implements IElement {
     } else {
       throw new RuntimeException("Invalid event phase: " + event.getPhase());
     }
-
-    // todo: look at how we could do onEnter and onExit events. definitely want the target element to use same logic as for click, and maybe also include the previous-next element in the data (ie. the before-after target elements)
   }
 
   private void onEventCapture(EventType type, IEvent<?> event) {
@@ -114,6 +143,9 @@ public abstract class ElementBase implements IElement {
         break;
       case MOUSE_SCROLL:
         this.onCaptureMouseScroll((IEvent<MouseEventData.In>)event);
+        break;
+      case MOUSE_ENTER:
+        this.onCaptureMouseEnter((IEvent<MouseEventData.In>)event);
         break;
       case KEY_DOWN:
         this.onCaptureKeyDown((IEvent<KeyboardEventData.In>)event);
@@ -157,20 +189,28 @@ public abstract class ElementBase implements IElement {
   public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {}
   public void onFocus(IEvent<FocusEventData> e) {}
   public void onBlur(IEvent<FocusEventData> e) {}
+  /** Target-only - this cannot be cancelled. */
   public void onMouseEnter(IEvent<MouseEventData.In> e) {}
+  /** The onCaptureMouseEnter event is special - if cancelled, all downstream elements to which we didn't get to yet
+   * will receive the MOUSE_EXIT event. */
+  public void onCaptureMouseEnter(IEvent<MouseEventData.In> e) {}
+  /** This doesn't bubble, it is target-only. there is no way to cancel this. */
   public void onMouseExit(IEvent<MouseEventData.In> e) {}
 
   @Override
   public final void onCloseScreen() { this.parent.onCloseScreen(); }
 
+  // todo: move this into the context as a callback method instead. it's confusing that this is a mandatory bubble-up callback
   @Override
   public final void onInvalidateSize() {
     this.parent.onInvalidateSize();
   }
 
-  /** Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
+  /** Should return the full size. Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
   @Override
   public final DimPoint calculateSize(Dim maxFullWidth) {
+    initialiseIfRequired();
+
     // add a wrapper around the calculation method so we can cache the calculated size and provide a context for working
     // with content units (rather than full units).
     Dim contentWidth = getContentBoxWidth(maxFullWidth);
@@ -180,7 +220,7 @@ public abstract class ElementBase implements IElement {
     return fullSize;
   }
 
-  /** Call this method ONLY in the context of `super` or `this`. For other elements, call `element.calculateSize()`. */
+  /** Should return the content size. Call this method ONLY in the context of `super` or `this`. For other elements, call `element.calculateSize()`. */
   protected abstract DimPoint calculateThisSize(Dim maxContentSize);
 
   @Override
@@ -188,8 +228,15 @@ public abstract class ElementBase implements IElement {
     return this.lastCalculatedSize;
   }
 
+  // todo: ideally this should be final, but an element might want to hook into this so they can deal with the new rect in some way.
+  // since it is easy to forget to call `super.setBox`, make a onBoxSet() virtual method instead.
   @Override
   public void setBox(DimRect box) {
+    this.box = box;
+  }
+
+  /** Directly sets the underlying box of the element, bypassing any hooks. */
+  protected final void setBoxUnsafe(DimRect box) {
     this.box = box;
   }
 
@@ -200,29 +247,48 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final void render() {
-    GlStateManager.pushMatrix();
-
-    GlStateManager.pushMatrix();
-    GlStateManager.enableBlend();
-    GlStateManager.disableLighting();
-    this.renderElement();
-    GlStateManager.popMatrix();
-
-    if (this.context.debugElement == this) {
-      ElementHelpers.renderDebugInfo(this, this.context);
+    initialiseIfRequired();
+    if (!this.visible) {
+      return;
     }
 
-    GlStateManager.popMatrix();
+    this.context.renderer.render(this, () -> {
+      GlStateManager.pushMatrix();
+      GlStateManager.enableBlend();
+      GlStateManager.disableLighting();
+      this.renderElement();
+      GlStateManager.popMatrix();
+    });
   }
 
   /** You should never call super.render() from this method, as it will cause an infinite loop.
    * If you need to render a base element, use super.renderElement() instead. */
   protected abstract void renderElement();
 
+  private void initialiseIfRequired() {
+    if (!this.initialised) {
+      this.initialised = true;
+      this.onInitialise();
+    }
+  }
+
+  @Override
+  public final IElement setTooltip(@Nullable String text) {
+    this.tooltip = text;
+    return this;
+  }
+
+  @Override
+  public final @Nullable String getTooltip() {
+    return this.tooltip;
+  }
+
   @Override
   public final IElement setPadding(RectExtension padding) {
-    this.padding = padding;
-    this.onInvalidateSize();
+    if (!this.padding.equals(padding)) {
+      this.padding = padding;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -233,8 +299,10 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final IElement setBorder(RectExtension border) {
-    this.border = border;
-    this.onInvalidateSize();
+    if (!this.border.equals(border)) {
+      this.border = border;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -245,8 +313,10 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final IElement setMargin(RectExtension margin) {
-    this.margin = margin;
-    this.onInvalidateSize();
+    if (!this.margin.equals(margin)) {
+      this.margin = margin;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -261,16 +331,25 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
+  public final int getEffectiveZIndex() {
+    return this.zIndex + this.parent.getEffectiveZIndex();
+  }
+
+  @Override
   public final IElement setZIndex(int zIndex) {
-    this.zIndex = zIndex;
-    this.onInvalidateSize();
+    if (this.zIndex != zIndex) {
+      this.zIndex = zIndex;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
   @Override
   public final IElement setHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
-    this.horizontalAlignment = horizontalAlignment;
-    this.onInvalidateSize();
+    if (this.horizontalAlignment != horizontalAlignment) {
+      this.horizontalAlignment = horizontalAlignment;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -281,8 +360,10 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public final IElement setVerticalAlignment(VerticalAlignment verticalAlignment) {
-    this.verticalAlignment = verticalAlignment;
-    this.onInvalidateSize();
+    if (this.verticalAlignment != verticalAlignment) {
+      this.verticalAlignment = verticalAlignment;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -293,14 +374,27 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public IElement setSizingMode(SizingMode sizingMode) {
-    this.sizingMode = sizingMode;
-    this.onInvalidateSize();
+    if (this.sizingMode != sizingMode) {
+      this.sizingMode = sizingMode;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
   @Override
   public SizingMode getSizingMode() {
     return this.sizingMode;
+  }
+
+  @Override
+  public IElement setName(String name) {
+    this.name = name;
+    return this;
+  }
+
+  @Override
+  public final <T extends IElement> T cast() {
+    return (T)this;
   }
 
   protected final Dim getContentBoxWidth(Dim fullBoxWidth) {
@@ -312,6 +406,10 @@ public abstract class ElementBase implements IElement {
       contentBoxSize.getX().plus(this.getPadding().getExtendedWidth()).plus(this.getBorder().getExtendedWidth()).plus(this.getMargin().getExtendedWidth()),
       contentBoxSize.getY().plus(this.getPadding().getExtendedHeight()).plus(this.getBorder().getExtendedHeight()).plus(this.getMargin().getExtendedHeight())
     );
+  }
+
+  protected final Dim getFullBoxWidth(Dim contentBoxWidth) {
+    return this.getFullBoxSize(new DimPoint(contentBoxWidth, ZERO)).getX();
   }
 
   protected final DimRect getContentBox() {
@@ -350,5 +448,9 @@ public abstract class ElementBase implements IElement {
 
   protected final Dim gui(float guiValue) {
     return this.context.dimFactory.fromGui(guiValue);
+  }
+
+  protected final Dim screen(float screenValue) {
+    return this.context.dimFactory.fromScreen(screenValue);
   }
 }

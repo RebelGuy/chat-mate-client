@@ -32,12 +32,25 @@ public class ElementReference implements IElement {
     this.underlyingElement = null;
   }
 
+  /** Schedules the provided element to be set. Note that the element will not be updated until the current render cycle is complete.
+   * When accessing this method from the main thread, and outside the render() method, the new element can be assumed to have been set immediately. */
   public ElementReference setUnderlyingElement(IElement element) {
-    if (element != null) {
-      element.setParent(this);
+    if (this.underlyingElement == element) {
+      return this;
     }
-    this.underlyingElement = element;
-    this.parent.onInvalidateSize();
+
+    // we don't set the underlying element here directly because it is entirely possible that the underlying element is set on another thread,
+    // so just tell the InteractiveScreen to recalculate layouts, and update the underlying element later
+    this.context.renderer.runSideEffect(() -> {
+      this.underlyingElement = element;
+
+      if (this.underlyingElement != null) {
+        this.underlyingElement.setParent(this.parent);
+      }
+
+      this.parent.onInvalidateSize();
+    });
+
     return this;
   }
 
@@ -59,17 +72,10 @@ public class ElementReference implements IElement {
   }
 
   @Override
-  public void onCreate() {
-    if (this.underlyingElement != null) {
-      this.underlyingElement.onCreate();
-    }
-  }
-
-  @Override
-  public void onDispose() {
-    if (this.underlyingElement != null) {
-      this.underlyingElement.onDispose();
-    }
+  public void onInitialise() {
+    // note that, realistically, this will never be called. we don't want to relay this to the underlying element, though,
+    // because we have no way of checking whether it has been initialised already. leave it up to its default ElementBase
+    // implementation to handle.
   }
 
   @Override
@@ -117,8 +123,8 @@ public class ElementReference implements IElement {
       this.underlyingElement.render();
     }
 
-    if (this.context.debugElement == this) {
-      ElementHelpers.renderDebugInfo(this, this.context);
+    if (this.context.debugElement == this && this.underlyingElement != null) {
+      this.context.debugElement = this.underlyingElement;
     }
   }
 
@@ -168,6 +174,11 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public int getEffectiveZIndex() {
+    return this.underlyingElement == null ? this.parent.getEffectiveZIndex() : this.underlyingElement.getEffectiveZIndex();
+  }
+
+  @Override
   public IElement setZIndex(int zIndex) {
     return this.underlyingElement == null ? this : this.underlyingElement.setZIndex(zIndex);
   }
@@ -200,5 +211,25 @@ public class ElementReference implements IElement {
   @Override
   public IElement setSizingMode(Layout.SizingMode sizingMode) {
     return this.underlyingElement == null ? this : this.underlyingElement.setSizingMode(sizingMode);
+  }
+
+  @Override
+  public @Nullable String getTooltip() {
+    return this.underlyingElement == null ? null : this.underlyingElement.getTooltip();
+  }
+
+  @Override
+  public IElement setTooltip(@Nullable String text) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setTooltip(text);
+  }
+
+  @Override
+  public IElement setName(String name) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setName(name);
+  }
+
+  @Override
+  public <T extends IElement> T cast() {
+    return this.underlyingElement == null ? null : (T)this.underlyingElement;
   }
 }

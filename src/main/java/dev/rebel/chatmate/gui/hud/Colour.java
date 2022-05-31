@@ -64,7 +64,7 @@ public class Colour {
 
   /** Inverse of Colour.toInt() */
   public Colour(int intValue) {
-    this(intValue >> 16 & 255, intValue & 255, intValue >> 8 & 255, intValue >> 24 & 255);
+    this(intValue >> 16 & 255, intValue >> 8 & 255, intValue & 255, intValue >> 24 & 255);
   }
 
   public int toInt() {
@@ -91,6 +91,20 @@ public class Colour {
     return this.withAlpha(alphaInt);
   }
 
+  /** Scales all colours by the given value. */
+  public Colour withBrightness(float brightness) {
+    return new Colour((int)(this.red * brightness), (int)(this.green * brightness), (int)(this.blue * brightness), this.alpha);
+  }
+
+  public static Colour lerp(Colour from, Colour to, float frac) {
+    return new Colour(
+        lerpInt(from.red, to.red, frac),
+        lerpInt(from.green, to.green, frac),
+        lerpInt(from.blue, to.blue, frac),
+        lerpInt(from.alpha, to.alpha, frac)
+    );
+  }
+
   private static int toInt(int red, int green, int blue, int alpha) {
     /*
       The font renderer unpacks the color as follows from the 32-bit int:
@@ -98,7 +112,15 @@ public class Colour {
       this.blue = (float)(color >> 8 & 255) / 255.0F;
       this.green = (float)(color & 255) / 255.0F;
       this.alpha = (float)(color >> 24 & 255) / 255.0F;
+
+      It then passes it to the GlStateManager::color in that order, however, that method expect the order to be RGBA.
+      So providing Colour.GREEN to the fontRenderer will be interpreted as green by the renderer, but passed as blue to the state manager.
+      Therefore, we have to swap blue and green colours when converting dealing with int conversions.
      */
-    return green | (blue << 8) | (red << 16) | (alpha << 24);
+    return blue | (green << 8) | (red << 16) | (alpha << 24);
+  }
+
+  private static int lerpInt(int from, int to, float frac) {
+    return (int)(from + (to - from) * frac);
   }
 }

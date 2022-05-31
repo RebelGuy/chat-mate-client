@@ -6,12 +6,8 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 
 /** A single element which does not automatically manage its childrens' layout. Intended for standalone elements. */
 public abstract class SingleElement extends ElementBase {
-  protected boolean visible;
-
   public SingleElement(InteractiveContext context, IElement parent) {
     super(context, parent);
-
-    this.visible = true;
   }
 
   @Override
@@ -19,16 +15,4 @@ public abstract class SingleElement extends ElementBase {
 
   @Override
   public abstract void renderElement();
-
-  @Override
-  public boolean getVisible() {
-    return this.visible;
-  }
-
-  @Override
-  public SingleElement setVisible(boolean visible) {
-    this.visible = visible;
-    this.onInvalidateSize();
-    return this;
-  }
 }

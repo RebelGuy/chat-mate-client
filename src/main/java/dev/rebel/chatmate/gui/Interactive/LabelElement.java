@@ -18,7 +18,6 @@ public class LabelElement extends SingleElement {
   private String text;
   private TextAlignment alignment;
   private TextOverflow overflow;
-  private SizingMode sizingMode;
   private Dim linePadding;
   private Colour colour;
   private float fontScale;
@@ -31,7 +30,7 @@ public class LabelElement extends SingleElement {
     this.text = "";
     this.alignment = TextAlignment.LEFT;
     this.overflow = TextOverflow.TRUNCATE;
-    this.sizingMode = SizingMode.MINIMISE;
+    super.setSizingMode(SizingMode.MINIMISE);
     this.linePadding = context.dimFactory.fromGui(1);
     this.colour = new Colour(Color.WHITE);
     this.fontScale = 1.0f;
@@ -48,6 +47,7 @@ public class LabelElement extends SingleElement {
     return this.text;
   }
 
+  /** For multi-line text, or where the sizing mode is FILL. To align the component itself within the parent, use the `setHorizontalAlignment` API. */
   public LabelElement setAlignment(TextAlignment alignment) {
     this.alignment = alignment;
     this.onInvalidateSize();
@@ -62,12 +62,6 @@ public class LabelElement extends SingleElement {
 
   public LabelElement setLinePadding(Dim linePadding) {
     this.linePadding = linePadding;
-    this.onInvalidateSize();
-    return this;
-  }
-
-  public LabelElement setSizingMode(SizingMode sizingMode) {
-    this.sizingMode = sizingMode;
     this.onInvalidateSize();
     return this;
   }
@@ -93,6 +87,13 @@ public class LabelElement extends SingleElement {
   @Override
   public List<IElement> getChildren() {
     return null;
+  }
+
+  /** Returns the full box width that would be required to contain the longest word of this label on a single line. */
+  public Dim calculateWidthToFitLongestWord() {
+    List<Integer> widths = Collections.map(Collections.list(this.text.split(" ")), this.context.fontRenderer::getStringWidth);
+    Dim maxWidth = this.context.dimFactory.fromGui(this.fontScale * Collections.max(widths));
+    return super.getFullBoxWidth(maxWidth);
   }
 
   @Override
@@ -131,7 +132,7 @@ public class LabelElement extends SingleElement {
       throw new RuntimeException("Invalid Overflow setting " + this.overflow);
     }
 
-    return new DimPoint(this.sizingMode == SizingMode.FILL ? maxContentSize : contentWidth, contentHeight).scale(this.fontScale);
+    return new DimPoint(this.getSizingMode() == SizingMode.FILL ? maxContentSize : contentWidth, contentHeight).scale(this.fontScale);
   }
 
   private void addTextForRendering(String text) {
@@ -151,7 +152,7 @@ public class LabelElement extends SingleElement {
     FontRenderer font = this.context.fontRenderer;
     DimFactory factory = this.context.dimFactory;
 
-    Dim fontHeight = factory.fromGui(font.FONT_HEIGHT);
+    Dim fontHeight = factory.fromGui(font.FONT_HEIGHT).times(this.fontScale);
     DimRect box = this.getContentBox();
     Dim y = this.getContentBox().getY();
 

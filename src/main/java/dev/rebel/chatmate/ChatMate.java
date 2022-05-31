@@ -10,13 +10,9 @@ import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
-import dev.rebel.chatmate.proxy.ChatEndpointProxy;
-import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
-import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
-import dev.rebel.chatmate.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
@@ -70,6 +66,7 @@ public class ChatMate {
     ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, chatMateEndpointStore, apiPath);
     UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, chatMateEndpointStore, apiPath);
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, chatMateEndpointStore, apiPath);
+    PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, chatMateEndpointStore, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -78,7 +75,7 @@ public class ChatMate {
     this.chatMateChatService = new ChatMateChatService(logService, this.config, chatEndpointProxy);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, this.config);
-    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy);
+    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy, logService);
     MessageService messageService = new MessageService(logService, minecraftProxyService);
     ImageService imageService = new ImageService(minecraft);
     this.mcChatService = new McChatService(minecraftProxyService,
@@ -98,18 +95,21 @@ public class ChatMate {
     ClipboardService clipboardService = new ClipboardService();
     CountdownHandler countdownHandler = new CountdownHandler(guiChatMateHud);
     CounterHandler counterHandler = new CounterHandler(this.keyBindingService, guiChatMateHud, dimFactory, minecraft);
+    CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
         experienceEndpointProxy,
+        punishmentEndpointProxy,
         mcChatService,
         mouseEventService,
         keyboardEventService,
         clipboardService,
         soundService,
         countdownHandler,
-        counterHandler);
-    CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
+        counterHandler,
+        minecraftProxyService,
+        cursorService);
     this.guiService = new GuiService(this.isDev,
         logService,
         this.config,

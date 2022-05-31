@@ -7,7 +7,7 @@ import dev.rebel.chatmate.proxy.ApiResponseBase;
 public class ModifyExperienceResponse extends ApiResponseBase<ModifyExperienceResponseData> {
   @Override
   public Integer GetExpectedSchema() {
-    return 1;
+    return 2;
   }
 
   public static class ModifyExperienceResponseData {

@@ -83,6 +83,18 @@ public class DimRect {
     return new DimRect(position, this.getSize());
   }
 
+  public DimRect withLeft(Dim left) { return new DimRect(left, this.y, this.width, this.height); }
+
+  public DimRect withRight(Dim right) { return new DimRect(this.x, this.y, right.minus(this.x), this.height); }
+
+  public DimRect withTop(Dim top) { return new DimRect(this.x, top, this.width, this.height); }
+
+  public DimRect withBottom(Dim bottom) { return new DimRect(this.x, this.y, this.width, bottom.minus(this.y)); }
+
+  public DimRect withHWidth(Dim width) { return new DimRect(this.x, this.y, width, this.height); }
+
+  public DimRect withHeight(Dim height) { return new DimRect(this.x, this.y, this.width, height); }
+
   /** Truncates the sides of this rect such that it fits into the given rect (loose fit). */
   public DimRect clamp(DimRect other) {
     Dim x = Dim.max(this.getX(), other.getX());

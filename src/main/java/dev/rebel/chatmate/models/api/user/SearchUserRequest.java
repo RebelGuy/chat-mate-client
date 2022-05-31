@@ -6,7 +6,7 @@ public class SearchUserRequest extends ApiRequestBase {
   public final String searchTerm;
 
   public SearchUserRequest(String searchTerm) {
-    super(1);
+    super(3);
     this.searchTerm = searchTerm;
   }
 }

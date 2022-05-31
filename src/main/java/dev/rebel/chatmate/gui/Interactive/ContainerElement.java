@@ -8,7 +8,6 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.util.Tuple;
 import scala.Tuple2;
 
 import java.util.ArrayList;
@@ -20,46 +19,59 @@ import java.util.Map;
 public abstract class ContainerElement extends ElementBase {
   private final LayoutMode mode;
 
+  /** Subset of `this.children`. */
+  protected final List<IElement> initialChildren;
   protected final List<IElement> children;
   protected final Map<IElement, DimRect> childrenRelBoxes;
 
   public ContainerElement(InteractiveContext context, IElement parent, LayoutMode mode) {
     super(context, parent);
     this.mode = mode;
+    this.initialChildren = new ArrayList<>();
     this.children = new ArrayList<>();
     this.childrenRelBoxes = new HashMap<>();
   }
 
+  @Override
+  public void onInitialise() {
+    this.clear();
+    this.children.addAll(this.initialChildren);
+  }
+
   protected ContainerElement addElement(IElement element) {
+    if (element == null) {
+      return this;
+    }
+
     this.children.add(element);
     element.setParent(this);
+
+    // If this is chained directly to the instantiation of the element, the child will be considered an "initial child"
+    // and is NOT cleared when this container element is initialised.
+    if (!super.isInitialised()) {
+      this.initialChildren.add(element);
+    } else {
+      this.onInvalidateSize();
+    }
     return this;
   }
 
   protected ContainerElement removeElement(IElement element) {
     this.children.remove(element);
     this.childrenRelBoxes.remove(element);
+    this.onInvalidateSize();
     return this;
   }
 
   protected ContainerElement clear() {
     this.children.clear();
     this.childrenRelBoxes.clear();
+    this.onInvalidateSize();
     return this;
   }
 
   protected List<IElement> getVisibleChildren() {
     return Collections.filter(this.children, IElement::getVisible);
-  }
-
-  @Override
-  public void onCreate() {
-    this.children.forEach(IElement::onCreate);
-  }
-
-  @Override
-  public void onDispose() {
-    this.children.forEach(IElement::onCreate);
   }
 
   @Override
@@ -72,6 +84,9 @@ public abstract class ContainerElement extends ElementBase {
     // note: the parent is responsible for the vertical/horizontal position of this container within itself.
     // we only need to set the relative positions of elements within the box that will be provided to us.
     List<Tuple2<IElement, DimPoint>> elementSizes = Collections.map(this.getVisibleChildren(), el -> new Tuple2<>(el, el.calculateSize(maxWidth)));
+    if (elementSizes.size() == 0) {
+      return new DimPoint(ZERO, ZERO);
+    }
 
     if (this.mode == LayoutMode.BLOCK) {
       return this.calculateBlockSize(elementSizes, maxWidth);
@@ -103,7 +118,7 @@ public abstract class ContainerElement extends ElementBase {
       } else if (element.getHorizontalAlignment() == HorizontalAlignment.CENTRE) {
         relX = containerWidth.minus(size.getX()).over(2);
       } else if (element.getHorizontalAlignment() == HorizontalAlignment.RIGHT) {
-        relX = containerWidth;
+        relX = containerWidth.minus(size.getX());
       } else {
         throw new RuntimeException("Invalid horizontal layout " + element.getHorizontalAlignment());
       }
@@ -115,7 +130,8 @@ public abstract class ContainerElement extends ElementBase {
     return new DimPoint(containerWidth, currentY);
   }
 
-  private DimPoint calculateInlineSize(List<Tuple2<IElement, DimPoint>> elementSizes, Dim maxWidth) {
+  /** Given the children's box sizes, calculates this container size using the INLINE layout model. */
+  protected final DimPoint calculateInlineSize(List<Tuple2<IElement, DimPoint>> elementSizes, Dim maxWidth) {
     // place one or more elements per line.
     // similar to the BLOCK calculation, except we also position elements vertically within their line.
 
@@ -165,7 +181,7 @@ public abstract class ContainerElement extends ElementBase {
         if (element.getHorizontalAlignment() == HorizontalAlignment.LEFT) {
           xOffset = ZERO;
         } else if (element.getHorizontalAlignment() == HorizontalAlignment.CENTRE) {
-          xOffset = freeWidth.minus(size.getX()).over(2);
+          xOffset = freeWidth.over(2);
         } else if (element.getHorizontalAlignment() == HorizontalAlignment.RIGHT) {
           xOffset = freeWidth;
         } else {
@@ -217,21 +233,16 @@ public abstract class ContainerElement extends ElementBase {
       if (relBox == null) {
         continue;
       }
-      // todo: add horizontal alignment mode that allows us to align items left, centre, or right
-      // and vertical alignment as well (for elements on the same line)
+
       element.setBox(relBox.withTranslation(contentBox.getPosition()));
     }
   }
 
   @Override
   public ContainerElement setVisible(boolean visible) {
+    super.setVisible(visible);
     this.children.forEach(el -> el.setVisible(visible));
     return this;
-  }
-
-  @Override
-  public boolean getVisible() {
-    return this.children.stream().anyMatch(IElement::getVisible);
   }
 
   /** Used for the automatic layout algorithm. */

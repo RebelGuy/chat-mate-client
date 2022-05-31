@@ -40,9 +40,10 @@ public class TextInputElement extends InputElement {
   private int selectionEndIndex; // this may be before or after the cursor
   private int enabledColor = 14737632;
   private int disabledColor = 7368816;
-  private Consumer<String> onTextChange;
+  private @Nullable Consumer<String> onTextChange;
   private Predicate<String> validator = text -> true;
   private @Nullable String suffix = null;
+  private @Nullable String placeholder = null;
 
   public TextInputElement(InteractiveContext context, IElement parent) {
     super(context, parent);
@@ -111,6 +112,10 @@ public class TextInputElement extends InputElement {
     return this;
   }
 
+  public String getText() {
+    return this.text;
+  }
+
   /** Internal method for setting the text. */
   private void setText_(String newText) {
     if (this.validator.test(newText)) {
@@ -131,6 +136,11 @@ public class TextInputElement extends InputElement {
 
   public TextInputElement setSuffix(String suffix) {
     this.suffix = suffix;
+    return this;
+  }
+
+  public TextInputElement setPlaceholder(String placeholder) {
+    this.placeholder = placeholder;
     return this;
   }
 
@@ -161,7 +171,10 @@ public class TextInputElement extends InputElement {
     if (this.validator.test(text)) {
       this.text = text;
       this.moveCursorBy(selectionStart - this.selectionEndIndex + lengthToAdd);
-      this.onTextChange.accept(this.text);
+
+      if (this.onTextChange != null) {
+        this.onTextChange.accept(this.text);
+      }
     }
   }
 
@@ -189,7 +202,9 @@ public class TextInputElement extends InputElement {
             this.moveCursorBy(offset);
           }
 
-          this.onTextChange.accept(this.text);
+          if (this.onTextChange != null) {
+            this.onTextChange.accept(this.text);
+          }
         }
       }
     }
@@ -343,6 +358,10 @@ public class TextInputElement extends InputElement {
       this.drawBackground();
       this.drawSuffix();
       this.drawEditableText();
+
+      if (this.context.focusedElement != this && isNullOrEmpty(this.text)) {
+        this.drawPlaceholder();
+      }
     }
   }
 
@@ -365,7 +384,18 @@ public class TextInputElement extends InputElement {
     Dim left = this.getContentBox().getRight().minus(suffixWidth);
     Dim top = this.getContentBox().getY();
     int color = this.disabledColor;
-    this.font.drawString(this.suffix, (int)left.getGui(), (int)top.getGui(), color);
+    this.font.drawString(this.suffix, left.getGui(), top.getGui(), color, false);
+  }
+
+  private void drawPlaceholder() {
+    if (isNullOrEmpty(this.placeholder)) {
+      return;
+    }
+
+    Dim left = this.getContentBox().getX();
+    Dim top = this.getContentBox().getY();
+    int color = this.disabledColor;
+    this.font.drawString("§o" + this.placeholder, left.getGui(), top.getGui(), color, false);
   }
 
   private void drawEditableText() {

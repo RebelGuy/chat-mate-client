@@ -34,10 +34,10 @@ public class ComponentHelperTests {
 
   @Test
   public void splitText_LongTextComponent_RetainsStyleOnSplit() {
-    when(this.fontRenderer.getStringWidth("Test1234")).thenReturn(10);
-    when(this.fontRenderer.getStringWidth("Test1")).thenReturn(7);
-    when(this.fontRenderer.getStringWidth("234")).thenReturn(3);
-    when(this.fontRenderer.trimStringToWidth("Test1234", 5)).thenReturn("Test1");
+    when(this.fontRenderer.getStringWidth("§0Test1234")).thenReturn(10);
+    when(this.fontRenderer.getStringWidth("§0Test1")).thenReturn(7);
+    when(this.fontRenderer.getStringWidth("§0234")).thenReturn(3);
+    when(this.fontRenderer.trimStringToWidth("§0Test1234", 5)).thenReturn("§0Test1");
     IChatComponent component = new ChatComponentText("Test1234");
     ChatStyle style = new ChatStyle().setColor(EnumChatFormatting.BLACK);
     component.setChatStyle(style);

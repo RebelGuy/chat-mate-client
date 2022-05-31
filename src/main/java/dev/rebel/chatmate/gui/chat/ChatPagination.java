@@ -50,7 +50,7 @@ public class ChatPagination<T> {
     this.items = items;
     this.itemsPerPage = itemsPerPage;
     this.headerText = headerText;
-    this.maxPage = this.items.length / this.itemsPerPage;
+    this.maxPage = Math.max(0, (this.items.length - 1)) / this.itemsPerPage;
 
     this.initialised = false;
     this.currentPage = 0;

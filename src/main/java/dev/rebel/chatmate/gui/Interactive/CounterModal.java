@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 
@@ -13,7 +14,7 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 public class CounterModal extends ModalElement {
   private final CounterHandler counterHandler;
 
-  private final ButtonElement deleteButton;
+  private ButtonElement deleteButton;
 
   private @Nullable String text = null;
   private @Nullable Integer startValue = 0;
@@ -21,7 +22,13 @@ public class CounterModal extends ModalElement {
 
   public CounterModal(InteractiveScreen.InteractiveContext context, InteractiveScreen parent, CounterHandler counterHandler) {
     super(context, parent);
+    this.name = "CounterModal";
     this.counterHandler = counterHandler;
+  }
+
+  @Override
+  public void onInitialise() {
+    super.onInitialise();
 
     IElement titleElements = new SideBySideElement(context, this)
         .setElementPadding(gui(10))
@@ -42,7 +49,7 @@ public class CounterModal extends ModalElement {
 
     IElement valueElements = new SideBySideElement(context, this)
         .setElementPadding(gui(40))
-        .addElement(1,
+        .addElement(0.5f,
             new SideBySideElement(context, this)
                 .addElement(1,
                     new LabelElement(context, this)
@@ -61,7 +68,7 @@ public class CounterModal extends ModalElement {
             new SideBySideElement(context, this)
                 .addElement(1,
                     new LabelElement(context, this)
-                        .setText("Start:")
+                        .setText("Increment:")
                         .setOverflow(TextOverflow.TRUNCATE)
                         .setVerticalAlignment(VerticalAlignment.MIDDLE)
                 ).addElement(0.75f,
@@ -137,7 +144,7 @@ public class CounterModal extends ModalElement {
   }
 
   @Override
-  protected boolean validate() {
+  protected @Nullable Boolean validate() {
     return this.incrementValue != null && this.startValue != null;
   }
 

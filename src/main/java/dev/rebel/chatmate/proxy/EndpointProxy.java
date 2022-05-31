@@ -56,7 +56,12 @@ public class EndpointProxy {
         }
         return null;
       }
-    }).thenAccept(callback);
+    }).thenAccept(res -> {
+      if (res != null) {
+        // if there is an exception here, it will bubble up
+        callback.accept(res);
+      }
+    });
   }
 
   public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass) throws ConnectException, ChatMateApiException, Exception {

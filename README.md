@@ -31,6 +31,14 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 
 Debug partial .minecraft folder: `chat-mate-client/run/`
 
+## Profiling
+Use the IntelliJ extension `VisualVM Launcher` from the Marketplace: `https://plugins.jetbrains.com/plugin/7115-visualvm-launcher/`.
+Start the profiling session by using the "Debug with VisualVM 'Minecraft Client'" configuration at the top. Download and extract
+VisualVM and copy the path of the executable in the `/bin` folder to the empty input field.
+
+Once started, Minecraft can be profiled within VisualVM via the `GradleStart` application. A partial snapshot can be 
+recorded within the `Sampler` tab.
+
 ## Custom Chat
 We use a custom implementation of the `GuiNewChat` gui object (this is what renders the chat lines,
 handles `IChatComponents`, etc). There is a couple of points to note on how this works:
@@ -52,7 +60,18 @@ Now, by listening to the chat render events fired by `GuiIngameForge`, we can pr
 behaviour (i.e. `cancel` the event) and use `CustomGuiNewChat.drawChat()` instead. As a result, the `GuiIngameForge`
 never has a chance to interact with its private `GuiNewChat` object (which remains to be the default implementation).
 
+## Misc
+List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
+
 # Change Log
+## v1.13 - The Punishment Update [30/5/2022]
+- Added fancy modal screens for:
+  - Displaying a list of the user's historic punishments
+  - Viewing punishment details
+  - Creating a new punishment
+  - Modifying an active punishment
+- New interactive features such as hover animations, tooltips, a checkbox element, centralised z-index and side effect handling, and many bugfixes
+
 ## v1.12 - The Twitch Update [1/4/2022]
 - Added configuration for identifying platform-specific information
   - The status indicator and viewer count is split into two

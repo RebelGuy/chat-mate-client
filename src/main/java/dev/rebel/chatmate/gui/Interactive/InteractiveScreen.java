@@ -6,11 +6,14 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Screen;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.ClipboardService;
+import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.SoundService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
@@ -19,16 +22,18 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData.Out.KeyboardH
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.TextHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
+
+import static dev.rebel.chatmate.gui.Interactive.RendererHelpers.drawTooltip;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
@@ -46,15 +51,19 @@ public class InteractiveScreen extends Screen implements IElement {
   private boolean requiresRecalculation = true;
 
   private IElement mainElement = null;
-  private Set<IElement> elementsUnderCursor = new HashSet<>();
+  private List<IElement> elementsUnderCursor = new ArrayList<>();
+  private IElement blockingElement = null;
+  private List<IElement> blockedElementsUnderCursor = new ArrayList<>();  // contains the list of elements that this element blocks, if any
   private boolean debugModeEnabled = false;
   private boolean debugElementSelected = false;
+  private long refreshTimestamp; // for showing a quick tooltip after F5 is pressed
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen) {
     super();
 
     this.context = context;
     this.parentScreen = parentScreen;
+    this.refreshTimestamp = 0;
 
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(true), this);
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this.onMouseMove, new MouseEventData.Options(true), this);
@@ -94,21 +103,24 @@ public class InteractiveScreen extends Screen implements IElement {
       throw new RuntimeException("Please set the MainElement before displaying the screen in Minecraft.");
     }
 
-    this.mainElement.onCreate();
-
     List<InputElement> autoFocusable = Collections.filter(ElementHelpers.getElementsOfType(this.mainElement, InputElement.class), InputElement::getAutoFocus);
     if (Collections.any(autoFocusable)) {
       InputElement toFocus = Collections.min(autoFocusable, InputElement::getTabIndex);
       this.setFocussedElement(toFocus, FocusReason.AUTO);
     }
 
-    // initial size calculations - required so that things like mouse events can be sent to the correct elements
     this.recalculateLayout();
   }
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   private void recalculateLayout() {
-    if (!this.requiresRecalculation || this.mainElement == null) {
+    if (this.mainElement == null) {
+      return;
+    }
+
+    this.context.renderer._executeSideEffects();
+
+    if (!this.requiresRecalculation && this.mainElement.getBox() != null) {
       return;
     }
     this.requiresRecalculation = false;
@@ -128,6 +140,7 @@ public class InteractiveScreen extends Screen implements IElement {
     DimRect mainRect = ElementHelpers.alignElementInBox(mainSize, screenRect, this.mainElement.getHorizontalAlignment(), this.mainElement.getVerticalAlignment());
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
+    this.context.renderer._executeSideEffects();
   }
 
   @Override
@@ -137,18 +150,21 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     this.recalculateLayout();
-    this.mainElement.render();
 
-    if (this.context.debugElement == this) {
-      ElementHelpers.renderDebugInfo(this, this.context);
+    this.context.renderer.clear();
+    this.mainElement.render();
+    this.context.renderer._executeRender();
+    this.context.renderer._executeSideEffects();
+    this.renderTooltip();
+
+    if (this.context.debugElement != null) {
+      ElementHelpers.renderDebugInfo(this.context.debugElement, this.context);
     }
   }
 
   @Override
   public void onGuiClosed() {
     if (this.mainElement != null) {
-      this.mainElement.onDispose();
-
       // it is very important that we remove the reference to the mainElement, otherwise
       // this screen will never be garbage collected since mainElement holds a reference to it
       this.mainElement = null;
@@ -165,7 +181,7 @@ public class InteractiveScreen extends Screen implements IElement {
 
     // if we are debugging and are in "discovery mode", select the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
-      IElement element = Collections.last(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
+      IElement element = Collections.first(ElementHelpers.raycast(this, in.mousePositionData.point));
       if (element != null) {
         this.debugElementSelected = true;
         this.context.debugElement = element;
@@ -188,7 +204,7 @@ public class InteractiveScreen extends Screen implements IElement {
 
     // if we are debugging and haven't selected an element, enter "discovery mode" by temp-debugging the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
-      IElement element = Collections.last(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
+      IElement element = Collections.first(ElementHelpers.raycast(this, in.mousePositionData.point));
       if (element != null) {
         this.context.debugElement = element;
         return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
@@ -196,19 +212,46 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     // fire MOUSE_ENTER/MOUSE_EXIT events
-    Set<IElement> newElements = new HashSet<>(ElementHelpers.getElementsAtPoint(this, in.mousePositionData.point));
-    Set<IElement> previousElements = this.elementsUnderCursor;
+    // if an element blocks the sequence propagation, then the blocked elements will be treated as if for a MOUSE_EXIT event.
+    // they will be added back as soon as the blocking element is no longer included in the new elements.
+    List<IElement> newElements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
+    List<IElement> newOrExistingEntered = new ArrayList<>();
+    List<IElement> previousElements = this.elementsUnderCursor;
+    List<IElement> blocked = this.blockingElement != null && newElements.contains(this.blockingElement) ? this.blockedElementsUnderCursor : new ArrayList<>();
+    List<IElement> newBlocked = new ArrayList<>();
+    IElement newBlocking = null;
+    for (IElement newElement : newElements) {
+      boolean isBlocked = Collections.any(blocked, el -> el == newElement);
+      if (!isBlocked) {
+        newOrExistingEntered.add(newElement);
+        InteractiveEvent<MouseEventData.In> event = new InteractiveEvent<>(EventPhase.CAPTURE, in, newElement);
+        newElement.onEvent(EventType.MOUSE_ENTER, event);
+
+        // go as far as we can or until propagation has stopped
+        // all remaining elements are now blocked
+        if (event.stoppedPropagation) {
+          newBlocked = Collections.filter(newElements, el -> !newOrExistingEntered.contains(el));
+          newBlocking = newElement;
+          break;
+        }
+      }
+    }
     for (IElement prevElement : previousElements) {
-      if (!newElements.contains(prevElement)) {
+      if (!newOrExistingEntered.contains(prevElement)) {
+        // state change from entered to exited
         prevElement.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, prevElement));
       }
     }
-    for (IElement newElement : newElements) {
+    for (IElement newElement : Collections.reverse(newOrExistingEntered)) { // reverse
       if (!previousElements.contains(newElement)) {
+        // state change from exited to entered
         newElement.onEvent(EventType.MOUSE_ENTER, new InteractiveEvent<>(EventPhase.TARGET, in, newElement));
       }
     }
-    this.elementsUnderCursor = newElements;
+
+    this.elementsUnderCursor = newOrExistingEntered;
+    this.blockedElementsUnderCursor = newBlocked;
+    this.blockingElement = newBlocking;
 
     this.recalculateLayout();
     boolean handled = this.propagateMouseEvent(EventType.MOUSE_MOVE, in);
@@ -260,6 +303,11 @@ public class InteractiveScreen extends Screen implements IElement {
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     } else if (in.isPressed(Keyboard.KEY_F3)) {
       this.toggleDebug();
+      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+    } else if (in.isPressed(Keyboard.KEY_F5)) {
+      // force a refresh
+      this.refreshTimestamp = new Date().getTime();
+      this.onInvalidateSize();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
 
     } else if (in.isPressed(Keyboard.KEY_TAB) && this.context.focusedElement != null) {
@@ -400,6 +448,40 @@ public class InteractiveScreen extends Screen implements IElement {
     return bubbleEvent.stoppedPropagation;
   }
 
+  /** Starting at the MOUSE_ENTER blocking element and working our way upwards, display the first non-null tooltip. */
+  private void renderTooltip() {
+    if (this.elementsUnderCursor.size() == 0) {
+      return;
+    }
+
+    List<IElement> candidates = new ArrayList<>();
+    for (IElement element : this.elementsUnderCursor) {
+      candidates.add(element);
+      if (element == this.blockingElement) {
+        break;
+      }
+    }
+
+    @Nullable String tooltip = null;
+    if (new Date().getTime() - this.refreshTimestamp < 2000L) {
+      tooltip = "Forced layout refresh";
+    } else {
+      for (IElement element : Collections.reverse(candidates)) {
+        tooltip = element.getTooltip();
+        if (tooltip != null) {
+          break;
+        }
+      }
+    }
+
+    DimPoint mousePos = context.mousePosition;
+    if (tooltip == null || mousePos == null) {
+      return;
+    }
+
+    RendererHelpers.drawTooltip(context.dimFactory, context.fontRenderer, context.mousePosition, tooltip);
+  }
+
   //region Empty or delegated IElement methods
   @Override
   public List<IElement> getChildren() { return Collections.list(this.mainElement); }
@@ -411,10 +493,7 @@ public class InteractiveScreen extends Screen implements IElement {
   public IElement setParent(IElement parent) { return null; }
 
   @Override
-  public void onCreate() { }
-
-  @Override
-  public void onDispose() { }
+  public void onInitialise() { }
 
   @Override
   public void onEvent(EventType type, IEvent<?> event) { }
@@ -468,6 +547,9 @@ public class InteractiveScreen extends Screen implements IElement {
   public int getZIndex() { return 0; }
 
   @Override
+  public int getEffectiveZIndex() { return 0; }
+
+  @Override
   public IElement setZIndex(int zIndex) { return this; }
 
   @Override
@@ -488,9 +570,22 @@ public class InteractiveScreen extends Screen implements IElement {
   @Override
   public SizingMode getSizingMode() { return null; }
 
+  @Override
+  public <T extends IElement> T cast() { return null; }
+
+  @Override
+  public @Nullable String getTooltip() { return null; }
+
+  @Override
+  public IElement setTooltip(@Nullable String text) { return null; }
+
+  @Override
+  public IElement setName(String name) { return null; }
+
   //endregion
 
   public static class InteractiveContext {
+    public final ScreenRenderer renderer;
     public final MouseEventService mouseEventService;
     public final KeyboardEventService keyboardEventService;
     public final DimFactory dimFactory;
@@ -498,19 +593,25 @@ public class InteractiveScreen extends Screen implements IElement {
     public final FontRenderer fontRenderer;
     public final ClipboardService clipboardService;
     public final SoundService soundService;
+    public final CursorService cursorService;
+    public final MinecraftProxyService minecraftProxyService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
     public @Nullable InputElement focusedElement = null;
     public @Nullable DimPoint mousePosition = null;
 
-    public InteractiveContext(MouseEventService mouseEventService,
+    public InteractiveContext(ScreenRenderer renderer,
+                              MouseEventService mouseEventService,
                               KeyboardEventService keyboardEventService,
                               DimFactory dimFactory,
                               Minecraft minecraft,
                               FontRenderer fontRenderer,
                               ClipboardService clipboardService,
-                              SoundService soundService) {
+                              SoundService soundService,
+                              CursorService cursorService,
+                              MinecraftProxyService minecraftProxyService) {
+      this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
       this.dimFactory = dimFactory;
@@ -518,6 +619,113 @@ public class InteractiveScreen extends Screen implements IElement {
       this.fontRenderer = fontRenderer;
       this.clipboardService = clipboardService;
       this.soundService = soundService;
+      this.cursorService = cursorService;
+      this.minecraftProxyService = minecraftProxyService;
+    }
+  }
+
+  // This manages the render order of elements to simulate z indexes. For some reason, OpenGL ignores z values when
+  // translating or rendering, otherwise we would just use the built-in functionality.
+  public static class ScreenRenderer {
+    // importantly, renderables within a layer are ordered
+    private Map<Integer, List<Runnable>> collectedRenders;
+    private Set<Runnable> completedRenders;
+    private final List<Runnable> sideEffects;
+    private boolean sideEffectsInProgress;
+
+    public ScreenRenderer() {
+      this.clear();
+      this.sideEffects = java.util.Collections.synchronizedList(new ArrayList<>());
+      this.sideEffectsInProgress = false;
+    }
+
+    public void clear() {
+      this.collectedRenders = new HashMap<>();
+      this.completedRenders = new HashSet<>();
+    }
+
+    public void render(IElement element, Runnable onRender) {
+      int zIndex = element.getEffectiveZIndex();
+      if (!this.collectedRenders.containsKey(zIndex)) {
+        this.collectedRenders.put(zIndex, new ArrayList<>());
+      }
+      this.collectedRenders.get(zIndex).add(onRender);
+    }
+
+    /** Waits until the current render or layout-calculation cycle is complete before running the specified side effect.
+     * May run the side effect immediately. Note that you will need to manually invalidate your size if required. */
+    public void runSideEffect(Runnable sideEffect) {
+      synchronized (this.sideEffects) {
+        if (this.sideEffectsInProgress) {
+          // it is possible that running a side effect causes another side effect to be run - we can safely run it immediately
+          sideEffect.run();
+        } else {
+          this.sideEffects.add(sideEffect);
+        }
+      }
+    }
+
+    public void _executeRender() {
+      // we don't have all render methods of all elements initially, so it's not possible to render an element very early
+      // that is supposed to be rendered on top of everything else. it works best when siblings have differing z indexes.
+      //
+      // note that the overall render order is still unchanged, we are merely enhancing it.
+
+      // algorithm: always exhaust the list of lowest z index elements, then move on to the next layer, etc, constantly
+      // checking whether there are new lower-layer elements to be rendered (though we wouldn't expect there to be any
+      // since the effective z index is additive).
+      @Nullable Runnable renderable;
+      while (true) {
+        renderable = getNextRenderable();
+        if (renderable == null) {
+          break;
+        }
+        renderable.run();
+        this.completedRenders.add(renderable);
+      }
+
+      this.clear();
+    }
+
+    public void _executeSideEffects() {
+      this.sideEffectsInProgress = true;
+
+      List<Runnable> copy;
+      synchronized (this.sideEffects) {
+        copy = Collections.list(this.sideEffects);
+        this.sideEffects.clear();
+      }
+      copy.forEach(Runnable::run);
+
+      this.sideEffectsInProgress = false;
+    }
+
+    private @Nullable Runnable getNextRenderable() {
+      @Nullable Runnable result = null;
+      while (result == null) {
+        if (this.collectedRenders.size() == 0) {
+          return null;
+        }
+
+        int zIndex = this.getLowestZIndex();
+        List<Runnable> list = Collections.filter(this.collectedRenders.get(zIndex), r -> !this.completedRenders.contains(r));
+        if (list.size() <= 1) {
+          this.collectedRenders.remove(zIndex);
+        }
+        if (list.size() == 0) {
+          return null;
+        }
+        result = list.remove(0);
+        if (list.size() > 0) {
+          this.collectedRenders.put(zIndex, list);
+        }
+      }
+
+      return result;
+    }
+
+    private int getLowestZIndex() {
+      return Collections.min(Collections.list(this.collectedRenders.keySet()), i -> i);
     }
   }
 }

@@ -13,7 +13,7 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 public class CountdownModal extends ModalElement {
   private final CountdownHandler countdownHandler;
 
-  private final ButtonElement deleteButton;
+  private ButtonElement deleteButton;
 
   private @Nullable Float hours = 0.0f;
   private @Nullable Float minutes = 0.0f;
@@ -23,6 +23,11 @@ public class CountdownModal extends ModalElement {
   public CountdownModal(InteractiveScreen.InteractiveContext context, InteractiveScreen parent, CountdownHandler countdownHandler) {
     super(context, parent);
     this.countdownHandler = countdownHandler;
+  }
+
+  @Override
+  public void onInitialise() {
+    super.onInitialise();
 
     IElement titleElements = new SideBySideElement(context, this)
         .setElementPadding(gui(10))
@@ -120,7 +125,7 @@ public class CountdownModal extends ModalElement {
   }
 
   @Override
-  protected boolean validate() {
+  protected @Nullable Boolean validate() {
     return this.seconds != null && this.minutes != null && this.hours != null && this.getTotalSeconds() > 0;
   }
 
