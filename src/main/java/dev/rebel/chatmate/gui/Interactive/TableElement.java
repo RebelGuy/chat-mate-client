@@ -175,8 +175,6 @@ public class TableElement<T> extends ContainerElement {
       );
     }
 
-    // todo: add mouse click and hover event here
-
     /** Create a new header row. */
     public RowElement(InteractiveContext context, IElement parent, List<LabelElement> headers) {
       super(context, parent, LayoutMode.INLINE);

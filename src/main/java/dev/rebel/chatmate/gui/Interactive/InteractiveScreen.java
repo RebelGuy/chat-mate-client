@@ -624,7 +624,7 @@ public class InteractiveScreen extends Screen implements IElement {
     }
   }
 
-  // This manages the render order of elements to simulate x indexes. For some reason, OpenGL ignores z values when
+  // This manages the render order of elements to simulate z indexes. For some reason, OpenGL ignores z values when
   // translating or rendering, otherwise we would just use the built-in functionality.
   public static class ScreenRenderer {
     // importantly, renderables within a layer are ordered

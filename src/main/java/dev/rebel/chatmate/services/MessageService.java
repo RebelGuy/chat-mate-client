@@ -140,7 +140,7 @@ public class MessageService {
     int levelNumberWidth = fontRenderer.getStringWidth("444");
     PrecisionLayout levelLayout = new PrecisionLayout(new PrecisionValue(4), new PrecisionValue(levelNumberWidth), PrecisionAlignment.RIGHT);
 
-    // todo: at the moment we are only showing the default channel name, but in the future it is possible that a single user
+    // todo CHAT-270: at the moment we are only showing the default channel name, but in the future it is possible that a single user
     // has multiple channels so then we must print a list
     PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(4 + levelNumberWidth + 4), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
     ChatStyle style = userNames.youtubeChannelNames.length > 0 ? YOUTUBE_CHANNEL_STYLE : TWITCH_CHANNEL_STYLE;
