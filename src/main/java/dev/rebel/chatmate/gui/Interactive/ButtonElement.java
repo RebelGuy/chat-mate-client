@@ -28,6 +28,7 @@ public class ButtonElement extends InputElement {
   /** Based on the texture. I don't know what happens if this is larger, though. */
   private static final int MIN_WIDTH_GUI = 20;
 
+  private Dim minSize;
   private LabelElement label;
   private boolean hovered;
   private @Nullable Runnable onClick;
@@ -35,6 +36,7 @@ public class ButtonElement extends InputElement {
   public ButtonElement(InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
 
+    this.minSize = ZERO;
     this.label = (LabelElement)new LabelElement(context, this)
         .setText("")
         .setAlignment(LabelElement.TextAlignment.CENTRE)
@@ -55,6 +57,13 @@ public class ButtonElement extends InputElement {
 
   public ButtonElement setOnClick(@Nullable Runnable onClick) {
     this.onClick = onClick;
+    return this;
+  }
+
+  /** If sizing mode is not FILL, and the provided minimum size is less than the maximum size when calculating the layout,
+   * the button will ensure its size does not exceed the provided value. */
+  public ButtonElement setMinSize(@Nullable Dim minSize) {
+    this.minSize = minSize == null ? ZERO : minSize;
     return this;
   }
 
@@ -94,6 +103,10 @@ public class ButtonElement extends InputElement {
       width = maxContentSize;
     } else {
       width = Dim.min(labelSize.getX(), maxContentSize);
+
+      if (this.minSize.lt(maxContentSize) && width.lt(this.minSize)) {
+        width = this.minSize;
+      }
     }
 
     Dim height = Dim.max(this.context.dimFactory.fromGui(MIN_WIDTH_GUI), labelSize.getY());

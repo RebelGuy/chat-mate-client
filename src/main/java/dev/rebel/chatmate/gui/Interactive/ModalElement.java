@@ -157,16 +157,23 @@ public abstract class ModalElement extends ContainerElement {
 
     this.closeButton = new ButtonElement(context, this)
         .setText("Close")
-        .setOnClick(this::onClose);
-    this.submitButton = (ButtonElement)new ButtonElement(context, this)
+        .setOnClick(this::onClose)
+        .setMinSize(this.width.over(4))
+        .setHorizontalAlignment(HorizontalAlignment.LEFT)
+        .cast();
+    this.submitButton = new ButtonElement(context, this)
         .setText("Submit")
         .setOnClick(this::onSubmit)
-        .setVisible(this.validate() != null);
-    this.footer = (SideBySideElement)new SideBySideElement(context, this)
-        .setElementPadding(this.width.over(2))
-        .addElement(1, this.closeButton)
-        .addElement(1, this.submitButton)
-        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO));
+        .setMinSize(this.width.over(4))
+        .setVisible(this.validate() != null)
+        .setHorizontalAlignment(HorizontalAlignment.RIGHT)
+        .cast();
+    this.footer = new SideBySideElement(context, this)
+        .setElementPadding(gui(8))
+        .addElement(1, new WrapperElement(context, this, this.closeButton))
+        .addElement(1, new WrapperElement(context, this, this.submitButton))
+        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO))
+        .cast();
 
     this.addElement(this.title);
 
