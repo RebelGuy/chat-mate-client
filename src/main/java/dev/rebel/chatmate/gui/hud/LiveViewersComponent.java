@@ -24,6 +24,8 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private final float initialScale;
   private final StatusService statusService;
   private final Minecraft minecraft;
+
+  private boolean initialised;
   private float scale;
   private DigitReel reel1;
   private DigitReel reel2;
@@ -39,6 +41,8 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.scale = initialScale;
     this.statusService = statusService;
     this.minecraft = minecraft;
+
+    this.initialised = false;
 
     this.reel1 = new DigitReel(minecraft, dimFactory);
     this.reel2 = new DigitReel(minecraft, dimFactory);
@@ -74,6 +78,13 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   public void render(RenderContext context) {
     if (!this.config.getShowLiveViewersEmitter().get() || this.getFontRenderer() == null) {
       return;
+    }
+
+    if (!this.initialised) {
+      // we can't call this in the constructor because the fontRenderer might not have been initialised yet.
+      // calling this ensures that our initial size and position is correct.
+      this.onShowLiveViewers(true);
+      this.initialised = true;
     }
 
     // we have to update this constantly because of dynamic content

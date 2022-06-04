@@ -93,7 +93,7 @@ public class ChatMate {
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config);
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, this.forgeEventService, this.mouseEventService, dimFactory);
     ClipboardService clipboardService = new ClipboardService();
-    CountdownHandler countdownHandler = new CountdownHandler(guiChatMateHud);
+    CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, guiChatMateHud);
     CounterHandler counterHandler = new CounterHandler(this.keyBindingService, guiChatMateHud, dimFactory, minecraft);
     CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,

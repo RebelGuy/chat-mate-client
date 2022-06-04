@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,6 @@ public class GuiChatMateHud {
 
   private final StatusIndicatorComponent statusIndicatorComponent;
   private final LiveViewersComponent liveViewersComponent;
-  private final TitleComponent titleComponent;
 
   public final List<IHudComponent> hudComponents;
 
@@ -40,16 +40,9 @@ public class GuiChatMateHud {
     this.statusIndicatorComponent = new StatusIndicatorComponent(dimFactory, 0.5f, statusService, config);
     this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft);
 
-    this.titleComponent = new TitleComponent(dimFactory, minecraft, true, true);
-
     this.hudComponents = new ArrayList<>();
     this.hudComponents.add(this.statusIndicatorComponent);
     this.hudComponents.add(this.liveViewersComponent);
-    this.hudComponents.add(this.titleComponent);
-  }
-
-  public TitleComponent getTitleComponent() {
-    return this.titleComponent;
   }
 
   // render indicators here, etc.
