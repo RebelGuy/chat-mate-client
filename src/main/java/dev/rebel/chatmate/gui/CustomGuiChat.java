@@ -69,6 +69,10 @@ public class CustomGuiChat extends GuiChat {
   }
 
   private MouseEventData.Out onMouseDown(MouseEventData.In in) {
+    if (!this.minecraftProxyService.checkCurrentScreen(this)) {
+      return new MouseEventData.Out();
+    }
+
     CustomGuiNewChat chatGui = this.minecraftProxyService.getChatGUI();
     chatGui.setSelectedLine(null);
 
@@ -97,6 +101,10 @@ public class CustomGuiChat extends GuiChat {
   }
 
   private MouseEventData.Out onMouseMove(MouseEventData.In in) {
+    if (!this.minecraftProxyService.checkCurrentScreen(this)) {
+      return new MouseEventData.Out();
+    }
+
     if (this.contextMenuStore.isShowingContextMenu()) {
       this.cursorService.setCursor(CursorType.DEFAULT);
       return new MouseEventData.Out();
