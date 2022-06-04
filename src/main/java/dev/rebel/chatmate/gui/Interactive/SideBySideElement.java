@@ -104,6 +104,11 @@ public class SideBySideElement extends ContainerElement {
       elementSizes.add(new Tuple2<>(element, size));
     }
 
-    return super.calculateInlineSize(elementSizes, maxContentSize);
+    // due to rounding, the effective width may be slightly larger than the maximum width - just allow this, as it
+    // will be a sub-pixel error. if we were to just pass through the maxContentSize, we would run the risk of adding
+    // the last element to the next line.
+    // note: don't add `totalPadding` because `elementSizes` includes the special empty elements already.
+    Dim effectiveWidth = Dim.sum(Collections.map(elementSizes, el -> el._2.getX()));
+    return super.calculateInlineSize(elementSizes, effectiveWidth);
   }
 }

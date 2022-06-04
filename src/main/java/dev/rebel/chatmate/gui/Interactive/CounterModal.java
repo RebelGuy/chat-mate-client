@@ -49,7 +49,7 @@ public class CounterModal extends ModalElement {
 
     IElement valueElements = new SideBySideElement(context, this)
         .setElementPadding(gui(40))
-        .addElement(0.5f,
+        .addElement(0.6f,
             new SideBySideElement(context, this)
                 .addElement(1,
                     new LabelElement(context, this)
