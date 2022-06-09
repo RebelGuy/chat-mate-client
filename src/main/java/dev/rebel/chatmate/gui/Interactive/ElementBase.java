@@ -403,7 +403,7 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public IElement setMaxWidth(@Nullable Dim maxWidth) {
-    if (Objects.equals(this.maxWidth, maxWidth)) {
+    if (!Objects.equals(this.maxWidth, maxWidth)) {
       this.maxWidth = maxWidth;
       this.onInvalidateSize();
     }
