@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.*;
@@ -10,6 +12,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.Color;
@@ -152,7 +155,45 @@ public class RendererHelpers {
     tessellator.draw();
   }
 
-  public static void drawTexturedModalRect(DimRect rect, int zLevel, int u, int v) {
+  public static void drawTexture(InteractiveContext context, Texture texture, DimPoint topLeft, float scale) {
+    // Minecraft expects a 256x256 texture to render.
+    // if we provide it with a smaller size, it will stretch out the texture.
+    // so we let it do that, and simply scale the screen. This means we will need to re-calculate the position.
+    // this will always draw the top-left corner at x-y, and display the (possibly rescaled) texture.
+    // (admittedly I don't fully understand why this works)
+    float scaleX = (float)texture.width / 256 * scale;
+    float scaleY = (float)texture.height / 256 * scale;
+    int u = 0, v = 0; // offset, with repeating boundaries in the 256x256 box
+
+    // position and size in the transformed (scaled) space
+    Dim renderX = topLeft.getX().over(scaleX);
+    Dim renderY = topLeft.getY().over(scaleY);
+    int width = 256;
+    int height = 256;
+
+    // note: it is important to use GlStateManager for two reasons:
+    // 1. better efficiency
+    // 2. calling the manager is used to keep track of state changes independently to GL11.* calls, and minecraft
+    //    uses the state manager - thus we would get unexpected behaviour if we use GL11 methods.
+    // see https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/minecraft-mods/modification-development/2231761-opengl-calls-glstatemanager
+    GlStateManager.pushMatrix();
+    GlStateManager.scale(scaleX, scaleY, 1);
+    GlStateManager.enableBlend();
+
+    // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
+    GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager.disableLighting();
+
+    context.minecraft.getTextureManager().bindTexture(texture.resourceLocation);
+    DimRect rect = new DimRect(renderX, renderY, context.dimFactory.fromGui(width), context.dimFactory.fromGui(height));
+    int zIndex = 0;
+    drawTexturedModalRect(rect, zIndex, u, v);
+
+    GlStateManager.popMatrix();
+  }
+
+  // stolen from Gui::drawTexturedModalRect
+  public static void drawTexturedModalRect(DimRect rect, int z, int u, int v) {
     float x = rect.getX().getGui();
     float y = rect.getY().getGui();
     float width = rect.getWidth().getGui();
@@ -160,14 +201,14 @@ public class RendererHelpers {
 
     float a = 0.00390625F; // 1/256
     float b = 0.00390625F;
-    Tessellator lvt_9_1_ = Tessellator.getInstance();
-    WorldRenderer lvt_10_1_ = lvt_9_1_.getWorldRenderer();
-    lvt_10_1_.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-    lvt_10_1_.pos(x, y + height, zLevel).tex(u * a, (v + height) * b).endVertex();
-    lvt_10_1_.pos(x + width, y + height, zLevel).tex((u + width) * a, (v + height) * b).endVertex();
-    lvt_10_1_.pos(x + width, y, zLevel).tex((u + width) * a, v * b).endVertex();
-    lvt_10_1_.pos(x, y, zLevel).tex(u * a, v * b).endVertex();
-    lvt_9_1_.draw();
+    Tessellator tessellator = Tessellator.getInstance();
+    WorldRenderer renderer = tessellator.getWorldRenderer();
+    renderer.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+    renderer.pos(x, y + height, z).tex(u * a, (v + height) * b).endVertex();
+    renderer.pos(x + width, y + height, z).tex((u + width) * a, (v + height) * b).endVertex();
+    renderer.pos(x + width, y, z).tex((u + width) * a, v * b).endVertex();
+    renderer.pos(x, y, z).tex(u * a, v * b).endVertex();
+    tessellator.draw();
   }
 
   public static void drawTooltip(DimFactory df, FontRenderer font, DimPoint mousePos, String tooltip) {

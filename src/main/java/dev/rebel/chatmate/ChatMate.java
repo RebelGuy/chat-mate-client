@@ -96,6 +96,7 @@ public class ChatMate {
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, guiChatMateHud);
     CounterHandler counterHandler = new CounterHandler(this.keyBindingService, guiChatMateHud, dimFactory, minecraft);
     CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
+    BrowserService browserService = new BrowserService(logService);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
@@ -109,7 +110,8 @@ public class ChatMate {
         countdownHandler,
         counterHandler,
         minecraftProxyService,
-        cursorService);
+        cursorService,
+        browserService);
     this.guiService = new GuiService(this.isDev,
         logService,
         this.config,
@@ -123,7 +125,11 @@ public class ChatMate {
         dimFactory,
         contextMenuStore,
         contextMenuService,
-        cursorService);
+        cursorService,
+        keyboardEventService,
+        clipboardService,
+        browserService,
+        chatMateEndpointProxy);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

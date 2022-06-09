@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
+import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -14,7 +15,7 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 public class CounterModal extends ModalElement {
   private final CounterHandler counterHandler;
 
-  private ButtonElement deleteButton;
+  private TextButtonElement deleteButton;
 
   private @Nullable String text = null;
   private @Nullable Integer startValue = 0;
@@ -81,12 +82,13 @@ public class CounterModal extends ModalElement {
             )
         .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5)));
 
-    this.deleteButton = (ButtonElement)new ButtonElement(context, this)
+    this.deleteButton = new TextButtonElement(context, this)
         .setText("Delete existing counter")
         .setOnClick(this::onDeleteCounter)
         .setVisible(this.counterHandler.hasExistingCounter())
         .setMargin(new RectExtension(ZERO, gui(5)))
-        .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE);
+        .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE)
+        .cast();
 
     super.setBody(new ListElement(context, this).addElement(titleElements).addElement(valueElements).addElement(deleteButton));
     super.setTitle("Set up Counter");

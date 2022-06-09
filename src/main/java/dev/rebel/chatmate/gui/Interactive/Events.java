@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.models.DimPoint;
+
 import javax.annotation.Nullable;
 
 public class Events {
@@ -55,8 +57,8 @@ public class Events {
   public enum EventType {
     MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, MOUSE_SCROLL, MOUSE_ENTER, MOUSE_EXIT, // MouseEventData.In
     KEY_DOWN, // KeyboardEventData.In
-    FOCUS, BLUR // FocusEventData
-
+    FOCUS, BLUR, // FocusEventData
+    WINDOW_RESIZE // SizeData, does not propagate. This will fire BEFORE layouts are recalculated and is sent to all elements from top to bottom.
     // if you add more events, be sure to update the onEvent handler of the ElementBase class
   }
 
@@ -74,5 +76,13 @@ public class Events {
 
   public enum FocusReason {
     CLICK, TAB, AUTO
+  }
+
+  public static class SizeData {
+    public final DimPoint size;
+
+    public SizeData(DimPoint size) {
+      this.size = size;
+    }
   }
 }

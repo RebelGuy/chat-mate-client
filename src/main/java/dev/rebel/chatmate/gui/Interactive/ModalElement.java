@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
@@ -29,8 +30,8 @@ public abstract class ModalElement extends ContainerElement {
   private ElementReference bodyElement;
   private LabelElement errorLabel;
   private HorizontalDivider divider;
-  private ButtonElement closeButton;
-  private ButtonElement submitButton;
+  private TextButtonElement closeButton;
+  private TextButtonElement submitButton;
   private SideBySideElement footer;
 
   private boolean loading = false;
@@ -155,13 +156,13 @@ public abstract class ModalElement extends ContainerElement {
     this.divider = new HorizontalDivider(context, this)
         .setMode(FillMode.PARENT_FULL);
 
-    this.closeButton = new ButtonElement(context, this)
+    this.closeButton = new TextButtonElement(context, this)
         .setText("Close")
         .setOnClick(this::onClose)
         .setMinSize(this.width.over(4))
         .setHorizontalAlignment(HorizontalAlignment.LEFT)
         .cast();
-    this.submitButton = new ButtonElement(context, this)
+    this.submitButton = new TextButtonElement(context, this)
         .setText("Submit")
         .setOnClick(this::onSubmit)
         .setMinSize(this.width.over(4))

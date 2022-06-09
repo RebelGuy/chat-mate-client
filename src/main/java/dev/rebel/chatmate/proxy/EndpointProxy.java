@@ -106,14 +106,14 @@ public class EndpointProxy {
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(method.toString());
 
-    if (method == Method.POST && data != null) {
+    if (method != Method.GET && data != null) {
       String json = this.gson.toJson(data);
       byte[] input = json.getBytes(StandardCharsets.UTF_8);
 
       conn.setRequestProperty("Content-Type", "application/json");
       conn.setRequestProperty("charset", "utf-8");
       conn.setRequestProperty("Content-Length", String.valueOf(input.length));
-      conn.setDoOutput(true); // allow data for be sent outwards
+      conn.setDoOutput(true); // allow data to be sent outwards
       try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
         wr.write(input);
       }
@@ -168,5 +168,5 @@ public class EndpointProxy {
     return msg;
   }
 
-  public enum Method { GET, POST }
+  public enum Method { GET, POST, PATCH }
 }

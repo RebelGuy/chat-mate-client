@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
+import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
@@ -13,7 +14,7 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 public class CountdownModal extends ModalElement {
   private final CountdownHandler countdownHandler;
 
-  private ButtonElement deleteButton;
+  private TextButtonElement deleteButton;
 
   private @Nullable Float hours = 0.0f;
   private @Nullable Float minutes = 0.0f;
@@ -75,12 +76,13 @@ public class CountdownModal extends ModalElement {
         ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
     );
 
-    this.deleteButton = (ButtonElement)new ButtonElement(context, this)
+    this.deleteButton = new TextButtonElement(context, this)
         .setText("Delete existing countdown")
         .setOnClick(this::onDeleteCountdown)
         .setVisible(this.countdownHandler.hasExistingCountdown())
         .setMargin(new RectExtension(ZERO, gui(5)))
-        .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE);
+        .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE)
+        .cast();
 
     super.setBody(new ListElement(context, this).addElement(titleElements).addElement(timeElements).addElement(this.deleteButton));
     super.setTitle("Set up Countdown");

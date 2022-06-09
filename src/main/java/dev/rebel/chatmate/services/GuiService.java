@@ -1,22 +1,23 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.*;
-import dev.rebel.chatmate.gui.dashboard.DashboardContext;
-import dev.rebel.chatmate.gui.dashboard.DashboardScreen;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
+import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.OpenGui;
-import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import dev.rebel.chatmate.services.events.models.Tick;
 import dev.rebel.chatmate.services.events.models.Tick.In;
 import dev.rebel.chatmate.services.events.models.Tick.Out;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
 
 import java.lang.reflect.Field;
 
@@ -35,6 +36,10 @@ public class GuiService {
   private final ContextMenuStore contextMenuStore;
   private final ContextMenuService contextMenuService;
   private final CursorService cursorService;
+  private final KeyboardEventService keyboardEventService;
+  private final ClipboardService clipboardService;
+  private final BrowserService browserService;
+  private final ChatMateEndpointProxy chatMateEndpointProxy;
 
   private CustomGuiIngame customGuiIngame;
 
@@ -51,7 +56,10 @@ public class GuiService {
                     DimFactory dimFactory,
                     ContextMenuStore contextMenuStore,
                     ContextMenuService contextMenuService,
-                    CursorService cursorService) {
+                    CursorService cursorService,
+                    KeyboardEventService keyboardEventService,
+                    ClipboardService clipboardService,
+                    BrowserService browserService, ChatMateEndpointProxy chatMateEndpointProxy) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -66,18 +74,19 @@ public class GuiService {
     this.contextMenuStore = contextMenuStore;
     this.contextMenuService = contextMenuService;
     this.cursorService = cursorService;
+    this.keyboardEventService = keyboardEventService;
+    this.clipboardService = clipboardService;
+    this.browserService = browserService;
+    this.chatMateEndpointProxy = chatMateEndpointProxy;
 
     this.addEventHandlers();
   }
 
   public void onDisplayDashboard() {
-    this.minecraft.displayGuiScreen(new DashboardScreen(new DashboardContext(
-        this.minecraft,
-        this.minecraft.fontRendererObj,
-        this.forgeEventService,
-        this.mouseEventService,
-        this.soundService
-    )));
+    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    screen.setMainElement(new ChatMateDashboardElement(context, screen, this.chatMateEndpointProxy));
+    this.minecraft.displayGuiScreen(screen);
   }
 
   public void initialiseCustomChat() {
@@ -122,7 +131,8 @@ public class GuiService {
   }
 
   private OpenGui.Out onOpenGuiModList(OpenGui.In eventIn) {
-    GuiScreen replaceWithGui = new CustomGuiModList(null, this.minecraft, this.config);
+    // : - <|
+    GuiScreen replaceWithGui = new CustomGuiModList(null, this.minecraft, this.config, this);
     return new OpenGui.Out(replaceWithGui);
   }
 
@@ -149,7 +159,14 @@ public class GuiService {
       defaultValue = (String)field.get(guiChat);
     } catch (Exception e) { throw new RuntimeException("This should never happen"); }
 
-    GuiScreen replaceWithGui = new CustomGuiChat(defaultValue, this.minecraftProxyService, this.mouseEventService, this.contextMenuStore, this.contextMenuService, this.cursorService);
+    GuiScreen replaceWithGui = new CustomGuiChat(
+        defaultValue,
+        this.minecraftProxyService,
+        this.mouseEventService,
+        this.contextMenuStore,
+        this.contextMenuService,
+        this.cursorService,
+        this.browserService);
     return new OpenGui.Out(replaceWithGui);
   }
 
@@ -170,5 +187,19 @@ public class GuiService {
     } else {
       return false;
     }
+  }
+
+  private InteractiveScreen.InteractiveContext createInteractiveContext() {
+    return new InteractiveScreen.InteractiveContext(new ScreenRenderer(),
+        this.mouseEventService,
+        this.keyboardEventService,
+        this.dimFactory,
+        this.minecraft,
+        this.minecraft.fontRendererObj,
+        this.clipboardService,
+        this.soundService,
+        this.cursorService,
+        this.minecraftProxyService,
+        this.browserService);
   }
 }

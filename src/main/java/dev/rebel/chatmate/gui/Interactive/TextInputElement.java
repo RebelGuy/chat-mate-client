@@ -106,7 +106,7 @@ public class TextInputElement extends InputElement {
     return this;
   }
 
-  /** Careful - not validated. */
+  /** Careful - not validated. Does not fire a `onTextChange` event. */
   public TextInputElement setText(String text) {
     this.text = text;
     return this;

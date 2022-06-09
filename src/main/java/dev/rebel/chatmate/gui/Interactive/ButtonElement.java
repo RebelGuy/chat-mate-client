@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
@@ -22,14 +24,14 @@ public class ButtonElement extends InputElement {
   private static final ResourceLocation BUTTON_TEXTURES = new ResourceLocation("textures/gui/widgets.png");
 
   /** A button cannot physically be wider than this value, as it is limited by the texture width itself.
-   * If there is ever a requirement for wider buttons, the rendering mechanism will need to be modified. */
+   * If there is evebur a requirement for wider buttons, the rendering mechanism will need to be modified. */
   private static final int MAX_WIDTH_GUI = 200;
 
   /** Based on the texture. I don't know what happens if this is larger, though. */
   private static final int MIN_WIDTH_GUI = 20;
 
   private Dim minSize;
-  private LabelElement label;
+  private @Nullable IElement childElement;
   private boolean hovered;
   private @Nullable Runnable onClick;
 
@@ -37,21 +39,16 @@ public class ButtonElement extends InputElement {
     super(context, parent);
 
     this.minSize = ZERO;
-    this.label = (LabelElement)new LabelElement(context, this)
-        .setText("")
-        .setAlignment(LabelElement.TextAlignment.CENTRE)
-        .setOverflow(LabelElement.TextOverflow.TRUNCATE)
-        .setSizingMode(SizingMode.MINIMISE)
-        .setHorizontalAlignment(HorizontalAlignment.CENTRE)
-        .setVerticalAlignment(VerticalAlignment.MIDDLE)
-        .setPadding(new Layout.RectExtension(context.dimFactory.fromGui(4))); // make sure the text doesn't touch the border
-
+    this.childElement = null;
     this.hovered = false;
+    this.onClick = null;
   }
 
-  public ButtonElement setText(String text) {
-    this.label.setText(text);
-    this.onInvalidateSize();
+  public ButtonElement setChildElement(@Nullable IElement childElement) {
+    if (this.childElement != childElement) {
+      this.childElement = childElement;
+      super.onInvalidateSize();
+    }
     return this;
   }
 
@@ -89,27 +86,32 @@ public class ButtonElement extends InputElement {
 
   @Override
   public List<IElement> getChildren() {
-    return Collections.list(this.label);
+    return this.childElement == null ? null : Collections.list(this.childElement);
   }
 
   @Override
   public DimPoint calculateThisSize(Dim maxContentSize) {
     maxContentSize = Dim.min(maxContentSize, this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
 
-    DimPoint labelSize = this.label.calculateSize(maxContentSize);
+    DimPoint childSize;
+    if (this.childElement == null) {
+      childSize = new DimPoint(ZERO, ZERO);
+    } else {
+      childSize = this.childElement.calculateSize(maxContentSize);
+    }
 
     Dim width;
     if (this.getSizingMode() == SizingMode.FILL) {
       width = maxContentSize;
     } else {
-      width = Dim.min(labelSize.getX(), maxContentSize);
+      width = Dim.min(childSize.getX(), maxContentSize);
 
       if (this.minSize.lt(maxContentSize) && width.lt(this.minSize)) {
         width = this.minSize;
       }
     }
 
-    Dim height = Dim.max(this.context.dimFactory.fromGui(MIN_WIDTH_GUI), labelSize.getY());
+    Dim height = Dim.max(this.context.dimFactory.fromGui(MIN_WIDTH_GUI), childSize.getY());
     return new DimPoint(width, height);
   }
 
@@ -117,8 +119,12 @@ public class ButtonElement extends InputElement {
   public void setBox(DimRect box) {
     super.setBox(box);
 
-    DimRect labelBox = this.alignChild(this.label);
-    this.label.setBox(labelBox);
+    if (this.childElement == null) {
+      return;
+    }
+
+    DimRect childBox = this.alignChild(this.childElement);
+    this.childElement.setBox(childBox);
   }
 
   @Override
@@ -149,13 +155,75 @@ public class ButtonElement extends InputElement {
     int v2 = 46 + hoverState * 20;
     RendererHelpers.drawTexturedModalRect(rect2, 0, u2, v2);
 
-    int j = 14737632;
-    if (!this.getEnabled()) {
-      j = 10526880;
-    } else if (this.hovered) {
-      j = 16777120;
+    if (this.childElement != null) {
+      this.childElement.render();
     }
-    this.label.setColour(new Colour(j));
-    this.label.render();
+  }
+
+  public static class TextButtonElement extends ButtonElement {
+    private final LabelElement label;
+
+    public TextButtonElement(InteractiveContext context, IElement parent) {
+      super(context, parent);
+
+      this.label = new LabelElement(context, this)
+          .setText("")
+          .setAlignment(LabelElement.TextAlignment.CENTRE)
+          .setOverflow(LabelElement.TextOverflow.TRUNCATE)
+          .setSizingMode(SizingMode.MINIMISE)
+          .setHorizontalAlignment(HorizontalAlignment.CENTRE)
+          .setVerticalAlignment(VerticalAlignment.MIDDLE)
+          .setPadding(new Layout.RectExtension(gui(4))) // make sure the text doesn't touch the border
+          .cast();
+      super.setChildElement(this.label);
+    }
+
+    public TextButtonElement setText(String text) {
+      this.label.setText(text);
+      return this;
+    }
+
+    @Override
+    public void renderElement() {
+      int j = 14737632;
+      if (!super.getEnabled()) {
+        j = 10526880;
+      } else if (super.hovered) {
+        j = 16777120;
+      }
+      this.label.setColour(new Colour(j));
+
+      super.renderElement();
+    }
+  }
+
+  public static class IconButtonElement extends ButtonElement {
+    private final ImageElement image;
+
+    public IconButtonElement(InteractiveContext context, IElement parent) {
+      super(context, parent);
+
+      this.image = new ImageElement(context, this)
+          .setSizingMode(SizingMode.FILL)
+          .setHorizontalAlignment(HorizontalAlignment.CENTRE)
+          .setVerticalAlignment(VerticalAlignment.MIDDLE)
+          .setPadding(new Layout.RectExtension(gui(4))) // make sure the image doesn't touch the border
+          .cast();
+      super.setChildElement(this.image);
+    }
+
+    public IconButtonElement setImage(@Nullable Texture texture) {
+      this.image.setImage(texture);
+      if (texture != null) {
+        this.image.setMaxWidth(gui(texture.width));
+      }
+      return this;
+    }
+
+    /** This determines the width to which the image will be scaled. Defaults to the image's width at 1x scale. */
+    public IconButtonElement setMaxWidth(@Nullable Dim maxWidth) {
+      this.image.setMaxWidth(maxWidth);
+      return this;
+    }
   }
 }

@@ -6,15 +6,11 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Screen;
-import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.ClipboardService;
-import dev.rebel.chatmate.services.CursorService;
-import dev.rebel.chatmate.services.MinecraftProxyService;
-import dev.rebel.chatmate.services.SoundService;
+import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
@@ -22,18 +18,14 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData.Out.KeyboardH
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.TextHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Function;
-
-import static dev.rebel.chatmate.gui.Interactive.RendererHelpers.drawTooltip;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
@@ -94,7 +86,12 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   protected void onScreenSizeUpdated() {
-    this.recalculateLayout();
+    this.onInvalidateSize();
+
+    SizeData eventData = new SizeData(this.context.dimFactory.getMinecraftSize());
+    for (IElement element : ElementHelpers.getAllChildren(this)) {
+      element.onEvent(EventType.WINDOW_RESIZE, new InteractiveEvent<>(EventPhase.TARGET, eventData, element));
+    }
   }
 
   @Override
@@ -582,6 +579,9 @@ public class InteractiveScreen extends Screen implements IElement {
   @Override
   public IElement setName(String name) { return null; }
 
+  @Override
+  public IElement setMaxWidth(@Nullable Dim maxWidth) { return null; }
+
   //endregion
 
   public static class InteractiveContext {
@@ -595,6 +595,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final SoundService soundService;
     public final CursorService cursorService;
     public final MinecraftProxyService minecraftProxyService;
+    public final BrowserService browserService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -610,7 +611,8 @@ public class InteractiveScreen extends Screen implements IElement {
                               ClipboardService clipboardService,
                               SoundService soundService,
                               CursorService cursorService,
-                              MinecraftProxyService minecraftProxyService) {
+                              MinecraftProxyService minecraftProxyService,
+                              BrowserService browserService) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -621,6 +623,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.soundService = soundService;
       this.cursorService = cursorService;
       this.minecraftProxyService = minecraftProxyService;
+      this.browserService = browserService;
     }
   }
 

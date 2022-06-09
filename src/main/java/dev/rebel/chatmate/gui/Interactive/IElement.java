@@ -68,6 +68,9 @@ public interface IElement {
 
   IElement setName(String name);
 
+  /** If set, the element's full width will never exceed this value. */
+  IElement setMaxWidth(@Nullable Dim maxWidth);
+
   /** Convenience method that automatically casts an element back to its original class type after chaining methods during instantiation. */
   <T extends IElement> T cast();
 }
