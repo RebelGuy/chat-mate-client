@@ -15,24 +15,23 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import scala.Tuple2;
 
+import java.util.List;
 import java.util.Map;
 
 public class SidebarElement extends ContainerElement {
   private final DashboardStore store;
 
-  public SidebarElement(InteractiveContext context, IElement parent, DashboardStore store, Map<SettingsPage, String> pageNames) {
+  public SidebarElement(InteractiveContext context, IElement parent, DashboardStore store, List<Tuple2<SettingsPage, String>> pageNames) {
     super(context, parent, LayoutMode.BLOCK);
+    super.setName("SidebarElement");
 
     this.store = store;
 
-    for (SettingsPage page : pageNames.keySet()) {
-      String name = pageNames.get(page);
-      SidebarOption option = new SidebarOption(context, this, store, page, name);
-      super.addElement(new WrapperElement(context, this, option)
-          .setPadding(new RectExtension(gui(4)))
-          .setSizingMode(SizingMode.FILL)
-      );
+    for (Tuple2<SettingsPage, String> pair : pageNames) {
+      SidebarOption option = new SidebarOption(context, this, store, pair._1, pair._2);
+      super.addElement(option);
     }
   }
 
@@ -47,6 +46,9 @@ public class SidebarElement extends ContainerElement {
 
     public SidebarOption(InteractiveContext context, IElement parent, DashboardStore store, SettingsPage page, String name) {
       super(context, parent, LayoutMode.BLOCK);
+      super.setSizingMode(SizingMode.FILL);
+      super.setPadding(new RectExtension(gui(2)));
+      super.setMargin(new RectExtension(gui(2)));
 
       this.store = store;
       this.page = page;
@@ -60,12 +62,15 @@ public class SidebarElement extends ContainerElement {
           .setOverflow(TextOverflow.SPLIT)
           .setMaxLines(3);
       this.horizontalDivider = new HorizontalDivider(context, this)
+          .setColour(Colour.WHITE)
           .setMode(FillMode.PARENT_CONTENT)
           .setHorizontalAlignment(HorizontalAlignment.LEFT)
           .cast();
 
       super.addElement(this.label);
       super.addElement(this.horizontalDivider);
+
+      this.setSelected(this.store.getSettingsPage() == this.page);
     }
 
     private void onSettingsPageChange(SettingsPage settingsPage) {
@@ -99,12 +104,11 @@ public class SidebarElement extends ContainerElement {
     public void renderElement() {
       float hoveringFrac = this.isHovering.getFrac();
       if (hoveringFrac > 0) {
-        RectExtension padding = new RectExtension(gui(2));
-        DimRect rect = super.getBox();
+        DimRect rect = super.getCollisionBox();
         Colour colour = Colour.lerp(Colour.GREY.withAlpha(0), Colour.GREY.withAlpha(0.4f), hoveringFrac);
         Dim cornerRadius = screen(2);
 
-        RendererHelpers.drawRect(0, padding.applyAdditive(rect), colour, null, null, cornerRadius);
+        RendererHelpers.drawRect(0, rect, colour, null, null, cornerRadius);
       }
 
       super.renderElement();

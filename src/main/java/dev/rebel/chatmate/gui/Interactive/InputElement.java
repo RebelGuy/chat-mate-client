@@ -26,7 +26,7 @@ public abstract class InputElement extends SingleElement {
   }
 
   /** This way of doing things allows multiple-source data validation (e.g. the input is valid in an isolated scope, but the form it is part of is disabled). */
-  public final InputElement setEnabled(Object key, boolean enabled) {
+  public InputElement setEnabled(Object key, boolean enabled) {
     if (enabled) {
       this.disabledSet.remove(key);
     } else {

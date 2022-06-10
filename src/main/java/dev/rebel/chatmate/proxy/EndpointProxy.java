@@ -12,10 +12,16 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -32,6 +38,8 @@ public class EndpointProxy {
     this.chatMateEndpointStore = chatMateEndpointStore;
     this.basePath = basePath;
     this.gson = new Gson();
+
+    hack_allowPatchRequests();
   }
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
@@ -166,6 +174,28 @@ public class EndpointProxy {
     }
 
     return msg;
+  }
+
+  /** For some reason, the nice devs over at Java didn't think the PATCH method was valid, so we have to add it via reflection.<br/>
+   * Adapted from https://stackoverflow.com/a/46323891. */
+  private static void hack_allowPatchRequests() {
+    try {
+      Field methodsField = HttpURLConnection.class.getDeclaredField("methods");
+      Field modifiersField = Field.class.getDeclaredField("modifiers");
+
+      modifiersField.setAccessible(true);
+      modifiersField.setInt(methodsField, methodsField.getModifiers() & ~Modifier.FINAL);
+      methodsField.setAccessible(true);
+
+      // replace the `methods` static string array
+      String[] methods = (String[])methodsField.get(null);
+      String[] newMethods = new String[methods.length + 1];
+      System.arraycopy(methods, 0, newMethods, 0, methods.length);
+      newMethods[newMethods.length - 1] = "PATCH";
+      methodsField.set(null, newMethods);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to add PATCH request method.");
+    }
   }
 
   public enum Method { GET, POST, PATCH }

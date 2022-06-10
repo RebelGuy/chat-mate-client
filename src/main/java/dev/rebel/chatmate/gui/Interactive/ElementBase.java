@@ -38,6 +38,7 @@ public abstract class ElementBase implements IElement {
   protected final FontRenderer font;
   protected String name;
 
+  /** Full size. */
   protected DimPoint lastCalculatedSize;
   private DimRect box;
   private RectExtension padding;
@@ -51,6 +52,7 @@ public abstract class ElementBase implements IElement {
   protected boolean visible;
   private @Nullable String tooltip;
   private @Nullable Dim maxWidth;
+  private @Nullable Dim maxContentWidth;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     ID++;
@@ -73,6 +75,7 @@ public abstract class ElementBase implements IElement {
 
     this.tooltip = null;
     this.maxWidth = null;
+    this.maxContentWidth = null;
   }
 
   @Override
@@ -223,6 +226,9 @@ public abstract class ElementBase implements IElement {
     // add a wrapper around the calculation method so we can cache the calculated size and provide a context for working
     // with content units (rather than full units).
     Dim contentWidth = getContentBoxWidth(maxFullWidth);
+    if (this.maxContentWidth != null) {
+      contentWidth = Dim.min(this.maxContentWidth, maxContentWidth);
+    }
     DimPoint size = this.calculateThisSize(contentWidth);
     DimPoint fullSize = getFullBoxSize(size);
     this.lastCalculatedSize = fullSize;
@@ -405,6 +411,15 @@ public abstract class ElementBase implements IElement {
   public IElement setMaxWidth(@Nullable Dim maxWidth) {
     if (!Objects.equals(this.maxWidth, maxWidth)) {
       this.maxWidth = maxWidth;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
+
+  @Override
+  public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) {
+    if (!Objects.equals(this.maxContentWidth, maxContentWidth)) {
+      this.maxContentWidth = maxContentWidth;
       this.onInvalidateSize();
     }
     return this;

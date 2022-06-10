@@ -12,15 +12,18 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.util.EnumHelpers;
+import scala.Tuple2;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** The main element that should be rendered into the interactive screen. */
 public class ChatMateDashboardElement extends ContainerElement {
-  private final static Map<SettingsPage, String> pageNames = new HashMap<SettingsPage, String>() {{
-    put(SettingsPage.GENERAL, "General");
-    put(SettingsPage.HUD, "HUD");
+  private final static List<Tuple2<SettingsPage, String>> pageNames = new ArrayList<Tuple2<SettingsPage, String>>() {{
+    add(new Tuple2<>(SettingsPage.GENERAL, "General"));
+    add(new Tuple2<>(SettingsPage.HUD, "HUD"));
   }};
 
   private final DashboardStore store;
@@ -37,24 +40,24 @@ public class ChatMateDashboardElement extends ContainerElement {
 
   public ChatMateDashboardElement(InteractiveContext context, IElement parent, ChatMateEndpointProxy chatMateEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
+    super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // clear the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
     super.setPadding(new RectExtension(gui(8)));
 
     this.store = new DashboardStore();
     this.chatMateEndpointProxy = chatMateEndpointProxy;
 
-    this.sidebarMaxWidth = gui(50);
+    this.sidebarMaxWidth = gui(80);
 
     this.generalSection = new GeneralSectionElement(context, this, this.chatMateEndpointProxy);
     this.hudSection = new HudSectionElement(context, this);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
-        .setMargin(new RectExtension(gui(8)))
+        .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))
         .setMaxWidth(this.sidebarMaxWidth)
         .cast();
     this.content = new ElementReference(context, this);
     this.contentWrapper = new WrapperElement(context, this, this.content)
-        .setMargin(new RectExtension(gui(8)))
         .cast();
     this.setContentWidth(this.context.dimFactory.getMinecraftSize());
 
@@ -66,7 +69,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   }
 
   private void onSettingsPageChange(SettingsPage settingsPage) {
-    IElement newElement;
+    ISectionElement newElement;
     switch (settingsPage) {
       case GENERAL:
         newElement = this.generalSection;
@@ -77,11 +80,20 @@ public class ChatMateDashboardElement extends ContainerElement {
       default:
         throw EnumHelpers.<SettingsPage>assertUnreachable(settingsPage);
     }
-    this.content.setUnderlyingElement(newElement);
+
+    if (!this.content.compareWithUnderlyingElement(newElement)) {
+      ISectionElement existingElement = (ISectionElement)this.content.getUnderlyingElement();
+      if (existingElement != null) {
+        existingElement.onHide();
+      }
+      this.content.setUnderlyingElement(newElement);
+      newElement.onShow();
+    }
   }
 
   private void setContentWidth(DimPoint windowSize) {
-    this.contentWrapper.setMaxWidth(windowSize.getX().minus(this.sidebarMaxWidth));
+    Dim dashboardContentWidth = super.getContentBoxWidth(windowSize.getX());
+    this.contentWrapper.setMaxWidth(dashboardContentWidth.minus(this.sidebarMaxWidth));
   }
 
   @Override
@@ -101,12 +113,18 @@ public class ChatMateDashboardElement extends ContainerElement {
   public void renderElement() {
     // draw a background with a thick, curvy border ;)
     DimRect minecraftRect = this.context.dimFactory.getMinecraftRect();
+    RectExtension margin = new RectExtension(screen(4));
     Colour colour = new Colour(0, 0, 20);
-    Dim borderWidth = screen(8);
+    Dim borderWidth = screen(16);
     Colour borderColour = new Colour(206, 212, 218);
-    Dim cornerRadius = screen(8);
-    RendererHelpers.drawRect(0, minecraftRect, colour, borderWidth, borderColour, cornerRadius);
+    Dim cornerRadius = screen(16);
+    RendererHelpers.drawRect(0, margin.applySubtractive(minecraftRect), colour, borderWidth, borderColour, cornerRadius);
 
     super.renderElement();
+  }
+
+  public interface ISectionElement extends IElement {
+    void onShow();
+    void onHide();
   }
 }

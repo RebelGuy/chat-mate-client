@@ -21,7 +21,7 @@ public class DashboardStore {
     }
   }
 
-  public SettingsPage getSettingsPage(SettingsPage settingsPage) {
+  public SettingsPage getSettingsPage() {
     return this.settingsPage;
   }
 

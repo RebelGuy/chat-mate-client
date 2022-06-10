@@ -155,7 +155,7 @@ public class RendererHelpers {
     tessellator.draw();
   }
 
-  public static void drawTexture(InteractiveContext context, Texture texture, DimPoint topLeft, float scale) {
+  public static void drawTexture(InteractiveContext context, Texture texture, DimPoint topLeft, float scale, @Nullable Colour colour) {
     // Minecraft expects a 256x256 texture to render.
     // if we provide it with a smaller size, it will stretch out the texture.
     // so we let it do that, and simply scale the screen. This means we will need to re-calculate the position.
@@ -183,6 +183,10 @@ public class RendererHelpers {
     // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
     GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
     GlStateManager.disableLighting();
+
+    if (colour != null) {
+      GlStateManager.color(colour.red / 255.0f, colour.green / 255.0f, colour.blue / 255.0f, colour.alpha / 255.0f);
+    }
 
     context.minecraft.getTextureManager().bindTexture(texture.resourceLocation);
     DimRect rect = new DimRect(renderX, renderY, context.dimFactory.fromGui(width), context.dimFactory.fromGui(height));

@@ -582,6 +582,9 @@ public class InteractiveScreen extends Screen implements IElement {
   @Override
   public IElement setMaxWidth(@Nullable Dim maxWidth) { return null; }
 
+  @Override
+  public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) { return null; }
+
   //endregion
 
   public static class InteractiveContext {
@@ -656,7 +659,10 @@ public class InteractiveScreen extends Screen implements IElement {
     }
 
     /** Waits until the current render or layout-calculation cycle is complete before running the specified side effect.
-     * May run the side effect immediately. Note that you will need to manually invalidate your size if required. */
+     * May run the side effect immediately. Note that you will need to manually invalidate your size if required. <br/><br/>
+     * If you get a crash because a required layout value (such as a box) is null, then that's most likely because you
+     * tried to modify an element when you shouldn't have, and you should instead call `runSideEffect`. <br/>
+     * In almost all cases, you should use `runSideEffect` when responding to the result of an async request. */
     public void runSideEffect(Runnable sideEffect) {
       synchronized (this.sideEffects) {
         if (this.sideEffectsInProgress) {

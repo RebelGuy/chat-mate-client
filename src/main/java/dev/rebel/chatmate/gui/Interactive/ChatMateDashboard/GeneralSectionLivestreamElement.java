@@ -10,12 +10,12 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.TextInputElement;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.models.api.chatMate.SetActiveLivestreamRequest;
-import dev.rebel.chatmate.models.api.chatMate.SetActiveLivestreamResponse;
 import dev.rebel.chatmate.models.api.chatMate.SetActiveLivestreamResponse.SetActiveLivestreamResponseData;
 import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
@@ -43,54 +43,58 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
   public GeneralSectionLivestreamElement(InteractiveContext context, IElement parent, ChatMateEndpointProxy chatMateEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
+    super.setName("GeneralSectionLivestreamElement");
 
     this.chatMateEndpointProxy = chatMateEndpointProxy;
 
     this.label = new LabelElement(context, this)
-        .setText("Active livestream link:")
+        .setText("Active livestream:")
         .setMaxWidth(gui(200))
-        .setSizingMode(SizingMode.FILL)
+        .setSizingMode(SizingMode.MINIMISE)
+        .setPadding(new RectExtension(ZERO, gui(4), ZERO, ZERO))
+        .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .cast();
     this.livestreamInputField = new TextInputElement(context, this)
         .onTextChange(this::onChange)
-        .setPlaceholder("Loading...")
+        .setPlaceholder("No active livestream")
         .setEnabled(this, false)
-        .setMaxWidth(gui(100))
+        .setMaxWidth(gui(120))
+        .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .cast();
 
-    Dim iconWidth = gui(context.fontRenderer.FONT_HEIGHT);
+    Dim iconWidth = gui(context.fontRenderer.FONT_HEIGHT).plus(gui(4));
     RectExtension buttonMargin = new RectExtension(gui(2), ZERO);
     this.clearButton = new IconButtonElement(context, this)
         .setImage(Asset.GUI_CLEAR_ICON)
-        .setMaxWidth(iconWidth)
+        .setMaxContentWidth(iconWidth)
         .setOnClick(this::onClear)
         .setEnabled(this, false)
         .setMargin(buttonMargin)
         .cast();
     this.confirmButton = new IconButtonElement(context, this)
         .setImage(Asset.GUI_TICK_ICON)
-        .setMaxWidth(iconWidth)
+        .setMaxContentWidth(iconWidth)
         .setOnClick(this::onConfirm)
         .setEnabled(this, false)
         .setMargin(buttonMargin)
         .cast();
     this.refreshButton = new IconButtonElement(context, this)
         .setImage(Asset.GUI_REFRESH_ICON)
-        .setMaxWidth(iconWidth)
+        .setMaxContentWidth(iconWidth)
         .setOnClick(this::onRefresh)
         .setEnabled(this, false)
         .setMargin(buttonMargin)
         .cast();
     this.copyButton = new IconButtonElement(context, this)
         .setImage(Asset.GUI_COPY_ICON)
-        .setMaxWidth(iconWidth)
+        .setMaxContentWidth(iconWidth)
         .setOnClick(this::onCopy)
         .setEnabled(this, false)
         .setMargin(buttonMargin)
         .cast();
     this.openInBrowserButton = new IconButtonElement(context, this)
         .setImage(Asset.GUI_WEB_ICON)
-        .setMaxWidth(iconWidth)
+        .setMaxContentWidth(iconWidth)
         .setOnClick(this::onOpenInBrowser)
         .setEnabled(this, false)
         .setMargin(buttonMargin)
@@ -100,7 +104,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
         .setOverflow(TextOverflow.SPLIT)
         .setMaxLines(4)
         .setColour(Colour.RED)
-        .setAlignment(TextAlignment.CENTRE)
+        .setAlignment(TextAlignment.LEFT)
         .setFontScale(0.75f)
         .setSizingMode(SizingMode.FILL)
         .setVisible(false)
@@ -118,9 +122,17 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
     super.addElement(this.errorLabel);
   }
 
+  public void onShow() {
+    this.onRefresh();
+  }
+
+  public void onHide() {
+    // no op
+  }
+
   private void onChange(String livestream) {
     this.livestream = livestream;
-    this.enableControls();
+    this.disableLoadingState();
   }
 
   private void onClear() {
@@ -128,13 +140,13 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
   }
 
   private void onConfirm() {
-    this.disableControls();
+    this.enableLoadingState();
     SetActiveLivestreamRequest request = new SetActiveLivestreamRequest(this.livestream);
     this.chatMateEndpointProxy.setActiveLivestreamAsync(request, this::onSetLivestreamSuccess, this::onSetLivestreamError);
   }
 
   private void onRefresh() {
-    this.disableControls();
+    this.enableLoadingState();
     this.chatMateEndpointProxy.getStatusAsync(this::onGetStatusSuccess, this::onGetStatusError);
   }
 
@@ -164,40 +176,48 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
   }
 
   private void onGetStatusSuccess(GetStatusResponseData getStatusResponseData) {
-    PublicLivestreamStatus status = getStatusResponseData.livestreamStatus;
-    this.livestream = status == null ? "" : status.livestreamLink;
-    this.livestreamInputField.setText(this.livestream);
-    this.enableControls();
-    this.errorLabel.setVisible(false);
+    // we need to run these all as side effects because we don't want to modify the element tree during the render process
+    super.context.renderer.runSideEffect(() -> {
+      PublicLivestreamStatus status = getStatusResponseData.livestreamStatus;
+      this.livestream = status == null ? "" : status.livestreamLink;
+      this.livestreamInputField.setText(this.livestream);
+      this.disableLoadingState();
+    });
   }
 
   private void onGetStatusError(Throwable error) {
-    this.enableControls();
-    this.errorLabel.setText(EndpointProxy.getApiErrorMessage(error)).setVisible(true);
+    super.context.renderer.runSideEffect(() -> {
+      this.disableLoadingState();
+      this.errorLabel.setText(EndpointProxy.getApiErrorMessage(error)).setVisible(true);
+    });
   }
 
   private void onSetLivestreamSuccess(SetActiveLivestreamResponseData setActiveLivestreamResponseData) {
-    this.livestream = setActiveLivestreamResponseData.livestreamLink;
-    this.livestreamInputField.setText(this.livestream);
-    this.enableControls();
-    this.errorLabel.setVisible(false);
+    super.context.renderer.runSideEffect(() -> {
+      this.livestream = setActiveLivestreamResponseData.livestreamLink;
+      this.livestreamInputField.setText(this.livestream);
+      this.disableLoadingState();
+    });
   }
 
   private void onSetLivestreamError(Throwable error) {
-    this.enableControls();
-    this.errorLabel.setText(EndpointProxy.getApiErrorMessage(error)).setVisible(true);
+    super.context.renderer.runSideEffect(() -> {
+      this.disableLoadingState();
+      this.errorLabel.setText(EndpointProxy.getApiErrorMessage(error)).setVisible(true);
+    });
   }
 
-  private void disableControls() {
+  private void enableLoadingState() {
     this.livestreamInputField.setEnabled(this, false);
     this.clearButton.setEnabled(this, false);
     this.confirmButton.setEnabled(this, false);
     this.refreshButton.setEnabled(this, false);
     this.copyButton.setEnabled(this, false);
     this.openInBrowserButton.setEnabled(this, false);
+    this.errorLabel.setVisible(false);
   }
 
-  private void enableControls() {
+  private void disableLoadingState() {
     boolean empty = TextHelpers.isNullOrEmpty(this.livestream);
     this.livestreamInputField.setEnabled(this, true);
     this.clearButton.setEnabled(this, !empty);

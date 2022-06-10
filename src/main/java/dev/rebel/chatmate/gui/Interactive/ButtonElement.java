@@ -198,6 +198,8 @@ public class ButtonElement extends InputElement {
   }
 
   public static class IconButtonElement extends ButtonElement {
+    private final static Colour DISABLED_COLOUR = new Colour(0.5f, 0.5f, 0.5f, 1);
+
     private final ImageElement image;
 
     public IconButtonElement(InteractiveContext context, IElement parent) {
@@ -207,15 +209,16 @@ public class ButtonElement extends InputElement {
           .setSizingMode(SizingMode.FILL)
           .setHorizontalAlignment(HorizontalAlignment.CENTRE)
           .setVerticalAlignment(VerticalAlignment.MIDDLE)
-          .setPadding(new Layout.RectExtension(gui(4))) // make sure the image doesn't touch the border
+          .setPadding(new Layout.RectExtension(gui(4), gui(2))) // make sure the image doesn't touch the border
           .cast();
       super.setChildElement(this.image);
     }
 
-    public IconButtonElement setImage(@Nullable Texture texture) {
-      this.image.setImage(texture);
-      if (texture != null) {
-        this.image.setMaxWidth(gui(texture.width));
+    public IconButtonElement setImage(@Nullable Texture image) {
+      this.image.setImage(image);
+      if (image != null) {
+        this.image.setMaxWidth(gui(image.width));
+        this.image.setColour(this.getEnabled() ? null : DISABLED_COLOUR);
       }
       return this;
     }
@@ -223,6 +226,22 @@ public class ButtonElement extends InputElement {
     /** This determines the width to which the image will be scaled. Defaults to the image's width at 1x scale. */
     public IconButtonElement setMaxWidth(@Nullable Dim maxWidth) {
       this.image.setMaxWidth(maxWidth);
+      return this;
+    }
+
+    /** This determines the width to which the image will be scaled. Defaults to the image's width at 1x scale. */
+    public IconButtonElement setMaxContentWidth(@Nullable Dim maxContentWidth) {
+      this.image.setMaxContentWidth(maxContentWidth);
+      return this;
+    }
+
+    @Override
+    public IconButtonElement setEnabled(Object key, boolean enabled) {
+      if (this.image != null) {
+        this.image.setColour(enabled ? null : DISABLED_COLOUR);
+      }
+
+      super.setEnabled(key, enabled);
       return this;
     }
   }

@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -15,12 +16,14 @@ import java.util.Objects;
 public class ImageElement extends SingleElement {
   private @Nullable Texture image;
   private float scale;
+  private @Nullable Colour colour;
 
   public ImageElement(InteractiveContext context, IElement parent) {
     super(context, parent);
 
     this.image = null;
     this.scale = 1;
+    this.colour = null;
   }
 
   public ImageElement setImage(@Nullable Texture image) {
@@ -36,6 +39,12 @@ public class ImageElement extends SingleElement {
       this.scale = scale;
       super.onInvalidateSize();
     }
+    return this;
+  }
+
+  /** Sets a colour modifier. */
+  public ImageElement setColour(@Nullable Colour colour) {
+    this.colour = colour;
     return this;
   }
 
@@ -90,6 +99,6 @@ public class ImageElement extends SingleElement {
     DimPoint size = getContentBoxSize(super.lastCalculatedSize);
     DimRect imageBox = ElementHelpers.alignElementInBox(size, super.getContentBox(), super.getHorizontalAlignment(), super.getVerticalAlignment());
     float effectiveScale = imageBox.getWidth().over(gui(this.image.width));
-    RendererHelpers.drawTexture(super.context, this.image, imageBox.getTopLeft(), effectiveScale);
+    RendererHelpers.drawTexture(super.context, this.image, imageBox.getTopLeft(), effectiveScale, this.colour);
   }
 }
