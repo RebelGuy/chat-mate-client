@@ -10,6 +10,7 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
@@ -77,11 +78,21 @@ public class ButtonElement extends InputElement {
   @Override
   public void onMouseEnter(IEvent<In> e) {
     this.hovered = true;
+    super.context.cursorService.setCursor(super.getEnabled() ? CursorType.CLICK : CursorType.DEFAULT);
   }
 
   @Override
   public void onMouseExit(IEvent<In> e) {
     this.hovered = false;
+    super.context.cursorService.setCursor(CursorType.DEFAULT);
+  }
+
+  @Override
+  public InputElement setEnabled(Object key, boolean enabled) {
+    if (this.hovered) {
+      super.context.cursorService.setCursor(enabled ? CursorType.CLICK : CursorType.DEFAULT);
+    }
+    return super.setEnabled(key, enabled);
   }
 
   @Override

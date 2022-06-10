@@ -180,7 +180,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
     super.context.renderer.runSideEffect(() -> {
       PublicLivestreamStatus status = getStatusResponseData.livestreamStatus;
       this.livestream = status == null ? "" : status.livestreamLink;
-      this.livestreamInputField.setText(this.livestream);
+      this.livestreamInputField.setTextUnsafe(this.livestream);
       this.disableLoadingState();
     });
   }
@@ -195,7 +195,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
   private void onSetLivestreamSuccess(SetActiveLivestreamResponseData setActiveLivestreamResponseData) {
     super.context.renderer.runSideEffect(() -> {
       this.livestream = setActiveLivestreamResponseData.livestreamLink;
-      this.livestreamInputField.setText(this.livestream);
+      this.livestreamInputField.setTextUnsafe(this.livestream);
       this.disableLoadingState();
     });
   }

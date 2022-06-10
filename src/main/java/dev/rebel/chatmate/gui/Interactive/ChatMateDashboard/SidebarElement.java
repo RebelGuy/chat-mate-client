@@ -13,6 +13,7 @@ import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import scala.Tuple2;
@@ -85,11 +86,13 @@ public class SidebarElement extends ContainerElement {
     @Override
     public void onMouseEnter(IEvent<In> e) {
       this.isHovering.set(true);
+      super.context.cursorService.setCursor(CursorType.CLICK);
     }
 
     @Override
     public void onMouseExit(IEvent<In> e) {
       this.isHovering.set(false);
+      super.context.cursorService.setCursor(CursorType.DEFAULT);
     }
 
     @Override

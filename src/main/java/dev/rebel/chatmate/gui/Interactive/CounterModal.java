@@ -3,7 +3,6 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
-import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 
@@ -61,7 +60,7 @@ public class CounterModal extends ModalElement {
                     new TextInputElement(context, this)
                         .onTextChange(this::onStartValueChange)
                         .setValidator(this::onValidateStartValue)
-                        .setText("0")
+                        .setTextUnsafe("0")
                         .setTabIndex(1)
                 ).setElementPadding(gui(5))
             )
@@ -76,7 +75,7 @@ public class CounterModal extends ModalElement {
                     new TextInputElement(context, this)
                         .onTextChange(this::onIncrementChange)
                         .setValidator(this::onValidateIncrement)
-                        .setText("1")
+                        .setTextUnsafe("1")
                         .setTabIndex(2)
                 ).setElementPadding(gui(5))
             )
