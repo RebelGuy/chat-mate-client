@@ -25,7 +25,11 @@ In order to allow characters such as `'§'`, Java files must be encoding using U
 - In the system environment variables, add `JAVA_TOOL_OPTIONS` with value `-Dfile.encoding=UTF8` (see [explanation](https://stackoverflow.com/questions/361975/setting-the-default-java-character-encoding))
 
 ## Building
-To build the project, use `gradlew build`.
+To build the project, use `gradlew build -Penv=[local|debug|release]`. If the `env` project property is omitted, it will
+default to `local`.
+Environment properties are defined in `config.groovy`. Currently, there is no known method of setting the environment
+when debugging locally - it will default to `local`. To debug using other environments, the configuration file must be
+temporarily modified directly.
 
 Build output: `chat-mate-client/build/libs/*.jar`.
 

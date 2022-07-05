@@ -42,6 +42,8 @@ public class StatusService {
       return SimpleStatus.SERVER_UNREACHABLE;
     } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
+    } else if (status.livestreamStatus == null) {
+      return SimpleStatus.OK_OFFLINE; // todo
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -56,6 +58,8 @@ public class StatusService {
       return SimpleStatus.SERVER_UNREACHABLE;
     } else if (status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
+    } else if (status.livestreamStatus == null) {
+      return SimpleStatus.OK_OFFLINE; // todo
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -70,6 +74,8 @@ public class StatusService {
       return SimpleStatus.SERVER_UNREACHABLE;
     } else if (status.youtubeApiStatus.status == ApiStatus.Error || status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
+    } else if (status.livestreamStatus == null) {
+      return SimpleStatus.OK_OFFLINE; // todo
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -80,7 +86,7 @@ public class StatusService {
   public @Nullable Integer getYoutubeLiveViewerCount() {
     GetStatusResponseData status = this.lastStatusResponse;
 
-    if (status == null) {
+    if (status == null || status.livestreamStatus == null) {
       return null;
     } else {
       return status.livestreamStatus.youtubeLiveViewers;
@@ -90,7 +96,7 @@ public class StatusService {
   public @Nullable Integer getTwitchLiveViewerCount() {
     GetStatusResponseData status = this.lastStatusResponse;
 
-    if (status == null) {
+    if (status == null || status.livestreamStatus == null) {
       return null;
     } else {
       return status.livestreamStatus.twitchLiveViewers;

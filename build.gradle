@@ -4,6 +4,17 @@ plugins {
     id "net.minecraftforge.gradle.forge" version "6f53277"
 }
 
+loadProperties()
+
+def loadProperties() {
+    def environment = hasProperty('env') ? env : 'local'
+    println "Building for environment " + environment
+
+    def configFile = file('config.groovy')
+    def config = new ConfigSlurper(environment).parse(configFile.toURL())
+    project.ext.config = config
+}
+
 version = "1.13.0"
 group = "dev.rebel"
 archivesBaseName = "ChatMate"
@@ -41,6 +52,9 @@ processResources {
     inputs.property "version", project.version
     inputs.property "mcversion", project.minecraft.version
 
+    // also update when the config changes
+    inputs.property "config", project.ext.config
+
     // replace stuff in mcmod.info, nothing else
     from(sourceSets.main.resources.srcDirs) {
         include 'mcmod.info'
@@ -49,9 +63,20 @@ processResources {
         expand 'version': project.version, 'mcversion': project.minecraft.version
     }
 
+    from(sourceSets.main.resources.srcDirs) {
+        include 'environment.yml'
+
+        def config = project.ext.config as Object
+        expand(
+                'ENVIRONMENT': config.ENVIRONMENT,
+                'SERVER_URL': config.SERVER_URL,
+                'STUDIO_URL': config.STUDIO_URL
+        )
+    }
+
     // copy everything else, thats not the mcmod.info
     from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
+        exclude 'mcmod.info', 'environment.yml'
     }
 }
 

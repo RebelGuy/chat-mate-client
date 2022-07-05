@@ -39,6 +39,7 @@ public class ChatMate {
   private final RenderService renderService;
   private final KeyBindingService keyBindingService;
   private final Config config;
+  private final Environment environment;
 
   // from https://forums.minecraftforge.net/topic/68571-1122-check-if-environment-is-deobfuscated/
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
@@ -60,7 +61,10 @@ public class ChatMate {
     this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
-    String apiPath = "http://localhost:3010/api";
+    String environmentPath = "/environment.yml";
+    this.environment = Environment.parseEnvironmentFile(FileHelpers.readLines(environmentPath));
+
+    String apiPath = this.environment.serverUrl + "/api";
     ChatMateEndpointStore chatMateEndpointStore = new ChatMateEndpointStore();
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, chatMateEndpointStore, apiPath);
     ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, chatMateEndpointStore, apiPath);
@@ -147,12 +151,17 @@ public class ChatMate {
     // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
     MinecraftForge.EVENT_BUS.register(this.forgeEventService);
 
+    this.guiService.initialiseCustomChat();
+    this.config.getChatMateEnabledEmitter().onChange(enabled -> {
+      if (enabled) {
+        this.mcChatService.printInfo(String.format("Enabled. [%s]", this.environment.env.toString().toCharArray()[0]));
+      }
+    });
+
     // to make our life easier, auto enable when in a dev environment
     if (this.isDev) {
       this.config.getChatMateEnabledEmitter().set(true);
     }
-
-    this.guiService.initialiseCustomChat();
   }
 
   // this doesn't do anything!
