@@ -54,6 +54,7 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.statusIndicators = new HashMap<>();
     this.statusIndicators.put(SimpleStatus.OK_LIVE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_GREEN, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.OK_OFFLINE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_CYAN, x, y, scale, canRescale, canTranslate));
+    this.statusIndicators.put(SimpleStatus.OK_NO_LIVESTREAM, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_BLUE, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.PLATFORM_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_ORANGE, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.SERVER_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_RED, x, y, scale, canRescale, canTranslate));
 

@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.proxy;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.services.LogService;
@@ -37,7 +38,9 @@ public class EndpointProxy {
     this.logService = logService;
     this.chatMateEndpointStore = chatMateEndpointStore;
     this.basePath = basePath;
-    this.gson = new Gson();
+    this.gson = new GsonBuilder()
+        .serializeNulls()
+        .create();
 
     hack_allowPatchRequests();
   }

@@ -43,7 +43,7 @@ public class StatusService {
     } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus == null) {
-      return SimpleStatus.OK_OFFLINE; // todo
+      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -59,7 +59,7 @@ public class StatusService {
     } else if (status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus == null) {
-      return SimpleStatus.OK_OFFLINE; // todo
+      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -75,7 +75,7 @@ public class StatusService {
     } else if (status.youtubeApiStatus.status == ApiStatus.Error || status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus == null) {
-      return SimpleStatus.OK_OFFLINE; // todo
+      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -148,6 +148,7 @@ public class StatusService {
     SERVER_UNREACHABLE,
     PLATFORM_UNREACHABLE,
     OK_OFFLINE,
+    OK_NO_LIVESTREAM,
     OK_LIVE
   }
 }

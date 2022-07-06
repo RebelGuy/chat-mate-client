@@ -23,6 +23,7 @@ import dev.rebel.chatmate.proxy.EndpointProxy;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 import dev.rebel.chatmate.services.util.TextHelpers;
 
+import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Timer;
@@ -39,7 +40,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
   private final IconButtonElement openInBrowserButton;
   private final LabelElement errorLabel;
 
-  private String livestream;
+  private @Nonnull String livestream;
 
   public GeneralSectionLivestreamElement(InteractiveContext context, IElement parent, ChatMateEndpointProxy chatMateEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
@@ -141,7 +142,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
   private void onConfirm() {
     this.enableLoadingState();
-    SetActiveLivestreamRequest request = new SetActiveLivestreamRequest(this.livestream);
+    SetActiveLivestreamRequest request = new SetActiveLivestreamRequest(Objects.equals(this.livestream, "") ? null : this.livestream);
     this.chatMateEndpointProxy.setActiveLivestreamAsync(request, this::onSetLivestreamSuccess, this::onSetLivestreamError);
   }
 
@@ -194,7 +195,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
   private void onSetLivestreamSuccess(SetActiveLivestreamResponseData setActiveLivestreamResponseData) {
     super.context.renderer.runSideEffect(() -> {
-      this.livestream = setActiveLivestreamResponseData.livestreamLink;
+      this.livestream = setActiveLivestreamResponseData.livestreamLink == null ? "" : setActiveLivestreamResponseData.livestreamLink;
       this.livestreamInputField.setTextUnsafe(this.livestream);
       this.disableLoadingState();
     });
