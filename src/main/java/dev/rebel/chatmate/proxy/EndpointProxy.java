@@ -47,14 +47,24 @@ public class EndpointProxy {
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
   public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler) {
-    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler);
+    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler, true);
   }
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
   public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(method, path, data, returnClass, callback, errorHandler, true);
+  }
+
+  /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
+    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler, notifyEndpointStore);
+  }
+
+  /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
     // we got there eventually.....
     CompletableFuture.supplyAsync(() -> {
-      Runnable onComplete = this.chatMateEndpointStore.onNewRequest();
+      Runnable onComplete = notifyEndpointStore ? this.chatMateEndpointStore.onNewRequest() : () -> {};
       try {
         Data result = this.makeRequest(method, path, returnClass, data);
         onComplete.run();

@@ -9,6 +9,7 @@ import dev.rebel.chatmate.services.events.models.EventData;
 import dev.rebel.chatmate.services.events.models.EventData.EventIn;
 import dev.rebel.chatmate.services.events.models.EventData.EventOptions;
 import dev.rebel.chatmate.services.events.models.EventData.EventOut;
+import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.util.ApiPoller;
 import dev.rebel.chatmate.util.ApiPoller.PollType;
 import dev.rebel.chatmate.util.ApiPollerFactory;
@@ -29,7 +30,7 @@ public class ServerLogEventService extends EventServiceBase<Events> {
   public ServerLogEventService(LogService logService, LogEndpointProxy logEndpointProxy, ApiPollerFactory apiPollerFactory) {
     super(Events.class, logService);
 
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, logEndpointProxy::getTimestampsAsync, 5000, PollType.CONSTANT_INTERVAL);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, logEndpointProxy::getTimestamps, 5000, PollType.CONSTANT_INTERVAL);
 
     this.initialised = false;
     this.warnings = new Long[0];
@@ -80,14 +81,14 @@ public class ServerLogEventService extends EventServiceBase<Events> {
     // as soon as we receive a successful response, these synthetic errors will be overwritten by the server response.
 
     // fuck off java
-    List<Long> errorsList = Arrays.asList(this.errors);
+    List<Long> errorsList = Collections.list(this.errors);
     errorsList.add(new Date().getTime());
     this.errors = errorsList.toArray(new Long[0]);
     this.fireEvent(Events.ERROR);
   }
 
   private void fireEvent(Events event) {
-    for (EventHandler<EventIn, EventOut, EventOptions> listener : super.getListeners(event, EventData.class)) {
+    for (EventHandler<EventIn, EventOut, EventOptions> listener : super.getListeners(event, EventData.Empty.class)) {
       super.safeDispatch(event, listener, new EventIn());
     }
   }

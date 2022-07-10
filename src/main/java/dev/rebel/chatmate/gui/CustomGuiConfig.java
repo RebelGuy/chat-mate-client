@@ -63,6 +63,9 @@ public class CustomGuiConfig extends GuiConfig {
     LabelLayout viewerCountLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Viewer Count", Color.WHITE);
     CheckBoxLayout viewerCountCheckbox = new CheckBoxLayout(this::onToggleViewerCount, config.getShowLiveViewersEmitter()::get);
 
+    LabelLayout serverLogsLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Server Logs", Color.WHITE);
+    CheckBoxLayout serverLogsCheckbox = new CheckBoxLayout(this::onToggleServerLogs, config.getShowServerLogs()::get);
+
     LabelLayout identifyPlatformsLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Separate Youtube and Twitch", Color.WHITE);
     CheckBoxLayout identifyPlatformsCheckbox = new CheckBoxLayout(this::onToggleIdentifyPlatforms, config.getIdentifyPlatforms()::get);
 
@@ -75,6 +78,7 @@ public class CustomGuiConfig extends GuiConfig {
         .withRow(hudLabel, hudCheckbox)
         .withRow(indicatorLabel, indicatorCheckbox)
         .withRow(viewerCountLabel, viewerCountCheckbox)
+        .withRow(serverLogsLabel, serverLogsCheckbox)
         .withRow(identifyPlatformsLabel, identifyPlatformsCheckbox)
         .withRow(chatOffsetLabel, chatOffsetSlider)
         .instantiate();
@@ -143,6 +147,10 @@ public class CustomGuiConfig extends GuiConfig {
 
   private void onToggleViewerCount(CheckBoxActionCheckedData checkBoxActionCheckedData) {
     this.config.getShowLiveViewersEmitter().set(checkBoxActionCheckedData.checked);
+  }
+
+  private void onToggleServerLogs(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.getShowServerLogs().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleIdentifyPlatforms(CheckBoxActionCheckedData checkBoxActionCheckedData) {

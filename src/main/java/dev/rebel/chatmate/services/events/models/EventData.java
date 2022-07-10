@@ -22,4 +22,6 @@ public class EventData<In extends EventIn, Out extends EventOut, Options extends
   public static class EventOptions {
 
   }
+
+  public static class Empty extends EventData<EventIn, EventOut, EventOptions> { }
 }

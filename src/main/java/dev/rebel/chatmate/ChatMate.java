@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.*;
 import dev.rebel.chatmate.services.*;
@@ -57,7 +58,7 @@ public class ChatMate {
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
 
-    ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV1.class, logService, fileService);
+    ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV2.class, logService, fileService);
     this.config = new Config(logService, configPersistorService);
     this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);
@@ -72,6 +73,7 @@ public class ChatMate {
     UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, chatMateEndpointStore, apiPath);
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, chatMateEndpointStore, apiPath);
     PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, chatMateEndpointStore, apiPath);
+    LogEndpointProxy logEndpointProxy = new LogEndpointProxy(logService, chatMateEndpointStore, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -96,7 +98,8 @@ public class ChatMate {
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
-    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config);
+    ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
+    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config, serverLogEventService);
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, this.forgeEventService, this.mouseEventService, dimFactory);
     ClipboardService clipboardService = new ClipboardService();
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, guiChatMateHud);

@@ -1,6 +1,33 @@
 package dev.rebel.chatmate.models.configMigrations;
 
 public class SerialisedConfigVersions {
+  public static class SerialisedConfigV2 extends Version {
+    public boolean soundEnabled;
+    public int chatVerticalDisplacement;
+    public boolean hudEnabled;
+    public boolean showStatusIndicator;
+    public boolean showLiveViewers;
+    public boolean showServerLogs;
+    public boolean identifyPlatforms;
+
+    public SerialisedConfigV2(boolean soundEnabled,
+                              int chatVerticalDisplacement,
+                              boolean hudEnabled,
+                              boolean showStatusIndicator,
+                              boolean showLiveViewers,
+                              boolean showServerLogs,
+                              boolean identifyPlatforms) {
+      super(2);
+      this.soundEnabled = soundEnabled;
+      this.chatVerticalDisplacement = chatVerticalDisplacement;
+      this.hudEnabled = hudEnabled;
+      this.showStatusIndicator = showStatusIndicator;
+      this.showLiveViewers = showLiveViewers;
+      this.showServerLogs = showServerLogs;
+      this.identifyPlatforms = identifyPlatforms;
+    }
+  }
+
   public static class SerialisedConfigV1 extends Version {
     public boolean soundEnabled;
     public int chatVerticalDisplacement;

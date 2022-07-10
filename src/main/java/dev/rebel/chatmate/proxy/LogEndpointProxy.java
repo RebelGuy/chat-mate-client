@@ -13,7 +13,7 @@ public class LogEndpointProxy extends EndpointProxy {
     super(logService, chatMateEndpointStore, basePath + "/log");
   }
 
-  public void getTimestampsAsync(Consumer<GetTimestampsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
-    this.makeRequestAsync(Method.GET, "/timestamps", GetTimestampsResponse.class, callback, errorHandler);
+  public void getTimestamps(Consumer<GetTimestampsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(Method.GET, "/timestamps", GetTimestampsResponse.class, callback, errorHandler, false);
   }
 }

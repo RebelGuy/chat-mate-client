@@ -62,8 +62,10 @@ public class CustomGuiModList extends GuiModList {
   @Override
   protected void actionPerformed(GuiButton button) throws IOException {
     // manually show the ChatMate config screen so we can inject dependencies :)
+    // todo: deprecate the CustomGuiConfig screen and instead show the dashboard
     if (button == this.configButton && this.modIndexSelected(modIndex)) {
-      this.guiService.onDisplayDashboard();
+      this.minecraft.displayGuiScreen(new CustomGuiConfig(this, this.config));
+//      this.guiService.onDisplayDashboard();
       return;
     }
 
