@@ -1,20 +1,13 @@
 package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatmate.gui.hud.IHudComponent;
-import dev.rebel.chatmate.gui.hud.LiveViewersComponent;
-import dev.rebel.chatmate.gui.hud.StatusIndicatorComponent;
-import dev.rebel.chatmate.gui.hud.TitleComponent;
-import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
+import dev.rebel.chatmate.gui.hud.*;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
+import dev.rebel.chatmate.services.events.ServerLogEventService;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.ScaledResolution;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,22 +20,25 @@ public class GuiChatMateHud {
 
   private final StatusIndicatorComponent statusIndicatorComponent;
   private final LiveViewersComponent liveViewersComponent;
+  private final ServerLogsTimeSeriesComponent serverLogsTimeSeriesComponent;
 
   public final List<IHudComponent> hudComponents;
 
-  public GuiChatMateHud(Minecraft minecraft, DimFactory dimFactory, ForgeEventService forgeEventService, StatusService statusService, Config config) {
+  public GuiChatMateHud(Minecraft minecraft, DimFactory dimFactory, ForgeEventService forgeEventService, StatusService statusService, Config config, ServerLogEventService serverLogEventService) {
     super();
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.forgeEventService = forgeEventService;
     this.statusService = statusService;
 
-    this.statusIndicatorComponent = new StatusIndicatorComponent(dimFactory, 0.5f, statusService, config);
+    this.statusIndicatorComponent = new StatusIndicatorComponent(dimFactory, 0.5f, statusService, config, serverLogEventService);
     this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft);
+    this.serverLogsTimeSeriesComponent = new ServerLogsTimeSeriesComponent(dimFactory, serverLogEventService, config);
 
     this.hudComponents = new ArrayList<>();
     this.hudComponents.add(this.statusIndicatorComponent);
     this.hudComponents.add(this.liveViewersComponent);
+    this.hudComponents.add(this.serverLogsTimeSeriesComponent);
   }
 
   // render indicators here, etc.

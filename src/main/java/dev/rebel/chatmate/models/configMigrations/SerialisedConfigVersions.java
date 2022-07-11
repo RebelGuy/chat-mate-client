@@ -7,7 +7,8 @@ public class SerialisedConfigVersions {
     public boolean hudEnabled;
     public boolean showStatusIndicator;
     public boolean showLiveViewers;
-    public boolean showServerLogs;
+    public boolean showServerLogsHeartbeat;
+    public boolean showServerLogsTimeSeries;
     public boolean identifyPlatforms;
 
     public SerialisedConfigV2(boolean soundEnabled,
@@ -15,7 +16,8 @@ public class SerialisedConfigVersions {
                               boolean hudEnabled,
                               boolean showStatusIndicator,
                               boolean showLiveViewers,
-                              boolean showServerLogs,
+                              boolean showServerLogsHeartbeat,
+                              boolean showServerLogsTimeSeries,
                               boolean identifyPlatforms) {
       super(2);
       this.soundEnabled = soundEnabled;
@@ -23,7 +25,8 @@ public class SerialisedConfigVersions {
       this.hudEnabled = hudEnabled;
       this.showStatusIndicator = showStatusIndicator;
       this.showLiveViewers = showLiveViewers;
-      this.showServerLogs = showServerLogs;
+      this.showServerLogsHeartbeat = showServerLogsHeartbeat;
+      this.showServerLogsTimeSeries = showServerLogsTimeSeries;
       this.identifyPlatforms = identifyPlatforms;
     }
   }

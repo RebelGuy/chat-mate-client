@@ -172,7 +172,13 @@ public class GuiService {
 
   private Out onRender(In in) {
     if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get() && !this.minecraft.gameSettings.showDebugInfo) {
+      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
+        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPreHud();
+      }
       this.guiChatMateHud.renderGameOverlay();
+      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
+        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPostHud();
+      }
     }
 
     return new Out();

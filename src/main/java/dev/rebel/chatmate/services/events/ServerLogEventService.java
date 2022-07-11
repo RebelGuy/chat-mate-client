@@ -45,16 +45,16 @@ public class ServerLogEventService extends EventServiceBase<Events> {
     return this.errors;
   }
 
-  public void onInitialise(Function<EventIn, EventOut> callback) {
-    super.addListener(Events.INITIALISE, callback, null);
+  public void onInitialise(Function<EventIn, EventOut> callback, Object key) {
+    super.addListener(Events.INITIALISE, callback, null, key);
   }
 
-  public void onWarning(Function<EventIn, EventOut> callback) {
-    super.addListener(Events.WARNING, callback, null);
+  public void onWarning(Function<EventIn, EventOut> callback, Object key) {
+    super.addListener(Events.WARNING, callback, null, key);
   }
 
-  public void onError(Function<EventIn, EventOut> callback) {
-    super.addListener(Events.ERROR, callback, null);
+  public void onError(Function<EventIn, EventOut> callback, Object key) {
+    super.addListener(Events.ERROR, callback, null, key);
   }
 
   private void onApiResponse(GetTimestampsResponseData data) {

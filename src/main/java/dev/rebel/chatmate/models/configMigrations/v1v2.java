@@ -17,6 +17,7 @@ public class v1v2 extends Migration<SerialisedConfigV1, SerialisedConfigV2> {
         data.showStatusIndicator,
         data.showLiveViewers,
         true,
+        false,
         data.identifyPlatforms);
   }
 }

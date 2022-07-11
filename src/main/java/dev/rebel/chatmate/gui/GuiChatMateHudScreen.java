@@ -1,6 +1,9 @@
 package dev.rebel.chatmate.gui;
 
+import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.hud.IHudComponent;
+import dev.rebel.chatmate.gui.hud.ServerLogsTimeSeriesComponent;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -16,7 +19,9 @@ import dev.rebel.chatmate.services.events.models.MouseEventData.Options;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.renderer.GlStateManager;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,9 +40,10 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private final Function<In, Out> onMouseUp = this::onMouseUp;
   private final Function<In, Out> onMouseScroll = this::onMouseScroll;
 
-  private IHudComponent draggingComponent = null;
-  private Dim draggingComponentOffsetX = null;
-  private Dim draggingComponentOffsetY = null;
+  private @Nullable MousePositionData mousePositionData = null;
+  private @Nullable IHudComponent draggingComponent = null;
+  private @Nullable Dim draggingComponentOffsetX = null;
+  private @Nullable Dim draggingComponentOffsetY = null;
 
   public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, DimFactory dimFactory, GuiChatMateHud hud, ContextMenuService contextMenuService) {
     super();
@@ -56,6 +62,19 @@ public class GuiChatMateHudScreen extends GuiScreen {
   }
 
   @Override
+  public void onResize(Minecraft minecraft, int w, int h) {
+    super.onResize(minecraft, w, h);
+
+    // todo: allow anchoring to side/corner, so that the element's position always stays constant relative to that side/corner.
+    // currently, the implied anchor is top-left.
+    for (IHudComponent component : this.guiChatMateHud.hudComponents) {
+      if (component instanceof ServerLogsTimeSeriesComponent) {
+        ((ServerLogsTimeSeriesComponent)component).onMinecraftResize();
+      }
+    }
+  }
+
+  @Override
   public void initGui() {
     super.initGui();
   }
@@ -70,7 +89,25 @@ public class GuiChatMateHudScreen extends GuiScreen {
     return false;
   }
 
-  // todo: draw a rect around a component when hovering over it, coloured bordered when dragging, etc
+  /** To be called when the HUD screen is active, and just before the HUD components are being rendered. */
+  public void renderGameOverlayPreHud() {
+    if (this.mousePositionData == null) {
+      return;
+    }
+
+    for (IHudComponent component : this.guiChatMateHud.hudComponents) {
+      if (containsPoint(component, this.mousePositionData.point)) {
+        DimRect rect = new DimRect(component.getX(), component.getY(), component.getWidth(), component.getHeight());
+        float alpha = this.draggingComponent == component ? 0.2f : 0.1f;
+        RendererHelpers.drawRect(0, rect, Colour.BLACK.withAlpha(alpha));
+      }
+    }
+  }
+
+  /** To be called when the HUD screen is active, and just after the HUD components are being rendered. */
+  public void renderGameOverlayPostHud() {
+
+  }
 
   private Out onMouseDown(In in) {
     if (this.minecraft.currentScreen != this) {
@@ -102,15 +139,17 @@ public class GuiChatMateHudScreen extends GuiScreen {
   }
 
   private Out onMouseMove(In in) {
+    this.mousePositionData = in.mousePositionData;
+
     if (this.minecraft.currentScreen != this) {
       return new Out(null);
     }
 
-    MousePositionData position = in.mousePositionData;
     if (in.isDragged(MouseButton.LEFT_BUTTON) && this.draggingComponent != null) {
       // note that we are not checking if the mouse is still hovering over the component
-      Dim newX = position.x.minus(this.draggingComponentOffsetX);
-      Dim newY = position.y.minus(this.draggingComponentOffsetY);
+      assert this.mousePositionData != null;
+      Dim newX = this.mousePositionData.x.minus(this.draggingComponentOffsetX);
+      Dim newY = this.mousePositionData.y.minus(this.draggingComponentOffsetY);
       this.draggingComponent.onTranslate(newX, newY);
     }
 

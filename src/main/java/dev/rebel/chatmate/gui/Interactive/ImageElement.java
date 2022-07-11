@@ -8,6 +8,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.util.EnumHelpers;
+import net.minecraft.client.renderer.texture.TextureManager;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -99,6 +100,7 @@ public class ImageElement extends SingleElement {
     DimPoint size = getContentBoxSize(super.lastCalculatedSize);
     DimRect imageBox = ElementHelpers.alignElementInBox(size, super.getContentBox(), super.getHorizontalAlignment(), super.getVerticalAlignment());
     float effectiveScale = imageBox.getWidth().over(gui(this.image.width));
-    RendererHelpers.drawTexture(super.context, this.image, imageBox.getTopLeft(), effectiveScale, this.colour);
+    TextureManager textureManager = super.context.minecraft.getTextureManager();
+    RendererHelpers.drawTexture(textureManager, super.context.dimFactory, this.image, imageBox.getTopLeft(), effectiveScale, this.colour);
   }
 }

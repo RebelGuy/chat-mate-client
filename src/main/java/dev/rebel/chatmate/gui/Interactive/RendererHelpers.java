@@ -155,7 +155,15 @@ public class RendererHelpers {
     tessellator.draw();
   }
 
-  public static void drawTexture(InteractiveContext context, Texture texture, DimPoint topLeft, float scale, @Nullable Colour colour) {
+  public static void drawTextureCentred(TextureManager textureManager, DimFactory dimFactory, Texture texture, DimPoint centre, float scale, @Nullable Colour colour) {
+    DimPoint topLeft = new DimPoint(
+        centre.getX().minus(dimFactory.fromGui(texture.width / 2.0f * scale)),
+        centre.getY().minus(dimFactory.fromGui(texture.height / 2.0f * scale))
+    );
+    drawTexture(textureManager, dimFactory, texture, topLeft, scale, colour);
+  }
+
+  public static void drawTexture(TextureManager textureManager, DimFactory dimFactory, Texture texture, DimPoint topLeft, float scale, @Nullable Colour colour) {
     // Minecraft expects a 256x256 texture to render.
     // if we provide it with a smaller size, it will stretch out the texture.
     // so we let it do that, and simply scale the screen. This means we will need to re-calculate the position.
@@ -188,8 +196,8 @@ public class RendererHelpers {
       GlStateManager.color(colour.red / 255.0f, colour.green / 255.0f, colour.blue / 255.0f, colour.alpha / 255.0f);
     }
 
-    context.minecraft.getTextureManager().bindTexture(texture.resourceLocation);
-    DimRect rect = new DimRect(renderX, renderY, context.dimFactory.fromGui(width), context.dimFactory.fromGui(height));
+    textureManager.bindTexture(texture.resourceLocation);
+    DimRect rect = new DimRect(renderX, renderY, dimFactory.fromGui(width), dimFactory.fromGui(height));
     int zIndex = 0;
     drawTexturedModalRect(rect, zIndex, u, v);
 
@@ -433,6 +441,7 @@ public class RendererHelpers {
     GlStateManager.disableBlend();
     GlStateManager.enableAlpha();
     GlStateManager.enableTexture2D();
+    GlStateManager.depthMask(true);
     GlStateManager.shadeModel(7424);
     GlStateManager.popMatrix();
   }

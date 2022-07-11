@@ -86,7 +86,10 @@ processResources {
 task moveResources {
     doLast {
         ant.move file: "${buildDir}/resources/main",
-            todir: "${buildDir}/classes/java"
+            todir: "${buildDir}/classes/java",
+            // during hot-reloading, this sometimes fails because the cursor image is in use
+            // ignore the error and continue building, see https://ant.apache.org/manual/Tasks/move.html
+            failonerror: "false"
     }
 }
 

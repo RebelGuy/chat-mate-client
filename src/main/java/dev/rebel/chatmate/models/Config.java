@@ -48,8 +48,11 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Boolean> showLiveViewers;
   public StatefulEmitter<Boolean> getShowLiveViewersEmitter() { return this.showLiveViewers; }
 
-  private final StatefulEmitter<Boolean> showServerLogs;
-  public StatefulEmitter<Boolean> getShowServerLogs() { return this.showServerLogs; }
+  private final StatefulEmitter<Boolean> showServerLogsHeartbeat;
+  public StatefulEmitter<Boolean> getShowServerLogsHeartbeat() { return this.showServerLogsHeartbeat; }
+
+  private final StatefulEmitter<Boolean> showServerLogsTimeSeries;
+  public StatefulEmitter<Boolean> getShowServerLogsTimeSeries() { return this.showServerLogsTimeSeries; }
 
   private final StatefulEmitter<Boolean> identifyPlatforms;
   public StatefulEmitter<Boolean> getIdentifyPlatforms() { return this.identifyPlatforms; }
@@ -71,7 +74,8 @@ public class Config extends EventServiceBase<ConfigType> {
     this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, true, this::onUpdate);
     this.showStatusIndicator = new StatefulEmitter<>(ConfigType.SHOW_STATUS_INDICATOR, true, this::onUpdate);
     this.showLiveViewers = new StatefulEmitter<>(ConfigType.SHOW_LIVE_VIEWERS, true, this::onUpdate);
-    this.showServerLogs = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS, true, this::onUpdate);
+    this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, true, this::onUpdate);
+    this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, false, this::onUpdate);
     this.identifyPlatforms = new StatefulEmitter<>(ConfigType.IDENTIFY_PLATFORMS, false, this::onUpdate);
 
     this.weakHandlers = new WeakHashMap<>();
@@ -99,7 +103,8 @@ public class Config extends EventServiceBase<ConfigType> {
       this.hudEnabled.set(loaded.hudEnabled);
       this.showStatusIndicator.set(loaded.showStatusIndicator);
       this.showLiveViewers.set(loaded.showLiveViewers);
-      this.showServerLogs.set(loaded.showServerLogs);
+      this.showServerLogsHeartbeat.set(loaded.showServerLogsHeartbeat);
+      this.showServerLogsTimeSeries.set(loaded.showServerLogsTimeSeries);
       this.identifyPlatforms.set(loaded.identifyPlatforms);
       this.save();
     }
@@ -112,7 +117,8 @@ public class Config extends EventServiceBase<ConfigType> {
       this.hudEnabled.get(),
       this.showStatusIndicator.get(),
       this.showLiveViewers.get(),
-      this.showServerLogs.get(),
+      this.showServerLogsHeartbeat.get(),
+      this.showServerLogsTimeSeries.get(),
       this.identifyPlatforms.get()
     );
     this.configPersistorService.save(serialisedConfig);
@@ -189,7 +195,8 @@ public class Config extends EventServiceBase<ConfigType> {
     ENABLE_HUD,
     SHOW_STATUS_INDICATOR,
     SHOW_LIVE_VIEWERS,
-    SHOW_SERVER_LOGS,
+    SHOW_SERVER_LOGS_HEARTBEAT,
+    SHOW_SERVER_LOGS_TIME_SERIES,
     IDENTIFY_PLATFORMS
   }
 }
