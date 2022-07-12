@@ -30,7 +30,7 @@ public class ServerLogEventService extends EventServiceBase<Events> {
   public ServerLogEventService(LogService logService, LogEndpointProxy logEndpointProxy, ApiPollerFactory apiPollerFactory) {
     super(Events.class, logService);
 
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, logEndpointProxy::getTimestamps, 5000, PollType.CONSTANT_INTERVAL);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, logEndpointProxy::getTimestamps, 5000, PollType.CONSTANT_INTERVAL, null);
 
     this.initialised = false;
     this.warnings = new Long[0];

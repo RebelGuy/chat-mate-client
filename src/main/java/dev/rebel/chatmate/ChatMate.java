@@ -79,10 +79,11 @@ public class ChatMate {
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
-    this.chatMateChatService = new ChatMateChatService(logService, this.config, chatEndpointProxy);
+    ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
+    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, this.config);
-    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, config, chatMateEndpointProxy, logService);
+    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory);
     MessageService messageService = new MessageService(logService, minecraftProxyService);
     ImageService imageService = new ImageService(minecraft);
     this.mcChatService = new McChatService(minecraftProxyService,
@@ -93,11 +94,10 @@ public class ChatMate {
         messageService,
         imageService,
         config);
-    StatusService statusService = new StatusService(this.config, chatMateEndpointProxy);
+    StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory);
 
     this.renderService = new RenderService(minecraft, this.forgeEventService);
     this.keyBindingService = new KeyBindingService(this.forgeEventService);
-    ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
     ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config, serverLogEventService);
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, this.forgeEventService, this.mouseEventService, dimFactory);

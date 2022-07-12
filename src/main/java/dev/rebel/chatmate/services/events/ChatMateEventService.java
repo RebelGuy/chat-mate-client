@@ -11,36 +11,31 @@ import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
 import dev.rebel.chatmate.services.events.models.NewTwitchFollowerEventData;
 import dev.rebel.chatmate.services.util.TaskWrapper;
+import dev.rebel.chatmate.util.ApiPoller;
+import dev.rebel.chatmate.util.ApiPoller.PollType;
+import dev.rebel.chatmate.util.ApiPollerFactory;
 
 import javax.annotation.Nullable;
 import java.net.ConnectException;
 import java.util.Date;
 import java.util.Timer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
-  private final Config config;
+  private final static long TIMEOUT_WAIT = 60 * 1000;
+
   private final ChatMateEndpointProxy chatMateEndpointProxy;
   private final LogService logService;
-  private final long TIMEOUT_WAIT = 60 * 1000;
-  private @Nullable Timer timer = null;
+  private final ApiPoller<GetEventsResponseData> apiPoller;
+
   private @Nullable Long lastTimestamp = null;
-  private @Nullable Long pauseUntil = null;
-  private boolean requestInProgress = false;
 
-  public ChatMateEventService(LogService logService, Config config, ChatMateEndpointProxy chatMateEndpointProxy, LogService logService1) {
+  public ChatMateEventService(LogService logService, ChatMateEndpointProxy chatMateEndpointProxy, ApiPollerFactory apiPollerFactory) {
     super(ChatMateEventType.class, logService);
-    this.config = config;
     this.chatMateEndpointProxy = chatMateEndpointProxy;
-    this.logService = logService1;
-
-    this.config.getChatMateEnabledEmitter().onChange(chatMateEnabled -> {
-      if (chatMateEnabled) {
-        this.start();
-      } else {
-        this.stop();
-      }
-    });
+    this.logService = logService;
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, null, this::onMakeRequest, 1000L, PollType.CONSTANT_PADDING, TIMEOUT_WAIT);
   }
 
   public void onLevelUp(Function<LevelUpEventData.In, LevelUpEventData.Out> handler, @Nullable LevelUpEventData.Options options) {
@@ -51,38 +46,11 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
     this.addListener(ChatMateEventType.NEW_TWITCH_FOLLOWER, handler, options);
   }
 
-  private void start() {
-    if (this.timer == null) {
-      this.timer = new Timer();
-      this.timer.scheduleAtFixedRate(new TaskWrapper(this::makeRequest), 1000, 10000);
-    }
+  private void onMakeRequest(Consumer<GetEventsResponseData> callback, Consumer<Throwable> onError) {
+    this.chatMateEndpointProxy.getEventsAsync(callback, onError, this.lastTimestamp);
   }
 
-  private void stop() {
-    if (this.timer != null) {
-      this.timer.cancel();
-      this.timer = null;
-    }
-  }
-
-  private void makeRequest() {
-    if (!this.canMakeRequest()) {
-      return;
-    }
-    this.requestInProgress = true;
-
-    GetEventsResponseData response = null;
-    try {
-      response = this.chatMateEndpointProxy.getEvents(this.lastTimestamp);
-    } catch (ConnectException e) {
-      this.pauseUntil = new Date().getTime() + this.TIMEOUT_WAIT;
-    } catch (Exception ignored) { }
-
-    if (response == null) {
-      this.requestInProgress = false;
-      return;
-    }
-
+  private void onApiResponse(GetEventsResponseData response) {
     this.lastTimestamp = response.reusableTimestamp;
     for (PublicChatMateEvent event : response.events) {
       if (event.type == ChatMateEventType.LEVEL_UP) {
@@ -105,12 +73,5 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
         this.logService.logError("Invalid ChatMate event of type " + event.type);
       }
     }
-
-    this.requestInProgress = false;
-  }
-
-  private boolean canMakeRequest() {
-    boolean skipRequest = this.requestInProgress || this.pauseUntil != null && this.pauseUntil > new Date().getTime();
-    return !skipRequest;
   }
 }

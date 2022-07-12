@@ -23,20 +23,16 @@ public class ChatMateEndpointProxy extends EndpointProxy {
     super(logService, chatMateEndpointStore, basePath + "/chatMate");
   }
 
-  public GetStatusResponseData getStatus() throws ConnectException, ChatMateApiException, Exception {
-    return this.makeRequest(Method.GET, "/status", GetStatusResponse.class);
-  }
-
   public void getStatusAsync(Consumer<GetStatusResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     this.makeRequestAsync(Method.GET, "/status", GetStatusResponse.class, callback, errorHandler);
   }
 
-  public GetEventsResponseData getEvents(@Nullable Long sinceTimestamp) throws ConnectException, ChatMateApiException, Exception {
+  public void getEventsAsync(Consumer<GetEventsResponseData> callback, @Nullable Consumer<Throwable> errorHandler, @Nullable Long sinceTimestamp) {
     if (sinceTimestamp == null) {
       sinceTimestamp = new Date().getTime();
     }
     String url = String.format("/events?since=%d", sinceTimestamp);
-    return this.makeRequest(Method.GET, url, GetEventsResponse.class);
+    this.makeRequestAsync(Method.GET, url, GetEventsResponse.class, callback, errorHandler);
   }
 
   public void setActiveLivestreamAsync(@Nonnull SetActiveLivestreamRequest request, Consumer<SetActiveLivestreamResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

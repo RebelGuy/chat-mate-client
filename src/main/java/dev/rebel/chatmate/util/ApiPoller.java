@@ -6,6 +6,8 @@ import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 
 import javax.annotation.Nullable;
+import java.net.ConnectException;
+import java.util.Date;
 import java.util.Timer;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -18,9 +20,13 @@ public class ApiPoller<D> {
   private final BiConsumer<Consumer<D>, Consumer<Throwable>> endpoint;
   private final long interval;
   private final PollType type;
-  private final Consumer<Boolean> onChatMateEnabledChanged = this::onChatMateEnabledChanged;
+  private final Long timeoutWaitTime;
+  private boolean requestInProgress;
+
+  private final Consumer<Boolean> _onChatMateEnabledChanged = this::onChatMateEnabledChanged;
 
   private @Nullable Timer timer;
+  private @Nullable Long pauseUntil;
 
   public ApiPoller(LogService logService,
                    Config config,
@@ -28,7 +34,8 @@ public class ApiPoller<D> {
                    @Nullable Consumer<Throwable> errorHandler,
                    BiConsumer<Consumer<D>, Consumer<Throwable>> endpoint,
                    long interval,
-                   PollType type) {
+                   PollType type,
+                   @Nullable Long timeoutWaitTime) {
     this.logService = logService;
     this.config = config;
     this.callback = callback;
@@ -36,15 +43,19 @@ public class ApiPoller<D> {
     this.endpoint = endpoint;
     this.interval = interval;
     this.type = type;
+    this.timeoutWaitTime = timeoutWaitTime;
 
     this.timer = null;
+    this.pauseUntil = null;
+    this.requestInProgress = false;
 
-    this.config.getChatMateEnabledEmitter().onChange(this.onChatMateEnabledChanged, this);
+    this.config.getChatMateEnabledEmitter().onChange(this._onChatMateEnabledChanged, this);
   }
 
   private void onChatMateEnabledChanged(Boolean enabled) {
     if (enabled) {
       if (this.timer == null) {
+        this.pauseUntil = null;
         this.timer = new Timer();
         if (this.type == PollType.CONSTANT_PADDING) {
           this.timer.schedule(new TaskWrapper(this::pollApi), 0);
@@ -63,6 +74,11 @@ public class ApiPoller<D> {
   }
 
   private void pollApi() {
+    if (!this.canMakeRequest()) {
+      return;
+    }
+
+    this.requestInProgress = true;
     this.endpoint.accept(this::onApiResponse, this::onApiError);
   }
 
@@ -71,6 +87,10 @@ public class ApiPoller<D> {
   }
 
   private void onApiError(Throwable error) {
+    if (error instanceof ConnectException && this.timeoutWaitTime != null) {
+      this.pauseUntil = new Date().getTime() + this.timeoutWaitTime;
+    }
+
     this.onHandleCallback(error, this.errorHandler);
   }
 
@@ -83,9 +103,20 @@ public class ApiPoller<D> {
       }
     }
 
+    onPollDone();
+  }
+
+  private void onPollDone() {
+    this.requestInProgress = false;
+
     if (this.type == PollType.CONSTANT_PADDING && this.timer != null) {
       this.timer.schedule(new TaskWrapper(this::pollApi), this.interval);
     }
+  }
+
+  private boolean canMakeRequest() {
+    boolean skipRequest = this.requestInProgress || this.pauseUntil != null && this.pauseUntil > new Date().getTime();
+    return !skipRequest;
   }
 
   public enum PollType { CONSTANT_INTERVAL, CONSTANT_PADDING }
