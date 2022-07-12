@@ -29,6 +29,7 @@ public class ChatMateChatServiceTests {
 
   @Test
   public void newChatItem_dispatched() {
+    // arrange
     PublicChatItem[] chatItems = new PublicChatItem[] { McChatServiceTests.createItem(
         McChatServiceTests.createAuthor("Test author"),
         McChatServiceTests.createText("Test text")
@@ -37,27 +38,28 @@ public class ChatMateChatServiceTests {
       reusableTimestamp = new Date().getTime();
       chat = chatItems;
     }};
+    Consumer<PublicChatItem[]> mockChatSubscriber = mock(Consumer.class);
 
-    Consumer<PublicChatItem[]> mockSubscriber = mock(Consumer.class);
-
+    // act
     ChatMateChatService chatService = new ChatMateChatService(this.mockLogService, this.mockChatEndpointProxy, this.mockApiPollerFactory);
-    chatService.onNewChat(mockSubscriber, this);
+    chatService.onNewChat(mockChatSubscriber, this);
 
-    // extract the onResponse callback
+    // extract the onResponse and endpoint callbacks
     ArgumentCaptor<Consumer<GetChatResponseData>> onResponseCaptor = ArgumentCaptor.forClass(Consumer.class);
-    ApiPollerFactory factory = verify(this.mockApiPollerFactory);
-    factory.Create(onResponseCaptor.capture(), any(), any(), any(), any(), any());
-
-    // verify that the callback methods are passed through to the endpoint proxy when executing a request
     ArgumentCaptor<BiConsumer<Consumer<GetChatResponseData>, Consumer<Throwable>>> getChatEndpointCaptor = ArgumentCaptor.forClass(BiConsumer.class);
-    getChatEndpointCaptor.getValue().accept(onResponseCaptor.getValue(), null);
-    verify(this.mockChatEndpointProxy).getChatAsync(onResponseCaptor.getValue(), any(), any(), any());
+    verify(this.mockApiPollerFactory).Create(onResponseCaptor.capture(), any(), getChatEndpointCaptor.capture(), anyLong(), any(), any());
 
-    // supply response to the callback
+    // simulate an endpoint call from the ApiPoller, passing through the original response callback it would have received during creation
+    getChatEndpointCaptor.getValue().accept(onResponseCaptor.getValue(), null);
+
+    // check that the actual endpoint was indeed used
+    // note that the `eq()` is required because... mockito
+    verify(this.mockChatEndpointProxy).getChatAsync(eq(onResponseCaptor.getValue()), any(), any(), any());
+
+    // simulate endpoint response
     onResponseCaptor.getValue().accept(chatResponse);
 
-    // YtChatService calls `scheduleAtFixedRate`, which executes on a separate thread even with zero delay.
-    // so wait some time until we are sure that the other thread has finished its work.
-    verify(mockSubscriber).accept(ArgumentMatchers.argThat(arg -> arg == chatItems));
+    // at long last, check that any subscribers were notified of the new data
+    verify(mockChatSubscriber).accept(ArgumentMatchers.argThat(arg -> arg == chatItems));
   }
 }
