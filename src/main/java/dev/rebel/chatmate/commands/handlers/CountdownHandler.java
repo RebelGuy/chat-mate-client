@@ -1,8 +1,11 @@
 package dev.rebel.chatmate.commands.handlers;
 
 import dev.rebel.chatmate.gui.GuiChatMateHud;
+import dev.rebel.chatmate.gui.hud.TitleComponent;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 import jline.internal.Nullable;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
 
@@ -13,13 +16,15 @@ public class CountdownHandler {
   private final static String COUNTDOWN_STYLE = new ChatStyle().setColor(EnumChatFormatting.YELLOW).setBold(true).getFormattingCode();
   private final static String SUB_TITLE_STYLE = new ChatStyle().setColor(EnumChatFormatting.YELLOW).getFormattingCode();
 
+  private final TitleComponent titleComponent;
   private final GuiChatMateHud guiChatMateHud;
 
   private @Nullable Timer timer = null;
   private @Nullable Integer secondsRemaining = null;
   private @Nullable String title = null;
 
-  public CountdownHandler(GuiChatMateHud guiChatMateHud) {
+  public CountdownHandler(DimFactory dimFactory, Minecraft minecraft, GuiChatMateHud guiChatMateHud) {
+    this.titleComponent = new TitleComponent(dimFactory, minecraft, true, true);
     this.guiChatMateHud = guiChatMateHud;
   }
 
@@ -36,18 +41,11 @@ public class CountdownHandler {
     this.title = title;
     this.timer = new Timer();
     this.timer.scheduleAtFixedRate(new TaskWrapper(this::updateCountdown), 0, 1000);
+    this.guiChatMateHud.hudComponents.add(this.titleComponent);
+    this.updateCountdown();
   }
 
   public void stop() {
-    this.guiChatMateHud.getTitleComponent().clearTimerState();
-    this.resetState();
-  }
-
-  public boolean hasExistingCountdown() {
-    return this.guiChatMateHud.getTitleComponent().hasExistingCountdown();
-  }
-
-  private void resetState() {
     if (this.timer != null) {
       this.timer.cancel();
       this.timer = null;
@@ -55,6 +53,12 @@ public class CountdownHandler {
 
     this.secondsRemaining = null;
     this.title = null;
+    this.titleComponent.clearTimerState();
+    this.guiChatMateHud.hudComponents.remove(this.titleComponent);
+  }
+
+  public boolean hasExistingCountdown() {
+    return this.titleComponent.hasExistingCountdown();
   }
 
   private void updateCountdown() {
@@ -62,11 +66,11 @@ public class CountdownHandler {
     String subTitle = this.title == null ? null : SUB_TITLE_STYLE + this.title;
 
     if (this.secondsRemaining <= 0) {
-      this.guiChatMateHud.getTitleComponent().displayTitle(mainTitle, subTitle, 0, 1000, 500);
-      this.resetState();
+      this.titleComponent.displayTitle(mainTitle, subTitle, 0, 1000, 500);
+      this.stop();
     } else {
       // set the duration a little bit longer to account for lag spikes
-      this.guiChatMateHud.getTitleComponent().displayTitle(mainTitle, subTitle, 0, 2000, 0);
+      this.titleComponent.displayTitle(mainTitle, subTitle, 0, 2000, 0);
       this.secondsRemaining--;
     }
   }

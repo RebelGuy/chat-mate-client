@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
@@ -29,8 +30,8 @@ public abstract class ModalElement extends ContainerElement {
   private ElementReference bodyElement;
   private LabelElement errorLabel;
   private HorizontalDivider divider;
-  private ButtonElement closeButton;
-  private ButtonElement submitButton;
+  private TextButtonElement closeButton;
+  private TextButtonElement submitButton;
   private SideBySideElement footer;
 
   private boolean loading = false;
@@ -155,18 +156,25 @@ public abstract class ModalElement extends ContainerElement {
     this.divider = new HorizontalDivider(context, this)
         .setMode(FillMode.PARENT_FULL);
 
-    this.closeButton = new ButtonElement(context, this)
+    this.closeButton = new TextButtonElement(context, this)
         .setText("Close")
-        .setOnClick(this::onClose);
-    this.submitButton = (ButtonElement)new ButtonElement(context, this)
+        .setOnClick(this::onClose)
+        .setMinSize(this.width.over(4))
+        .setHorizontalAlignment(HorizontalAlignment.LEFT)
+        .cast();
+    this.submitButton = new TextButtonElement(context, this)
         .setText("Submit")
         .setOnClick(this::onSubmit)
-        .setVisible(this.validate() != null);
-    this.footer = (SideBySideElement)new SideBySideElement(context, this)
-        .setElementPadding(this.width.over(2))
-        .addElement(1, this.closeButton)
-        .addElement(1, this.submitButton)
-        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO));
+        .setMinSize(this.width.over(4))
+        .setVisible(this.validate() != null)
+        .setHorizontalAlignment(HorizontalAlignment.RIGHT)
+        .cast();
+    this.footer = new SideBySideElement(context, this)
+        .setElementPadding(gui(8))
+        .addElement(1, new WrapperElement(context, this, this.closeButton))
+        .addElement(1, new WrapperElement(context, this, this.submitButton))
+        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO))
+        .cast();
 
     this.addElement(this.title);
 

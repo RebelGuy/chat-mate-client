@@ -135,13 +135,6 @@ public abstract class ContainerElement extends ElementBase {
     // place one or more elements per line.
     // similar to the BLOCK calculation, except we also position elements vertically within their line.
 
-    Dim containerWidth;
-    if (this.getSizingMode() == SizingMode.FILL) {
-      containerWidth = maxWidth;
-    } else {
-      containerWidth = Collections.max(elementSizes, size -> size._2.getX().getGui())._2.getX();
-    }
-
     // first pass: group into lines
     List<List<Tuple2<IElement, DimPoint>>> lines = new ArrayList<>();
     List<Tuple2<IElement, DimPoint>> currentLine = new ArrayList<>();
@@ -149,7 +142,7 @@ public abstract class ContainerElement extends ElementBase {
     for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
       DimPoint size = elementSize._2;
 
-      if (currentLine.size() > 0 && lineX.plus(size.getX()).gt(containerWidth)) {
+      if (currentLine.size() > 0 && lineX.plus(size.getX()).gt(maxWidth)) {
         // doesn't fit on line
         lines.add(currentLine);
         currentLine = Collections.list(elementSize);
@@ -164,10 +157,11 @@ public abstract class ContainerElement extends ElementBase {
 
     // second pass: lay out elements within their lines. similar to the BLOCK layout algorithm
     Dim currentY = ZERO;
+    Dim right = ZERO;
     for (List<Tuple2<IElement, DimPoint>> line : lines) {
       Dim lineHeight = Collections.max(line, size -> size._2.getY().getGui())._2.getY();
       Dim lineContentWidth = Collections.eliminate(Collections.map(line, l -> l._2.getX()), Dim::plus);
-      Dim freeWidth = containerWidth.minus(lineContentWidth); // horizontal wiggle room
+      Dim freeWidth = maxWidth.minus(lineContentWidth); // horizontal wiggle room
 
       // the line elements' horizontal alignment is prioritised from left to right.
       // so, if the first element is right-aligned, it will "squish over" all other element to the right.
@@ -206,9 +200,17 @@ public abstract class ContainerElement extends ElementBase {
         this.childrenRelBoxes.put(element, new DimRect(thisRelX, thisRelY, size.getX(), size.getY()));
 
         currentX = thisRelX.plus(size.getX());
+        right = Dim.max(right, currentX);
       }
 
       currentY = currentY.plus(lineHeight);
+    }
+
+    Dim containerWidth;
+    if (this.getSizingMode() == SizingMode.FILL) {
+      containerWidth = maxWidth;
+    } else {
+      containerWidth = right;
     }
 
     return new DimPoint(containerWidth, currentY);

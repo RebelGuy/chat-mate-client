@@ -200,6 +200,7 @@ public class ElementHelpers {
     lines.add("Margin: " + element.getMargin().toString());
     lines.add("Hor Algn: " + element.getHorizontalAlignment());
     lines.add("Vert Algn: " + element.getVerticalAlignment());
+    lines.add("Sizing: " + element.getSizingMode());
     lines.add(String.format("Z-index: %d (%d)", element.getZIndex(), element.getEffectiveZIndex()));
     lines.add("");
 

@@ -2,6 +2,7 @@ package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.models.Config.ConfigType;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.EventHandler;
 import dev.rebel.chatmate.services.events.EventServiceBase;
@@ -21,12 +22,13 @@ import java.util.function.Function;
 public class Config extends EventServiceBase<ConfigType> {
   // Since config settings are stored locally, whenever you make changes to the Config that affect the serialised model,
   // you must also change the schema. This is an additive process, and existing serialised models must not be changed.
-  // 1. Create new model version that extends `Version`
-  // 2. Update the generic type of ConfigPersistorService set in ChatMate.java
+  // 1. Create new model version that extends `Version` in `SerialisedConfigVersions.java`
+  // 2. Update the generic type of ConfigPersistorService set in ChatMate.java, and in here
   // 3. Bump the ConfigPersistorService.CURRENT_VERSION
-  // 4. Add a new migration file
-  // 5. Use the new migration file when loading the serialised config
-  private final ConfigPersistorService<SerialisedConfigV1> configPersistorService;
+  // 4. Add a new migration file in the `configMigrations` package
+  // 5. Add the migration class from the previous step and the new serialised model to the arrays in `Migration.java`
+  // 6. Change the type of the saved and loaded serialised config in this file
+  private final ConfigPersistorService<SerialisedConfigV2> configPersistorService;
 
   private final StatefulEmitter<Boolean> chatMateEnabled;
   public StatefulEmitter<Boolean> getChatMateEnabledEmitter() { return this.chatMateEnabled; }
@@ -45,6 +47,12 @@ public class Config extends EventServiceBase<ConfigType> {
 
   private final StatefulEmitter<Boolean> showLiveViewers;
   public StatefulEmitter<Boolean> getShowLiveViewersEmitter() { return this.showLiveViewers; }
+
+  private final StatefulEmitter<Boolean> showServerLogsHeartbeat;
+  public StatefulEmitter<Boolean> getShowServerLogsHeartbeat() { return this.showServerLogsHeartbeat; }
+
+  private final StatefulEmitter<Boolean> showServerLogsTimeSeries;
+  public StatefulEmitter<Boolean> getShowServerLogsTimeSeries() { return this.showServerLogsTimeSeries; }
 
   private final StatefulEmitter<Boolean> identifyPlatforms;
   public StatefulEmitter<Boolean> getIdentifyPlatforms() { return this.identifyPlatforms; }
@@ -66,6 +74,8 @@ public class Config extends EventServiceBase<ConfigType> {
     this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, true, this::onUpdate);
     this.showStatusIndicator = new StatefulEmitter<>(ConfigType.SHOW_STATUS_INDICATOR, true, this::onUpdate);
     this.showLiveViewers = new StatefulEmitter<>(ConfigType.SHOW_LIVE_VIEWERS, true, this::onUpdate);
+    this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, true, this::onUpdate);
+    this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, false, this::onUpdate);
     this.identifyPlatforms = new StatefulEmitter<>(ConfigType.IDENTIFY_PLATFORMS, false, this::onUpdate);
 
     this.weakHandlers = new WeakHashMap<>();
@@ -86,25 +96,29 @@ public class Config extends EventServiceBase<ConfigType> {
   }
 
   private void load() {
-    SerialisedConfigV1 loaded = this.configPersistorService.load();
+    SerialisedConfigV2 loaded = this.configPersistorService.load();
     if (loaded != null) {
       this.soundEnabled.set(loaded.soundEnabled);
       this.chatVerticalDisplacement.set(loaded.chatVerticalDisplacement);
       this.hudEnabled.set(loaded.hudEnabled);
       this.showStatusIndicator.set(loaded.showStatusIndicator);
       this.showLiveViewers.set(loaded.showLiveViewers);
+      this.showServerLogsHeartbeat.set(loaded.showServerLogsHeartbeat);
+      this.showServerLogsTimeSeries.set(loaded.showServerLogsTimeSeries);
       this.identifyPlatforms.set(loaded.identifyPlatforms);
       this.save();
     }
   }
 
   private void save() {
-    SerialisedConfigV1 serialisedConfig = new SerialisedConfigV1(
+    SerialisedConfigV2 serialisedConfig = new SerialisedConfigV2(
       this.soundEnabled.get(),
       this.chatVerticalDisplacement.get(),
       this.hudEnabled.get(),
       this.showStatusIndicator.get(),
       this.showLiveViewers.get(),
+      this.showServerLogsHeartbeat.get(),
+      this.showServerLogsTimeSeries.get(),
       this.identifyPlatforms.get()
     );
     this.configPersistorService.save(serialisedConfig);
@@ -181,6 +195,8 @@ public class Config extends EventServiceBase<ConfigType> {
     ENABLE_HUD,
     SHOW_STATUS_INDICATOR,
     SHOW_LIVE_VIEWERS,
+    SHOW_SERVER_LOGS_HEARTBEAT,
+    SHOW_SERVER_LOGS_TIME_SERIES,
     IDENTIFY_PLATFORMS
   }
 }

@@ -6,7 +6,14 @@ public class Asset {
   public static Texture STATUS_INDICATOR_RED = new Texture(16, 16, "textures/status_indicator_red.png");
   public static Texture STATUS_INDICATOR_ORANGE = new Texture(16, 16, "textures/status_indicator_orange.png");
   public static Texture STATUS_INDICATOR_CYAN = new Texture(16, 16, "textures/status_indicator_cyan.png");
+  public static Texture STATUS_INDICATOR_BLUE = new Texture(16, 16, "textures/status_indicator_blue.png");
   public static Texture STATUS_INDICATOR_GREEN = new Texture(16, 16, "textures/status_indicator_green.png");
+  
+  public static Texture GUI_CLEAR_ICON = new Texture(64, 64, "textures/gui/clear_icon.png");
+  public static Texture GUI_COPY_ICON = new Texture(64, 64, "textures/gui/copy_icon.png");
+  public static Texture GUI_REFRESH_ICON = new Texture(64, 64, "textures/gui/refresh_icon.png");
+  public static Texture GUI_TICK_ICON = new Texture(64, 64, "textures/gui/tick_icon.png");
+  public static Texture GUI_WEB_ICON = new Texture(64, 64, "textures/gui/web_icon.png");
 
   public static CursorImage CURSOR_DEFAULT = new CursorImage(0, 0, "textures/cursor_default.png");
   public static CursorImage CURSOR_TIP = new CursorImage(0, 0, "textures/cursor_tip.png");

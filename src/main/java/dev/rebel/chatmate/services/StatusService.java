@@ -6,33 +6,24 @@ import dev.rebel.chatmate.models.publicObjects.status.PublicApiStatus.ApiStatus;
 import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus.LivestreamStatus;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.util.TaskWrapper;
+import dev.rebel.chatmate.util.ApiPoller;
+import dev.rebel.chatmate.util.ApiPoller.PollType;
+import dev.rebel.chatmate.util.ApiPollerFactory;
 
 import javax.annotation.Nullable;
 import java.util.Timer;
 
 public class StatusService {
-  private final Config config;
-  private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final static long INTERVAL = 5000;
 
-  private @Nullable Timer timer;
-  private @Nullable GetStatusResponseData lastSuccessfulStatusResponse;
+  private final ApiPoller<GetStatusResponseData> apiPoller;
+
   private @Nullable GetStatusResponseData lastStatusResponse;
 
-  public StatusService(Config config, ChatMateEndpointProxy chatMateEndpointProxy) {
-    this.config = config;
-    this.chatMateEndpointProxy = chatMateEndpointProxy;
+  public StatusService(ChatMateEndpointProxy chatMateEndpointProxy, ApiPollerFactory apiPollerFactory) {
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, chatMateEndpointProxy::getStatusAsync, INTERVAL, PollType.CONSTANT_INTERVAL, null);
 
-    this.timer = null;
-    this.lastSuccessfulStatusResponse = null;
     this.lastStatusResponse = null;
-
-    this.config.getChatMateEnabledEmitter().onChange(chatMateEnabled -> {
-      if (chatMateEnabled) {
-        this.start();
-      } else {
-        this.stop();
-      }
-    });
   }
 
   public SimpleStatus getYoutubeSimpleStatus() {
@@ -42,6 +33,8 @@ public class StatusService {
       return SimpleStatus.SERVER_UNREACHABLE;
     } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
+    } else if (status.livestreamStatus == null) {
+      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -56,6 +49,8 @@ public class StatusService {
       return SimpleStatus.SERVER_UNREACHABLE;
     } else if (status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
+    } else if (status.livestreamStatus == null) {
+      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -70,6 +65,8 @@ public class StatusService {
       return SimpleStatus.SERVER_UNREACHABLE;
     } else if (status.youtubeApiStatus.status == ApiStatus.Error || status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
+    } else if (status.livestreamStatus == null) {
+      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -80,7 +77,7 @@ public class StatusService {
   public @Nullable Integer getYoutubeLiveViewerCount() {
     GetStatusResponseData status = this.lastStatusResponse;
 
-    if (status == null) {
+    if (status == null || status.livestreamStatus == null) {
       return null;
     } else {
       return status.livestreamStatus.youtubeLiveViewers;
@@ -90,7 +87,7 @@ public class StatusService {
   public @Nullable Integer getTwitchLiveViewerCount() {
     GetStatusResponseData status = this.lastStatusResponse;
 
-    if (status == null) {
+    if (status == null || status.livestreamStatus == null) {
       return null;
     } else {
       return status.livestreamStatus.twitchLiveViewers;
@@ -112,36 +109,19 @@ public class StatusService {
     }
   }
 
-  private void start() {
-    if (this.timer == null) {
-      this.timer = new Timer();
-      this.timer.scheduleAtFixedRate(new TaskWrapper(this::fetchStatus), 0, 5000);
-    }
+  private void onApiResponse(GetStatusResponseData response) {
+     this.lastStatusResponse = response;
   }
 
-  private void stop() {
-    if (this.timer != null) {
-      this.timer.cancel();
-      this.timer = null;
-    }
-  }
-
-  private void fetchStatus() {
-    GetStatusResponseData response = null;
-    try {
-      response = this.chatMateEndpointProxy.getStatus();
-    } catch (Exception ignored) { }
-
-    this.lastStatusResponse = response;
-    if (response != null) {
-      this.lastSuccessfulStatusResponse = response;
-    }
+  private void onApiError(Throwable error) {
+    this.lastStatusResponse = null;
   }
 
   public enum SimpleStatus {
     SERVER_UNREACHABLE,
     PLATFORM_UNREACHABLE,
     OK_OFFLINE,
+    OK_NO_LIVESTREAM,
     OK_LIVE
   }
 }

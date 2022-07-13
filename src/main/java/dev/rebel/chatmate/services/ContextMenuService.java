@@ -9,7 +9,6 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
@@ -32,6 +31,7 @@ public class ContextMenuService {
   private final CounterHandler counterHandler;
   private final MinecraftProxyService minecraftProxyService;
   private final CursorService cursorService;
+  private final BrowserService browserService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -46,7 +46,8 @@ public class ContextMenuService {
                             CountdownHandler countdownHandler,
                             CounterHandler counterHandler,
                             MinecraftProxyService minecraftProxyService,
-                            CursorService cursorService) {
+                            CursorService cursorService,
+                            BrowserService browserService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -61,6 +62,7 @@ public class ContextMenuService {
     this.counterHandler = counterHandler;
     this.minecraftProxyService = minecraftProxyService;
     this.cursorService = cursorService;
+    this.browserService = browserService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -134,6 +136,7 @@ public class ContextMenuService {
         this.clipboardService,
         this.soundService,
         this.cursorService,
-        minecraftProxyService);
+        this.minecraftProxyService,
+        this.browserService);
   }
 }

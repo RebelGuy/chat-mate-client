@@ -1,9 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.Events.EventPhase;
-import dev.rebel.chatmate.gui.Interactive.Events.EventType;
-import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
@@ -22,6 +19,8 @@ import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;
 
+import java.util.Objects;
+
 import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBox;
 
 // a note about box size terminology:
@@ -39,6 +38,7 @@ public abstract class ElementBase implements IElement {
   protected final FontRenderer font;
   protected String name;
 
+  /** Full size. */
   protected DimPoint lastCalculatedSize;
   private DimRect box;
   private RectExtension padding;
@@ -51,6 +51,8 @@ public abstract class ElementBase implements IElement {
   private boolean initialised;
   protected boolean visible;
   private @Nullable String tooltip;
+  private @Nullable Dim maxWidth;
+  private @Nullable Dim maxContentWidth;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     ID++;
@@ -72,6 +74,8 @@ public abstract class ElementBase implements IElement {
     this.visible = true;
 
     this.tooltip = null;
+    this.maxWidth = null;
+    this.maxContentWidth = null;
   }
 
   @Override
@@ -117,6 +121,9 @@ public abstract class ElementBase implements IElement {
           break;
         case MOUSE_EXIT:
           this.onMouseExit((IEvent<MouseEventData.In>)event);
+          break;
+        case WINDOW_RESIZE:
+          this.onWindowResize((IEvent<SizeData>)event);
           break;
         default:
           throw new RuntimeException("Invalid event type at TARGET phase: " + type);
@@ -196,6 +203,7 @@ public abstract class ElementBase implements IElement {
   public void onCaptureMouseEnter(IEvent<MouseEventData.In> e) {}
   /** This doesn't bubble, it is target-only. there is no way to cancel this. */
   public void onMouseExit(IEvent<MouseEventData.In> e) {}
+  public void onWindowResize(IEvent<SizeData> e) {}
 
   @Override
   public final void onCloseScreen() { this.parent.onCloseScreen(); }
@@ -211,9 +219,16 @@ public abstract class ElementBase implements IElement {
   public final DimPoint calculateSize(Dim maxFullWidth) {
     initialiseIfRequired();
 
+    if (this.maxWidth != null) {
+      maxFullWidth = Dim.min(this.maxWidth, maxFullWidth);
+    }
+
     // add a wrapper around the calculation method so we can cache the calculated size and provide a context for working
     // with content units (rather than full units).
     Dim contentWidth = getContentBoxWidth(maxFullWidth);
+    if (this.maxContentWidth != null) {
+      contentWidth = Dim.min(this.maxContentWidth, maxContentWidth);
+    }
     DimPoint size = this.calculateThisSize(contentWidth);
     DimPoint fullSize = getFullBoxSize(size);
     this.lastCalculatedSize = fullSize;
@@ -393,12 +408,37 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
+  public IElement setMaxWidth(@Nullable Dim maxWidth) {
+    if (!Objects.equals(this.maxWidth, maxWidth)) {
+      this.maxWidth = maxWidth;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
+
+  @Override
+  public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) {
+    if (!Objects.equals(this.maxContentWidth, maxContentWidth)) {
+      this.maxContentWidth = maxContentWidth;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
+
+  @Override
   public final <T extends IElement> T cast() {
     return (T)this;
   }
 
+  protected final DimPoint getContentBoxSize(DimPoint fullBoxSize) {
+    return new DimPoint(
+      fullBoxSize.getX().minus(this.getPadding().getExtendedWidth()).minus(this.getBorder().getExtendedWidth()).minus(this.getMargin().getExtendedWidth()),
+      fullBoxSize.getY().minus(this.getPadding().getExtendedHeight()).minus(this.getBorder().getExtendedHeight()).minus(this.getMargin().getExtendedHeight())
+    );
+  }
+
   protected final Dim getContentBoxWidth(Dim fullBoxWidth) {
-    return fullBoxWidth.minus(this.getPadding().getExtendedWidth()).minus(this.getBorder().getExtendedWidth()).minus(this.getMargin().getExtendedWidth());
+    return this.getContentBoxSize(new DimPoint(fullBoxWidth, ZERO)).getX();
   }
 
   protected final DimPoint getFullBoxSize(DimPoint contentBoxSize) {

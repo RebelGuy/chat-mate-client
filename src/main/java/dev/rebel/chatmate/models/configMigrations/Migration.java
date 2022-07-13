@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.Version;
 import dev.rebel.chatmate.models.VersionedData;
 import dev.rebel.chatmate.services.util.Collections;
@@ -12,8 +13,8 @@ import java.util.List;
 
 /** Represents a model of version `V` that can be migrated to version `V+1`. */
 public abstract class Migration<CurrentModel extends Version, NextModel extends Version> {
-  private final static Class<Migration<?, ?>>[] migrations = new Class[] { v0v1.class };
-  private final static Class<Version>[] versions = new Class[] { SerialisedConfigV0.class, SerialisedConfigV1.class };
+  private final static Class<Migration<?, ?>>[] migrations = new Class[] { v0v1.class, v1v2.class };
+  private final static Class<Version>[] versions = new Class[] { SerialisedConfigV0.class, SerialisedConfigV1.class, SerialisedConfigV2.class};
 
   protected final CurrentModel data;
 

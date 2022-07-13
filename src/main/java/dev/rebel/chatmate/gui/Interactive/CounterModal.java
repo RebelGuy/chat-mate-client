@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
+import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
-import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 
@@ -14,7 +14,7 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 public class CounterModal extends ModalElement {
   private final CounterHandler counterHandler;
 
-  private ButtonElement deleteButton;
+  private TextButtonElement deleteButton;
 
   private @Nullable String text = null;
   private @Nullable Integer startValue = 0;
@@ -49,7 +49,7 @@ public class CounterModal extends ModalElement {
 
     IElement valueElements = new SideBySideElement(context, this)
         .setElementPadding(gui(40))
-        .addElement(0.5f,
+        .addElement(0.6f,
             new SideBySideElement(context, this)
                 .addElement(1,
                     new LabelElement(context, this)
@@ -60,7 +60,7 @@ public class CounterModal extends ModalElement {
                     new TextInputElement(context, this)
                         .onTextChange(this::onStartValueChange)
                         .setValidator(this::onValidateStartValue)
-                        .setText("0")
+                        .setTextUnsafe("0")
                         .setTabIndex(1)
                 ).setElementPadding(gui(5))
             )
@@ -75,18 +75,19 @@ public class CounterModal extends ModalElement {
                     new TextInputElement(context, this)
                         .onTextChange(this::onIncrementChange)
                         .setValidator(this::onValidateIncrement)
-                        .setText("1")
+                        .setTextUnsafe("1")
                         .setTabIndex(2)
                 ).setElementPadding(gui(5))
             )
         .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5)));
 
-    this.deleteButton = (ButtonElement)new ButtonElement(context, this)
+    this.deleteButton = new TextButtonElement(context, this)
         .setText("Delete existing counter")
         .setOnClick(this::onDeleteCounter)
         .setVisible(this.counterHandler.hasExistingCounter())
         .setMargin(new RectExtension(ZERO, gui(5)))
-        .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE);
+        .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE)
+        .cast();
 
     super.setBody(new ListElement(context, this).addElement(titleElements).addElement(valueElements).addElement(deleteButton));
     super.setTitle("Set up Counter");

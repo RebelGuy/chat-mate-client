@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.Anchor;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
@@ -88,7 +89,7 @@ public class ManagePunishmentsModal extends ModalElement {
 
   private class PunishmentList extends ContainerElement {
     private final LabelElement titleLabel;
-    private final ButtonElement createNewPunishmentButton;
+    private final TextButtonElement createNewPunishmentButton;
     private final DropdownMenu createNewPunishmentDropdown;
     private final WrapperElement listWrapper;
     private final ElementReference listReference;
@@ -102,7 +103,7 @@ public class ManagePunishmentsModal extends ModalElement {
 
       this.titleLabel = new LabelElement(context, this).setText("All Punishments");
 
-      this.createNewPunishmentButton = new ButtonElement(context, this)
+      this.createNewPunishmentButton = new TextButtonElement(context, this)
           .setText("Create new")
           .setHorizontalAlignment(HorizontalAlignment.RIGHT)
           .cast();

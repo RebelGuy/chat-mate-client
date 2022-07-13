@@ -5,6 +5,7 @@ import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.services.BrowserService;
 import dev.rebel.chatmate.services.ContextMenuService;
 import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.CursorService.CursorType;
@@ -45,6 +46,7 @@ public class CustomGuiChat extends GuiChat {
   private final ContextMenuStore contextMenuStore;
   private final ContextMenuService contextMenuService;
   private final CursorService cursorService;
+  private final BrowserService browserService;
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseDown = this::onMouseDown;
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseMove = this::onMouseMove;
 
@@ -55,7 +57,8 @@ public class CustomGuiChat extends GuiChat {
                        MouseEventService mouseEventService,
                        ContextMenuStore contextMenuStore,
                        ContextMenuService contextMenuService,
-                       CursorService cursorService) {
+                       CursorService cursorService,
+                       BrowserService browserService) {
     super(defaultInput);
 
     this.minecraftProxyService = minecraftProxyService;
@@ -63,12 +66,17 @@ public class CustomGuiChat extends GuiChat {
     this.contextMenuStore = contextMenuStore;
     this.contextMenuService = contextMenuService;
     this.cursorService = cursorService;
+    this.browserService = browserService;
 
     this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(), this);
     this.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this.onMouseMove, new MouseEventData.Options(), this);
   }
 
   private MouseEventData.Out onMouseDown(MouseEventData.In in) {
+    if (!this.minecraftProxyService.checkCurrentScreen(this)) {
+      return new MouseEventData.Out();
+    }
+
     CustomGuiNewChat chatGui = this.minecraftProxyService.getChatGUI();
     chatGui.setSelectedLine(null);
 
@@ -97,6 +105,10 @@ public class CustomGuiChat extends GuiChat {
   }
 
   private MouseEventData.Out onMouseMove(MouseEventData.In in) {
+    if (!this.minecraftProxyService.checkCurrentScreen(this)) {
+      return new MouseEventData.Out();
+    }
+
     if (this.contextMenuStore.isShowingContextMenu()) {
       this.cursorService.setCursor(CursorType.DEFAULT);
       return new MouseEventData.Out();
@@ -195,7 +207,7 @@ public class CustomGuiChat extends GuiChat {
             this.clickedLinkURI = uri;
             this.mc.displayGuiScreen(new GuiConfirmOpenLink(this, clickevent.getValue(), 31102009, false));
           } else {
-            this.openWebLink(uri);
+            this.browserService.openWebLink(uri);
           }
         } catch (URISyntaxException urisyntaxexception) {
           LOGGER.error((String)("Can\'t open url for " + clickevent), (Throwable)urisyntaxexception);
@@ -203,7 +215,7 @@ public class CustomGuiChat extends GuiChat {
 
       } else if (clickevent.getAction() == ClickEvent.Action.OPEN_FILE) {
         URI uri1 = (new File(clickevent.getValue())).toURI();
-        this.openWebLink(uri1);
+        this.browserService.openWebLink(uri1);
 
       } else if (clickevent.getAction() == ClickEvent.Action.SUGGEST_COMMAND) {
         this.setText(clickevent.getValue(), true);
@@ -230,21 +242,6 @@ public class CustomGuiChat extends GuiChat {
     return false;
   }
 
-  /** Stolen from GuiScreen. */
-  private void openWebLink(URI url)
-  {
-    try
-    {
-      Class<?> oclass = Class.forName("java.awt.Desktop");
-      Object object = oclass.getMethod("getDesktop", new Class[0]).invoke((Object)null, new Object[0]);
-      oclass.getMethod("browse", new Class[] {URI.class}).invoke(object, new Object[] {url});
-    }
-    catch (Throwable throwable)
-    {
-      LOGGER.error("Couldn\'t open link", throwable);
-    }
-  }
-
   /** Stolen from GuiScreen. Needs to be reproduced here because of the use of private `this.clickedLinkURI`. */
   @Override
   public void confirmClicked(boolean result, int id)
@@ -253,7 +250,7 @@ public class CustomGuiChat extends GuiChat {
     {
       if (result)
       {
-        this.openWebLink(this.clickedLinkURI);
+        this.browserService.openWebLink(this.clickedLinkURI);
       }
 
       this.clickedLinkURI = null;

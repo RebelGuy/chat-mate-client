@@ -63,6 +63,12 @@ public class CustomGuiConfig extends GuiConfig {
     LabelLayout viewerCountLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Viewer Count", Color.WHITE);
     CheckBoxLayout viewerCountCheckbox = new CheckBoxLayout(this::onToggleViewerCount, config.getShowLiveViewersEmitter()::get);
 
+    LabelLayout serverLogsHeartbeatLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Server Logs Heartbeat", Color.WHITE);
+    CheckBoxLayout serverLogsHeartbeatCheckbox = new CheckBoxLayout(this::onToggleServerLogsHeartbeat, config.getShowServerLogsHeartbeat()::get);
+
+    LabelLayout serverLogsTimeSeriesLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Server Logs Time Series", Color.WHITE);
+    CheckBoxLayout serverLogsTimeSeriesCheckbox = new CheckBoxLayout(this::onToggleServerLogsTimeSeries, config.getShowServerLogsTimeSeries()::get);
+
     LabelLayout identifyPlatformsLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Separate Youtube and Twitch", Color.WHITE);
     CheckBoxLayout identifyPlatformsCheckbox = new CheckBoxLayout(this::onToggleIdentifyPlatforms, config.getIdentifyPlatforms()::get);
 
@@ -75,6 +81,8 @@ public class CustomGuiConfig extends GuiConfig {
         .withRow(hudLabel, hudCheckbox)
         .withRow(indicatorLabel, indicatorCheckbox)
         .withRow(viewerCountLabel, viewerCountCheckbox)
+        .withRow(serverLogsHeartbeatLabel, serverLogsHeartbeatCheckbox)
+        .withRow(serverLogsTimeSeriesLabel, serverLogsTimeSeriesCheckbox)
         .withRow(identifyPlatformsLabel, identifyPlatformsCheckbox)
         .withRow(chatOffsetLabel, chatOffsetSlider)
         .instantiate();
@@ -143,6 +151,14 @@ public class CustomGuiConfig extends GuiConfig {
 
   private void onToggleViewerCount(CheckBoxActionCheckedData checkBoxActionCheckedData) {
     this.config.getShowLiveViewersEmitter().set(checkBoxActionCheckedData.checked);
+  }
+
+  private void onToggleServerLogsHeartbeat(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.getShowServerLogsHeartbeat().set(checkBoxActionCheckedData.checked);
+  }
+
+  private void onToggleServerLogsTimeSeries(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+    this.config.getShowServerLogsTimeSeries().set(checkBoxActionCheckedData.checked);
   }
 
   private void onToggleIdentifyPlatforms(CheckBoxActionCheckedData checkBoxActionCheckedData) {

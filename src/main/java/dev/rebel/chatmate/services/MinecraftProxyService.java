@@ -6,6 +6,7 @@ import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.entity.player.EntityPlayer.EnumChatVisibility;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.Tuple;
@@ -95,6 +96,10 @@ public class MinecraftProxyService {
     synchronized (this.pendingDeletionChat) {
       this.pendingDeletionChat.add(component);
     }
+  }
+
+  public boolean checkCurrentScreen(@Nullable GuiScreen screen) {
+    return this.minecraft.currentScreen == screen;
   }
 
   private void schedule(Consumer<Minecraft> work) {

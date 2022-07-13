@@ -6,9 +6,11 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.In.KeyModifier;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
@@ -31,8 +33,8 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 public class TextInputElement extends InputElement {
   private String placeholderText = "";
   private String text = "";
-  private boolean isEnabled = true;
   private int maxStringLength = 64;
+  private boolean hovered;
   private final Dim textHeight;
 
   private int scrollOffsetIndex; // if the text doesn't fit on the window, it scrolls to the right
@@ -53,6 +55,7 @@ public class TextInputElement extends InputElement {
     this.setPadding(new Layout.RectExtension(gui(4), gui(2)));
 
     this.textHeight = gui(this.font.FONT_HEIGHT);
+    this.hovered = false;
   }
 
   @Override
@@ -92,6 +95,26 @@ public class TextInputElement extends InputElement {
   }
 
   @Override
+  public void onMouseEnter(IEvent<In> e) {
+    this.hovered = true;
+    super.context.cursorService.setCursor(super.getEnabled() ? CursorType.TEXT : CursorType.DEFAULT);
+  }
+
+  @Override
+  public void onMouseExit(IEvent<In> e) {
+    this.hovered = false;
+    super.context.cursorService.setCursor(CursorType.DEFAULT);
+  }
+
+  @Override
+  public InputElement setEnabled(Object key, boolean enabled) {
+    if (this.hovered) {
+      super.context.cursorService.setCursor(enabled ? CursorType.TEXT : CursorType.DEFAULT);
+    }
+    return super.setEnabled(key, enabled);
+  }
+
+  @Override
   public DimPoint calculateThisSize(Dim maxContentSize) {
     return new DimPoint(maxContentSize, this.textHeight);
   }
@@ -106,8 +129,8 @@ public class TextInputElement extends InputElement {
     return this;
   }
 
-  /** Careful - not validated. */
-  public TextInputElement setText(String text) {
+  /** Careful - not validated. Does not call the `onTextChange` callback. */
+  public TextInputElement setTextUnsafe(String text) {
     this.text = text;
     return this;
   }
@@ -116,8 +139,8 @@ public class TextInputElement extends InputElement {
     return this.text;
   }
 
-  /** Internal method for setting the text. */
-  private void setText_(String newText) {
+  /** Validates the text, then calls the `onTextChange` callback. */
+  public void setText(String newText) {
     if (this.validator.test(newText)) {
       if (newText.length() > this.maxStringLength) {
         this.text = newText.substring(0, this.maxStringLength);
@@ -126,6 +149,10 @@ public class TextInputElement extends InputElement {
       }
 
       this.setCursorPositionToEnd();
+
+      if (this.onTextChange != null) {
+        this.onTextChange.accept(this.text);
+      }
     }
   }
 
@@ -278,10 +305,10 @@ public class TextInputElement extends InputElement {
       switch(data.eventKey) {
         case Keyboard.KEY_BACK:
           if (GuiScreen.isCtrlKeyDown()) {
-            if (this.isEnabled) {
+            if (super.getEnabled()) {
               this.deleteWords(-1);
             }
-          } else if (this.isEnabled) {
+          } else if (super.getEnabled()) {
             this.deleteFromCursor(-1);
           }
 
@@ -332,10 +359,10 @@ public class TextInputElement extends InputElement {
           return true;
         case Keyboard.KEY_DELETE:
           if (GuiScreen.isCtrlKeyDown()) {
-            if (this.isEnabled) {
+            if (super.getEnabled()) {
               this.deleteWords(1);
             }
-          } else if (this.isEnabled) {
+          } else if (super.getEnabled()) {
             this.deleteFromCursor(1);
           }
 
@@ -367,6 +394,9 @@ public class TextInputElement extends InputElement {
 
   private void drawBorder() {
     Colour borderColour = new Colour(-6250336);
+    if (!this.getEnabled()) {
+      borderColour = borderColour.withBrightness(0.5f);
+    }
     RendererHelpers.drawRect(this.getZIndex(), this.getBorderBox(), borderColour);
   }
 
@@ -405,7 +435,7 @@ public class TextInputElement extends InputElement {
     Dim bottom = this.getContentBox().getBottom();
     Dim right = left.plus(width);
 
-    int color = this.isEnabled ? this.enabledColor : this.disabledColor;
+    int color = super.getEnabled() ? this.enabledColor : this.disabledColor;
     int cursorStartIndex = this.cursorIndex - this.scrollOffsetIndex;
     int cursorEndIndex = this.selectionEndIndex - this.scrollOffsetIndex;
     String string = this.font.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), (int)width.getGui());
@@ -455,7 +485,7 @@ public class TextInputElement extends InputElement {
       Dim one = gui(1);
       RendererHelpers.drawRect(this.getZIndex(), new DimRect(left, top.minus(one), one, this.textHeight.plus(one)), cursorColour);
     } else {
-      int color = this.isEnabled ? this.enabledColor : this.disabledColor;
+      int color = super.getEnabled() ? this.enabledColor : this.disabledColor;
       this.font.drawStringWithShadow("_", left.getGui(), top.getGui(), color);
     }
   }

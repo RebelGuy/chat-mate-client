@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.proxy;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.services.LogService;
@@ -12,10 +13,16 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -31,19 +38,33 @@ public class EndpointProxy {
     this.logService = logService;
     this.chatMateEndpointStore = chatMateEndpointStore;
     this.basePath = basePath;
-    this.gson = new Gson();
+    this.gson = new GsonBuilder()
+        .serializeNulls()
+        .create();
+
+    hack_allowPatchRequests();
   }
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
   public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler) {
-    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler);
+    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler, true);
   }
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
   public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(method, path, data, returnClass, callback, errorHandler, true);
+  }
+
+  /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
+    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler, notifyEndpointStore);
+  }
+
+  /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
     // we got there eventually.....
     CompletableFuture.supplyAsync(() -> {
-      Runnable onComplete = this.chatMateEndpointStore.onNewRequest();
+      Runnable onComplete = notifyEndpointStore ? this.chatMateEndpointStore.onNewRequest() : () -> {};
       try {
         Data result = this.makeRequest(method, path, returnClass, data);
         onComplete.run();
@@ -106,14 +127,14 @@ public class EndpointProxy {
     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.setRequestMethod(method.toString());
 
-    if (method == Method.POST && data != null) {
+    if (method != Method.GET && data != null) {
       String json = this.gson.toJson(data);
       byte[] input = json.getBytes(StandardCharsets.UTF_8);
 
       conn.setRequestProperty("Content-Type", "application/json");
       conn.setRequestProperty("charset", "utf-8");
       conn.setRequestProperty("Content-Length", String.valueOf(input.length));
-      conn.setDoOutput(true); // allow data for be sent outwards
+      conn.setDoOutput(true); // allow data to be sent outwards
       try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
         wr.write(input);
       }
@@ -168,5 +189,27 @@ public class EndpointProxy {
     return msg;
   }
 
-  public enum Method { GET, POST }
+  /** For some reason, the nice devs over at Java didn't think the PATCH method was valid, so we have to add it via reflection.<br/>
+   * Adapted from https://stackoverflow.com/a/46323891. */
+  private static void hack_allowPatchRequests() {
+    try {
+      Field methodsField = HttpURLConnection.class.getDeclaredField("methods");
+      Field modifiersField = Field.class.getDeclaredField("modifiers");
+
+      modifiersField.setAccessible(true);
+      modifiersField.setInt(methodsField, methodsField.getModifiers() & ~Modifier.FINAL);
+      methodsField.setAccessible(true);
+
+      // replace the `methods` static string array
+      String[] methods = (String[])methodsField.get(null);
+      String[] newMethods = new String[methods.length + 1];
+      System.arraycopy(methods, 0, newMethods, 0, methods.length);
+      newMethods[newMethods.length - 1] = "PATCH";
+      methodsField.set(null, newMethods);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to add PATCH request method.");
+    }
+  }
+
+  public enum Method { GET, POST, PATCH }
 }

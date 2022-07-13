@@ -25,7 +25,11 @@ In order to allow characters such as `'§'`, Java files must be encoding using U
 - In the system environment variables, add `JAVA_TOOL_OPTIONS` with value `-Dfile.encoding=UTF8` (see [explanation](https://stackoverflow.com/questions/361975/setting-the-default-java-character-encoding))
 
 ## Building
-To build the project, use `gradlew build`.
+To build the project, use `gradlew build -Penv=[local|debug|release]`. If the `env` project property is omitted, it will
+default to `local`.
+Environment properties are defined in `config.groovy`. Currently, there is no known method of setting the environment
+when debugging locally - it will default to `local`. To debug using other environments, the configuration file must be
+temporarily modified directly.
 
 Build output: `chat-mate-client/build/libs/*.jar`.
 
@@ -64,6 +68,16 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.14 - The Deployment Update [13/7/2022]
+- Added CI for building and testing the project when pushing to GitHub
+- Added ChatMate Dashboard (WIP)
+  - This will be the one place for administration, configuration, etc
+- Added indicators for when the server reports an error or warning
+  - Heartbeat indicator behind the status indicator
+  - Time series plot in the top right corner
+- Added build configurations for easily injecting different sets of environment variables
+- Visual bug fixes related to modals
+
 ## v1.13 - The Punishment Update [30/5/2022]
 - Added fancy modal screens for:
   - Displaying a list of the user's historic punishments
