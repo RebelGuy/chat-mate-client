@@ -23,8 +23,8 @@ public class ChatMateEndpointProxy extends EndpointProxy {
     super(logService, chatMateEndpointStore, basePath + "/chatMate");
   }
 
-  public void getStatusAsync(Consumer<GetStatusResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
-    this.makeRequestAsync(Method.GET, "/status", GetStatusResponse.class, callback, errorHandler);
+  public void getStatusAsync(Consumer<GetStatusResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
+    this.makeRequestAsync(Method.GET, "/status", GetStatusResponse.class, callback, errorHandler, notifyEndpointStore);
   }
 
   public void getEventsAsync(Consumer<GetEventsResponseData> callback, @Nullable Consumer<Throwable> errorHandler, @Nullable Long sinceTimestamp) {

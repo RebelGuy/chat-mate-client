@@ -12,16 +12,19 @@ import dev.rebel.chatmate.util.ApiPollerFactory;
 
 import javax.annotation.Nullable;
 import java.util.Timer;
+import java.util.function.Consumer;
 
 public class StatusService {
   private final static long INTERVAL = 5000;
 
+  private final ChatMateEndpointProxy chatMateEndpointProxy;
   private final ApiPoller<GetStatusResponseData> apiPoller;
 
   private @Nullable GetStatusResponseData lastStatusResponse;
 
   public StatusService(ChatMateEndpointProxy chatMateEndpointProxy, ApiPollerFactory apiPollerFactory) {
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, chatMateEndpointProxy::getStatusAsync, INTERVAL, PollType.CONSTANT_INTERVAL, null);
+    this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, INTERVAL, PollType.CONSTANT_INTERVAL, null);
 
     this.lastStatusResponse = null;
   }
@@ -109,6 +112,10 @@ public class StatusService {
     } else {
       return yt + twitch;
     }
+  }
+
+  private void onMakeRequest(Consumer<GetStatusResponseData> onResponse, Consumer<Throwable> onError) {
+    this.chatMateEndpointProxy.getStatusAsync(onResponse, onError, false);
   }
 
   private void onApiResponse(GetStatusResponseData response) {

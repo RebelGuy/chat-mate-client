@@ -22,6 +22,6 @@ public class ChatEndpointProxy extends EndpointProxy {
     String limitParam = limit == null ? "" : String.format("&limit=%s", limit.toString());
     String url = String.format("?since=%d%s", sinceTimestamp, limitParam);
 
-    this.makeRequestAsync(Method.GET, url, GetChatResponse.class, callback, errorHandler);
+    this.makeRequestAsync(Method.GET, url, GetChatResponse.class, callback, errorHandler, false);
   }
 }

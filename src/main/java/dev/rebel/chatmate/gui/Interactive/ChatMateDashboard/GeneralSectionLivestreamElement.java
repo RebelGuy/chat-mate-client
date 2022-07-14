@@ -148,7 +148,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
   private void onRefresh() {
     this.enableLoadingState();
-    this.chatMateEndpointProxy.getStatusAsync(this::onGetStatusSuccess, this::onGetStatusError);
+    this.chatMateEndpointProxy.getStatusAsync(this::onGetStatusSuccess, this::onGetStatusError, true);
   }
 
   private void onCopy() {
