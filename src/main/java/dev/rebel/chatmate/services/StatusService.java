@@ -31,10 +31,10 @@ public class StatusService {
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
-      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus == null) {
       return SimpleStatus.OK_NO_LIVESTREAM;
+    } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
+      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -47,10 +47,10 @@ public class StatusService {
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.twitchApiStatus.status == ApiStatus.Error) {
-      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus == null) {
       return SimpleStatus.OK_NO_LIVESTREAM;
+    } else if (status.twitchApiStatus.status == ApiStatus.Error) {
+      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -63,10 +63,12 @@ public class StatusService {
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
+    } else if (status.livestreamStatus == null) {
+      // we show "OK" even if the platforms are unreachable because, from the client's perspective, we only care about
+      // reachability during active livestreams, and it's more useful to show the OK_NO_LIVESTREAM status in this case.
+      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.youtubeApiStatus.status == ApiStatus.Error || status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
-    } else if (status.livestreamStatus == null) {
-      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
