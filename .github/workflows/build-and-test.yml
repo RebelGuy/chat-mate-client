@@ -2,11 +2,6 @@ name: Build and Test Client
 
 on:
   push:
-    branches: [master, develop]
-  
-  pull_request:
-    branches: [master, develop]
-  
   workflow_dispatch:
 
 jobs:
@@ -27,7 +22,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build
-        run: ./gradlew setupCIWorkspace build --no-daemon
+        run: ./gradlew setupCIWorkspace build -Penv=${{ github.ref_name == 'master' && 'release' || 'debug' }} --no-daemon
 
       - name: Test
         run: ./gradlew test
