@@ -121,7 +121,7 @@ public class ImageComponent extends Gui implements IHudComponent {
     GlStateManager.scale(scaleX, scaleY, 1);
     GlStateManager.enableBlend();
 
-    // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
+    // Required to prevent things like the blinking cursor in chat from interfering with the rendering
     GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
     GlStateManager.disableLighting();
 
