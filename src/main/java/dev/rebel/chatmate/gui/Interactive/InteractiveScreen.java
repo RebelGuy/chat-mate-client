@@ -100,13 +100,14 @@ public class InteractiveScreen extends Screen implements IElement {
       throw new RuntimeException("Please set the MainElement before displaying the screen in Minecraft.");
     }
 
+    // this will force all elements to initialise
+    this.recalculateLayout();
+
     List<InputElement> autoFocusable = Collections.filter(ElementHelpers.getElementsOfType(this.mainElement, InputElement.class), InputElement::getAutoFocus);
     if (Collections.any(autoFocusable)) {
       InputElement toFocus = Collections.min(autoFocusable, InputElement::getTabIndex);
       this.setFocussedElement(toFocus, FocusReason.AUTO);
     }
-
-    this.recalculateLayout();
   }
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
