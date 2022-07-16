@@ -109,11 +109,24 @@ public class ComponentHelperTests {
   }
 
   @Test
-  public void splitText_EmptyComponent_ReturnsSingleLineWithEmptyComponent() {
+  public void splitText_EmptyTextComponent_ReturnsSingleLineWithEmptyComponent() {
     IChatComponent component = new ChatComponentText("");
     when(this.fontRenderer.getStringWidth("")).thenReturn(0);
 
     List<IChatComponent> result = ComponentHelpers.splitText(component, 15, this.fontRenderer);
+
+    Assert.assertEquals(1, result.size());
+    Assert.assertEquals(0, result.get(0).getSiblings().size());
+    Assert.assertEquals("", result.get(0).getUnformattedTextForChat());
+  }
+
+  @Test
+  public void splitText_ContainerComponentWithEmptyTextComponent_ReturnsSingleLineWithEmptyComponent() {
+    IChatComponent textComponent = new ChatComponentText("");
+    IChatComponent containerComponent = new ContainerChatComponent(textComponent);
+    when(this.fontRenderer.getStringWidth("")).thenReturn(0);
+
+    List<IChatComponent> result = ComponentHelpers.splitText(containerComponent, 15, this.fontRenderer);
 
     Assert.assertEquals(1, result.size());
     Assert.assertEquals(0, result.get(0).getSiblings().size());
