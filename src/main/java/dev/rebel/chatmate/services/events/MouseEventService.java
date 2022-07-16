@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services.events;
 
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.InputEventData;
@@ -41,6 +42,7 @@ public class MouseEventService extends EventServiceBase<Events> {
     this.prevPosition = new MousePositionData(dimFactory.fromScreen(0), dimFactory.fromScreen(0));
 
     this.forgeEventService.onGuiScreenMouse(this::onGuiScreenMouse, new InputEventData.Options());
+    this.forgeEventService.onRenderTick(this::onRenderTick, null);
   }
 
   public void on(Events event, Function<In, Out> handler, Options options, Object key) {
@@ -53,6 +55,20 @@ public class MouseEventService extends EventServiceBase<Events> {
 
   public MousePositionData getCurrentPosition() {
     return this.prevPosition;
+  }
+
+  private Tick.Out onRenderTick(Tick.In in) {
+    int x = Mouse.getX();
+    int y = Mouse.getY();
+    MousePositionData position = this.constructPositionData(x, y);
+
+    if (!this.prevPosition.Equals(position)) {
+      this.prevPosition = position;
+      Set<MouseButton> currentDown = new HashSet<>(prevHeld);
+      this.dispatchEvent(Events.MOUSE_MOVE, position, new MouseButtonData(null, currentDown), null);
+    }
+
+    return new Tick.Out();
   }
 
   private InputEventData.Out onGuiScreenMouse(InputEventData.In in) {
@@ -118,7 +134,7 @@ public class MouseEventService extends EventServiceBase<Events> {
     }
 
     // fire move event
-    if (!position.equals(this.prevPosition)) {
+    if (!position.Equals(this.prevPosition)) {
       if (this.dispatchEvent(Events.MOUSE_MOVE, position, new MouseButtonData(null, currentDown), null)) {
         swallowed = true;
       }
