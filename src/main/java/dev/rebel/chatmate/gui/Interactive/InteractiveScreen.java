@@ -288,6 +288,27 @@ public class InteractiveScreen extends Screen implements IElement {
       return new KeyboardEventData.Out(null);
     }
 
+    // first handle debug controls
+    if (this.debugModeEnabled && this.debugElementSelected && this.context.debugElement != null) {
+      if (in.isPressed(Keyboard.KEY_UP) && this.context.debugElement.getParent() != null) {
+        // go to parent
+        this.context.debugElement = this.context.debugElement.getParent();
+        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      } else if (in.isPressed(Keyboard.KEY_DOWN) && Collections.any(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible))) {
+        // go to first child
+        this.context.debugElement = Collections.first(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible));
+        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      } else if (this.context.debugElement.getParent() != null && (in.isPressed(Keyboard.KEY_LEFT) || in.isPressed(Keyboard.KEY_RIGHT))) {
+        List<IElement> siblings = Collections.filter(this.context.debugElement.getParent().getChildren(), IElement::getVisible);
+        if (Collections.size(siblings) > 1) {
+          int currentIndex = siblings.indexOf(this.context.debugElement);
+          int delta = in.isPressed(Keyboard.KEY_LEFT) ? -1 : 1;
+          this.context.debugElement = Collections.elementAt(siblings, currentIndex + delta);
+          return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+        }
+      }
+    }
+
     // now do the normal event propagation
     this.recalculateLayout();
     boolean handled = this.propagateKeyboardEvent(EventType.KEY_DOWN, in);
@@ -322,25 +343,6 @@ public class InteractiveScreen extends Screen implements IElement {
         int delta = in.isKeyModifierActive(KeyboardEventData.In.KeyModifier.SHIFT) ? -1 : 1;
         InputElement newFocus = Collections.elementAt(sorted, currentIndex + delta);
         this.setFocussedElement(newFocus, FocusReason.TAB);
-      }
-
-    } else if (this.debugModeEnabled && this.debugElementSelected && this.context.debugElement != null) {
-      if (in.isPressed(Keyboard.KEY_UP) && this.context.debugElement.getParent() != null) {
-        // go to parent
-        this.context.debugElement = this.context.debugElement.getParent();
-        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-      } else if (in.isPressed(Keyboard.KEY_DOWN) && Collections.any(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible))) {
-        // go to first child
-        this.context.debugElement = Collections.first(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible));
-        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-      } else if (this.context.debugElement.getParent() != null && (in.isPressed(Keyboard.KEY_LEFT) || in.isPressed(Keyboard.KEY_RIGHT))) {
-        List<IElement> siblings = Collections.filter(this.context.debugElement.getParent().getChildren(), IElement::getVisible);
-        if (Collections.size(siblings) > 1) {
-          int currentIndex = siblings.indexOf(this.context.debugElement);
-          int delta = in.isPressed(Keyboard.KEY_LEFT) ? -1 : 1;
-          this.context.debugElement = Collections.elementAt(siblings, currentIndex + delta);
-          return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-        }
       }
     }
 
