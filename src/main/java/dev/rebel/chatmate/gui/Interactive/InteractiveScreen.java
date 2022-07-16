@@ -162,12 +162,16 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public void onGuiClosed() {
-    if (this.mainElement != null) {
-      // it is very important that we remove the reference to the mainElement, otherwise
-      // this screen will never be garbage collected since mainElement holds a reference to it
-      this.mainElement = null;
-      this.context = null;
-    }
+    // it is very important that we remove the reference to the mainElement, otherwise
+    // this screen will never be garbage collected since mainElement holds a reference to it
+    this.mainElement = null;
+    this.context = null;
+    this.elementsUnderCursor = null;
+    this.blockingElement = null;
+    this.blockedElementsUnderCursor = null;
+
+    // don't wait around - immediately release references so weak collections (such as the CursorService) update right now
+    System.gc();
   }
 
   // note: the mouse location does not need to be translated for the root element, because it is assumed to be positioned

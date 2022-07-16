@@ -25,7 +25,7 @@ public class ButtonElement extends InputElement {
   private static final ResourceLocation BUTTON_TEXTURES = new ResourceLocation("textures/gui/widgets.png");
 
   /** A button cannot physically be wider than this value, as it is limited by the texture width itself.
-   * If there is evebur a requirement for wider buttons, the rendering mechanism will need to be modified. */
+   * If there is ever a requirement for wider buttons, the rendering mechanism will need to be modified. */
   private static final int MAX_WIDTH_GUI = 200;
 
   /** Based on the texture. I don't know what happens if this is larger, though. */

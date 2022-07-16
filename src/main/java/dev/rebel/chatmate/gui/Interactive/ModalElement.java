@@ -82,6 +82,11 @@ public abstract class ModalElement extends ContainerElement {
 
   /** Called after the close button is pressed, but before the screen is closed. If not implemented, the default behaviour is to close the modal screen. */
   protected void close() {
+    // hack: forces the Close button to disable, which returns the cursor to DEFAULT instead of being stuck on CLICK after the modal closes
+    // I don't understand why you can hover over the close button, press Escape, and the cursor resets just fine - it's running the same code!!
+    // something related to the button focus (as a result of the click) is most likely interfering with it, but I can't figure it out
+    this.setLoading(true);
+
     super.onCloseScreen();
   }
 
