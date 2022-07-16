@@ -97,19 +97,19 @@ public class TextInputElement extends InputElement {
   @Override
   public void onMouseEnter(IEvent<In> e) {
     this.hovered = true;
-    super.context.cursorService.setCursor(super.getEnabled() ? CursorType.TEXT : CursorType.DEFAULT);
+    super.context.cursorService.toggleCursor(super.getEnabled() ? CursorType.TEXT : CursorType.DEFAULT, this);
   }
 
   @Override
   public void onMouseExit(IEvent<In> e) {
     this.hovered = false;
-    super.context.cursorService.setCursor(CursorType.DEFAULT);
+    super.context.cursorService.untoggleCursor(this);
   }
 
   @Override
   public InputElement setEnabled(Object key, boolean enabled) {
     if (this.hovered) {
-      super.context.cursorService.setCursor(enabled ? CursorType.TEXT : CursorType.DEFAULT);
+      super.context.cursorService.toggleCursor(enabled ? CursorType.TEXT : CursorType.DEFAULT, this);
     }
     return super.setEnabled(key, enabled);
   }

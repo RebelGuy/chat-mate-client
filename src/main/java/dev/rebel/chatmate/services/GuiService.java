@@ -166,7 +166,8 @@ public class GuiService {
         this.contextMenuStore,
         this.contextMenuService,
         this.cursorService,
-        this.browserService);
+        this.browserService,
+        this.forgeEventService);
     return new OpenGui.Out(replaceWithGui);
   }
 

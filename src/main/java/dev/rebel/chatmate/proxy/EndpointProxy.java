@@ -5,38 +5,32 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.models.ChatMateApiException;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.services.StatusService;
-import dev.rebel.chatmate.stores.ChatMateEndpointStore;
+import dev.rebel.chatmate.services.ApiRequestService;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class EndpointProxy {
   private final LogService logService;
-  private final ChatMateEndpointStore chatMateEndpointStore;
+  private final ApiRequestService apiRequestService;
   private final String basePath;
   private final Gson gson;
 
   private int requestId = 0;
 
-  public EndpointProxy(LogService logService, ChatMateEndpointStore chatMateEndpointStore, String basePath) {
+  public EndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
     this.logService = logService;
-    this.chatMateEndpointStore = chatMateEndpointStore;
+    this.apiRequestService = apiRequestService;
     this.basePath = basePath;
     this.gson = new GsonBuilder()
         .serializeNulls()
@@ -64,7 +58,7 @@ public class EndpointProxy {
   public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
     // we got there eventually.....
     CompletableFuture.supplyAsync(() -> {
-      Runnable onComplete = notifyEndpointStore ? this.chatMateEndpointStore.onNewRequest() : () -> {};
+      Runnable onComplete = notifyEndpointStore ? this.apiRequestService.onNewRequest() : () -> {};
       try {
         Data result = this.makeRequest(method, path, returnClass, data);
         onComplete.run();

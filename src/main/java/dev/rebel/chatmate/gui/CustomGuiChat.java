@@ -10,9 +10,11 @@ import dev.rebel.chatmate.services.ContextMenuService;
 import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.MinecraftProxyService;
+import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.services.events.models.Tick;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
@@ -47,8 +49,8 @@ public class CustomGuiChat extends GuiChat {
   private final ContextMenuService contextMenuService;
   private final CursorService cursorService;
   private final BrowserService browserService;
+  private final ForgeEventService forgeEventService;
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseDown = this::onMouseDown;
-  private final Function<MouseEventData.In, MouseEventData.Out> onMouseMove = this::onMouseMove;
 
   private URI clickedLinkURI;
 
@@ -58,7 +60,8 @@ public class CustomGuiChat extends GuiChat {
                        ContextMenuStore contextMenuStore,
                        ContextMenuService contextMenuService,
                        CursorService cursorService,
-                       BrowserService browserService) {
+                       BrowserService browserService,
+                       ForgeEventService forgeEventService) {
     super(defaultInput);
 
     this.minecraftProxyService = minecraftProxyService;
@@ -67,9 +70,10 @@ public class CustomGuiChat extends GuiChat {
     this.contextMenuService = contextMenuService;
     this.cursorService = cursorService;
     this.browserService = browserService;
+    this.forgeEventService = forgeEventService;
 
     this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(), this);
-    this.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this.onMouseMove, new MouseEventData.Options(), this);
+    this.forgeEventService.onRenderTick(this::onRender, null);
   }
 
   private MouseEventData.Out onMouseDown(MouseEventData.In in) {
@@ -104,30 +108,30 @@ public class CustomGuiChat extends GuiChat {
     return new MouseEventData.Out();
   }
 
-  private MouseEventData.Out onMouseMove(MouseEventData.In in) {
+  private Tick.Out onRender(Tick.In in) {
     if (!this.minecraftProxyService.checkCurrentScreen(this)) {
-      return new MouseEventData.Out();
+      return new Tick.Out();
     }
 
     if (this.contextMenuStore.isShowingContextMenu()) {
-      this.cursorService.setCursor(CursorType.DEFAULT);
-      return new MouseEventData.Out();
+      this.cursorService.setCursorType(CursorType.DEFAULT);
+      return new Tick.Out();
     }
 
-    Dim x = in.mousePositionData.x;
-    Dim y = in.mousePositionData.y;
-    IChatComponent component = this.minecraftProxyService.getChatGUI().getChatComponent(x, y);
+    Dim mouseX = this.mouseEventService.getCurrentPosition().x;
+    Dim mouseY = this.mouseEventService.getCurrentPosition().y;
+    IChatComponent component = this.minecraftProxyService.getChatGUI().getChatComponent(mouseX, mouseY);
     ComponentActionType action = this.getComponentActionType(component);
 
     if (action == ComponentActionType.CLICK) {
-      this.cursorService.setCursor(CursorType.CLICK);
+      this.cursorService.setCursorType(CursorType.CLICK);
     } else if (action == ComponentActionType.CONTEXT) {
-      this.cursorService.setCursor(CursorType.TIP);
+      this.cursorService.setCursorType(CursorType.TIP);
     } else {
-      this.cursorService.setCursor(CursorType.DEFAULT);
+      this.cursorService.setCursorType(CursorType.DEFAULT);
     }
 
-    return new MouseEventData.Out();
+    return new Tick.Out();
   }
 
   @Override
@@ -269,7 +273,6 @@ public class CustomGuiChat extends GuiChat {
 
   @Override
   public void onGuiClosed() {
-    this.cursorService.setCursor(CursorType.DEFAULT);
     this.minecraftProxyService.getChatGUI().setSelectedLine(null);
     super.onGuiClosed();
   }
