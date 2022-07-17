@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -592,6 +593,18 @@ public class InteractiveScreen extends Screen implements IElement {
   @Override
   public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) { return null; }
 
+  @Override
+  public IElement setTargetHeight(@Nullable Dim height) { return null; }
+
+  @Override
+  public IElement setTargetContentHeight(@Nullable Dim height) { return null; }
+
+  @Override
+  public @Nullable Dim getTargetHeight() { return null; }
+
+  @Override
+  public @Nullable Dim getTargetContentHeight() { return null; }
+
   //endregion
 
   public static class InteractiveContext {
@@ -606,6 +619,8 @@ public class InteractiveScreen extends Screen implements IElement {
     public final CursorService cursorService;
     public final MinecraftProxyService minecraftProxyService;
     public final BrowserService browserService;
+    public final Environment environment;
+    public final LogService logService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -622,7 +637,9 @@ public class InteractiveScreen extends Screen implements IElement {
                               SoundService soundService,
                               CursorService cursorService,
                               MinecraftProxyService minecraftProxyService,
-                              BrowserService browserService) {
+                              BrowserService browserService,
+                              Environment environment,
+                              LogService logService) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -634,6 +651,8 @@ public class InteractiveScreen extends Screen implements IElement {
       this.cursorService = cursorService;
       this.minecraftProxyService = minecraftProxyService;
       this.browserService = browserService;
+      this.environment = environment;
+      this.logService = logService;
     }
   }
 

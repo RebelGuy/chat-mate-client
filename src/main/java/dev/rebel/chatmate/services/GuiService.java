@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
@@ -40,6 +41,7 @@ public class GuiService {
   private final ClipboardService clipboardService;
   private final BrowserService browserService;
   private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final Environment environment;
 
   private CustomGuiIngame customGuiIngame;
 
@@ -59,7 +61,9 @@ public class GuiService {
                     CursorService cursorService,
                     KeyboardEventService keyboardEventService,
                     ClipboardService clipboardService,
-                    BrowserService browserService, ChatMateEndpointProxy chatMateEndpointProxy) {
+                    BrowserService browserService,
+                    ChatMateEndpointProxy chatMateEndpointProxy,
+                    Environment environment) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -78,6 +82,7 @@ public class GuiService {
     this.clipboardService = clipboardService;
     this.browserService = browserService;
     this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.environment = environment;
 
     this.addEventHandlers();
   }
@@ -207,6 +212,8 @@ public class GuiService {
         this.soundService,
         this.cursorService,
         this.minecraftProxyService,
-        this.browserService);
+        this.browserService,
+        this.environment,
+        this.logService);
   }
 }

@@ -119,7 +119,9 @@ public class ChatMate {
         counterHandler,
         minecraftProxyService,
         cursorService,
-        browserService);
+        browserService,
+        environment,
+        logService);
     this.guiService = new GuiService(this.isDev,
         logService,
         this.config,
@@ -137,7 +139,8 @@ public class ChatMate {
         keyboardEventService,
         clipboardService,
         browserService,
-        chatMateEndpointProxy);
+        chatMateEndpointProxy,
+        environment);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

@@ -73,6 +73,13 @@ public interface IElement {
   /** If set, the element's content width will never exceed this value. */
   IElement setMaxContentWidth(@Nullable Dim maxContentWidth);
 
+  /** If set, attempts to lock the height of the element's full box. No guarantee can be made that the height won't exceed this value. */
+  IElement setTargetHeight(@Nullable Dim height);
+  @Nullable Dim getTargetHeight();
+  /** If set, attempts to lock the height of the element's content box. No guarantee can be made that the height won't exceed this value. */
+  IElement setTargetContentHeight(@Nullable Dim contentHeight);
+  @Nullable Dim getTargetContentHeight();
+
   /** Convenience method that automatically casts an element back to its original class type after chaining methods during instantiation. */
   <T extends IElement> T cast();
 }

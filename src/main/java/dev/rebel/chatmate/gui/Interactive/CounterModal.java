@@ -89,7 +89,7 @@ public class CounterModal extends ModalElement {
         .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE)
         .cast();
 
-    super.setBody(new ListElement(context, this).addElement(titleElements).addElement(valueElements).addElement(deleteButton));
+    super.setBody(new BlockElement(context, this).addElement(titleElements).addElement(valueElements).addElement(deleteButton));
     super.setTitle("Set up Counter");
   }
 
