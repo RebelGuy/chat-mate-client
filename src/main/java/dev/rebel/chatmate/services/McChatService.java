@@ -59,10 +59,6 @@ public class McChatService {
   }
 
   public void printStreamChatItem(PublicChatItem item) {
-    if (!this.minecraftProxyService.canPrintChatMessage()) {
-      return;
-    }
-
     if (item.author.activePunishments.length > 0) {
       String name = item.author.userInfo.channelName;
       String punishments = String.join(",", Collections.map(Collections.list(item.author.activePunishments), p -> p.type.toString()));
@@ -97,7 +93,7 @@ public class McChatService {
   }
 
   public LevelUpEventData.Out onLevelUp(LevelUpEventData.In in) {
-    if (!this.minecraftProxyService.canPrintChatMessage() || in.newLevel == 0 || in.newLevel % 5 != 0) {
+    if (in.newLevel == 0 || in.newLevel % 5 != 0) {
       return new LevelUpEventData.Out();
     }
 
@@ -121,10 +117,6 @@ public class McChatService {
 
   public NewTwitchFollowerEventData.Out onNewTwitchFollower(NewTwitchFollowerEventData.In in) {
     this.soundService.playLevelUp(1.75f);
-
-    if (!this.minecraftProxyService.canPrintChatMessage()) {
-      return new NewTwitchFollowerEventData.Out();
-    }
 
     try {
       IChatComponent message = this.messageService.getNewFollowerMessage(in.displayName);

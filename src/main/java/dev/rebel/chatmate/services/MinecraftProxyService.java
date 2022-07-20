@@ -48,12 +48,8 @@ public class MinecraftProxyService {
 
   /** Prints the chat message immediately, or holds on to the message until the chat GUI is visible again. */
   public void printChatMessage(String type, IChatComponent component) {
-    if (!canPrintChatMessage()) {
-      this.logService.logError(this, String.format("Could not print chat %s message '%s'. Error: %s", type, component.getUnformattedText(), "minecraft.ingameGUI is null"));
-    } else {
-      synchronized (this.pendingChat) {
-        this.pendingChat.add(new Tuple<>(type, component));
-      }
+    synchronized (this.pendingChat) {
+      this.pendingChat.add(new Tuple<>(type, component));
     }
   }
 
@@ -62,16 +58,12 @@ public class MinecraftProxyService {
     this.refreshChat = true;
   }
 
-  public boolean canPrintChatMessage() {
-    return this.minecraft.gameSettings.chatVisibility != EnumChatVisibility.HIDDEN && this.minecraft.ingameGUI != null;
-  }
-
   /** Never null if `canPrintChatMessage()` returns true. */
   public @Nullable FontRenderer getChatFontRenderer() {
-    if (canPrintChatMessage()) {
-      return this.minecraft.ingameGUI.getFontRenderer();
-    } else {
+    if (this.minecraft.ingameGUI == null) {
       return null;
+    } else {
+      return this.minecraft.ingameGUI.getFontRenderer();
     }
   }
 
@@ -112,6 +104,11 @@ public class MinecraftProxyService {
   }
 
   private void flushPendingChatChanges() {
+    // save up messages until it becomes available
+    if (this.minecraft.ingameGUI == null) {
+      return;
+    }
+
     synchronized (this.pendingChat) {
       for (Tuple<String, IChatComponent> chatItem : this.pendingChat) {
         String type = chatItem.getFirst();

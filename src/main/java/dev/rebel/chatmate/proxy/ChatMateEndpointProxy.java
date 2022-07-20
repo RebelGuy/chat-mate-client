@@ -29,7 +29,7 @@ public class ChatMateEndpointProxy extends EndpointProxy {
       sinceTimestamp = new Date().getTime();
     }
     String url = String.format("/events?since=%d", sinceTimestamp);
-    this.makeRequestAsync(Method.GET, url, GetEventsResponse.class, callback, errorHandler);
+    this.makeRequestAsync(Method.GET, url, GetEventsResponse.class, callback, errorHandler, false);
   }
 
   public void setActiveLivestreamAsync(@Nonnull SetActiveLivestreamRequest request, Consumer<SetActiveLivestreamResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
