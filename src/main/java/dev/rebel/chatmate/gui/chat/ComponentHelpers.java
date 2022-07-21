@@ -63,6 +63,10 @@ public class ComponentHelpers {
         // stop here, as we can't fit any more
         List<IChatComponent> remaining = Lists.newArrayList(trimmed.leftover);
         remaining.addAll(flattenedComponents.subList(i + 1, flattenedComponents.size()));
+
+        if (result == null) {
+          result = new ChatComponentText("");
+        }
         return new Tuple2<>(result, remaining);
       }
     }
