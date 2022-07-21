@@ -60,6 +60,10 @@ public abstract class InputElement extends SingleElement {
     return this.isFocusable;
   }
 
+  public final boolean hasFocus() {
+    return super.context.focusedElement == this;
+  }
+
   public final InputElement setAutoFocus(boolean autoFocus) {
     this.autoFocus = autoFocus;
     return this;
