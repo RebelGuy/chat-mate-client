@@ -1,41 +1,50 @@
 package dev.rebel.chatmate.models.configMigrations;
 
-import com.google.gson.Gson;
-import com.google.gson.internal.LinkedTreeMap;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.Version;
 import dev.rebel.chatmate.models.VersionedData;
-import dev.rebel.chatmate.services.util.Collections;
 
-import java.util.List;
+import java.lang.reflect.Method;
 
 /** Represents a model of version `V` that can be migrated to version `V+1`. */
-public abstract class Migration<CurrentModel extends Version, NextModel extends Version> {
+public abstract class Migration<FromModel extends Version, ToModel extends Version> {
   private final static Class<Migration<?, ?>>[] migrations = new Class[] { v0v1.class, v1v2.class };
   private final static Class<Version>[] versions = new Class[] { SerialisedConfigV0.class, SerialisedConfigV1.class, SerialisedConfigV2.class};
 
-  protected final CurrentModel data;
+  abstract ToModel up(FromModel data);
 
-  public Migration(CurrentModel currentModel) {
-    this.data = currentModel;
-  }
+  abstract FromModel down(ToModel data);
 
-  abstract NextModel up();
-
-  public static <TargetVersion extends Version> TargetVersion parseAndMigrate(VersionedData data) {
+  public static <TargetVersion extends Version> TargetVersion parseAndMigrate(VersionedData data, int targetSchema) throws Exception {
     Version parsed = data.parseData(versions[data.schema]);
-    return (TargetVersion)migrate(parsed);
+    return (TargetVersion)migrate(parsed, targetSchema);
   }
 
-  private static Version migrate(Version version) {
-    while (version.getVersion() < migrations.length) {
-      int currentSchema = version.getVersion();
+  private static Version migrate(Version version, int targetSchema) throws Exception {
+    int currentSchema = version.getVersion();
+
+    while (currentSchema != targetSchema) {
       try {
-        version = migrations[currentSchema].getConstructor(versions[currentSchema]).newInstance(version).up();
-      } catch (Exception ignored) {
-        throw new RuntimeException(String.format("Unable to migrate to version %d because the constructor of the migration is unexpected.", currentSchema));
+        if (version.getClass() != versions[currentSchema]) {
+          throw new Exception(String.format("Data of version %d is contained in the wrong class type - aborting migration.", currentSchema));
+        }
+
+        Class<Migration<?, ?>> clazz;
+        String method;
+        if (currentSchema < targetSchema) {
+          clazz = migrations[currentSchema];
+          method = "up";
+        } else {
+          clazz = migrations[currentSchema - 1];
+          method = "down";
+        }
+        Migration<?, ?> instance = clazz.getDeclaredConstructor().newInstance();
+        version = (Version)clazz.getMethod(method, Version.class).invoke(instance, version);
+        currentSchema = version.getVersion();
+      } catch (Exception e) {
+        throw new Exception(String.format("Unable to migrate from version %d to %d.", currentSchema, targetSchema), e);
       }
     }
 

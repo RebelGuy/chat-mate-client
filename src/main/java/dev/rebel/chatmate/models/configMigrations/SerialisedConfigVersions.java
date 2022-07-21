@@ -19,7 +19,6 @@ public class SerialisedConfigVersions {
                               boolean showServerLogsHeartbeat,
                               boolean showServerLogsTimeSeries,
                               boolean identifyPlatforms) {
-      super(2);
       this.soundEnabled = soundEnabled;
       this.chatVerticalDisplacement = chatVerticalDisplacement;
       this.hudEnabled = hudEnabled;
@@ -28,6 +27,11 @@ public class SerialisedConfigVersions {
       this.showServerLogsHeartbeat = showServerLogsHeartbeat;
       this.showServerLogsTimeSeries = showServerLogsTimeSeries;
       this.identifyPlatforms = identifyPlatforms;
+    }
+
+    @Override
+    public int getVersion() {
+      return 2;
     }
   }
 
@@ -40,13 +44,17 @@ public class SerialisedConfigVersions {
     public boolean identifyPlatforms;
 
     public SerialisedConfigV1(boolean soundEnabled, int chatVerticalDisplacement, boolean hudEnabled, boolean showStatusIndicator, boolean showLiveViewers, boolean identifyPlatforms) {
-      super(1);
       this.soundEnabled = soundEnabled;
       this.chatVerticalDisplacement = chatVerticalDisplacement;
       this.hudEnabled = hudEnabled;
       this.showStatusIndicator = showStatusIndicator;
       this.showLiveViewers = showLiveViewers;
       this.identifyPlatforms = identifyPlatforms;
+    }
+
+    @Override
+    public int getVersion() {
+      return 1;
     }
   }
 
@@ -58,25 +66,20 @@ public class SerialisedConfigVersions {
     public final boolean showLiveViewers;
 
     public SerialisedConfigV0(boolean soundEnabled, int chatVerticalDisplacement, boolean hudEnabled, boolean showStatusIndicator, boolean showLiveViewers) {
-      super(0);
       this.soundEnabled = soundEnabled;
       this.chatVerticalDisplacement = chatVerticalDisplacement;
       this.hudEnabled = hudEnabled;
       this.showStatusIndicator = showStatusIndicator;
       this.showLiveViewers = showLiveViewers;
     }
+
+    @Override
+    public int getVersion() {
+      return 0;
+    }
   }
 
   public abstract static class Version {
-    // transient means that the property will not be serialised
-    private final transient int schema;
-
-    public Version(int schema) {
-      this.schema = schema;
-    }
-
-    public int getVersion() {
-      return this.schema;
-    }
+    public abstract int getVersion();
   }
 }
