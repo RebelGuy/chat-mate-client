@@ -50,6 +50,7 @@ public class ApiPoller<D> {
     this.requestInProgress = false;
 
     this.config.getChatMateEnabledEmitter().onChange(this._onChatMateEnabledChanged, this);
+    this.onChatMateEnabledChanged(this.config.getChatMateEnabledEmitter().get());
   }
 
   private void onChatMateEnabledChanged(Boolean enabled) {
