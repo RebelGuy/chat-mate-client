@@ -358,7 +358,7 @@ public class ManagePunishmentsModal extends ModalElement {
               .setElementPadding(gui(4))
               .addElement(1, new LabelElement(context, this)
                   .setText(channelPunishment.channelName)
-                  .setColour(channelPunishment.platform == Platform.YOUTUBE ? Colour.RED : Colour.PURPLE)
+                  .setColour(channelPunishment.platform == Platform.YOUTUBE ? Colour.RED : Colour.DARK_PURPLE)
               ).addElement(1, new WrapperElement(context, this, // wrapper so text element size is flush to the text for a better tooltip experience
                   new LabelElement(context, this)
                       .setText(channelPunishment.error == null ? "SUCCESS" : "FAILURE")
