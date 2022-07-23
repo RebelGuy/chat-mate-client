@@ -42,6 +42,7 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> onKeyDown = this::_onKeyDown;
 
   private boolean requiresRecalculation = true;
+  private boolean shouldCloseScreen = false;
 
   private IElement mainElement = null;
   private List<IElement> elementsUnderCursor = new ArrayList<>();
@@ -79,6 +80,10 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public void onCloseScreen() {
+    this.shouldCloseScreen = true;
+  }
+
+  private void doCloseScreen() {
     this.mc.displayGuiScreen(this.parentScreen);
     if (this.mc.currentScreen == null) {
       this.mc.setIngameFocus();
@@ -113,7 +118,7 @@ public class InteractiveScreen extends Screen implements IElement {
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   private void recalculateLayout() {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return;
     }
 
@@ -146,6 +151,9 @@ public class InteractiveScreen extends Screen implements IElement {
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
     if (this.mainElement == null) {
       throw new RuntimeException("Please set the MainElement before displaying the screen in Minecraft.");
+    } else if (this.shouldCloseScreen) {
+      this.doCloseScreen();
+      return;
     }
 
     this.recalculateLayout();
@@ -178,7 +186,7 @@ public class InteractiveScreen extends Screen implements IElement {
   // note: the mouse location does not need to be translated for the root element, because it is assumed to be positioned
   // at 0,0
   private MouseEventData.Out _onMouseDown(MouseEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new MouseEventData.Out(null);
     }
 
@@ -199,7 +207,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private MouseEventData.Out _onMouseMove(MouseEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new MouseEventData.Out(null);
     }
 
@@ -263,7 +271,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private MouseEventData.Out _onMouseUp(MouseEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new MouseEventData.Out(null);
     }
 
@@ -274,7 +282,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private MouseEventData.Out _onMouseScroll(MouseEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new MouseEventData.Out(null);
     }
 
@@ -285,7 +293,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private KeyboardEventData.Out _onKeyDown(KeyboardEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new KeyboardEventData.Out(null);
     }
 
@@ -358,7 +366,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private boolean propagateMouseEvent(Events.EventType type, MouseEventData.In data) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return false;
     }
 

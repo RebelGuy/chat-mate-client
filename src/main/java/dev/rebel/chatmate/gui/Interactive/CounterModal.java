@@ -154,7 +154,7 @@ public class CounterModal extends ModalElement {
     try {
       this.counterHandler.createCounter(this.startValue, this.incrementValue, 1, this.text);
       onSuccess.run();
-      super.onCloseScreen();
+      super.close();
 
     } catch (Exception e) {
       onError.accept("Something went wrong: " + e.getMessage());
