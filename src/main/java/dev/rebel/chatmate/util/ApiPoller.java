@@ -75,12 +75,12 @@ public class ApiPoller<D> {
   }
 
   private void pollApi() {
-    if (!this.canMakeRequest()) {
-      return;
+    if (this.canMakeRequest()) {
+      this.requestInProgress = true;
+      this.endpoint.accept(this::onApiResponse, this::onApiError);
+    } else if (this.type == PollType.CONSTANT_PADDING && this.timer != null) {
+      this.timer.schedule(new TaskWrapper(this::pollApi), this.interval);
     }
-
-    this.requestInProgress = true;
-    this.endpoint.accept(this::onApiResponse, this::onApiError);
   }
 
   private void onApiResponse(D data) {
