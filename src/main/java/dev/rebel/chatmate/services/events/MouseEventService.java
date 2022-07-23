@@ -57,6 +57,10 @@ public class MouseEventService extends EventServiceBase<Events> {
     return this.prevPosition;
   }
 
+  public In constructSyntheticMoveEvent() {
+    return new In(Events.MOUSE_MOVE, this.getCurrentPosition(), new MouseButtonData(null, this.prevHeld), null);
+  }
+
   private Tick.Out onRenderTick(Tick.In in) {
     int x = Mouse.getX();
     int y = Mouse.getY();

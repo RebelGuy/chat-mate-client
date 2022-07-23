@@ -83,7 +83,7 @@ public class ManagePunishmentsModal extends ModalElement {
   @Override
   protected void close() {
     if (this.onClose == null || !this.onClose.get()) {
-      super.close();
+      super.onCloseScreen();
     }
   }
 

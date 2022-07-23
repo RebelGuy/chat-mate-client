@@ -140,7 +140,7 @@ public class CountdownModal extends ModalElement {
     try {
       this.countdownHandler.start(this.getTotalSeconds(), this.title);
       onSuccess.run();
-      super.close();
+      super.onCloseScreen();
 
     } catch (Exception e) {
       onError.accept("Something went wrong: " + e.getMessage());

@@ -134,7 +134,7 @@ public class TextInputElement extends InputElement {
     this.text = text;
     if (super.hasFocus()) {
       this.setCursorPositionToEnd();
-    } else {
+    } else if (super.isInitialised()) {
       this.setCursorIndex(0);
     }
     return this;

@@ -84,6 +84,13 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private void doCloseScreen() {
+    // fire the MOUSE_EXIT event one last time
+    MouseEventData.In in = this.context.mouseEventService.constructSyntheticMoveEvent();
+    List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
+    for (IElement element : elements) {
+        element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, element));
+    }
+
     this.mc.displayGuiScreen(this.parentScreen);
     if (this.mc.currentScreen == null) {
       this.mc.setIngameFocus();

@@ -90,7 +90,7 @@ public class ManageExperienceModal extends ModalElement {
   private void onModifyExperienceResponse(ModifyExperienceResponseData response, Runnable callback) {
     this.mcChatService.printInfo("Successfully modified experience for " + response.updatedUser.userInfo.channelName + ".");
     callback.run();
-    super.close();
+    super.onCloseScreen();
   }
 
   private void onModifyExperienceError(Throwable error, Consumer<String> callback) {
