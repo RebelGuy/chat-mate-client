@@ -1,4 +1,5 @@
-The ChatMate mod uses the locally run `chat-mate-server` as an interface to get near real-time YouTube livestream chat messages. Messages are displayed in Minecraft chat.
+The ChatMate mod uses the `chat-mate-server` (deployed to Azure) as an interface to get near real-time YouTube and Twitch livestream chat messages. Messages are displayed in Minecraft chat.
+It also features a collection of streaming and messaging management tools.
 
 # Project Details
 
@@ -15,7 +16,7 @@ https://adoptium.net/archive.html?variant=openjdk8&jvmVariant=hotspot
 - Under Project Structure -> Platform Settings -> SDKs add the JDK home path to the Java 17 JDK folder - **failing to do so may cause IntelliJ to freeze upon project setup**
 - Ensure the default IntelliJ Java version is Java 8 (File -> Project Structure -> Project Settings -> Project -> SDK -> Choose 1.8/Java 8).
 
- **Once IntelliJ had set up the project workspace**, the command  `gradlew setupDecompWorkspace` for setting up the environment (which includes a decompilation of Minecraft - if this is not desired, use `gradlew setupDevWorkspace` instead). Next, `gradlew genIntellijRuns` was run for generating the Gradle tasks. Note that the Gradle Java version was manually set in the `gradle.properties` file by adding the line `java.import.gradle.java.home=C:/Program Files/Eclipse Adoptium/jdk-8.0.312.7-hotspot` (the same folder as the default Project SDK picked in the step above). Furthermore, the `gradle-wrapper.properties` distribution URL was set to `distributionUrl=https\://services.gradle.org/distributions/gradle-6.8.3-all.zip`.
+ **Once IntelliJ had set up the project workspace**, the command `gradlew setupDecompWorkspace` for setting up the environment (which includes a decompilation of Minecraft - if this is not desired, use `gradlew setupDevWorkspace` instead). Next, `gradlew genIntellijRuns` was run for generating the Gradle tasks. Note that the Gradle Java version was manually set in the `gradle.properties` file by adding the line `java.import.gradle.java.home=C:/Program Files/Eclipse Adoptium/jdk-8.0.312.7-hotspot` (the same folder as the default Project SDK picked in the step above). Furthermore, the `gradle-wrapper.properties` distribution URL was set to `distributionUrl=https\://services.gradle.org/distributions/gradle-6.8.3-all.zip`.
 
 If developing in VSCode, may need to first open the project in IntelliJ to generate all required files. Install the `Extension Pack for Java` and `Gradle for Java` extensions and make sure the 1.8/Java 8 folder is set in the `org.eclipse.buildship.core.prefs` file under `java.home`.
 

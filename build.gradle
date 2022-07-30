@@ -15,7 +15,7 @@ def loadProperties() {
     project.ext.config = config
 }
 
-version = "1.14.0"
+version = "1.15.0"
 group = "dev.rebel"
 archivesBaseName = "ChatMate"
 
