@@ -3,7 +3,7 @@
     "modid": "chatmate",
     "name": "ChatMate",
     "description": "Display YouTube and Twitch live chat in Minecraft",
-    "version": "1.14.0",
+    "version": "${version}",
     "mcversion": "${mcversion}",
     "url": "",
     "updateUrl": "",
