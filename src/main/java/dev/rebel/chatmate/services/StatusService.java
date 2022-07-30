@@ -12,16 +12,19 @@ import dev.rebel.chatmate.util.ApiPollerFactory;
 
 import javax.annotation.Nullable;
 import java.util.Timer;
+import java.util.function.Consumer;
 
 public class StatusService {
   private final static long INTERVAL = 5000;
 
+  private final ChatMateEndpointProxy chatMateEndpointProxy;
   private final ApiPoller<GetStatusResponseData> apiPoller;
 
   private @Nullable GetStatusResponseData lastStatusResponse;
 
   public StatusService(ChatMateEndpointProxy chatMateEndpointProxy, ApiPollerFactory apiPollerFactory) {
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, chatMateEndpointProxy::getStatusAsync, INTERVAL, PollType.CONSTANT_INTERVAL, null);
+    this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, INTERVAL, PollType.CONSTANT_INTERVAL, null);
 
     this.lastStatusResponse = null;
   }
@@ -31,10 +34,10 @@ public class StatusService {
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
-      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus == null) {
       return SimpleStatus.OK_NO_LIVESTREAM;
+    } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
+      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -47,10 +50,10 @@ public class StatusService {
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.twitchApiStatus.status == ApiStatus.Error) {
-      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus == null) {
       return SimpleStatus.OK_NO_LIVESTREAM;
+    } else if (status.twitchApiStatus.status == ApiStatus.Error) {
+      return SimpleStatus.PLATFORM_UNREACHABLE;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -63,10 +66,12 @@ public class StatusService {
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
+    } else if (status.livestreamStatus == null) {
+      // we show "OK" even if the platforms are unreachable because, from the client's perspective, we only care about
+      // reachability during active livestreams, and it's more useful to show the OK_NO_LIVESTREAM status in this case.
+      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.youtubeApiStatus.status == ApiStatus.Error || status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
-    } else if (status.livestreamStatus == null) {
-      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.livestreamStatus.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
@@ -107,6 +112,10 @@ public class StatusService {
     } else {
       return yt + twitch;
     }
+  }
+
+  private void onMakeRequest(Consumer<GetStatusResponseData> onResponse, Consumer<Throwable> onError) {
+    this.chatMateEndpointProxy.getStatusAsync(onResponse, onError, false);
   }
 
   private void onApiResponse(GetStatusResponseData response) {

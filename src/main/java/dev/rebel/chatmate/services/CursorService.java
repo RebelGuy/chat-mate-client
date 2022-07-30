@@ -3,7 +3,6 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.Tick;
-import dev.rebel.chatmate.stores.ChatMateEndpointStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
 import org.lwjgl.BufferUtils;
@@ -14,51 +13,87 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.nio.IntBuffer;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class CursorService {
   private final Minecraft minecraft;
   private final LogService logService;
-  private final ChatMateEndpointStore chatMateEndpointStore;
   private final ForgeEventService forgeEventService;
+
   private final Map<CursorType, Cursor> cursors;
+  private final Set<CursorType> nextCursors;
+  private final WeakHashMap<Object, CursorType> toggledCursors; // deliberate weak map
 
   private Cursor currentCursor;
-  private CursorType cursorType;
+  private int toggleId;
 
-  public CursorService(Minecraft minecraft, LogService logService, ChatMateEndpointStore chatMateEndpointStore, ForgeEventService forgeEventService) {
+  public CursorService(Minecraft minecraft, LogService logService, ForgeEventService forgeEventService) {
     this.minecraft = minecraft;
     this.logService = logService;
-    this.chatMateEndpointStore = chatMateEndpointStore;
     this.forgeEventService = forgeEventService;
+
+    this.nextCursors = new HashSet<>();
+    this.toggledCursors = new WeakHashMap<>();
 
     this.cursors = new HashMap<>();
 
+    // some cursor changes might take one frame to come into effect - this is a known and accepted limitation
     this.forgeEventService.onRenderTick(this::onRenderTick, null);
   }
 
-  public void setCursor(CursorType type) {
-    // todo: require that this is called every frame, then aggregate all set types and choose the most appropriate one.
-    // e.g. if someone sets to default, and another one to click, obviously we want to show click.
-    // if not set, use default
-    this.cursorType = type;
+  /** Use this for an interactive-based cursor modification.
+   * Required to be called every frame. The cursor with the highest weight wins. Falls back to `DEFAULT`. */
+  public void setCursorType(CursorType type) {
+    this.nextCursors.add(type);
+  }
+
+  /** Returns a new key for untoggling this cursor. Will automatically add the cursor type to the render set until `untoggleCursor` is called. */
+  public int toggleCursor(CursorType type) {
+    int id = this.toggleId++;
+    this.toggledCursors.put(id, type);
+    return id;
+  }
+
+  /** Toggle with a custom key. Use the same key to untoggle the cursor. The cursor is automatically untoggled when the key is garbage collected. */
+  public void toggleCursor(CursorType type, Object key) {
+    this.toggledCursors.put(key, type);
+  }
+
+  public void untoggleCursor(@Nullable Object key) {
+    this.toggledCursors.remove(key);
   }
 
   private Tick.Out onRenderTick(Tick.In in) {
-    CursorType type = this.cursorType == null ? CursorType.DEFAULT : this.cursorType;
-
-    // if we have nothing better to show and are waiting for a request, use the waiting cursor
-    if (type == CursorType.DEFAULT && this.chatMateEndpointStore.isWaitingForResponse()) {
-      type = CursorType.WAIT;
-    }
-
+    CursorType type = this.getAndResetCursorType();
     Cursor cursor = this.getCursorInstance(type);
+
+    // I think setting the cursor is expensive, so do it only if something changed
     if (cursor != null && this.currentCursor != cursor) {
       this.setCursor(cursor);
     }
 
     return new Tick.Out();
+  }
+
+  private CursorType getAndResetCursorType() {
+    CursorType nextType = CursorType.DEFAULT;
+
+    // check one-time cursors
+    for (CursorType cursor : this.nextCursors) {
+      if (cursor.ordinal() > nextType.ordinal()) {
+        nextType = cursor;
+      }
+    }
+    this.nextCursors.clear();
+
+    // check toggled cursors
+    for (CursorType cursor : this.toggledCursors.values()) {
+      if (cursor.ordinal() > nextType.ordinal()) {
+        nextType = cursor;
+      }
+    }
+
+    return nextType;
   }
 
   private void setCursor(Cursor cursor) {
@@ -121,7 +156,7 @@ public class CursorService {
       this.cursors.put(type, cursor);
       return cursor;
     } catch (Exception e) {
-      this.logService.logWarning(this, "Unable to construct cursor:", e);
+      this.logService.logError(this, "Unable to construct cursor:", e);
       return null;
     }
   }
@@ -148,10 +183,11 @@ public class CursorService {
     }
   }
 
+  /** Ordered according to priority. E.g. CLICK type will always take precedence over WAIT type. */
   public enum CursorType {
     DEFAULT,
-    TIP,
     WAIT,
+    TIP,
     TEXT,
     CLICK
   }

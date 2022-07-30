@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
+import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
@@ -18,6 +19,7 @@ import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import scala.Tuple2;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +35,34 @@ public class SidebarElement extends ContainerElement {
     for (Tuple2<SettingsPage, String> pair : pageNames) {
       SidebarOption option = new SidebarOption(context, this, store, pair._1, pair._2);
       super.addElement(option);
+    }
+
+    super.addElement(
+        new InlineElement(context, this)
+            .addElement(
+                new LabelElement(context, this)
+                  .setText("Open Studio")
+                  .setColour(Colour.BLUE)
+                  .setOnClick(this::onOpenStudio)
+                )
+            .addElement(
+                new ImageElement(context, this)
+                    .setImage(Asset.EXTERNAL_ICON)
+                    .setScale(1.0f / 12)
+                    .setPadding(new RectExtension(gui(2), ZERO, ZERO, ZERO))
+                    .setSizingMode(SizingMode.MINIMISE)
+                    .setVerticalAlignment(Layout.VerticalAlignment.TOP)
+                )
+            .setVerticalAlignment(Layout.VerticalAlignment.BOTTOM)
+            .setSizingMode(SizingMode.FILL)
+    );
+  }
+
+  private void onOpenStudio() {
+    try {
+      super.context.browserService.openWebLink(new URI(super.context.environment.studioUrl));
+    } catch (Exception e) {
+      super.context.logService.logError(this, "Unable to open Studio in the web browser", e);
     }
   }
 
@@ -86,13 +116,13 @@ public class SidebarElement extends ContainerElement {
     @Override
     public void onMouseEnter(IEvent<In> e) {
       this.isHovering.set(true);
-      super.context.cursorService.setCursor(CursorType.CLICK);
+      super.context.cursorService.toggleCursor(CursorType.CLICK, this);
     }
 
     @Override
     public void onMouseExit(IEvent<In> e) {
       this.isHovering.set(false);
-      super.context.cursorService.setCursor(CursorType.DEFAULT);
+      super.context.cursorService.untoggleCursor(this);
     }
 
     @Override

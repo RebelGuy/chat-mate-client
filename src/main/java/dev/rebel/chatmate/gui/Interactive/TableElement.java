@@ -250,14 +250,14 @@ public class TableElement<T> extends ContainerElement {
       }
 
       if (this.item != null) {
-        this.context.cursorService.setCursor(CursorType.CLICK);
+        this.context.cursorService.toggleCursor(CursorType.CLICK, this);
       }
     }
 
     @Override
     public void onMouseExit(IEvent<In> e) {
       this.state.setState(s -> s.hovering.set(false));
-      this.context.cursorService.setCursor(CursorType.DEFAULT);
+      this.context.cursorService.untoggleCursor(this);
     }
 
     @Override

@@ -248,6 +248,26 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public IElement setTargetHeight(@Nullable Dim height) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setTargetHeight(height);
+  }
+
+  @Override
+  public IElement setTargetContentHeight(@Nullable Dim height) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setTargetContentHeight(height);
+  }
+
+  @Override
+  public @Nullable Dim getTargetHeight() {
+    return this.underlyingElement == null ? null : this.underlyingElement.getTargetHeight();
+  }
+
+  @Override
+  public @Nullable Dim getTargetContentHeight() {
+    return this.underlyingElement == null ? null : this.underlyingElement.getTargetContentHeight();
+  }
+
+  @Override
   public <T extends IElement> T cast() {
     return this.underlyingElement == null ? null : (T)this.underlyingElement;
   }

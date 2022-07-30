@@ -66,18 +66,13 @@ public class ContextMenu {
     int tooltipHeight = Math.max(dimensions._2, minTooltipHeight);
 
     GlStateManager.pushMatrix();
-    GlStateManager.disableRescaleNormal();
-    RenderHelper.disableStandardItemLighting();
     GlStateManager.disableLighting();
     GlStateManager.disableDepth();
 
     this.drawContextBox(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
     this.drawOptions(boxes, tooltipX, tooltipY, mouseX, mouseY, font);
 
-    GlStateManager.enableLighting();
     GlStateManager.enableDepth();
-    RenderHelper.enableStandardItemLighting();
-    GlStateManager.enableRescaleNormal();
     GlStateManager.popMatrix();
   }
 

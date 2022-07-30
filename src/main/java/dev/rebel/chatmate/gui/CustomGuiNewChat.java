@@ -14,6 +14,7 @@ import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
+import dev.rebel.chatmate.services.events.models.GuiScreenChanged;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
@@ -82,16 +83,27 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.selectedLine = new AnimatedSelection<>(100L);
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
+    this.forgeEventService.onGuiScreenChanged(this::onChatLoseFocus, new GuiScreenChanged.Options(GuiScreenChanged.ListenType.CLOSE_ONLY, CustomGuiChat.class));
     this.mouseEventService.on(Events.MOUSE_MOVE, this::onMouseMove, new MouseEventData.Options(), null);
   }
 
+  private GuiScreenChanged.Out onChatLoseFocus(GuiScreenChanged.In in) {
+    this.hoveredLine.setSelected(null);
+    return new GuiScreenChanged.Out();
+  }
+
   private MouseEventData.Out onMouseMove(MouseEventData.In in) {
-    if (this.contextMenuStore.isShowingContextMenu()) {
+    this.updateHoveredLine();
+    return new MouseEventData.Out();
+  }
+
+  private void updateHoveredLine() {
+    if (this.contextMenuStore.isShowingContextMenu() || !this.getChatOpen()) {
       this.hoveredLine.setSelected(null);
     } else {
-      this.hoveredLine.setSelected(this.getAbstractChatLine(in.mousePositionData.x, in.mousePositionData.y));
+      MouseEventData.In.MousePositionData position = this.mouseEventService.getCurrentPosition();
+      this.hoveredLine.setSelected(this.getAbstractChatLine(position.x, position.y));
     }
-    return new MouseEventData.Out();
   }
 
   private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
@@ -375,6 +387,8 @@ public class CustomGuiNewChat extends GuiNewChat {
         this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId, parent));
       }
     }
+
+    this.updateHoveredLine();
   }
 
   /** Adds the ChatLine to the `drawnChatLines`. */

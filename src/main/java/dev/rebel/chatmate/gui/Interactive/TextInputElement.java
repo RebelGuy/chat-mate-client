@@ -97,19 +97,19 @@ public class TextInputElement extends InputElement {
   @Override
   public void onMouseEnter(IEvent<In> e) {
     this.hovered = true;
-    super.context.cursorService.setCursor(super.getEnabled() ? CursorType.TEXT : CursorType.DEFAULT);
+    super.context.cursorService.toggleCursor(super.getEnabled() ? CursorType.TEXT : CursorType.DEFAULT, this);
   }
 
   @Override
   public void onMouseExit(IEvent<In> e) {
     this.hovered = false;
-    super.context.cursorService.setCursor(CursorType.DEFAULT);
+    super.context.cursorService.untoggleCursor(this);
   }
 
   @Override
   public InputElement setEnabled(Object key, boolean enabled) {
     if (this.hovered) {
-      super.context.cursorService.setCursor(enabled ? CursorType.TEXT : CursorType.DEFAULT);
+      super.context.cursorService.toggleCursor(enabled ? CursorType.TEXT : CursorType.DEFAULT, this);
     }
     return super.setEnabled(key, enabled);
   }
@@ -132,6 +132,11 @@ public class TextInputElement extends InputElement {
   /** Careful - not validated. Does not call the `onTextChange` callback. */
   public TextInputElement setTextUnsafe(String text) {
     this.text = text;
+    if (super.hasFocus()) {
+      this.setCursorPositionToEnd();
+    } else if (super.isInitialised()) {
+      this.setCursorIndex(0);
+    }
     return this;
   }
 
@@ -557,6 +562,8 @@ public class TextInputElement extends InputElement {
     this.selectionEndIndex = newIndex;
     if (this.scrollOffsetIndex > length) {
       this.scrollOffsetIndex = length;
+    } else if (this.scrollOffsetIndex < 0) {
+      this.scrollOffsetIndex = 0;
     }
 
     String visibleText = this.getVisibleText();
@@ -601,6 +608,7 @@ public class TextInputElement extends InputElement {
     this.cursorIndex = newPosition;
     int N = this.text.length();
     this.cursorIndex = MathHelper.clamp_int(this.cursorIndex, 0, N);
+    this.scrollOffsetIndex = MathHelper.clamp_int(this.scrollOffsetIndex, 0, N);
     this.setSelectionIndex(this.cursorIndex);
   }
 

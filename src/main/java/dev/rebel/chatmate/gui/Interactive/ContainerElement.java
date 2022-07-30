@@ -8,8 +8,11 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.EnumHelpers;
 import scala.Tuple2;
+import scala.Tuple3;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +41,7 @@ public abstract class ContainerElement extends ElementBase {
     this.children.addAll(this.initialChildren);
   }
 
-  protected ContainerElement addElement(IElement element) {
+  public ContainerElement addElement(IElement element) {
     if (element == null) {
       return this;
     }
@@ -56,7 +59,7 @@ public abstract class ContainerElement extends ElementBase {
     return this;
   }
 
-  protected ContainerElement removeElement(IElement element) {
+  public ContainerElement removeElement(IElement element) {
     this.children.remove(element);
     this.childrenRelBoxes.remove(element);
     this.onInvalidateSize();
@@ -107,10 +110,23 @@ public abstract class ContainerElement extends ElementBase {
       containerWidth = Collections.max(elementSizes, size -> size._2.getX().getGui())._2.getX();
     }
 
-    Dim currentY = ZERO;
-    for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
-      IElement element = elementSize._1;
-      DimPoint size = elementSize._2;
+    Dim targetHeight = super.getTargetContentHeight();
+    Dim contentHeight = Dim.sum(Collections.map(elementSizes, el -> el._2.getY()));
+    Dim containerHeight;
+    if (targetHeight == null) {
+      containerHeight = contentHeight;
+    } else {
+      // use max so that we don't end up with negative numbers when positioning
+      containerHeight = Dim.max(targetHeight, contentHeight);
+    }
+
+    List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> verticalGroups = this.getVerticalGroups(elementSizes);
+    List<Dim> elementOffsets = this.getVerticalOffsetsOfElements(verticalGroups, containerHeight);
+
+    for (Tuple3<IElement, DimPoint, Dim> elementSize : Collections.map(elementSizes, (el, i) -> new Tuple3<>(el._1, el._2, elementOffsets.get(i)))) {
+      IElement element = elementSize._1();
+      DimPoint size = elementSize._2();
+      Dim offset = elementSize._3();
 
       Dim relX;
       if (element.getHorizontalAlignment() == HorizontalAlignment.LEFT) {
@@ -123,11 +139,73 @@ public abstract class ContainerElement extends ElementBase {
         throw new RuntimeException("Invalid horizontal layout " + element.getHorizontalAlignment());
       }
 
-      this.childrenRelBoxes.put(element, new DimRect(relX, currentY, size.getX(), size.getY()));
-      currentY = currentY.plus(size.getY());
+      this.childrenRelBoxes.put(element, new DimRect(relX, offset, size.getX(), size.getY()));
     }
 
-    return new DimPoint(containerWidth, currentY);
+    return new DimPoint(containerWidth, containerHeight);
+  }
+
+  /** Gets the ordered list of vertically grouped elements. Each group is made up of successive elements of the provided list that have a matching vertical alignment. */
+  private List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> getVerticalGroups(List<Tuple2<IElement, DimPoint>> elementSizes) {
+    List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> groups = new ArrayList<>();
+
+    @Nullable VerticalAlignment currentAlignment = null;
+    List<Tuple2<IElement, DimPoint>> currentGroup = new ArrayList<>();
+    for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
+      VerticalAlignment thisAlignment = elementSize._1.getVerticalAlignment();
+
+      // new group
+      if (currentAlignment != null && currentAlignment != thisAlignment) {
+        groups.add(new Tuple2<>(currentGroup, currentAlignment));
+        currentGroup = new ArrayList<>();
+      }
+
+      // update current
+      currentGroup.add(elementSize);
+      currentAlignment = thisAlignment;
+    }
+
+    // flush
+    if (currentGroup.size() > 0) {
+      groups.add(new Tuple2<>(currentGroup, currentAlignment));
+    }
+
+    return groups;
+  }
+
+  /** Assuming each element is on its own line (BLOCK layout), returns the ordered y-offsets for the elements.
+   * This works best with three (or less) groups, ordered as TOP -> MIDDLE -> BOTTOM. Adding more groups may result in undesired layouts. */
+  private List<Dim> getVerticalOffsetsOfElements(List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> groups, Dim height) {
+    List<Dim> verticalOffsets = new ArrayList<>();
+    Dim remainingContentHeight = Dim.sum(Collections.map(groups, g -> Dim.sum(Collections.map(g._1, el -> el._2.getY()))));
+
+    Dim currentY = ZERO;
+    for (Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment> group : groups) {
+      // all elements in the group will be placed directly after one another, and the group itself will be placed according to its alignment
+      VerticalAlignment groupAlignment = group._2;
+      Dim groupHeight = Dim.sum(Collections.map(group._1, el -> el._2.getY()));
+
+      if (groupAlignment == VerticalAlignment.TOP) {
+        currentY = currentY;
+      } else if (groupAlignment == VerticalAlignment.MIDDLE) {
+        // align the group in the middle of the space
+        currentY = currentY.plus(remainingContentHeight.minus(groupHeight).over(2));
+      } else if (groupAlignment == VerticalAlignment.BOTTOM) {
+        // every group hereafter will effectively also be aligned at the bottom
+        currentY = height.minus(remainingContentHeight);
+      } else {
+        throw EnumHelpers.<VerticalAlignment>assertUnreachable(groupAlignment);
+      }
+
+      for (Tuple2<IElement, DimPoint> elementSize : group._1) {
+        verticalOffsets.add(currentY);
+        currentY = currentY.plus(elementSize._2.getY());
+      }
+
+      remainingContentHeight = remainingContentHeight.minus(groupHeight);
+    }
+
+    return verticalOffsets;
   }
 
   /** Given the children's box sizes, calculates this container size using the INLINE layout model. */
@@ -249,7 +327,7 @@ public abstract class ContainerElement extends ElementBase {
 
   /** Used for the automatic layout algorithm. */
   public enum LayoutMode {
-    INLINE, // try to render multiple elements per line
-    BLOCK // only one element per line
+    INLINE, // try to render multiple elements per line. vertical positioning of elements is done according to the total height of the row of elements they are part of
+    BLOCK // only one element per line. vertical positioning of elements is done according to the `targetHeight`, if set. Note that `FILL` layout mode does not affect the vertical size.
   }
 }

@@ -15,9 +15,7 @@ import dev.rebel.chatmate.services.util.EnumHelpers;
 import scala.Tuple2;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /** The main element that should be rendered into the interactive screen. */
 public class ChatMateDashboardElement extends ContainerElement {
@@ -59,7 +57,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.content = new ElementReference(context, this);
     this.contentWrapper = new WrapperElement(context, this, this.content)
         .cast();
-    this.setContentWidth(this.context.dimFactory.getMinecraftSize());
+    this.setContentSizes(this.context.dimFactory.getMinecraftSize());
 
     super.addElement(this.sidebar);
     super.addElement(this.contentWrapper);
@@ -91,14 +89,17 @@ public class ChatMateDashboardElement extends ContainerElement {
     }
   }
 
-  private void setContentWidth(DimPoint windowSize) {
+  private void setContentSizes(DimPoint windowSize) {
     Dim dashboardContentWidth = super.getContentBoxWidth(windowSize.getX());
     this.contentWrapper.setMaxWidth(dashboardContentWidth.minus(this.sidebarMaxWidth));
+
+    Dim dashboardSidebarHeight = super.getContentBoxHeight(windowSize.getY());
+    this.sidebar.setTargetHeight(dashboardSidebarHeight);
   }
 
   @Override
   public void onWindowResize(IEvent<SizeData> e) {
-    this.setContentWidth(e.getData().size);
+    this.setContentSizes(e.getData().size);
   }
 
   @Override

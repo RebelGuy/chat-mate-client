@@ -15,6 +15,7 @@ public class Colour {
   public static final Colour LTGREY = new Colour(Color.LTGREY);
   public static final Colour ORANGE = new Colour(Color.ORANGE);
   public static final Colour PURPLE = new Colour(Color.PURPLE);
+  public static final Colour DARK_PURPLE = new Colour(170, 0, 170); // same as Minecraft's DARK_PURPLE style
   public static final Colour YELLOW = new Colour(Color.YELLOW);
 
   public final int red;

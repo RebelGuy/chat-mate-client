@@ -66,7 +66,7 @@ public class ManageExperienceModal extends ModalElement {
         ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
     );
 
-    super.setBody(new ListElement(context, this).addElement(this.levelSbs).addElement(this.msgSbs));
+    super.setBody(new BlockElement(context, this).addElement(this.levelSbs).addElement(this.msgSbs));
     super.setTitle("Manage Experience for " + user.userInfo.channelName);
   }
 

@@ -58,8 +58,8 @@ public class ServerLogEventService extends EventServiceBase<Events> {
   }
 
   private void onApiResponse(GetTimestampsResponseData data) {
-    boolean newError = !Objects.equals(this.errors[this.errors.length - 1], data.timestamps.errors[data.timestamps.errors.length - 1]);
-    boolean newWarning = !Objects.equals(this.warnings[this.warnings.length - 1], data.timestamps.warnings[data.timestamps.warnings.length - 1]);
+    boolean newError = !compareLastItem(this.errors, data.timestamps.errors);
+    boolean newWarning = !compareLastItem(this.warnings, data.timestamps.warnings);
 
     this.errors = data.timestamps.errors;
     this.warnings = data.timestamps.warnings;
@@ -76,7 +76,22 @@ public class ServerLogEventService extends EventServiceBase<Events> {
     }
   }
 
+  private static boolean compareLastItem(Long[] first, Long[] second) {
+    if (first.length == 0 && second.length == 0) {
+      return true;
+    } else if (first.length > 0 && second.length > 0) {
+      return Objects.equals(first[first.length - 1], second[second.length - 1]);
+    } else {
+      return false;
+    }
+  }
+
   private void onApiError(Throwable error) {
+    // CHAT-368 There is a known issue where the server will randomly return 502 (bad gateway) every now and then.
+    // it seems that these are entirely isolated errors, so it's safe to ignore them and not show the error
+    if (error.getMessage().startsWith("Server returned HTTP response code: 502")) {
+      return;
+    }
     // treat this as another server error and just append the current time to the error array.
     // as soon as we receive a successful response, these synthetic errors will be overwritten by the server response.
 

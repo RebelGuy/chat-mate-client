@@ -3,6 +3,7 @@ package dev.rebel.chatmate.services.events;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService.Events;
 import dev.rebel.chatmate.services.events.models.*;
+import dev.rebel.chatmate.services.util.EnumHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraftforge.client.event.*;
@@ -112,6 +113,33 @@ public class ForgeEventService extends EventServiceBase<Events> {
     GuiScreen newScreen = event.gui;
     if (originalScreen != newScreen) {
       for (EventHandler<GuiScreenChanged.In, GuiScreenChanged.Out, GuiScreenChanged.Options> handler : this.getListeners(Events.GuiScreenChanged, GuiScreenChanged.class)) {
+        GuiScreenChanged.Options options = handler.options;
+
+        // check if the subscriber is interested in this event, and skip notifying them if not
+        if (options != null) {
+          Class<? extends GuiScreen> filter = options.screenFilter;
+          GuiScreenChanged.ListenType listenType = options.listenType;
+
+          boolean matchClose, matchOpen;
+          if (filter == null) {
+            matchClose = originalScreen == null;
+            matchOpen = newScreen == null;
+          } else {
+            matchClose = originalScreen != null && filter.isAssignableFrom(originalScreen.getClass());
+            matchOpen = newScreen != null && filter.isAssignableFrom(newScreen.getClass());
+          }
+
+          if (listenType == GuiScreenChanged.ListenType.OPEN_ONLY) {
+            if (!matchOpen) continue;
+          } else if (listenType == GuiScreenChanged.ListenType.CLOSE_ONLY) {
+            if (!matchClose) continue;
+          } else if (listenType == GuiScreenChanged.ListenType.OPEN_AND_CLOSE) {
+            if (!matchOpen && !matchClose) continue;
+          } else {
+            throw EnumHelpers.<GuiScreenChanged.ListenType>assertUnreachable(listenType);
+          }
+        }
+
         GuiScreenChanged.In eventIn = new GuiScreenChanged.In(originalScreen, newScreen);
         GuiScreenChanged.Out eventOut = this.safeDispatch(Events.GuiScreenChanged, handler, eventIn);
       }

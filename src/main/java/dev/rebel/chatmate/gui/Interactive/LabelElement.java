@@ -6,6 +6,8 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import net.minecraft.client.gui.FontRenderer;
@@ -22,6 +24,7 @@ public class LabelElement extends SingleElement {
   private Colour colour;
   private float fontScale;
   private @Nullable Integer maxLines;
+  private @Nullable Runnable onClick;
 
   private List<String> lines;
 
@@ -34,6 +37,9 @@ public class LabelElement extends SingleElement {
     this.linePadding = context.dimFactory.fromGui(1);
     this.colour = new Colour(Color.WHITE);
     this.fontScale = 1.0f;
+    this.maxLines = null;
+    this.onClick = null;
+
     this.maxLines = null;
   }
 
@@ -84,6 +90,12 @@ public class LabelElement extends SingleElement {
     return this;
   }
 
+  /** If set, this element will handle mouse events. */
+  public LabelElement setOnClick(@Nullable Runnable onClick) {
+    this.onClick = onClick;
+    return this;
+  }
+
   @Override
   public List<IElement> getChildren() {
     return null;
@@ -94,6 +106,27 @@ public class LabelElement extends SingleElement {
     List<Integer> widths = Collections.map(Collections.list(this.text.split(" ")), this.context.fontRenderer::getStringWidth);
     Dim maxWidth = this.context.dimFactory.fromGui(this.fontScale * Collections.max(widths));
     return super.getFullBoxWidth(maxWidth);
+  }
+
+  @Override
+  public void onMouseDown(Events.IEvent<MouseEventData.In> e) {
+    if (this.onClick != null) {
+      e.stopPropagation();
+      this.onClick.run();
+    }
+  }
+
+  @Override
+  public void onMouseEnter(Events.IEvent<MouseEventData.In> e) {
+    if (this.onClick != null) {
+      e.stopPropagation();
+      super.context.cursorService.toggleCursor(CursorService.CursorType.CLICK, this);
+    }
+  }
+
+  @Override
+  public void onMouseExit(Events.IEvent<MouseEventData.In> e) {
+    super.context.cursorService.untoggleCursor(this);
   }
 
   @Override

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
@@ -32,6 +33,8 @@ public class ContextMenuService {
   private final MinecraftProxyService minecraftProxyService;
   private final CursorService cursorService;
   private final BrowserService browserService;
+  private final Environment environment;
+  private final LogService logService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -47,7 +50,9 @@ public class ContextMenuService {
                             CounterHandler counterHandler,
                             MinecraftProxyService minecraftProxyService,
                             CursorService cursorService,
-                            BrowserService browserService) {
+                            BrowserService browserService,
+                            Environment environment,
+                            LogService logService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -63,6 +68,8 @@ public class ContextMenuService {
     this.minecraftProxyService = minecraftProxyService;
     this.cursorService = cursorService;
     this.browserService = browserService;
+    this.environment = environment;
+    this.logService = logService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -137,6 +144,8 @@ public class ContextMenuService {
         this.soundService,
         this.cursorService,
         this.minecraftProxyService,
-        this.browserService);
+        this.browserService,
+        this.environment,
+        this.logService);
   }
 }

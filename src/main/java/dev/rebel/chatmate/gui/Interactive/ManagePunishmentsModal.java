@@ -222,7 +222,7 @@ public class ManagePunishmentsModal extends ModalElement {
     private final @Nullable SideBySideElement revokedMessageElement;
     private final @Nullable TextInputElement revokePunishmentTextInputElement;
     private final @Nullable LabelElement channelPunishmentsHeader;
-    private final @Nullable ListElement channelPunishmentsList;
+    private final @Nullable BlockElement channelPunishmentsList;
 
     /** ChannelPunishments should be provided when displaying these punishment details in response to an API action, and otherwise should be null. */
     public PunishmentDetails(InteractiveContext context, IElement parent, PublicPunishment punishment, @Nullable PublicChannelPunishment[] channelPunishments) {
@@ -344,7 +344,7 @@ public class ManagePunishmentsModal extends ModalElement {
             .setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO))
             .cast();
 
-        this.channelPunishmentsList = new ListElement(context, this)
+        this.channelPunishmentsList = new BlockElement(context, this)
             .setSizingMode(SizingMode.FILL)
             .setMargin(new RectExtension(ZERO, gui(6)))
             .cast();
@@ -358,7 +358,7 @@ public class ManagePunishmentsModal extends ModalElement {
               .setElementPadding(gui(4))
               .addElement(1, new LabelElement(context, this)
                   .setText(channelPunishment.channelName)
-                  .setColour(channelPunishment.platform == Platform.YOUTUBE ? Colour.RED : Colour.PURPLE)
+                  .setColour(channelPunishment.platform == Platform.YOUTUBE ? Colour.RED : Colour.DARK_PURPLE)
               ).addElement(1, new WrapperElement(context, this, // wrapper so text element size is flush to the text for a better tooltip experience
                   new LabelElement(context, this)
                       .setText(channelPunishment.error == null ? "SUCCESS" : "FAILURE")
@@ -509,7 +509,7 @@ public class ManagePunishmentsModal extends ModalElement {
         this.timeElements = new SideBySideElement(context, this)
             .setElementPadding(gui(10))
             .addElement(1,
-                new ListElement(context, this)
+                new BlockElement(context, this)
                     .addElement(
                         new LabelElement(context, this)
                             .setText("Duration:")

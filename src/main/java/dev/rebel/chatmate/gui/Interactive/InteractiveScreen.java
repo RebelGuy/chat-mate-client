@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -41,6 +42,7 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> onKeyDown = this::_onKeyDown;
 
   private boolean requiresRecalculation = true;
+  private boolean shouldCloseScreen = false;
 
   private IElement mainElement = null;
   private List<IElement> elementsUnderCursor = new ArrayList<>();
@@ -78,6 +80,17 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public void onCloseScreen() {
+    this.shouldCloseScreen = true;
+  }
+
+  private void doCloseScreen() {
+    // fire the MOUSE_EXIT event one last time
+    MouseEventData.In in = this.context.mouseEventService.constructSyntheticMoveEvent();
+    List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
+    for (IElement element : elements) {
+        element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, element));
+    }
+
     this.mc.displayGuiScreen(this.parentScreen);
     if (this.mc.currentScreen == null) {
       this.mc.setIngameFocus();
@@ -100,18 +113,19 @@ public class InteractiveScreen extends Screen implements IElement {
       throw new RuntimeException("Please set the MainElement before displaying the screen in Minecraft.");
     }
 
+    // this will force all elements to initialise
+    this.recalculateLayout();
+
     List<InputElement> autoFocusable = Collections.filter(ElementHelpers.getElementsOfType(this.mainElement, InputElement.class), InputElement::getAutoFocus);
     if (Collections.any(autoFocusable)) {
       InputElement toFocus = Collections.min(autoFocusable, InputElement::getTabIndex);
       this.setFocussedElement(toFocus, FocusReason.AUTO);
     }
-
-    this.recalculateLayout();
   }
 
   // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   private void recalculateLayout() {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return;
     }
 
@@ -144,6 +158,9 @@ public class InteractiveScreen extends Screen implements IElement {
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
     if (this.mainElement == null) {
       throw new RuntimeException("Please set the MainElement before displaying the screen in Minecraft.");
+    } else if (this.shouldCloseScreen) {
+      this.doCloseScreen();
+      return;
     }
 
     this.recalculateLayout();
@@ -161,18 +178,22 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public void onGuiClosed() {
-    if (this.mainElement != null) {
-      // it is very important that we remove the reference to the mainElement, otherwise
-      // this screen will never be garbage collected since mainElement holds a reference to it
-      this.mainElement = null;
-      this.context = null;
-    }
+    // it is very important that we remove the reference to the mainElement, otherwise
+    // this screen will never be garbage collected since mainElement holds a reference to it
+    this.mainElement = null;
+    this.context = null;
+    this.elementsUnderCursor = null;
+    this.blockingElement = null;
+    this.blockedElementsUnderCursor = null;
+
+    // don't wait around - immediately release references so weak collections (such as the CursorService) update right now
+    System.gc();
   }
 
   // note: the mouse location does not need to be translated for the root element, because it is assumed to be positioned
   // at 0,0
   private MouseEventData.Out _onMouseDown(MouseEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new MouseEventData.Out(null);
     }
 
@@ -193,7 +214,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private MouseEventData.Out _onMouseMove(MouseEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new MouseEventData.Out(null);
     }
 
@@ -257,7 +278,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private MouseEventData.Out _onMouseUp(MouseEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new MouseEventData.Out(null);
     }
 
@@ -268,7 +289,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private MouseEventData.Out _onMouseScroll(MouseEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new MouseEventData.Out(null);
     }
 
@@ -279,8 +300,29 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private KeyboardEventData.Out _onKeyDown(KeyboardEventData.In in) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return new KeyboardEventData.Out(null);
+    }
+
+    // first handle debug controls
+    if (this.debugModeEnabled && this.debugElementSelected && this.context.debugElement != null) {
+      if (in.isPressed(Keyboard.KEY_UP) && this.context.debugElement.getParent() != null) {
+        // go to parent
+        this.context.debugElement = this.context.debugElement.getParent();
+        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      } else if (in.isPressed(Keyboard.KEY_DOWN) && Collections.any(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible))) {
+        // go to first child
+        this.context.debugElement = Collections.first(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible));
+        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      } else if (this.context.debugElement.getParent() != null && (in.isPressed(Keyboard.KEY_LEFT) || in.isPressed(Keyboard.KEY_RIGHT))) {
+        List<IElement> siblings = Collections.filter(this.context.debugElement.getParent().getChildren(), IElement::getVisible);
+        if (Collections.size(siblings) > 1) {
+          int currentIndex = siblings.indexOf(this.context.debugElement);
+          int delta = in.isPressed(Keyboard.KEY_LEFT) ? -1 : 1;
+          this.context.debugElement = Collections.elementAt(siblings, currentIndex + delta);
+          return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+        }
+      }
     }
 
     // now do the normal event propagation
@@ -318,25 +360,6 @@ public class InteractiveScreen extends Screen implements IElement {
         InputElement newFocus = Collections.elementAt(sorted, currentIndex + delta);
         this.setFocussedElement(newFocus, FocusReason.TAB);
       }
-
-    } else if (this.debugModeEnabled && this.debugElementSelected && this.context.debugElement != null) {
-      if (in.isPressed(Keyboard.KEY_UP) && this.context.debugElement.getParent() != null) {
-        // go to parent
-        this.context.debugElement = this.context.debugElement.getParent();
-        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-      } else if (in.isPressed(Keyboard.KEY_DOWN) && Collections.any(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible))) {
-        // go to first child
-        this.context.debugElement = Collections.first(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible));
-        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-      } else if (this.context.debugElement.getParent() != null && (in.isPressed(Keyboard.KEY_LEFT) || in.isPressed(Keyboard.KEY_RIGHT))) {
-        List<IElement> siblings = Collections.filter(this.context.debugElement.getParent().getChildren(), IElement::getVisible);
-        if (Collections.size(siblings) > 1) {
-          int currentIndex = siblings.indexOf(this.context.debugElement);
-          int delta = in.isPressed(Keyboard.KEY_LEFT) ? -1 : 1;
-          this.context.debugElement = Collections.elementAt(siblings, currentIndex + delta);
-          return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-        }
-      }
     }
 
     this.recalculateLayout();
@@ -350,7 +373,7 @@ public class InteractiveScreen extends Screen implements IElement {
   }
 
   private boolean propagateMouseEvent(Events.EventType type, MouseEventData.In data) {
-    if (this.mainElement == null) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
       return false;
     }
 
@@ -585,6 +608,18 @@ public class InteractiveScreen extends Screen implements IElement {
   @Override
   public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) { return null; }
 
+  @Override
+  public IElement setTargetHeight(@Nullable Dim height) { return null; }
+
+  @Override
+  public IElement setTargetContentHeight(@Nullable Dim height) { return null; }
+
+  @Override
+  public @Nullable Dim getTargetHeight() { return null; }
+
+  @Override
+  public @Nullable Dim getTargetContentHeight() { return null; }
+
   //endregion
 
   public static class InteractiveContext {
@@ -599,6 +634,8 @@ public class InteractiveScreen extends Screen implements IElement {
     public final CursorService cursorService;
     public final MinecraftProxyService minecraftProxyService;
     public final BrowserService browserService;
+    public final Environment environment;
+    public final LogService logService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -615,7 +652,9 @@ public class InteractiveScreen extends Screen implements IElement {
                               SoundService soundService,
                               CursorService cursorService,
                               MinecraftProxyService minecraftProxyService,
-                              BrowserService browserService) {
+                              BrowserService browserService,
+                              Environment environment,
+                              LogService logService) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -627,6 +666,8 @@ public class InteractiveScreen extends Screen implements IElement {
       this.cursorService = cursorService;
       this.minecraftProxyService = minecraftProxyService;
       this.browserService = browserService;
+      this.environment = environment;
+      this.logService = logService;
     }
   }
 

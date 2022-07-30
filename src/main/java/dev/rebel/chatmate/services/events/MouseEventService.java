@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services.events;
 
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.InputEventData;
@@ -19,6 +20,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import org.lwjgl.input.Mouse;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Function;
@@ -28,7 +30,7 @@ public class MouseEventService extends EventServiceBase<Events> {
   private final Minecraft minecraft;
   private final DimFactory dimFactory;
 
-  private MousePositionData prevPosition = null;
+  private @Nonnull MousePositionData prevPosition;
   private Set<MouseButton> prevHeld = new HashSet<>();
 
   public MouseEventService(LogService logService, ForgeEventService forgeEventService, Minecraft minecraft, DimFactory dimFactory) {
@@ -37,7 +39,10 @@ public class MouseEventService extends EventServiceBase<Events> {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
 
+    this.prevPosition = new MousePositionData(dimFactory.fromScreen(0), dimFactory.fromScreen(0));
+
     this.forgeEventService.onGuiScreenMouse(this::onGuiScreenMouse, new InputEventData.Options());
+    this.forgeEventService.onRenderTick(this::onRenderTick, null);
   }
 
   public void on(Events event, Function<In, Out> handler, Options options, Object key) {
@@ -46,6 +51,28 @@ public class MouseEventService extends EventServiceBase<Events> {
 
   public boolean off(Events event, Object key) {
     return this.removeListener(event, key);
+  }
+
+  public MousePositionData getCurrentPosition() {
+    return this.prevPosition;
+  }
+
+  public In constructSyntheticMoveEvent() {
+    return new In(Events.MOUSE_MOVE, this.getCurrentPosition(), new MouseButtonData(null, this.prevHeld), null);
+  }
+
+  private Tick.Out onRenderTick(Tick.In in) {
+    int x = Mouse.getX();
+    int y = Mouse.getY();
+    MousePositionData position = this.constructPositionData(x, y);
+
+    if (!this.prevPosition.Equals(position)) {
+      this.prevPosition = position;
+      Set<MouseButton> currentDown = new HashSet<>(prevHeld);
+      this.dispatchEvent(Events.MOUSE_MOVE, position, new MouseButtonData(null, currentDown), null);
+    }
+
+    return new Tick.Out();
   }
 
   private InputEventData.Out onGuiScreenMouse(InputEventData.In in) {
@@ -111,7 +138,7 @@ public class MouseEventService extends EventServiceBase<Events> {
     }
 
     // fire move event
-    if (!position.equals(prevPosition)) {
+    if (!position.Equals(this.prevPosition)) {
       if (this.dispatchEvent(Events.MOUSE_MOVE, position, new MouseButtonData(null, currentDown), null)) {
         swallowed = true;
       }

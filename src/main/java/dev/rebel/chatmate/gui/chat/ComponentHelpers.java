@@ -63,6 +63,10 @@ public class ComponentHelpers {
         // stop here, as we can't fit any more
         List<IChatComponent> remaining = Lists.newArrayList(trimmed.leftover);
         remaining.addAll(flattenedComponents.subList(i + 1, flattenedComponents.size()));
+
+        if (result == null) {
+          result = new ChatComponentText("");
+        }
         return new Tuple2<>(result, remaining);
       }
     }
@@ -170,7 +174,8 @@ public class ComponentHelpers {
     // even though we are possibly destroying the unpacked component reference, it's ok because modifying the properties in ContainerChatComponent
     // requires a chat refresh already, meaning this method will be called anyway
     TrimmedComponent trimmed = trimComponent(unpackedComponent, maxWidth, isLineStart, font);
-    ContainerChatComponent trimmedContainer = new ContainerChatComponent(trimmed.component, component.data);
+    IChatComponent innerComponent = trimmed.component == null ? new ChatComponentText("") : trimmed.component;
+    ContainerChatComponent trimmedContainer = new ContainerChatComponent(innerComponent, component.data);
     ContainerChatComponent leftoverContainer = trimmed.leftover == null ? null : new ContainerChatComponent(trimmed.leftover, component.data);
 
     return new TrimmedComponent(trimmedContainer, trimmed.trimmedWidth, leftoverContainer);

@@ -68,16 +68,6 @@ public class McChatServiceTests {
   }
 
   @Test
-  public void addChat_ignoresIfCantPrintChat() {
-    McChatService service = this.setupService();
-    when(this.mockMinecraftProxyService.canPrintChatMessage()).thenReturn(false);
-
-    service.printStreamChatItem(null);
-
-    verify(this.mockMinecraftProxyService, never()).printChatMessage(anyString(), any());
-  }
-
-  @Test
   public void addChat_ignoresIfUserHasActivePunishments() {
     author1.activePunishments = new PublicPunishment[] {
         new PublicPunishment() {{ type = PunishmentType.MUTE; }}
@@ -186,7 +176,6 @@ public class McChatServiceTests {
 
   private McChatService setupService() {
     when(this.mockMinecraftProxyService.getChatFontRenderer()).thenReturn(this.mockFontRenderer);
-    when(this.mockMinecraftProxyService.canPrintChatMessage()).thenReturn(true);
 
     // just return the input
     when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArgument(0));

@@ -25,7 +25,7 @@ public class ButtonElement extends InputElement {
   private static final ResourceLocation BUTTON_TEXTURES = new ResourceLocation("textures/gui/widgets.png");
 
   /** A button cannot physically be wider than this value, as it is limited by the texture width itself.
-   * If there is evebur a requirement for wider buttons, the rendering mechanism will need to be modified. */
+   * If there is ever a requirement for wider buttons, the rendering mechanism will need to be modified. */
   private static final int MAX_WIDTH_GUI = 200;
 
   /** Based on the texture. I don't know what happens if this is larger, though. */
@@ -78,19 +78,19 @@ public class ButtonElement extends InputElement {
   @Override
   public void onMouseEnter(IEvent<In> e) {
     this.hovered = true;
-    super.context.cursorService.setCursor(super.getEnabled() ? CursorType.CLICK : CursorType.DEFAULT);
+    super.context.cursorService.toggleCursor(super.getEnabled() ? CursorType.CLICK : CursorType.DEFAULT, this);
   }
 
   @Override
   public void onMouseExit(IEvent<In> e) {
     this.hovered = false;
-    super.context.cursorService.setCursor(CursorType.DEFAULT);
+    super.context.cursorService.untoggleCursor(this);
   }
 
   @Override
   public InputElement setEnabled(Object key, boolean enabled) {
     if (this.hovered) {
-      super.context.cursorService.setCursor(enabled ? CursorType.CLICK : CursorType.DEFAULT);
+      super.context.cursorService.toggleCursor(enabled ? CursorType.CLICK : CursorType.DEFAULT, this);
     }
     return super.setEnabled(key, enabled);
   }

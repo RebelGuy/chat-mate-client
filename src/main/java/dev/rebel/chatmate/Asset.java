@@ -14,6 +14,7 @@ public class Asset {
   public static Texture GUI_REFRESH_ICON = new Texture(64, 64, "textures/gui/refresh_icon.png");
   public static Texture GUI_TICK_ICON = new Texture(64, 64, "textures/gui/tick_icon.png");
   public static Texture GUI_WEB_ICON = new Texture(64, 64, "textures/gui/web_icon.png");
+  public static Texture EXTERNAL_ICON = new Texture(64, 64, "textures/gui/external_icon.png");
 
   public static CursorImage CURSOR_DEFAULT = new CursorImage(0, 0, "textures/cursor_default.png");
   public static CursorImage CURSOR_TIP = new CursorImage(0, 0, "textures/cursor_tip.png");

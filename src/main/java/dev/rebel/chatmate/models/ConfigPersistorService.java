@@ -34,16 +34,18 @@ public class ConfigPersistorService<SerialisedConfig extends Version> {
   public @Nullable SerialisedConfig load() {
     try {
       VersionedData data = this.fileService.readObjectFromFile(this.fileName, VersionedData.class);
-      SerialisedConfig parsed = Migration.parseAndMigrate(data);
+      this.logService.logInfo(this, "Read configuration file for schema", data.schema);
+      SerialisedConfig parsed = Migration.parseAndMigrate(data, CURRENT_SCHEMA);
 
       if (parsed.getVersion() == CURRENT_SCHEMA) {
-        this.logService.logInfo(this, "Parsed configuration for schema " + CURRENT_SCHEMA);
+        this.logService.logInfo(this, "Parsed and migrated configuration to schema " + CURRENT_SCHEMA);
         return parsed;
       } else {
-        throw new Exception("Failed to parse config (schema " + data.schema + ") to schema version " + CURRENT_SCHEMA);
+        this.logService.logError(this, "Failed to parse config (schema " + data.schema + ") to schema version " + CURRENT_SCHEMA);
+        return null;
       }
     } catch (Exception e) {
-      this.logService.logError(this,"Unable to load configuration:", e.getMessage());
+      this.logService.logError(this, "Unable to load or migrate configuration:", e.getMessage(), e.getCause());
       return null;
     }
   }

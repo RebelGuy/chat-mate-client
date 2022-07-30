@@ -10,15 +10,15 @@ import dev.rebel.chatmate.models.api.punishment.TimeoutUserResponse.TimeoutUserR
 import dev.rebel.chatmate.models.api.punishment.UnbanUserResponse.UnbanUserResponseData;
 import dev.rebel.chatmate.models.api.punishment.UnmuteUserResponse.UnmuteUserResponseData;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.stores.ChatMateEndpointStore;
+import dev.rebel.chatmate.services.ApiRequestService;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public class PunishmentEndpointProxy extends EndpointProxy {
-  public PunishmentEndpointProxy(LogService logService, ChatMateEndpointStore chatMateEndpointStore, String basePath) {
-    super(logService, chatMateEndpointStore, basePath + "/punishment");
+  public PunishmentEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
+    super(logService, apiRequestService, basePath + "/punishment");
   }
 
   public void getSinglePunishmentAsync(int punishmentId, Consumer<GetSinglePunishmentResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

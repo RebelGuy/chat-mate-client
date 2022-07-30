@@ -10,7 +10,6 @@ import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.*;
@@ -18,7 +17,7 @@ import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
 import dev.rebel.chatmate.services.util.FileHelpers;
-import dev.rebel.chatmate.stores.ChatMateEndpointStore;
+import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
@@ -67,13 +66,14 @@ public class ChatMate {
     this.environment = Environment.parseEnvironmentFile(FileHelpers.readLines(environmentPath));
 
     String apiPath = this.environment.serverUrl + "/api";
-    ChatMateEndpointStore chatMateEndpointStore = new ChatMateEndpointStore();
-    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, chatMateEndpointStore, apiPath);
-    ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, chatMateEndpointStore, apiPath);
-    UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, chatMateEndpointStore, apiPath);
-    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, chatMateEndpointStore, apiPath);
-    PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, chatMateEndpointStore, apiPath);
-    LogEndpointProxy logEndpointProxy = new LogEndpointProxy(logService, chatMateEndpointStore, apiPath);
+    CursorService cursorService = new CursorService(minecraft, logService, forgeEventService);
+    ApiRequestService apiRequestService = new ApiRequestService(cursorService);
+    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, apiPath);
+    ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, apiRequestService, apiPath);
+    UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, apiPath);
+    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, apiPath);
+    PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, apiPath);
+    LogEndpointProxy logEndpointProxy = new LogEndpointProxy(logService, apiRequestService, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -104,7 +104,6 @@ public class ChatMate {
     ClipboardService clipboardService = new ClipboardService();
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, guiChatMateHud);
     CounterHandler counterHandler = new CounterHandler(this.keyBindingService, guiChatMateHud, dimFactory, minecraft);
-    CursorService cursorService = new CursorService(minecraft, logService, chatMateEndpointStore, forgeEventService);
     BrowserService browserService = new BrowserService(logService);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
@@ -120,7 +119,9 @@ public class ChatMate {
         counterHandler,
         minecraftProxyService,
         cursorService,
-        browserService);
+        browserService,
+        environment,
+        logService);
     this.guiService = new GuiService(this.isDev,
         logService,
         this.config,
@@ -138,7 +139,8 @@ public class ChatMate {
         keyboardEventService,
         clipboardService,
         browserService,
-        chatMateEndpointProxy);
+        chatMateEndpointProxy,
+        environment);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

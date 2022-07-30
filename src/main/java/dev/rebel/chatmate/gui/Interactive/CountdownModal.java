@@ -84,7 +84,7 @@ public class CountdownModal extends ModalElement {
         .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE)
         .cast();
 
-    super.setBody(new ListElement(context, this).addElement(titleElements).addElement(timeElements).addElement(this.deleteButton));
+    super.setBody(new BlockElement(context, this).addElement(titleElements).addElement(timeElements).addElement(this.deleteButton));
     super.setTitle("Set up Countdown");
   }
 
