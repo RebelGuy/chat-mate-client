@@ -68,6 +68,13 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+
+## v1.15 - The Stress Test Update [30/7/2022]
+- Extended the capabilities of the vertical layout algorithm in the container element
+- Improved cursor mechanics, and added the "click" cursor to more elements when hovering
+- Added downward migrations to the config data
+  - Makes it easier to jump between a testing and production environment
+
 ## v1.14 - The Deployment Update [13/7/2022]
 - Added CI for building and testing the project when pushing to GitHub
 - Added ChatMate Dashboard (WIP)
