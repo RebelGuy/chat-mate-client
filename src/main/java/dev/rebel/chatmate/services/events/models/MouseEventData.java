@@ -73,6 +73,10 @@ public class MouseEventData extends EventData<In, Out, Options> {
       public boolean Equals(MousePositionData other) {
         return other == null || this.x.equals(other.x) && this.y.equals(other.y);
       }
+
+      public MousePositionData setAnchor(Dim.DimAnchor anchor) {
+        return new MousePositionData(this.x.setAnchor(anchor), this.y.setAnchor(anchor));
+      }
     }
 
     public static class MouseButtonData {
