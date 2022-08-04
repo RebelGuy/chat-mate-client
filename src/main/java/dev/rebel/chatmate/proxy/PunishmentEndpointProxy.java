@@ -26,8 +26,8 @@ public class PunishmentEndpointProxy extends EndpointProxy {
     this.makeRequestAsync(Method.GET, url, GetSinglePunishmentResponse.class, callback, errorHandler);
   }
 
-  public void getPunishmentsAsync(@Nullable Integer userId, @Nullable Boolean activeOnly, Consumer<GetPunishmentsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
-    String url = String.format("?activeOnly=%s", activeOnly == null ? false : activeOnly);
+  public void getPunishmentsAsync(@Nullable Integer userId, Boolean includeInactive, Consumer<GetPunishmentsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    String url = String.format("?includeInactive=%s", includeInactive);
     if (userId != null) {
       url += String.format("&userId=%d", userId);
     }

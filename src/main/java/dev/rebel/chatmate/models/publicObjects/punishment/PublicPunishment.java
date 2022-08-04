@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 
 public class PublicPunishment extends PublicObject {
   @Override
-  public Integer GetExpectedSchema() { return 1; }
+  public Integer GetExpectedSchema() { return 2; }
 
   public Integer id;
   public PunishmentType type;
@@ -19,8 +19,8 @@ public class PublicPunishment extends PublicObject {
   public @Nullable String revokeMessage;
 
   public enum PunishmentType {
-    @SerializedName("ban") BAN,
-    @SerializedName("timeout") TIMEOUT,
-    @SerializedName("mute") MUTE,
+    @SerializedName("banned") BAN,
+    @SerializedName("timed_out") TIMEOUT,
+    @SerializedName("muted") MUTE,
   }
 }
