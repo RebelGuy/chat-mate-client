@@ -128,7 +128,7 @@ public class ManagePunishmentsModal extends ModalElement {
           .setMargin(new RectExtension(ZERO, gui(6)))
           .cast();
 
-      ManagePunishmentsModal.this.punishmentEndpointProxy.getPunishmentsAsync(ManagePunishmentsModal.this.user.id, null, this::onPunishmentsLoaded, this::onPunishmentsLoadError);
+      ManagePunishmentsModal.this.punishmentEndpointProxy.getPunishmentsAsync(ManagePunishmentsModal.this.user.id, true, this::onPunishmentsLoaded, this::onPunishmentsLoadError);
     }
 
     @Override

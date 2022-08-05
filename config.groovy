@@ -8,13 +8,13 @@ environments {
 
     debug {
         ENVIRONMENT = 'debug'
-        SERVER_URL = 'https://chat-mate-sandbox.azurewebsites.net'
+        SERVER_URL = 'http://chat-mate-sandbox.azurewebsites.net'
         STUDIO_URL = 'https://nice-coast-05a39c31e.1.azurestaticapps.net'
     }
 
     release {
         ENVIRONMENT = 'release'
-        SERVER_URL = 'https://chat-mate-prod.azurewebsites.net'
+        SERVER_URL = 'http://chat-mate-prod.azurewebsites.net'
         STUDIO_URL = 'https://kind-rock-0d2509e10.1.azurestaticapps.net'
     }
 }
