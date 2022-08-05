@@ -16,6 +16,7 @@ public class PublicRank extends PublicObject {
   public @Nullable String description;
 
   public enum RankName {
+    @SerializedName("admin") ADMIN,
     @SerializedName("owner") OWNER,
     @SerializedName("famous") FAMOUS,
     @SerializedName("mod") MOD,
