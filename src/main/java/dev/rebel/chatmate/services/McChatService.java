@@ -5,6 +5,7 @@ import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart.MessagePartType;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
@@ -59,9 +60,10 @@ public class McChatService {
   }
 
   public void printStreamChatItem(PublicChatItem item) {
-    if (item.author.activePunishments.length > 0) {
+    PublicUserRank[] activePunishments = item.author.getActivePunishments();
+    if (activePunishments.length > 0) {
       String name = item.author.userInfo.channelName;
-      String punishments = String.join(",", Collections.map(Collections.list(item.author.activePunishments), p -> p.type.toString()));
+      String punishments = String.join(",", Collections.map(Collections.list(activePunishments), p -> p.rank.name.toString()));
       this.logService.logDebug(this, String.format("Ignoring chat message from user '%s' because of the following active punishments: %s", name, punishments));
       return;
     }

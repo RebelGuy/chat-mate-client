@@ -7,7 +7,8 @@ import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessageEmoji;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessageText;
-import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
@@ -20,8 +21,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.invocation.Invocation;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.function.Consumer;
@@ -69,8 +68,13 @@ public class McChatServiceTests {
 
   @Test
   public void addChat_ignoresIfUserHasActivePunishments() {
-    author1.activePunishments = new PublicPunishment[] {
-        new PublicPunishment() {{ type = PunishmentType.MUTE; }}
+    author1.activeRanks = new PublicUserRank[] {
+        new PublicUserRank() {{
+          rank = new PublicRank() {{
+            name = RankName.BAN;
+            group = RankGroup.PUNISHMENT;
+          }};
+        }}
     };
     PublicChatItem item = createItem(author1, text1);
     McChatService service = this.setupService();
@@ -205,7 +209,7 @@ public class McChatServiceTests {
     return new PublicUser() {{
       userInfo = new PublicChannelInfo() {{ channelName = authorName; }};
       levelInfo = new PublicLevelInfo() {{ level = 0; levelProgress = 0.0f; }};
-      activePunishments = new PublicPunishment[0];
+      activeRanks = new PublicUserRank[0];
     }};
   }
 

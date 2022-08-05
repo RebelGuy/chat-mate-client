@@ -6,13 +6,12 @@ import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
-import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
-import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment.PunishmentType;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
-import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
 import net.minecraft.client.gui.FontRenderer;
@@ -277,16 +276,16 @@ public class MessageService {
     }
 
     if (showPunishmentPrefix) {
-      for (PublicPunishment punishment : user.activePunishments) {
+      for (PublicUserRank punishment : user.getActivePunishments()) {
         String prefix;
-        if (punishment.type == PunishmentType.MUTE) {
+        if (punishment.rank.name == PublicRank.RankName.MUTE) {
           prefix = "♪ ";
-        } else if (punishment.type == PunishmentType.TIMEOUT) {
+        } else if (punishment.rank.name == PublicRank.RankName.TIMEOUT) {
           prefix = "◔ ";
-        } else if (punishment.type == PunishmentType.BAN) {
+        } else if (punishment.rank.name == PublicRank.RankName.BAN) {
           prefix = "☠ ";
         } else {
-          throw EnumHelpers.<PunishmentType>assertUnreachable(punishment.type);
+          throw new RuntimeException("Invalid punishment rank " + punishment.rank.name);
         }
 
         unstyledName = prefix + unstyledName;
