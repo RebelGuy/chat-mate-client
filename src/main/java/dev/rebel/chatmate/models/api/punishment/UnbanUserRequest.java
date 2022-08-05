@@ -9,7 +9,7 @@ public class UnbanUserRequest extends ApiRequestBase {
   public final @Nullable String message;
 
   public UnbanUserRequest(int userId, @Nullable String message) {
-    super(2);
+    super(3);
     this.userId = userId;
     this.message = message;
   }

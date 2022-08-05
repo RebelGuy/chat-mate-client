@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.models.publicObjects.user;
 
 import dev.rebel.chatmate.models.publicObjects.PublicObject;
-import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
 
 public class PublicUser extends PublicObject {
   @Override
