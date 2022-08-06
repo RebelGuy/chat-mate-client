@@ -20,9 +20,14 @@ public class PublicRank extends PublicObject {
     @SerializedName("owner") OWNER,
     @SerializedName("famous") FAMOUS,
     @SerializedName("mod") MOD,
+
     @SerializedName("ban") BAN,
     @SerializedName("timeout") TIMEOUT,
     @SerializedName("mute") MUTE,
+
+    @SerializedName("donator") DONATOR,
+    @SerializedName("supporter") SUPPORTER,
+    @SerializedName("member") MEMBER,
   }
 
   public enum RankGroup {
