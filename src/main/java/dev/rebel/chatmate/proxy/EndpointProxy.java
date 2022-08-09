@@ -205,5 +205,5 @@ public class EndpointProxy {
     }
   }
 
-  public enum Method { GET, POST, PATCH }
+  public enum Method { GET, POST, PATCH, DELETE }
 }
