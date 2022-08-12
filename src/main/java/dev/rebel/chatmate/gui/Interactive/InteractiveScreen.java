@@ -636,6 +636,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final BrowserService browserService;
     public final Environment environment;
     public final LogService logService;
+    public final MinecraftChatService minecraftChatService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -654,7 +655,8 @@ public class InteractiveScreen extends Screen implements IElement {
                               MinecraftProxyService minecraftProxyService,
                               BrowserService browserService,
                               Environment environment,
-                              LogService logService) {
+                              LogService logService,
+                              MinecraftChatService minecraftChatService) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -668,6 +670,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.browserService = browserService;
       this.environment = environment;
       this.logService = logService;
+      this.minecraftChatService = minecraftChatService;
     }
   }
 

@@ -3,6 +3,7 @@ package dev.rebel.chatmate.proxy;
 import dev.rebel.chatmate.models.api.rank.*;
 import dev.rebel.chatmate.models.api.rank.AddModRankResponse.AddModRankResponseData;
 import dev.rebel.chatmate.models.api.rank.AddUserRankResponse.AddUserRankResponseData;
+import dev.rebel.chatmate.models.api.rank.GetAccessibleRanksResponse.GetAccessibleRanksResponseData;
 import dev.rebel.chatmate.models.api.rank.GetUserRanksResponse.GetUserRanksResponseData;
 import dev.rebel.chatmate.models.api.rank.RemoveModRankResponse.RemoveModRankResponseData;
 import dev.rebel.chatmate.models.api.rank.RemoveUserRankResponse.RemoveUserRankResponseData;
@@ -22,6 +23,10 @@ public class RankEndpointProxy extends EndpointProxy {
     this.makeRequestAsync(Method.GET, path, GetUserRanksResponse.class, callback, errorHandler);
   }
 
+  public void getAccessibleRanksAsync(Consumer<GetAccessibleRanksResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(Method.GET, "/accessible", GetAccessibleRanksResponse.class, callback, errorHandler);
+  }
+
   public void addUserRank(AddUserRankRequest request, Consumer<AddUserRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     this.makeRequestAsync(Method.POST, "", request, AddUserRankResponse.class, callback, errorHandler);
   }
@@ -30,11 +35,11 @@ public class RankEndpointProxy extends EndpointProxy {
     this.makeRequestAsync(Method.DELETE, "", request, RemoveUserRankResponse.class, callback, errorHandler);
   }
 
-  public void addModRank(AddUserRankRequest request, Consumer<AddModRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+  public void addModRank(AddModRankRequest request, Consumer<AddModRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     this.makeRequestAsync(Method.POST, "/mod", request, AddModRankResponse.class, callback, errorHandler);
   }
 
-  public void removeModRank(RemoveUserRankRequest request, Consumer<RemoveModRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+  public void removeModRank(RemoveModRankRequest request, Consumer<RemoveModRankResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     this.makeRequestAsync(Method.DELETE, "/mod", request, RemoveModRankResponse.class, callback, errorHandler);
   }
 }

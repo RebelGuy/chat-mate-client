@@ -9,14 +9,14 @@ public class AddUserRankRequest extends ApiRequestBase {
   public AddRankName rank;
   public int userId;
   public @Nullable String message;
-  public @Nullable Long expirationTime;
+  public @Nullable Integer durationSeconds;
 
-  public AddUserRankRequest(AddRankName rank, int userId, @Nullable String message, @Nullable Long expirationTime) {
+  public AddUserRankRequest(AddRankName rank, int userId, @Nullable String message, @Nullable Integer durationSeconds) {
     super(1);
     this.rank = rank;
     this.userId = userId;
     this.message = message;
-    this.expirationTime = expirationTime;
+    this.durationSeconds = durationSeconds;
   }
 
   public enum AddRankName {

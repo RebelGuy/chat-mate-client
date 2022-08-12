@@ -7,12 +7,16 @@ import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
+import dev.rebel.chatmate.gui.Interactive.rank.ManageRanksModal;
+import dev.rebel.chatmate.gui.Interactive.rank.PunishmentAdapters;
+import dev.rebel.chatmate.gui.Interactive.rank.RankAdapters;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
+import dev.rebel.chatmate.proxy.RankEndpointProxy;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import net.minecraft.client.Minecraft;
@@ -35,6 +39,8 @@ public class ContextMenuService {
   private final BrowserService browserService;
   private final Environment environment;
   private final LogService logService;
+  private final RankEndpointProxy rankEndpointProxy;
+  private final MinecraftChatService minecraftChatService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -52,7 +58,9 @@ public class ContextMenuService {
                             CursorService cursorService,
                             BrowserService browserService,
                             Environment environment,
-                            LogService logService) {
+                            LogService logService,
+                            RankEndpointProxy rankEndpointProxy,
+                            MinecraftChatService minecraftChatService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -70,12 +78,15 @@ public class ContextMenuService {
     this.browserService = browserService;
     this.environment = environment;
     this.logService = logService;
+    this.rankEndpointProxy = rankEndpointProxy;
+    this.minecraftChatService = minecraftChatService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Reveal on leaderboard", () -> this.onRevealOnLeaderboard(user)),
       new ContextMenuOption("Manage experience", () -> this.onModifyExperience(user)),
+      new ContextMenuOption("Manage ranks", () -> this.onManageRanks(user)),
       new ContextMenuOption("Manage punishments", () -> this.onManagePunishments(user))
     );
   }
@@ -105,10 +116,20 @@ public class ContextMenuService {
     this.minecraft.displayGuiScreen(screen);
   }
 
+  private void onManageRanks(PublicUser user) {
+    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    RankAdapters rankAdapters = new RankAdapters(this.rankEndpointProxy);
+    IElement modal = new ManageRanksModal(context, screen, user, rankAdapters);
+    screen.setMainElement(modal);
+    this.minecraft.displayGuiScreen(screen);
+  }
+
   private void onManagePunishments(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
-    IElement modal = new ManagePunishmentsModal(context, screen, user, this.punishmentEndpointProxy);
+    PunishmentAdapters punishmentAdapters = new PunishmentAdapters(this.rankEndpointProxy, this.punishmentEndpointProxy);
+    IElement modal = new ManageRanksModal(context, screen, user, punishmentAdapters);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
   }
@@ -146,6 +167,7 @@ public class ContextMenuService {
         this.minecraftProxyService,
         this.browserService,
         this.environment,
-        this.logService);
+        this.logService,
+        this.minecraftChatService);
   }
 }
