@@ -87,11 +87,6 @@ public class ServerLogEventService extends EventServiceBase<Events> {
   }
 
   private void onApiError(Throwable error) {
-    // CHAT-368 There is a known issue where the server will randomly return 502 (bad gateway) every now and then.
-    // it seems that these are entirely isolated errors, so it's safe to ignore them and not show the error
-    if (error.getMessage().startsWith("Server returned HTTP response code: 502")) {
-      return;
-    }
     // treat this as another server error and just append the current time to the error array.
     // as soon as we receive a successful response, these synthetic errors will be overwritten by the server response.
 

@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.util;
 
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.models.HttpException;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TaskWrapper;
@@ -11,6 +12,8 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static dev.rebel.chatmate.services.util.Objects.casted;
 
 public class ApiPoller<D> {
   private final LogService logService;
@@ -90,6 +93,13 @@ public class ApiPoller<D> {
   private void onApiError(Throwable error) {
     if (error instanceof ConnectException && this.timeoutWaitTime != null) {
       this.pauseUntil = new Date().getTime() + this.timeoutWaitTime;
+
+    } else if (casted(HttpException.class, error, e -> e.statusCode == 502)) {
+      // CHAT-368 CHAT-392 There is a known issue where the server will randomly return 502 (bad gateway) every now and then.
+      // it seems that these are entirely isolated errors, so it's safe to ignore them and not show the error.
+      // we could retry the request, but in the interest of avoiding additional complexity we will leave it for now.
+      this.onHandleCallback(error, null);
+      return;
     }
 
     this.onHandleCallback(error, this.errorHandler);
