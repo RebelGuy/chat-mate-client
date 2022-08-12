@@ -81,7 +81,9 @@ public class ManageRanksModal extends ModalElement {
     }
   }
 
-  private class RankList extends ContainerElement {
+  private static class RankList extends ContainerElement {
+    private final ManageRanksModal modal;
+    private final Adapters adapters;
     private final EndpointAdapter endpointAdapter;
     private final TableAdapter tableAdapter;
     private final CreateAdapter createAdapter;
@@ -93,17 +95,19 @@ public class ManageRanksModal extends ModalElement {
     private final WrapperElement listWrapper;
     private final ElementReference listReference;
 
-    public RankList(InteractiveContext context, IElement parent, PublicUser user, Adapters adapters) {
+    public RankList(InteractiveContext context, ManageRanksModal parent, PublicUser user, Adapters adapters) {
       super(context, parent, LayoutMode.INLINE);
 
+      this.modal = parent;
+      this.adapters = adapters;
       this.endpointAdapter = adapters.endpointAdapter;
       this.tableAdapter = adapters.tableAdapter;
       this.createAdapter = adapters.createAdapter;
       this.user = user;
 
-      ManageRanksModal.this.onValidate = null;
-      ManageRanksModal.this.onSubmit = null;
-      ManageRanksModal.this.onClose = null;
+      parent.onValidate = null;
+      parent.onSubmit = null;
+      parent.onClose = null;
 
       this.titleLabel = new LabelElement(context, this).setText(tableAdapter.tableHeader);
 
@@ -142,7 +146,7 @@ public class ManageRanksModal extends ModalElement {
     public void onInitialise() {
       super.onInitialise();
 
-      ManageRanksModal.this.setCloseText("Close");
+      this.modal.setCloseText("Close");
 
       super.addElement(this.titleLabel);
       super.addElement(this.createNewRankButton);
@@ -203,20 +207,22 @@ public class ManageRanksModal extends ModalElement {
     }
 
     private void onShowDetails(PublicUserRank rank) {
-      ManageRanksModal.super.setBody(new RankDetails(this.context, ManageRanksModal.this, this.user, rank, ManageRanksModal.this.adapters));
+      this.modal.setBody(new RankDetails(this.context, this.modal, this.user, rank, this.adapters));
     }
 
     private void onCreateNewRank(PublicRank rank) {
-      ManageRanksModal.super.setBody(new RankCreate(this.context, ManageRanksModal.this, ManageRanksModal.this.adapters, rank));
+      this.modal.setBody(new RankCreate(this.context, this.modal, this.adapters, this.user, rank));
     }
   }
 
-  private class RankDetails extends ContainerElement {
+  private static class RankDetails extends ContainerElement {
+    private final ManageRanksModal modal;
+    private final Adapters adapters;
     private final ChannelRankChangeAdapter channelRankChangeAdapter;
     private final EndpointAdapter endpointAdapter;
+    private final DetailsAdapter detailsAdapter;
     private final PublicUser user;
-    // null only if `rankError` is non-null
-    private final @Nullable PublicUserRank rank;
+    private final PublicRank underlyingRank;
 
     private final LabelElement titleLabel;
     private final @Nullable LabelElement statusLabel;
@@ -232,25 +238,29 @@ public class ManageRanksModal extends ModalElement {
     private final @Nullable BlockElement channelActionsList;
 
     /** Use this constructor when cold-displaying a rank. */
-    public RankDetails(InteractiveContext context, IElement parent, PublicUser user, @Nonnull PublicUserRank rank, Adapters adapters) {
-      this(context, parent, user, rank, adapters, null, null);
+    public RankDetails(InteractiveContext context, ManageRanksModal parent, PublicUser user, @Nonnull PublicUserRank rank, Adapters adapters) {
+      this(context, parent, user, rank.rank, rank, adapters, null, null);
     }
 
     /** Use this constructor in response to an API response. */
-    public RankDetails(InteractiveContext context, IElement parent, PublicUser user, @Nonnull RankResult rank, Adapters adapters) {
-      this(context, parent, user, rank.rank, adapters, rank.rankError, rank.channelRankChanges);
+    public RankDetails(InteractiveContext context, ManageRanksModal parent, PublicUser user, @Nonnull PublicRank underlyingRank, @Nonnull RankResult rank, Adapters adapters) {
+      this(context, parent, user, underlyingRank, rank.rank, adapters, rank.rankError, rank.channelRankChanges);
     }
 
-    private RankDetails(InteractiveContext context, IElement parent, PublicUser user, @Nullable PublicUserRank rank, Adapters adapters, @Nullable String rankError, @Nullable PublicChannelRankChange[] channelRankChanges) {
+    private RankDetails(InteractiveContext context, ManageRanksModal parent, PublicUser user, @Nonnull PublicRank underlyingRank, @Nullable PublicUserRank rank, Adapters adapters, @Nullable String rankError, @Nullable PublicChannelRankChange[] channelRankChanges) {
       super(context, parent, LayoutMode.INLINE);
-      ManageRanksModal.this.onValidate = null;
-      ManageRanksModal.this.onSubmit = null;
-      ManageRanksModal.this.onClose = this::onBack;
+
+      this.modal = parent;
+      this.adapters = adapters;
+      this.modal.onValidate = null;
+      this.modal.onSubmit = null;
+      this.modal.onClose = this::onBack;
 
       this.channelRankChangeAdapter = adapters.channelRankChangeAdapter;
       this.endpointAdapter = adapters.endpointAdapter;
+      this.detailsAdapter = adapters.detailsAdapter;
       this.user = user;
-      this.rank = rank;
+      this.underlyingRank = underlyingRank;
 
       String status = null;
       if (rank != null && rank.revokedAt != null) {
@@ -259,7 +269,7 @@ public class ManageRanksModal extends ModalElement {
         status = "EXPIRED";
       }
       this.titleLabel = new LabelElement(context, this)
-          .setText(String.format("Details for %s", rank == null ? "rank" : rank.rank.displayNameNoun.toLowerCase()))
+          .setText(this.detailsAdapter.getHeader(underlyingRank))
           .setHorizontalAlignment(HorizontalAlignment.LEFT)
           .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(4)))
           .cast();
@@ -323,8 +333,8 @@ public class ManageRanksModal extends ModalElement {
               .setPadding(new RectExtension(gui(4), gui(1)))
               .setMargin(new RectExtension(ZERO, gui(4)))
               .cast();
-          ManageRanksModal.this.onValidate = () -> true; // nothing to validate
-          ManageRanksModal.this.onSubmit = this::onRevokeRank;
+          this.modal.onValidate = () -> true; // nothing to validate
+          this.modal.onSubmit = this::onRevokeRank;
 
         } else if (rank.revokedAt != null) {
           this.revokedAtElement = new SideBySideElement(context, this)
@@ -344,14 +354,14 @@ public class ManageRanksModal extends ModalElement {
               ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(8)))
               .cast();
           this.revokeRankTextInputElement = null;
-          ManageRanksModal.this.onValidate = () -> null;
+          this.modal.onValidate = () -> null;
 
         } else {
           // rank has expired
           this.revokedAtElement = null;
           this.revokedMessageElement = null;
           this.revokeRankTextInputElement = null;
-          ManageRanksModal.this.onValidate = () -> null;
+          this.modal.onValidate = () -> null;
         }
       }
 
@@ -403,7 +413,7 @@ public class ManageRanksModal extends ModalElement {
                   new LabelElement(context, this)
                       .setText(rankChange.error == null ? "SUCCESS" : "FAILURE")
                       .setColour(rankChange.error == null ? Colour.GREEN : Colour.RED)
-                      .setTooltip(this.channelRankChangeAdapter.getTooltip(this.rank, rankChange))
+                      .setTooltip(this.channelRankChangeAdapter.getTooltip(this.underlyingRank, rank, rankChange))
                       .setSizingMode(SizingMode.MINIMISE)
                       .setHorizontalAlignment(HorizontalAlignment.RIGHT)
                   )
@@ -417,8 +427,8 @@ public class ManageRanksModal extends ModalElement {
     public void onInitialise() {
       super.onInitialise();
 
-      ManageRanksModal.this.setCloseText("Go back");
-      ManageRanksModal.this.setSubmitText(toSentenceCase(this.getRevokeName()));
+      this.modal.setCloseText("Go back");
+      this.modal.setSubmitText(toSentenceCase(this.getRevokeName()));
 
       super.addElement(this.titleLabel);
       super.addElement(this.statusLabel);
@@ -438,15 +448,14 @@ public class ManageRanksModal extends ModalElement {
     }
 
     private Boolean onBack() {
-      ManageRanksModal.this.setBody(new RankList(context, parent, this.user, ManageRanksModal.this.adapters));
+      this.modal.setBody(new RankList(context, this.modal, this.user, this.adapters));
       return true;
     }
 
     private void onRevokeRank(Runnable onSuccess, Consumer<String> onError) {
-      int userId = ManageRanksModal.this.user.id;
-      RankName rank = this.rank.rank.name;
+      int userId = this.user.id;
       @Nullable String message = this.revokeRankTextInputElement.getText();
-      this.endpointAdapter.revokeRank(userId, rank, message, result -> this.onRankUpdated(result, onSuccess), e -> this.onRevokeRankFailed(e, onError));
+      this.endpointAdapter.revokeRank(userId, this.underlyingRank.name, message, result -> this.onRankUpdated(result, onSuccess), e -> this.onRevokeRankFailed(e, onError));
     }
 
     private void onRevokeRankFailed(Throwable error, Consumer<String> callback) {
@@ -458,19 +467,21 @@ public class ManageRanksModal extends ModalElement {
 
     private void onRankUpdated(RankResult result, Runnable onSuccess) {
       this.context.renderer.runSideEffect(() -> {
-        ManageRanksModal.super.setBody(new RankDetails(this.context, ManageRanksModal.this, this.user, result, ManageRanksModal.this.adapters));
+        // the underlying rank is guaranteed to be defined, otherwise how could we have updated a rank that we don't know about?
+        assert this.underlyingRank != null;
+        this.modal.setBody(new RankDetails(this.context, this.modal, this.user, this.underlyingRank, result, this.adapters));
         onSuccess.run();
       });
     }
 
     private String getRevokeName() {
-      if (this.rank.rank.name == RankName.BAN) {
+      if (this.underlyingRank.name == RankName.BAN) {
         return "unban";
-      } else if (this.rank.rank.name == RankName.TIMEOUT) {
+      } else if (this.underlyingRank.name == RankName.TIMEOUT) {
         return "revoke timeout";
-      } else if (this.rank.rank.name == RankName.MUTE) {
+      } else if (this.underlyingRank.name == RankName.MUTE) {
         return "unmute";
-      } else if (this.rank.rank.name == RankName.MOD) {
+      } else if (this.underlyingRank.name == RankName.MOD) {
         return "unmod";
       } else {
         return "revoke rank";
@@ -478,9 +489,12 @@ public class ManageRanksModal extends ModalElement {
     }
   }
 
-  private class RankCreate extends ContainerElement {
+  private static class RankCreate extends ContainerElement {
+    private final ManageRanksModal modal;
+    private final Adapters adapters;
     private final CreateAdapter createAdapter;
     private final EndpointAdapter endpointAdapter;
+    private final PublicUser user;
     private final PublicRank rank;
 
     private final LabelElement titleLabel;
@@ -492,15 +506,18 @@ public class ManageRanksModal extends ModalElement {
     private @Nullable Float hours = 0.0f;
     private @Nullable Float minutes = 0.0f;
 
-    public RankCreate(InteractiveContext context, IElement parent, Adapters adapters, PublicRank rank) {
+    public RankCreate(InteractiveContext context, ManageRanksModal parent, Adapters adapters, PublicUser user, PublicRank rank) {
       super(context, parent, LayoutMode.INLINE);
 
-      ManageRanksModal.this.onValidate = this::onValidate;
-      ManageRanksModal.this.onSubmit = this::onCreateRank;
-      ManageRanksModal.this.onClose = this::onBack;
+      this.modal = parent;
+      this.adapters = adapters;
+      this.modal.onValidate = this::onValidate;
+      this.modal.onSubmit = this::onCreateRank;
+      this.modal.onClose = this::onBack;
 
       this.createAdapter = adapters.createAdapter;
       this.endpointAdapter = adapters.endpointAdapter;
+      this.user = user;
       this.rank = rank;
 
       this.titleLabel = new LabelElement(context, this)
@@ -575,8 +592,8 @@ public class ManageRanksModal extends ModalElement {
     public void onInitialise() {
       super.onInitialise();
 
-      ManageRanksModal.this.setCloseText("Go back");
-      ManageRanksModal.this.setSubmitText("Submit");
+      this.modal.setCloseText("Go back");
+      this.modal.setSubmitText("Submit");
 
       super.addElement(this.titleLabel);
 
@@ -586,7 +603,7 @@ public class ManageRanksModal extends ModalElement {
     }
 
     private Boolean onBack() {
-      ManageRanksModal.this.setBody(new RankList(context, parent, ManageRanksModal.this.user, ManageRanksModal.this.adapters));
+      this.modal.setBody(new RankList(context, this.modal, this.user, this.adapters));
       return true;
     }
 
@@ -639,12 +656,12 @@ public class ManageRanksModal extends ModalElement {
     private void onCreateRank(Runnable onSuccess, Consumer<String> onError) {
       // always valid, since the submit button is disabled if it's invalid
       @Nullable Integer durationSeconds = this.createAdapter.allowExpiration(this.rank.name) ? this.getTotalSeconds() : null;
-      int userId = ManageRanksModal.this.user.id;
+      int userId = this.user.id;
       @Nullable String message = this.createMessageInputElement.getText();
-      this.endpointAdapter.createRank(userId, this.rank.name, message, durationSeconds, r -> this.onPunishmentCreated(r, onSuccess), e -> this.onCreatePunishmentFailed(e, onError));
+      this.endpointAdapter.createRank(userId, this.rank.name, message, durationSeconds, r -> this.onRankCreated(r, onSuccess), e -> this.onCreateRankFailed(e, onError));
     }
 
-    private void onCreatePunishmentFailed(Throwable error, Consumer<String> callback) {
+    private void onCreateRankFailed(Throwable error, Consumer<String> callback) {
       String action;
       if (this.rank.name == RankName.BAN) {
         action = "ban user";
@@ -664,12 +681,12 @@ public class ManageRanksModal extends ModalElement {
       });
     }
 
-    private void onPunishmentCreated(RankResult result, Runnable callback) {
+    private void onRankCreated(RankResult result, Runnable callback) {
       this.context.renderer.runSideEffect(() -> {
         if (this.clearChatCheckbox != null && this.clearChatCheckbox.getChecked()) {
-          super.context.minecraftChatService.clearChatMessagesByUser(ManageRanksModal.this.user);
+          super.context.minecraftChatService.clearChatMessagesByUser(this.user);
         }
-        ManageRanksModal.super.setBody(new RankDetails(this.context, ManageRanksModal.this, ManageRanksModal.this.user, result, ManageRanksModal.this.adapters));
+        this.modal.setBody(new RankDetails(this.context, this.modal, this.user, this.rank, result, this.adapters));
         callback.run();
       });
     }

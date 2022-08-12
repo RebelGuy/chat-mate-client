@@ -33,6 +33,7 @@ public class RankAdapters extends Adapters {
       new RankEndpointAdapter(rankEndpointProxy),
       new RankTableAdapter(),
       new RankCreateAdapter(),
+      new DetailsAdapter(),
       new ChannelRankChangeAdapter()
     );
   }

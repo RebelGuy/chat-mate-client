@@ -19,6 +19,7 @@ import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
 import dev.rebel.chatmate.proxy.RankEndpointProxy;
 import dev.rebel.chatmate.services.util.Collections;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
@@ -32,6 +33,7 @@ public class PunishmentAdapters extends Adapters {
       new PunishmentEndpointAdapter(rankEndpointProxy, punishmentEndpointProxy),
       new PunishmentTableAdapter(),
       new PunishmentCreateAdapter(),
+      new PunishmentDetailsAdapter(),
       new PunishmentChannelRankChangeAdapter()
     );
   }
@@ -163,6 +165,13 @@ public class PunishmentAdapters extends Adapters {
     }
   }
 
+  public static class PunishmentDetailsAdapter extends DetailsAdapter {
+    @Override
+    public String getHeader(PublicRank rank) {
+      return String.format("Details for %s", rank.displayNameNoun.toLowerCase());
+    }
+  }
+
   public static class PunishmentChannelRankChangeAdapter extends ChannelRankChangeAdapter {
     public PunishmentChannelRankChangeAdapter() {
       super.internalRankErrorHeaderMessage = "Failed to apply the punishment internally:";
@@ -171,9 +180,9 @@ public class PunishmentAdapters extends Adapters {
     }
 
     @Override
-    public String getTooltip(@Nullable PublicUserRank punishment, PublicChannelRankChange rankChange) {
+    public String getTooltip(@Nonnull PublicRank underlyingRank, @Nullable PublicUserRank punishment, PublicChannelRankChange rankChange) {
       String platform = rankChange.platform == Platform.YOUTUBE ? "YouTube" : "Twitch";
-      String punishmentType = punishment == null ? "punishment" : punishment.rank.displayNameNoun.toLowerCase();
+      String punishmentType = underlyingRank.displayNameNoun.toLowerCase();
       if (rankChange.error == null) {
         String actionType = punishment == null || punishment.isActive ? "applied" : "revoked";
         return String.format("Successfully %s %s to %s channel %d.", actionType, punishmentType, platform, rankChange.channelId);

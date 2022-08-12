@@ -11,6 +11,7 @@ import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.RankEndpointProxy;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
@@ -19,12 +20,14 @@ public class Adapters {
   public final EndpointAdapter endpointAdapter;
   public final TableAdapter tableAdapter;
   public final CreateAdapter createAdapter;
+  public final DetailsAdapter detailsAdapter;
   public final ChannelRankChangeAdapter channelRankChangeAdapter;
 
-  public Adapters(EndpointAdapter endpointAdapter, TableAdapter tableAdapter, CreateAdapter createAdapter, ChannelRankChangeAdapter channelRankChangeAdapter) {
+  public Adapters(EndpointAdapter endpointAdapter, TableAdapter tableAdapter, CreateAdapter createAdapter, DetailsAdapter detailsAdapter, ChannelRankChangeAdapter channelRankChangeAdapter) {
     this.endpointAdapter = endpointAdapter;
     this.tableAdapter = tableAdapter;
     this.createAdapter = createAdapter;
+    this.detailsAdapter = detailsAdapter;
     this.channelRankChangeAdapter = channelRankChangeAdapter;
   }
 
@@ -71,6 +74,12 @@ public class Adapters {
     public abstract List<IElement> getRow(InteractiveContext context, IElement parent, PublicUserRank rank);
   }
 
+  public static class DetailsAdapter {
+    public String getHeader(PublicRank rank) {
+      return String.format("Details for %s rank", rank.displayNameNoun.toLowerCase());
+    }
+  }
+
   public static abstract class CreateAdapter {
     public abstract boolean shouldIncludeRank(PublicRank rank);
     public abstract String getTitle(PublicRank rank);
@@ -92,7 +101,7 @@ public class Adapters {
     public String noActionsMessage = "No external actions were applied.";
     public String actionsHeaderMessage = "External actions:";
 
-    public String getTooltip(@Nullable PublicUserRank rank, PublicChannelRankChange rankChange) {
+    public String getTooltip(@Nonnull PublicRank underlyingRank, @Nullable PublicUserRank rank, PublicChannelRankChange rankChange) {
       String platform = rankChange.platform == Platform.YOUTUBE ? "YouTube" : "Twitch";
       if (rankChange.error == null) {
         String actionType = rank == null || rank.isActive ? "applied" : "revoked";
