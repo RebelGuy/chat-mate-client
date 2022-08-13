@@ -10,6 +10,7 @@ import net.minecraft.util.IChatComponent;
 
 import java.util.*;
 import java.util.Collections;
+import java.util.Objects;
 
 public class ChatHelpers {
 
