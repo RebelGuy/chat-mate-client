@@ -8,14 +8,16 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class ImageChatComponent extends ChatComponentBase {
-  public final int paddingGui = 1; // padding in gui units
-
+  public final float paddingGuiLeft;
+  public final float paddingGuiRight;
   private @Nullable Texture texture;
   private final Supplier<Texture> textureSupplier;
 
-  public ImageChatComponent(Supplier<Texture> textureSupplier) {
+  public ImageChatComponent(Supplier<Texture> textureSupplier, float paddingGuiLeft, float paddingGuiRight) {
     super();
     this.textureSupplier = textureSupplier;
+    this.paddingGuiLeft = paddingGuiLeft;
+    this.paddingGuiRight = paddingGuiRight;
   }
 
   /** This must be called from the Minecraft thread, as it may initialise the texture and requires the OpenGL context. */
@@ -42,7 +44,7 @@ public class ImageChatComponent extends ChatComponentBase {
 
   /** Returns the horizontal space required to display this image, in GUI units. */
   public float getRequiredWidth(int guiHeight) {
-    return this.getImageWidth(guiHeight) + this.paddingGui * 2;
+    return this.getImageWidth(guiHeight) + this.paddingGuiLeft + this.paddingGuiRight;
   }
 
   @Override

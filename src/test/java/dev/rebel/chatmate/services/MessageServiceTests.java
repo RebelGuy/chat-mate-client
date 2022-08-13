@@ -44,7 +44,7 @@ public class MessageServiceTests {
 
   @Test
   public void ensureNonempty_ComponentWithImage_ReturnsArgument() {
-    IChatComponent component = new ImageChatComponent(() -> null);
+    IChatComponent component = new ImageChatComponent(() -> null, 0, 0);
 
     IChatComponent result = this.messageService.ensureNonempty(component, "Test");
 

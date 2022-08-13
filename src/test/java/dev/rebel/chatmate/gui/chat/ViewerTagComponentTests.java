@@ -28,24 +28,24 @@ public class ViewerTagComponentTests {
   }
 
   @Test
-  public void identifyPlatformsChanged_rendersCorrectText_onYoutubePlatform() {
+  public void identifyPlatformsChanged_rendersImage_onYoutubePlatform() {
     // initial test
     when(this.identifyPlatforms.get()).thenReturn(false);
 
-    ViewerTagComponent component = new ViewerTagComponent(this.mockConfig, ChatPlatform.Youtube);
-    verifyText(component, "VIEWER");
+    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockConfig, ChatPlatform.Youtube);
+    Assert.assertFalse(component.component instanceof ImageChatComponent);
 
     // change to true
     ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
     verify(this.identifyPlatforms).onChange(captor.capture(), any(Object.class));
     captor.getValue().accept(true);
 
-    verifyText(component, "YOUTUBE");
+    Assert.assertTrue(component.component instanceof ImageChatComponent);
 
     // change to false
     captor.getValue().accept(false);
 
-    verifyText(component, "VIEWER");
+    Assert.assertFalse(component.component instanceof ImageChatComponent);
   }
 
   @Test
@@ -53,23 +53,26 @@ public class ViewerTagComponentTests {
     // initial test
     when(this.identifyPlatforms.get()).thenReturn(true);
 
-    ViewerTagComponent component = new ViewerTagComponent(this.mockConfig, ChatPlatform.Twitch);
-    verifyText(component, "TWITCH");
+    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockConfig, ChatPlatform.Twitch);
+    Assert.assertTrue(component.component instanceof ImageChatComponent);
 
     // change to false
     ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
     verify(this.identifyPlatforms).onChange(captor.capture(), any(Object.class));
     captor.getValue().accept(false);
 
-    verifyText(component, "VIEWER");
+    Assert.assertFalse(component.component instanceof ImageChatComponent);
 
     // change to true
     captor.getValue().accept(true);
 
-    verifyText(component, "TWITCH");
+    Assert.assertTrue(component.component instanceof ImageChatComponent);
   }
 
-  private static void verifyText(ViewerTagComponent component, String expectedViewerTag) {
-    Assert.assertEquals(expectedViewerTag, component.getUnformattedText());
+  private static void verifyText(PlatformViewerTagComponent component, boolean expectImage) {
+    if (expectImage) {
+
+    }
+    Assert.assertEquals(component, component.getUnformattedText());
   }
 }

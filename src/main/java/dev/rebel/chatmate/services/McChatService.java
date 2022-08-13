@@ -71,7 +71,8 @@ public class McChatService {
     try {
       Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
-      IChatComponent rank = new ViewerTagComponent(this.config, item.platform);
+      IChatComponent platform = new PlatformViewerTagComponent(this.config, item.platform);
+      IChatComponent rank = styledText("VIEWER", VIEWER_RANK_STYLE);
       IChatComponent player = this.messageService.getUserComponent(item.author);
       McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
 
@@ -80,10 +81,11 @@ public class McChatService {
 
       ArrayList<IChatComponent> components = new ArrayList<>();
       components.add(level);
+      components.add(platform);
       components.add(rank);
       components.add(player);
       components.add(joinedMessage);
-      IChatComponent message = joinComponents(" ", components);
+      IChatComponent message = joinComponents(" ", components, c -> c == platform);
 
       this.minecraftProxyService.printChatMessage("YouTube chat", message);
       if (mcChatResult.includesMention) {
@@ -199,7 +201,7 @@ public class McChatService {
         prevText = null;
 
         assert msg.customEmojiData != null;
-        components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData)));
+        components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData), 1, 1));
         continue;
 
       } else if (msg.type == MessagePartType.cheer) {
@@ -210,7 +212,7 @@ public class McChatService {
       } else throw new Exception("Invalid partial message type " + msg.type);
 
       // add space between components except when we have two text types after one another.
-      if (prevType != null && !(msg.type == MessagePartType.text && prevType == MessagePartType.text)) {
+      if (prevType != null && prevType != MessagePartType.customEmoji && !(msg.type == MessagePartType.text && prevType == MessagePartType.text)) {
         if (text.startsWith(" ") || (prevText != null && prevText.endsWith(" "))) {
           // already spaced out
         } else {
