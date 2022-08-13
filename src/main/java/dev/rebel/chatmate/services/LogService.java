@@ -48,8 +48,8 @@ public class LogService {
     this.log("API", logger, String.format("%s request #%d dispatched to %s", method, requestId, url));
   }
 
-  public void logApiResponse(Object logger, int requestId, boolean error, String response) {
-    this.log("API", logger, String.format("Request #%d %s with response %s", requestId, error ? "failed" : "succeeded", response));
+  public void logApiResponse(Object logger, int requestId, @Nullable Integer statusCode, boolean error, String response) {
+    this.log("API", logger, String.format("Request #%d %s%s with response %s", requestId, error ? "failed" : "succeeded", statusCode == null ? "" : String.format(" (code %d)", statusCode), response));
   }
 
   private void log(String type, Object logger, Object... args) {

@@ -4,13 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.models.ChatMateApiException;
+import dev.rebel.chatmate.models.HttpException;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.ApiRequestService;
 
 import javax.annotation.Nullable;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.ConnectException;
@@ -79,46 +78,49 @@ public class EndpointProxy {
     });
   }
 
-  public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass) throws ConnectException, ChatMateApiException, Exception {
+  public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass) throws ConnectException, ChatMateApiException, HttpException, Exception {
     return this.makeRequest(method, path, returnClass, null);
   }
 
-  public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass, Object data) throws ConnectException, ChatMateApiException, Exception {
+  public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass, Object data) throws ConnectException, ChatMateApiException, HttpException, Exception {
     int id = ++this.requestId;
     this.logService.logApiRequest(this, id, method, this.basePath + path);
 
-    Exception ex = null;
-    String result;
+    ApiResponse result;
     try {
       result = downloadString(method, path, data);
     } catch (ConnectException e) {
-      result = "Failed to connect to the server - is it running? " + e.getMessage();
-      ex = e;
+      String message = "Failed to connect to the server - is it running? " + e.getMessage();
+      this.logService.logApiResponse(this, id, null, true, message);
+      throw e;
     } catch (JsonSyntaxException e) {
-      result = "Failed to parse JSON response to " + returnClass.getSimpleName() + " - has the schema changed? " + e.getMessage();
-      ex = e;
+      String message = "Failed to parse JSON response to " + returnClass.getSimpleName() + " - has the schema changed? " + e.getMessage();
+      this.logService.logApiResponse(this, id, null, true, message);
+      throw e;
     } catch (Exception e) {
-      result = "Failed to get response. " + e.getMessage();
-      ex = e;
+      String message = "Failed to get response. " + e.getMessage();
+      this.logService.logApiResponse(this, id, null, true, message);
+      throw e;
     }
 
-    this.logService.logApiResponse(this, id, ex != null, result);
-    if (ex == null) {
-      Res parsed = this.parseResponse(result, returnClass);
+    this.logService.logApiResponse(this, id, result.statusCode, !result.success, result.responseBody);
+    try {
+      Res parsed = this.parseResponse(result.responseBody, returnClass);
       parsed.assertIntegrity();
       if (!parsed.success) {
         throw new ChatMateApiException(parsed.error);
       } else {
         return parsed.data;
       }
-    } else {
-      throw ex;
+    } catch (Exception e) {
+      // errors reaching here are most likely due to a response with an unexpected format, e.g. 502 errors.
+      throw new HttpException(e.getMessage(), result.statusCode, result.responseBody);
     }
   }
 
-  private String downloadString(Method method, String path, Object data) throws Exception {
+  private ApiResponse downloadString(Method method, String path, Object data) throws Exception {
     URL url = new URL(this.basePath + path);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
     conn.setRequestMethod(method.toString());
 
     if (method != Method.GET && data != null) {
@@ -134,16 +136,34 @@ public class EndpointProxy {
       }
     }
 
+    @Nullable Integer statusCode = conn.getResponseCode();
+    boolean success;
+    InputStream stream;
+    try {
+      stream = conn.getInputStream();
+      success = true;
+    } catch (IOException e) {
+      // responses with certain error codes don't have input streams, only error streams.
+      // if this also fails we let it bubble up
+      stream = conn.getErrorStream();
+      success = false;
+    }
+
+    // the stream can be null if there is no response body
+    if (stream == null) {
+      return new ApiResponse(success, statusCode, "");
+    }
+
     // https://stackoverflow.com/a/1826995
     // turns out default encoding is system/environment dependent if not set explicitly.
-    InputStreamReader streamReader = new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8);
+    InputStreamReader streamReader = new InputStreamReader(stream, StandardCharsets.UTF_8);
     StringBuilder result = new StringBuilder();
     try (BufferedReader reader = new BufferedReader(streamReader)) {
       for (String line; (line = reader.readLine()) != null; ) {
         result.append(line);
       }
     }
-    return result.toString();
+    return new ApiResponse(success, statusCode, result.toString());
   }
 
   private <T extends ApiResponseBase<?>> T parseResponse(String response, Class<T> returnClass) throws Exception {
@@ -202,6 +222,18 @@ public class EndpointProxy {
       methodsField.set(null, newMethods);
     } catch (NoSuchFieldException | IllegalAccessException e) {
       throw new RuntimeException("Unable to add PATCH request method.");
+    }
+  }
+
+  private static class ApiResponse {
+    public final boolean success;
+    public final int statusCode;
+    public final String responseBody;
+
+    public ApiResponse(boolean success, @Nullable Integer statusCode, String responseBody) {
+      this.success = success;
+      this.statusCode = statusCode;
+      this.responseBody = responseBody;
     }
   }
 
