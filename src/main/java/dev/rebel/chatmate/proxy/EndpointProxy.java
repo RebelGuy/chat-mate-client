@@ -19,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import static dev.rebel.chatmate.services.util.Objects.casted;
+
 public class EndpointProxy {
   private final LogService logService;
   private final ApiRequestService apiRequestService;
@@ -112,6 +114,8 @@ public class EndpointProxy {
       } else {
         return parsed.data;
       }
+    } catch (ChatMateApiException e) {
+      throw e;
     } catch (Exception e) {
       // errors reaching here are most likely due to a response with an unexpected format, e.g. 502 errors.
       throw new HttpException(e.getMessage(), result.statusCode, result.responseBody);
@@ -191,11 +195,13 @@ public class EndpointProxy {
     if (e instanceof ConnectException) {
       msg = "Unable to connect.";
     } else if (e instanceof ChatMateApiException) {
-      ChatMateApiException error = (ChatMateApiException)e;
+      ChatMateApiException error = (ChatMateApiException) e;
       msg = error.apiResponseError.message;
       if (msg == null) {
         msg = error.apiResponseError.errorType;
       }
+    } else if (casted(HttpException.class, e, ex -> ex.statusCode != 200)) {
+      msg = String.format("Something went wrong (code %d).", ((HttpException)e).statusCode);
     } else {
       msg = "Something went wrong.";
     }

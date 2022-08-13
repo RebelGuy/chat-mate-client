@@ -152,6 +152,10 @@ public class InteractiveScreen extends Screen implements IElement {
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
     this.context.renderer._executeSideEffects();
+
+    // fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect
+    // it is not clear if we should do this after EVERY side effect execution (if side effects were scheduled), or only after size invalidation - for now, see how we go.
+    this._onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
   }
 
   @Override

@@ -376,8 +376,9 @@ public class ManageRanksModal extends ModalElement {
             .cast();
         this.rankErrorLabel = new LabelElement(context, this)
             .setText(rankError)
+            .setColour(Colour.DARK_RED)
             .setSizingMode(SizingMode.FILL)
-            .setMargin(new RectExtension(ZERO, ZERO, gui(2), ZERO))
+            .setMargin(new RectExtension(ZERO, ZERO, gui(2), gui(6)))
             .cast();
       }
 
@@ -408,7 +409,7 @@ public class ManageRanksModal extends ModalElement {
               .setElementPadding(gui(4))
               .addElement(1, new LabelElement(context, this)
                   .setText(rankChange.channelName)
-                  .setColour(rankChange.platform == Platform.YOUTUBE ? Colour.RED : Colour.DARK_PURPLE)
+                  .setColour(rankChange.platform == Platform.YOUTUBE ? Colour.LIGHT_RED : Colour.DARK_PURPLE)
               ).addElement(1, new WrapperElement(context, this, // wrapper so text element size is flush to the text for a better tooltip experience
                   new LabelElement(context, this)
                       .setText(rankChange.error == null ? "SUCCESS" : "FAILURE")
@@ -677,7 +678,7 @@ public class ManageRanksModal extends ModalElement {
 
       this.context.renderer.runSideEffect(() -> {
         String errorMessage = EndpointProxy.getApiErrorMessage(error);
-        callback.accept(String.format("Failed to %s user: %s", action, errorMessage));
+        callback.accept(String.format("Failed to %s: %s", action, errorMessage));
       });
     }
 

@@ -55,7 +55,7 @@ public class RankAdapters extends Adapters {
     public void createRank(int userId, RankName rank, @Nullable String createMessage, @Nullable Integer durationSeconds, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
       if (rank == RankName.MOD) {
         AddModRankRequest request = new AddModRankRequest(userId, createMessage);
-        this.rankEndpointProxy.addModRank(request, r -> new RankResult(r.newRank, r.newRankError, r.channelModChanges), onError);
+        this.rankEndpointProxy.addModRank(request, r -> onResult.accept(new RankResult(r.newRank, r.newRankError, r.channelModChanges)), onError);
       } else {
         AddRankName rankName;
         if (rank == RankName.FAMOUS) {
@@ -71,7 +71,7 @@ public class RankAdapters extends Adapters {
           return;
         }
         AddUserRankRequest request = new AddUserRankRequest(rankName, userId, createMessage, durationSeconds == null ? 0 : durationSeconds);
-        this.rankEndpointProxy.addUserRank(request, r -> new RankResult(r.newRank, null, null), onError);
+        this.rankEndpointProxy.addUserRank(request, r -> onResult.accept(new RankResult(r.newRank, null, null)), onError);
       }
     }
 
@@ -79,7 +79,7 @@ public class RankAdapters extends Adapters {
     public void revokeRank(int userId, RankName rank, @Nullable String revokeMessage, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
       if (rank == RankName.MOD) {
         RemoveModRankRequest request = new RemoveModRankRequest(userId, revokeMessage);
-        this.rankEndpointProxy.removeModRank(request, r -> new RankResult(r.removedRank, r.removedRankError, r.channelModChanges), onError);
+        this.rankEndpointProxy.removeModRank(request, r -> onResult.accept(new RankResult(r.removedRank, r.removedRankError, r.channelModChanges)), onError);
       } else {
         RemoveRankName rankName;
         if (rank == RankName.FAMOUS) {
@@ -95,7 +95,7 @@ public class RankAdapters extends Adapters {
           return;
         }
         RemoveUserRankRequest request = new RemoveUserRankRequest(rankName, userId, revokeMessage);
-        this.rankEndpointProxy.removeUserRank(request, r -> new RankResult(r.removedRank, null, null), onError);
+        this.rankEndpointProxy.removeUserRank(request, r -> onResult.accept(new RankResult(r.removedRank, null, null)), onError);
       }
     }
   }
