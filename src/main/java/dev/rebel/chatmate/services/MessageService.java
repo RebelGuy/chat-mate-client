@@ -7,11 +7,13 @@ import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
+import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
 import net.minecraft.client.gui.FontRenderer;
@@ -293,6 +295,22 @@ public class MessageService {
     }
 
     return new ContainerChatComponent(styledText(unstyledName, style), user);
+  }
+
+  public IChatComponent getRankComponent(List<PublicRank> activeRanks) {
+    @Nullable RankName rankToShow = EnumHelpers.getFirst(
+        dev.rebel.chatmate.services.util.Collections.map(activeRanks, r -> r.name),
+        RankName.OWNER,
+        RankName.ADMIN,
+        RankName.MOD,
+        RankName.MEMBER,
+        RankName.SUPPORTER,
+        RankName.DONATOR,
+        RankName.FAMOUS
+    );
+    @Nullable PublicRank matchingRank = dev.rebel.chatmate.services.util.Collections.first(activeRanks, r -> r.name == rankToShow);
+    String rankText = matchingRank == null ? "VIEWER" : matchingRank.displayNameNoun.toUpperCase();
+    return styledText(rankText, VIEWER_RANK_STYLE);
   }
 
   /** Ensures the component can be displayed in chat, otherwise replaces it with the provided message. */
