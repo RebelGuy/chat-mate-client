@@ -64,6 +64,7 @@ public class McChatServiceTests {
 
     when(this.mockConfig.getIdentifyPlatforms()).thenReturn(this.identifyPlatforms);
     when(this.identifyPlatforms.get()).thenReturn(false);
+    when(this.mockMessageService.getRankComponent(any())).thenReturn(new ChatComponentText("VIEWER"));
   }
 
   @Test
