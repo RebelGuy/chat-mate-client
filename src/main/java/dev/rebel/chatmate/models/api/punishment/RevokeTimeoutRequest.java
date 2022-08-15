@@ -9,7 +9,7 @@ public class RevokeTimeoutRequest extends ApiRequestBase {
   public final @Nullable String message;
 
   public RevokeTimeoutRequest(int userId, @Nullable String message) {
-    super(2);
+    super(4);
     this.userId = userId;
     this.message = message;
   }

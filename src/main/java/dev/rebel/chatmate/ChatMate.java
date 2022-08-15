@@ -74,6 +74,7 @@ public class ChatMate {
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, apiPath);
     PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, apiPath);
     LogEndpointProxy logEndpointProxy = new LogEndpointProxy(logService, apiRequestService, apiPath);
+    RankEndpointProxy rankEndpointProxy = new RankEndpointProxy(logService, apiRequestService, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -105,6 +106,7 @@ public class ChatMate {
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, guiChatMateHud);
     CounterHandler counterHandler = new CounterHandler(this.keyBindingService, guiChatMateHud, dimFactory, minecraft);
     BrowserService browserService = new BrowserService(logService);
+    MinecraftChatService minecraftChatService = new MinecraftChatService(minecraftProxyService);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
@@ -121,7 +123,9 @@ public class ChatMate {
         cursorService,
         browserService,
         environment,
-        logService);
+        logService,
+        rankEndpointProxy,
+        minecraftChatService);
     this.guiService = new GuiService(this.isDev,
         logService,
         this.config,
@@ -140,7 +144,8 @@ public class ChatMate {
         clipboardService,
         browserService,
         chatMateEndpointProxy,
-        environment);
+        environment,
+        minecraftChatService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

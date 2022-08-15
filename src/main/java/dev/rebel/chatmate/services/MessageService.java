@@ -6,8 +6,9 @@ import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
-import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
-import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment.PunishmentType;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
@@ -277,16 +278,16 @@ public class MessageService {
     }
 
     if (showPunishmentPrefix) {
-      for (PublicPunishment punishment : user.activePunishments) {
+      for (PublicUserRank punishment : user.getActivePunishments()) {
         String prefix;
-        if (punishment.type == PunishmentType.MUTE) {
+        if (punishment.rank.name == PublicRank.RankName.MUTE) {
           prefix = "♪ ";
-        } else if (punishment.type == PunishmentType.TIMEOUT) {
+        } else if (punishment.rank.name == PublicRank.RankName.TIMEOUT) {
           prefix = "◔ ";
-        } else if (punishment.type == PunishmentType.BAN) {
+        } else if (punishment.rank.name == PublicRank.RankName.BAN) {
           prefix = "☠ ";
         } else {
-          throw EnumHelpers.<PunishmentType>assertUnreachable(punishment.type);
+          throw new RuntimeException("Invalid punishment rank " + punishment.rank.name);
         }
 
         unstyledName = prefix + unstyledName;
@@ -294,6 +295,22 @@ public class MessageService {
     }
 
     return new ContainerChatComponent(styledText(unstyledName, style), user);
+  }
+
+  public IChatComponent getRankComponent(List<PublicRank> activeRanks) {
+    @Nullable RankName rankToShow = EnumHelpers.getFirst(
+        dev.rebel.chatmate.services.util.Collections.map(activeRanks, r -> r.name),
+        RankName.OWNER,
+        RankName.ADMIN,
+        RankName.MOD,
+        RankName.MEMBER,
+        RankName.SUPPORTER,
+        RankName.DONATOR,
+        RankName.FAMOUS
+    );
+    @Nullable PublicRank matchingRank = dev.rebel.chatmate.services.util.Collections.first(activeRanks, r -> r.name == rankToShow);
+    String rankText = matchingRank == null ? "VIEWER" : matchingRank.displayNameNoun.toUpperCase();
+    return styledText(rankText, VIEWER_RANK_STYLE);
   }
 
   /** Ensures the component can be displayed in chat, otherwise replaces it with the provided message. */

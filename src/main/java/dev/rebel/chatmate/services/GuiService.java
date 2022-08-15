@@ -42,6 +42,7 @@ public class GuiService {
   private final BrowserService browserService;
   private final ChatMateEndpointProxy chatMateEndpointProxy;
   private final Environment environment;
+  private final MinecraftChatService minecraftChatService;
 
   private CustomGuiIngame customGuiIngame;
 
@@ -63,7 +64,8 @@ public class GuiService {
                     ClipboardService clipboardService,
                     BrowserService browserService,
                     ChatMateEndpointProxy chatMateEndpointProxy,
-                    Environment environment) {
+                    Environment environment,
+                    MinecraftChatService minecraftChatService) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -83,6 +85,7 @@ public class GuiService {
     this.browserService = browserService;
     this.chatMateEndpointProxy = chatMateEndpointProxy;
     this.environment = environment;
+    this.minecraftChatService = minecraftChatService;
 
     this.addEventHandlers();
   }
@@ -214,6 +217,7 @@ public class GuiService {
         this.minecraftProxyService,
         this.browserService,
         this.environment,
-        this.logService);
+        this.logService,
+        this.minecraftChatService);
   }
 }

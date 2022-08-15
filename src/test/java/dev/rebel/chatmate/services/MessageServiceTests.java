@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
-import dev.rebel.chatmate.models.publicObjects.punishment.PublicPunishment;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import net.minecraft.client.gui.FontRenderer;
@@ -44,7 +44,7 @@ public class MessageServiceTests {
 
   @Test
   public void ensureNonempty_ComponentWithImage_ReturnsArgument() {
-    IChatComponent component = new ImageChatComponent(() -> null);
+    IChatComponent component = new ImageChatComponent(() -> null, 0, 0);
 
     IChatComponent result = this.messageService.ensureNonempty(component, "Test");
 
@@ -66,7 +66,7 @@ public class MessageServiceTests {
     PublicUser user = new PublicUser() {{
       userInfo = new PublicChannelInfo() {{
         channelName = " Test channel ! ";
-        activePunishments = new PublicPunishment[0];
+        activeRanks = new PublicUserRank[0];
       }};
     }};
 
@@ -82,7 +82,7 @@ public class MessageServiceTests {
       id = 5;
       userInfo = new PublicChannelInfo() {{
         channelName = "x";
-        activePunishments = new PublicPunishment[0];
+        activeRanks = new PublicUserRank[0];
       }};
     }};
 

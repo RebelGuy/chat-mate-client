@@ -116,7 +116,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
       return new Out(null);
     }
 
-    MousePositionData position = in.mousePositionData;
+    MousePositionData position = in.mousePositionData.setAnchor(Dim.DimAnchor.GUI);
 
     if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       for (IHudComponent component : this.getReverseComponents()) {
@@ -130,16 +130,16 @@ public class GuiChatMateHudScreen extends GuiScreen {
         }
       }
     } else if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
-      if (this.guiChatMateHud.hudComponents.stream().noneMatch(c -> containsPoint(c, in.mousePositionData.point))) {
+      if (this.guiChatMateHud.hudComponents.stream().noneMatch(c -> containsPoint(c, position.point))) {
         // only show context menu if we right click empty space
-        this.contextMenuService.showHudContext(in.mousePositionData.x, in.mousePositionData.y);
+        this.contextMenuService.showHudContext(position.x, position.y);
       }
     }
     return new Out(null);
   }
 
   private Out onMouseMove(In in) {
-    this.mousePositionData = in.mousePositionData;
+    this.mousePositionData = in.mousePositionData.setAnchor(Dim.DimAnchor.GUI);
 
     if (this.minecraft.currentScreen != this) {
       return new Out(null);
@@ -168,7 +168,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
       return new Out(null);
     }
 
-    MousePositionData position = in.mousePositionData;
+    MousePositionData position = in.mousePositionData.setAnchor(Dim.DimAnchor.GUI);
     for (IHudComponent component : this.getReverseComponents()) {
       if (component.canRescaleContent() && containsPoint(component, new DimPoint(position.x, position.y))) {
         int multiplier = in.mouseScrollData.scrollDirection == ScrollDirection.UP ? 1 : -1;

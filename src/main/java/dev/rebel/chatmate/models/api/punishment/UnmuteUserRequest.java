@@ -9,7 +9,7 @@ public class UnmuteUserRequest extends ApiRequestBase {
   public final @Nullable String message;
 
   public UnmuteUserRequest(int userId, @Nullable String message) {
-    super(1);
+    super(3);
     this.userId = userId;
     this.message = message;
   }

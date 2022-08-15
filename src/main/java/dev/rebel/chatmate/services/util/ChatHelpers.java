@@ -8,9 +8,11 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.Collections;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class ChatHelpers {
 
@@ -46,11 +48,16 @@ public class ChatHelpers {
   }
 
   public static IChatComponent joinComponents(String joinText, List<IChatComponent> components) {
+    return joinComponents(joinText, components, null);
+  }
+
+  /** Does not add the `joinText` before the ignored components. */
+  public static IChatComponent joinComponents(String joinText, List<IChatComponent> components, @Nullable Predicate<IChatComponent> ignoreComponents) {
     IChatComponent result = new ChatComponentText("");
 
     boolean isFirst = true;
     for (IChatComponent comp: components) {
-      if (!isFirst) {
+      if (!isFirst && (ignoreComponents == null || !ignoreComponents.test(comp))) {
         if (joinText.length() > 0) {
           result = result.appendText(joinText);
         }

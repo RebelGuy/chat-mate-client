@@ -7,7 +7,7 @@ import dev.rebel.chatmate.proxy.ApiResponseBase;
 public class GetEventsResponse extends ApiResponseBase<GetEventsResponseData> {
   @Override
   public Integer GetExpectedSchema() {
-    return 4;
+    return 5;
   }
 
   public static class GetEventsResponseData {

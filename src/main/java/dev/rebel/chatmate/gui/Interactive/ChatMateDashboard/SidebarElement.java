@@ -56,6 +56,14 @@ public class SidebarElement extends ContainerElement {
             .setVerticalAlignment(Layout.VerticalAlignment.BOTTOM)
             .setSizingMode(SizingMode.FILL)
     );
+
+    super.addElement(new LabelElement(context, this)
+        .setText(context.environment.buildName)
+        .setColour(Colour.LTGREY)
+        .setFontScale(0.5f)
+        .setPadding(new RectExtension(gui(0), gui(0), gui(4), gui(0)))
+        .setMargin(new RectExtension(gui(0), gui(0), gui(0), gui(-8))) // this actually works... wow!
+    );
   }
 
   private void onOpenStudio() {

@@ -233,7 +233,7 @@ public class CustomGuiNewChat extends GuiNewChat {
         return 0;
       }
 
-      // if the image is not square, it's possible that it will not be centred in the dedicated space in the chat line
+      // if the image is not square, it's possible that it will not be positioned properly in the dedicated space in the chat line
       // due to rounding error. the following adjustment will fix that
       float requiredWidth = imageComponent.getRequiredWidth(this.minecraft.fontRendererObj.FONT_HEIGHT);
       int requiredWidthInt = (int)Math.ceil(requiredWidth);
@@ -241,7 +241,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
       Dim targetHeight = this.dimFactory.fromGui(this.minecraft.fontRendererObj.FONT_HEIGHT);
       Dim currentHeight = this.dimFactory.fromScreen(texture.height);
-      float imageX = x + imageComponent.paddingGui + xAdjustment;
+      float imageX = x + imageComponent.paddingGuiLeft + xAdjustment;
       float imageY = lineBottom - targetHeight.getGui();
 
       float scaleToReachTarget = targetHeight.getGui() / currentHeight.getGui();
@@ -515,13 +515,13 @@ public class CustomGuiNewChat extends GuiNewChat {
 
       } else if (component instanceof ImageChatComponent) {
         ImageChatComponent imageComponent = (ImageChatComponent)component;
-        lineX += imageComponent.paddingGui;
+        lineX += imageComponent.paddingGuiLeft;
 
         int width = (int)Math.ceil(imageComponent.getImageWidth(this.minecraft.fontRendererObj.FONT_HEIGHT));
         if (lineX <= x && lineX + width >= x) {
           return originalComponent;
         }
-        lineX += width + imageComponent.paddingGui;
+        lineX += width + imageComponent.paddingGuiRight;
 
       } else if (component instanceof ContainerChatComponent) {
         throw new RuntimeException("Cannot get chat component because a container has not been unwrapped.");
