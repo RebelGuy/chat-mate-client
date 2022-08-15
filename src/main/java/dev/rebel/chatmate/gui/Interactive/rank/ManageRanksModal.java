@@ -500,7 +500,7 @@ public class ManageRanksModal extends ModalElement {
 
     private final LabelElement titleLabel;
     private final TextInputElement createMessageInputElement;
-    private final @Nullable IElement timeElements; // only for timeouts and mutes
+    private final @Nullable IElement timeElements; // only for rank types that allow expiration
     private final @Nullable CheckboxInputElement clearChatCheckbox;
 
     private @Nullable Float days = 0.0f;
