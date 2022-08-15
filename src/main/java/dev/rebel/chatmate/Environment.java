@@ -10,11 +10,13 @@ public class Environment {
   public final Env env;
   public final String serverUrl;
   public final String studioUrl;
+  public final String buildName;
 
-  private Environment(Env env, String serverUrl, String studioUrl) {
+  private Environment(Env env, String serverUrl, String studioUrl, String buildName) {
     this.env = env;
     this.serverUrl = serverUrl;
     this.studioUrl = studioUrl;
+    this.buildName = buildName;
   }
 
   public static Environment parseEnvironmentFile(Stream<String> lines) {
@@ -39,7 +41,8 @@ public class Environment {
     return new Environment(
         Enum.valueOf(Env.class, getValue.apply("ENVIRONMENT").toUpperCase()),
         getValue.apply("SERVER_URL"),
-        getValue.apply("STUDIO_URL")
+        getValue.apply("STUDIO_URL"),
+        getValue.apply("BUILD_NAME")
     );
   }
 

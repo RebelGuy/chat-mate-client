@@ -1,8 +1,17 @@
+import java.util.function.BiConsumer
+
 plugins {
     id "java"
     id "com.github.johnrengelman.shadow" version "6.1.0"
     id "net.minecraftforge.gradle.forge" version "6f53277"
 }
+
+version = "1.15.0"
+group = "dev.rebel"
+archivesBaseName = "ChatMate"
+
+targetCompatibility = 1.8
+compileJava.options.encoding = 'UTF-8'
 
 loadProperties()
 
@@ -12,15 +21,19 @@ def loadProperties() {
 
     def configFile = file('config.groovy')
     def config = new ConfigSlurper(environment).parse(configFile.toURL())
+
+    def numCommits
+    def proc = "git rev-list HEAD --count".execute()
+    proc.in.eachLine { line -> numCommits = line }
+    proc.err.eachLine { line -> println line }
+    proc.waitFor()
+
+    def splitVersion = project.version.toString().split(/\./)
+    splitVersion[2] = numCommits
+    config.setProperty('BUILD_NAME', 'ChatMate v' + splitVersion.join("."))
+
     project.ext.config = config
 }
-
-version = "1.15.0"
-group = "dev.rebel"
-archivesBaseName = "ChatMate"
-
-targetCompatibility = 1.8
-compileJava.options.encoding = 'UTF-8'
 
 minecraft {
     version = "1.8.9-11.15.1.2318-1.8.9"
@@ -66,12 +79,9 @@ processResources {
     from(sourceSets.main.resources.srcDirs) {
         include 'environment.yml'
 
-        def config = project.ext.config as Object
-        expand(
-                'ENVIRONMENT': config.ENVIRONMENT,
-                'SERVER_URL': config.SERVER_URL,
-                'STUDIO_URL': config.STUDIO_URL
-        )
+        // replace the templates in the `environment.yml` file with the config values
+        def config = project.ext.config as ConfigObject
+        expand((Map)config.toProperties()) // for some reason, `getProperties()` doesn't return the values, but this works too!
     }
 
     // copy everything else, thats not the mcmod.info
