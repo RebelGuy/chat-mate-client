@@ -8,6 +8,7 @@ import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart.MessagePar
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
+import dev.rebel.chatmate.services.events.ChatMateChatService;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
 import dev.rebel.chatmate.services.events.models.NewTwitchFollowerEventData;
@@ -44,7 +45,8 @@ public class McChatService {
                        ChatMateEventService chatMateEventService,
                        MessageService messageService,
                        ImageService imageService,
-                       Config config) {
+                       Config config,
+                       ChatMateChatService chatMateChatService) {
     this.minecraftProxyService = minecraftProxyService;
     this.logService = logService;
     this.filterService = filterService;
@@ -57,6 +59,12 @@ public class McChatService {
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower, null);
     this.config.getIdentifyPlatforms().onChange(_value -> this.minecraftProxyService.refreshChat());
+
+    chatMateChatService.onNewChat(newChat -> {
+      for (PublicChatItem chat: newChat) {
+        this.printStreamChatItem(chat);
+      }
+    }, null);
   }
 
   public void printStreamChatItem(PublicChatItem item) {

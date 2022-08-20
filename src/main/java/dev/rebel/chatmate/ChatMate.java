@@ -6,6 +6,8 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
 import dev.rebel.chatmate.gui.ContextMenuStore;
+import dev.rebel.chatmate.gui.CustomGuiIngame;
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
@@ -26,46 +28,37 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 // refer to mcmod.info for more settings.
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
 public class ChatMate {
-  private final Minecraft minecraft;
-  private final ForgeEventService forgeEventService;
-  private final ChatMateChatService chatMateChatService;
-  private final McChatService mcChatService;
-  private final MouseEventService mouseEventService;
-  private final KeyboardEventService keyboardEventService;
-  private final GuiService guiService;
-  private final RenderService renderService;
-  private final KeyBindingService keyBindingService;
-  private final Config config;
-  private final Environment environment;
-
   // from https://forums.minecraftforge.net/topic/68571-1122-check-if-environment-is-deobfuscated/
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
-  public ChatMate() throws Exception {
+  @Mod.EventHandler
+  public void onFMLInitialization(FMLInitializationEvent event) throws Exception {
     String currentDir = System.getProperty("user.dir").replace("\\", "/");
     String dataDir = currentDir + "/mods/ChatMate";
     FileService fileService = new FileService(dataDir);
     LogService logService = new LogService(fileService, false);
 
     Minecraft minecraft = Minecraft.getMinecraft();
-    this.minecraft = minecraft;
-    this.forgeEventService = new ForgeEventService(logService, minecraft);
+    ForgeEventService forgeEventService = new ForgeEventService(logService, minecraft);
+    // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
+    MinecraftForge.EVENT_BUS.register(forgeEventService);
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
 
     ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV2.class, logService, fileService);
-    this.config = new Config(logService, configPersistorService);
-    this.mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
-    this.keyboardEventService = new KeyboardEventService(logService, forgeEventService);
+    Config config = new Config(logService, configPersistorService);
+    MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
+    KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
     String environmentPath = "/environment.yml";
-    this.environment = Environment.parseEnvironmentFile(FileHelpers.readLines(environmentPath));
+    Environment environment = Environment.parseEnvironmentFile(FileHelpers.readLines(environmentPath));
 
-    String apiPath = this.environment.serverUrl + "/api";
+    String apiPath = environment.serverUrl + "/api";
     CursorService cursorService = new CursorService(minecraft, logService, forgeEventService);
     ApiRequestService apiRequestService = new ApiRequestService(cursorService);
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, apiPath);
@@ -81,30 +74,31 @@ public class ChatMate {
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
-    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
+    ChatMateChatService chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
 
-    SoundService soundService = new SoundService(logService, minecraftProxyService, this.config);
+    SoundService soundService = new SoundService(logService, minecraftProxyService, config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory);
     MessageService messageService = new MessageService(logService, minecraftProxyService);
     ImageService imageService = new ImageService(minecraft);
-    this.mcChatService = new McChatService(minecraftProxyService,
+    McChatService mcChatService = new McChatService(minecraftProxyService,
         logService,
         filterService,
         soundService,
         chatMateEventService,
         messageService,
         imageService,
-        config);
+        config,
+        chatMateChatService);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory);
 
-    this.renderService = new RenderService(minecraft, this.forgeEventService);
-    this.keyBindingService = new KeyBindingService(this.forgeEventService);
+    RenderService renderService = new RenderService(minecraft, forgeEventService);
+    KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
     ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
-    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, this.forgeEventService, statusService, config, serverLogEventService);
-    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, this.forgeEventService, this.mouseEventService, dimFactory);
+    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, forgeEventService, statusService, config, serverLogEventService);
+    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory);
     ClipboardService clipboardService = new ClipboardService();
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, guiChatMateHud);
-    CounterHandler counterHandler = new CounterHandler(this.keyBindingService, guiChatMateHud, dimFactory, minecraft);
+    CounterHandler counterHandler = new CounterHandler(keyBindingService, guiChatMateHud, dimFactory, minecraft);
     BrowserService browserService = new BrowserService(logService);
     MinecraftChatService minecraftChatService = new MinecraftChatService(minecraftProxyService);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
@@ -126,12 +120,22 @@ public class ChatMate {
         logService,
         rankEndpointProxy,
         minecraftChatService);
-    this.guiService = new GuiService(this.isDev,
+
+    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
+        minecraft,
         logService,
-        this.config,
-        this.forgeEventService,
-        this.mouseEventService,
-        this.keyBindingService,
+        config,
+        forgeEventService,
+        dimFactory,
+        mouseEventService,
+        contextMenuStore);
+    CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
+    GuiService guiService = new GuiService(this.isDev,
+        logService,
+        config,
+        forgeEventService,
+        mouseEventService,
+        keyBindingService,
         minecraft,
         minecraftProxyService,
         guiChatMateHud,
@@ -145,7 +149,8 @@ public class ChatMate {
         browserService,
         chatMateEndpointProxy,
         environment,
-        minecraftChatService);
+        minecraftChatService,
+        customGuiIngame);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),
@@ -155,36 +160,15 @@ public class ChatMate {
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 
-    chatMateChatService.onNewChat(this::onNewYtChat, null);
-  }
-
-  @Mod.EventHandler
-  public void onFMLInitialization(FMLInitializationEvent event) {
-    // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
-    MinecraftForge.EVENT_BUS.register(this.forgeEventService);
-
-    this.guiService.initialiseCustomChat();
-    this.config.getChatMateEnabledEmitter().onChange(enabled -> {
+    config.getChatMateEnabledEmitter().onChange(enabled -> {
       if (enabled) {
-        this.mcChatService.printInfo(String.format("Enabled. [%s]", this.environment.env.toString().toCharArray()[0]));
+        mcChatService.printInfo(String.format("Enabled. [%s]", environment.env.toString().toCharArray()[0]));
       }
     });
 
     // to make our life easier, auto enable when in a dev environment
     if (this.isDev) {
-      this.config.getChatMateEnabledEmitter().set(true);
-    }
-  }
-
-  // this doesn't do anything!
-  @Mod.EventHandler
-  public void onFMLDeactivation(FMLModDisabledEvent event) {
-    this.config.getChatMateEnabledEmitter().set(false);
-  }
-
-  private void onNewYtChat(PublicChatItem[] newChat) {
-    for (PublicChatItem chat: newChat) {
-      this.mcChatService.printStreamChatItem(chat);
+      config.getChatMateEnabledEmitter().set(true);
     }
   }
 }

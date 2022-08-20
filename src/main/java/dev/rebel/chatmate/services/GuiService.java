@@ -43,8 +43,7 @@ public class GuiService {
   private final ChatMateEndpointProxy chatMateEndpointProxy;
   private final Environment environment;
   private final MinecraftChatService minecraftChatService;
-
-  private CustomGuiIngame customGuiIngame;
+  private final CustomGuiIngame customGuiIngame;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -65,7 +64,8 @@ public class GuiService {
                     BrowserService browserService,
                     ChatMateEndpointProxy chatMateEndpointProxy,
                     Environment environment,
-                    MinecraftChatService minecraftChatService) {
+                    MinecraftChatService minecraftChatService,
+                    CustomGuiIngame customGuiIngame) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -86,6 +86,7 @@ public class GuiService {
     this.chatMateEndpointProxy = chatMateEndpointProxy;
     this.environment = environment;
     this.minecraftChatService = minecraftChatService;
+    this.customGuiIngame = customGuiIngame;
 
     this.addEventHandlers();
   }
@@ -95,20 +96,6 @@ public class GuiService {
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
     screen.setMainElement(new ChatMateDashboardElement(context, screen, this.chatMateEndpointProxy));
     this.minecraft.displayGuiScreen(screen);
-  }
-
-  public void initialiseCustomChat() {
-    // we can only instantiate the GuiIngame once Minecraft is fully initialised (NOT in the ChatMate constructor)
-    // because it has a getter that returns null if not fully initialised, which would cause a render crash later on.
-    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
-        this.minecraft,
-        this.logService,
-        this.config,
-        this.forgeEventService,
-        this.dimFactory,
-        this.mouseEventService,
-        this.contextMenuStore);
-    this.customGuiIngame = new CustomGuiIngame(this.minecraft, customGuiNewChat);
   }
 
   private void addEventHandlers() {
