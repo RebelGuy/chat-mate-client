@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.chat;
 
 import com.google.common.collect.Iterators;
+import dev.rebel.chatmate.gui.FontEngine;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
@@ -28,11 +29,11 @@ public class PrecisionChatComponentText implements IChatComponent {
   }
 
   /** Gets the effective components for a chat line. Note that any action events may be lost - they are only retained in the original components. */
-  public List<Tuple2<PrecisionLayout, IChatComponent>> getComponentsForLine(FontRenderer fontRenderer, int guiLineWidth) {
+  public List<Tuple2<PrecisionLayout, IChatComponent>> getComponentsForLine(FontEngine fontEngine, int guiLineWidth) {
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
 
     for (Tuple2<PrecisionLayout, IChatComponent> pair : components) {
-      Tuple2<PrecisionLayout, IChatComponent> effective = this.getEffectiveComponent(pair, guiLineWidth, fontRenderer);
+      Tuple2<PrecisionLayout, IChatComponent> effective = this.getEffectiveComponent(pair, guiLineWidth, fontEngine);
       list.add(effective);
     }
 
@@ -41,7 +42,7 @@ public class PrecisionChatComponentText implements IChatComponent {
 
   /** If fullWidth is true, will use the whole layout box for the text component's hitbox, otherwise,
    * will use only the visible text region. Returns the original text component instance. */
-  public @Nullable IChatComponent getComponentAtGuiPosition(int guiPosition, int guiLineWidth, boolean fullWidth, FontRenderer fontRenderer) {
+  public @Nullable IChatComponent getComponentAtGuiPosition(int guiPosition, int guiLineWidth, boolean fullWidth, FontEngine fontEngine) {
     for (Tuple2<PrecisionLayout, IChatComponent> component : this.components) {
       int start, width;
       if (fullWidth) {
@@ -50,7 +51,7 @@ public class PrecisionChatComponentText implements IChatComponent {
         width = component._1.width.getGuiValue(guiLineWidth);
       } else {
         // truncated/positioned layout (text region only)
-        Tuple2<PrecisionLayout, IChatComponent> effective = this.getEffectiveComponent(component, guiLineWidth, fontRenderer);
+        Tuple2<PrecisionLayout, IChatComponent> effective = this.getEffectiveComponent(component, guiLineWidth, fontEngine);
         start = effective._1.position.getGuiValue(guiLineWidth);
         width = effective._1.width.getGuiValue(guiLineWidth);
       }
@@ -66,19 +67,19 @@ public class PrecisionChatComponentText implements IChatComponent {
 
   /** Returns the left-aligned, truncated chat component that should be rendered to satisfy the layout of the provided component.
    * Retains all chat style properties of this component. The layout box is flush with the text. */
-  private Tuple2<PrecisionLayout, IChatComponent> getEffectiveComponent(Tuple2<PrecisionLayout, IChatComponent> pair, int lineWidth, FontRenderer fontRenderer) {
+  private Tuple2<PrecisionLayout, IChatComponent> getEffectiveComponent(Tuple2<PrecisionLayout, IChatComponent> pair, int lineWidth, FontEngine fontEngine) {
     PrecisionLayout layout = pair._1;
     IChatComponent component = pair._2;
     int maxWidth = layout.width.getGuiValue(lineWidth);
 
     String text = component.getFormattedText();
-    int textWidth = fontRenderer.getStringWidth(text);
+    int textWidth = fontEngine.getStringWidth(text);
 
     if (textWidth > maxWidth) {
       String truncation = layout.customTruncation == null ? "…" : layout.customTruncation;
-      int suffixWidth = fontRenderer.getStringWidth(truncation);
-      text = listFormattedStringToWidth(component.getFormattedText(), maxWidth - suffixWidth, fontRenderer).get(0) + truncation;
-      textWidth = fontRenderer.getStringWidth(text);
+      int suffixWidth = fontEngine.getStringWidth(truncation);
+      text = listFormattedStringToWidth(component.getFormattedText(), maxWidth - suffixWidth, fontEngine).get(0) + truncation;
+      textWidth = fontEngine.getStringWidth(text);
     }
 
     // at this point, the text is guaranteed to be <= maxWidth
@@ -139,13 +140,13 @@ public class PrecisionChatComponentText implements IChatComponent {
   // Note: the following overrides are required when trimming formatted strings because,
   // by default, the FontRenderer tries to split in-between words only.
 
-  private List<String> listFormattedStringToWidth(String text, int width, FontRenderer fontRenderer) {
-    return Arrays.asList(this.wrapFormattedStringToWidth(text, width, fontRenderer).split("\n"));
+  private List<String> listFormattedStringToWidth(String text, int width, FontEngine fontEngine) {
+    return Arrays.asList(this.wrapFormattedStringToWidth(text, width, fontEngine).split("\n"));
   }
 
   /** From the FontRenderer::wrapFormattedStringToWidth, except it treats spaces as just another character and ignores newlines. */
-  private String wrapFormattedStringToWidth(String text, int width, FontRenderer fontRenderer) {
-    int i = this.sizeStringToWidth(text, width, fontRenderer);
+  private String wrapFormattedStringToWidth(String text, int width, FontEngine fontEngine) {
+    int i = this.sizeStringToWidth(text, width, fontEngine);
     if (text.length() <= i) {
       return text;
     } else {
@@ -154,7 +155,7 @@ public class PrecisionChatComponentText implements IChatComponent {
   }
 
   /** Same as the FontRenderer implementation, except it treats spaces as just another character. */
-  private int sizeStringToWidth(String text, int width, FontRenderer fontRenderer) {
+  private int sizeStringToWidth(String text, int width, FontEngine fontEngine) {
     int i = text.length();
     int j = 0;
     int k = 0;
@@ -168,7 +169,7 @@ public class PrecisionChatComponentText implements IChatComponent {
           break;
 
         default:
-          j += fontRenderer.getCharWidth(c0);
+          j += fontEngine.getCharWidth(c0);
           if (flag) {
             ++j;
           }

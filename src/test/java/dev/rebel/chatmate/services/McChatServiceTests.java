@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
@@ -12,8 +13,8 @@ import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.services.events.ChatMateChatService;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,11 +40,11 @@ public class McChatServiceTests {
   @Mock ChatMateEventService mockChatMateEventService;
   @Mock MessageService mockMessageService;
   @Mock ImageService mockImageService;
+  @Mock ChatMateChatService mockChatMateService;
+  @Mock FontEngine mockFontEngine;
 
   @Mock Config mockConfig;
   @Mock StatefulEmitter<Boolean> identifyPlatforms;
-
-  @Mock FontRenderer mockFontRenderer;
 
   PublicUser author1 = createAuthor("Author 1");
   PublicMessagePart text1 = createText("Text 1");
@@ -98,7 +99,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_unicodeEmoji_PrintedDirectly() {
     PublicChatItem item = createItem(author1, emoji1);
-    when(this.mockFontRenderer.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
+    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
@@ -132,7 +133,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_textEmoji_spacingBetween() {
     PublicChatItem item = createItem(author1, text1, emoji2, emoji1, text2);
-    when(this.mockFontRenderer.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
+    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
@@ -180,8 +181,6 @@ public class McChatServiceTests {
   }
 
   private McChatService setupService() {
-    when(this.mockMinecraftProxyService.getChatFontRenderer()).thenReturn(this.mockFontRenderer);
-
     // just return the input
     when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArgument(0));
 
@@ -192,7 +191,9 @@ public class McChatServiceTests {
         this.mockChatMateEventService,
         this.mockMessageService,
         this.mockImageService,
-        this.mockConfig);
+        this.mockConfig,
+        this.mockChatMateService,
+        this.mockFontEngine);
   }
 
   // The below methods should be used for mock data creation. It sets all

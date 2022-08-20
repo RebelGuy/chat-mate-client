@@ -63,7 +63,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .cast();
 
-    Dim iconWidth = gui(context.fontRenderer.FONT_HEIGHT).plus(gui(4));
+    Dim iconWidth = gui(context.fontEngine.FONT_HEIGHT).plus(gui(4));
     RectExtension buttonMargin = new RectExtension(gui(2), ZERO);
     this.clearButton = new IconButtonElement(context, this)
         .setImage(Asset.GUI_CLEAR_ICON)

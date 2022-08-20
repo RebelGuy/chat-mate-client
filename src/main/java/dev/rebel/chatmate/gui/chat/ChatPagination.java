@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.chat;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
@@ -22,6 +23,7 @@ public class ChatPagination<T> {
   private final LogService logService;
   private MinecraftProxyService minecraftProxyService;
   private MessageService messageService;
+  private FontEngine fontEngine;
   private final T[] items;
   private final int itemsPerPage;
   private final PaginationRenderer<T> renderer;
@@ -39,6 +41,7 @@ public class ChatPagination<T> {
   public ChatPagination(LogService logService,
                         MinecraftProxyService minecraftProxyService,
                         MessageService messageService,
+                        FontEngine fontEngine,
                         PaginationRenderer<T> renderer,
                         T[] items,
                         int itemsPerPage,
@@ -46,6 +49,7 @@ public class ChatPagination<T> {
     this.logService = logService;
     this.minecraftProxyService = minecraftProxyService;
     this.messageService = messageService;
+    this.fontEngine = fontEngine;
     this.renderer = renderer;
     this.items = items;
     this.itemsPerPage = itemsPerPage;
@@ -68,13 +72,12 @@ public class ChatPagination<T> {
   public void render() {
     this.renderHeader();
 
-    FontRenderer fontRenderer =  this.minecraftProxyService.getChatFontRenderer();
     int chatWidth = this.minecraftProxyService.getChatWidth();
     int effectiveChatWidth = this.minecraftProxyService.getChatWidthForText();
     T[] visibleItems = this.getVisibleItems();
     for (int i = 0; i < renderedComponents.length; i++) {
       if (i < visibleItems.length) {
-        this.renderedComponents[i].component = this.renderer.renderItem(visibleItems[i], visibleItems, fontRenderer, chatWidth, effectiveChatWidth);
+        this.renderedComponents[i].component = this.renderer.renderItem(visibleItems[i], visibleItems, this.fontEngine, chatWidth, effectiveChatWidth);
       } else {
         // empty padding on the last page
         this.renderedComponents[i].component = emptyLine;
@@ -226,6 +229,6 @@ public class ChatPagination<T> {
     /** Should return the chat component for rendering the given item. To help with layout, all items that are visible on the current page are also provided.
      * @param chatWidth is the actual chat width in GUI units.
      * @param effectiveChatWidth is the effective chat width for text rendering considerations. If you limit your text to this width, it will fit onto a single line. */
-    public abstract IChatComponent renderItem(T item, T[] allItemsOnPage, FontRenderer fontRenderer, int chatWidth, int effectiveChatWidth);
+    public abstract IChatComponent renderItem(T item, T[] allItemsOnPage, FontEngine fontEngine, int chatWidth, int effectiveChatWidth);
   }
 }

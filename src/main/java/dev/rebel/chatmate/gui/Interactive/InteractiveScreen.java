@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Environment;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -503,7 +504,7 @@ public class InteractiveScreen extends Screen implements IElement {
       return;
     }
 
-    RendererHelpers.drawTooltip(context.dimFactory, context.fontRenderer, context.mousePosition, tooltip);
+    RendererHelpers.drawTooltip(context.dimFactory, context.fontEngine, context.mousePosition, tooltip);
   }
 
   //region Empty or delegated IElement methods
@@ -632,7 +633,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final KeyboardEventService keyboardEventService;
     public final DimFactory dimFactory;
     public final Minecraft minecraft;
-    public final FontRenderer fontRenderer;
+    public final FontEngine fontEngine;
     public final ClipboardService clipboardService;
     public final SoundService soundService;
     public final CursorService cursorService;
@@ -652,7 +653,7 @@ public class InteractiveScreen extends Screen implements IElement {
                               KeyboardEventService keyboardEventService,
                               DimFactory dimFactory,
                               Minecraft minecraft,
-                              FontRenderer fontRenderer,
+                              FontEngine fontEngine,
                               ClipboardService clipboardService,
                               SoundService soundService,
                               CursorService cursorService,
@@ -666,7 +667,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.keyboardEventService = keyboardEventService;
       this.dimFactory = dimFactory;
       this.minecraft = minecraft;
-      this.fontRenderer = fontRenderer;
+      this.fontEngine = fontEngine;
       this.clipboardService = clipboardService;
       this.soundService = soundService;
       this.cursorService = cursorService;

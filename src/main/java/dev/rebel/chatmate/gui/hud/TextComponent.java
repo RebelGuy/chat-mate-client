@@ -10,6 +10,9 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 
 public class TextComponent extends Box implements IHudComponent {
   private final Minecraft minecraft;
@@ -128,7 +131,7 @@ public class TextComponent extends Box implements IHudComponent {
     }
 
     RendererHelpers.withMapping(new DimPoint(this.x, this.y), this.scale, () -> {
-      this.minecraft.fontRendererObj.drawStringWithShadow(this.text, 0, 0, Colour.WHITE.toInt());
+      context.fontEngine.drawStringWithShadow(this.text, 0, 0, Colour.WHITE.toInt());
     });
   }
 }

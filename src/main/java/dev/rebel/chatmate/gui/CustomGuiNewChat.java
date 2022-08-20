@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
+import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
@@ -53,6 +54,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final DimFactory dimFactory;
   private final MouseEventService mouseEventService;
   private final ContextMenuStore contextMenuStore;
+  private final FontEngine fontEngine;
 
   private final List<String> sentMessages = Lists.newArrayList();
   private final List<AbstractChatLine> abstractChatLines = Lists.newArrayList();
@@ -69,7 +71,8 @@ public class CustomGuiNewChat extends GuiNewChat {
                           ForgeEventService forgeEventService,
                           DimFactory dimFactory,
                           MouseEventService mouseEventService,
-                          ContextMenuStore contextMenuStore) {
+                          ContextMenuStore contextMenuStore,
+                          FontEngine fontEngine) {
     super(minecraft);
     this.minecraft = minecraft;
     this.logService = logService;
@@ -78,6 +81,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.dimFactory = dimFactory;
     this.mouseEventService = mouseEventService;
     this.contextMenuStore = contextMenuStore;
+    this.fontEngine = fontEngine;
 
     this.hoveredLine = new AnimatedSelection<>(150L);
     this.selectedLine = new AnimatedSelection<>(100L);
@@ -184,7 +188,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     if (chatComponent instanceof PrecisionChatComponentText) {
       PrecisionChatComponentText component = (PrecisionChatComponentText)chatComponent;
-      for (Tuple2<PrecisionChatComponentText.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.minecraft.fontRendererObj, width)) {
+      for (Tuple2<PrecisionChatComponentText.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.fontEngine, width)) {
         int left = lineLeft + pair._1.position.getGuiValue(width);
         this.drawChatComponent(pair._2, left, lineBottom, opacity);
       }
@@ -223,8 +227,8 @@ public class CustomGuiNewChat extends GuiNewChat {
     } else if (component instanceof ChatComponentText) {
       String formattedText = getFormattedText((ChatComponentText)component);
       int textColour = 16777215 + (opacity << 24);
-      this.minecraft.fontRendererObj.drawStringWithShadow(formattedText, x, lineBottom - 8, textColour);
-      return this.minecraft.fontRendererObj.getStringWidth(formattedText);
+      this.fontEngine.drawStringWithShadow(formattedText, x, lineBottom - 8, textColour);
+      return this.fontEngine.getStringWidth(formattedText);
 
     } else if (component instanceof ImageChatComponent) {
       ImageChatComponent imageComponent = (ImageChatComponent)component;
@@ -235,18 +239,18 @@ public class CustomGuiNewChat extends GuiNewChat {
 
       // if the image is not square, it's possible that it will not be positioned properly in the dedicated space in the chat line
       // due to rounding error. the following adjustment will fix that
-      float requiredWidth = imageComponent.getRequiredWidth(this.minecraft.fontRendererObj.FONT_HEIGHT);
+      float requiredWidth = imageComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT);
       int requiredWidthInt = (int)Math.ceil(requiredWidth);
       float xAdjustment = (requiredWidthInt - requiredWidth) / 2;
 
-      Dim targetHeight = this.dimFactory.fromGui(this.minecraft.fontRendererObj.FONT_HEIGHT);
+      Dim targetHeight = this.dimFactory.fromGui(this.fontEngine.FONT_HEIGHT);
       Dim currentHeight = this.dimFactory.fromScreen(texture.height);
       float imageX = x + imageComponent.paddingGuiLeft + xAdjustment;
       float imageY = lineBottom - targetHeight.getGui();
 
       float scaleToReachTarget = targetHeight.getGui() / currentHeight.getGui();
       float scaleY = currentHeight.getGui() / 256 * scaleToReachTarget;
-      float aspectRatio = imageComponent.getImageWidth(this.minecraft.fontRendererObj.FONT_HEIGHT) / targetHeight.getGui();
+      float aspectRatio = imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT) / targetHeight.getGui();
       float scaleX = aspectRatio * scaleY;
 
       GlStateManager.pushMatrix();
@@ -275,7 +279,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   /** Given the lineCount (total lines) and the renderedLines (how many lines are visible on screen), draws the scrollbar to the left of the chat GUI. */
   private void drawScrollBar(int lineCount, int renderedLines) {
-    int lineHeight = this.minecraft.fontRendererObj.FONT_HEIGHT;
+    int lineHeight = this.fontEngine.FONT_HEIGHT;
     GlStateManager.translate(-3.0F, 0.0F, 0.0F);
     int fullHeight = lineCount * lineHeight + lineCount;
     int renderedHeight = renderedLines * lineHeight + renderedLines;
@@ -382,7 +386,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     } else {
       int lineWidth = this.getLineWidth();
-      List<IChatComponent> splitComponents = ComponentHelpers.splitText(chatComponent, lineWidth, this.minecraft.fontRendererObj);
+      List<IChatComponent> splitComponents = ComponentHelpers.splitText(chatComponent, lineWidth, this.fontEngine);
       for (IChatComponent component : splitComponents) {
         this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId, parent));
       }
@@ -503,7 +507,7 @@ public class CustomGuiNewChat extends GuiNewChat {
       }
 
       if (component instanceof ChatComponentText) {
-        lineX += this.minecraft.fontRendererObj.getStringWidth(getFormattedText((ChatComponentText)component));
+        lineX += this.fontEngine.getStringWidth(getFormattedText((ChatComponentText)component));
         if (lineX > x) {
           return originalComponent;
         }
@@ -511,13 +515,13 @@ public class CustomGuiNewChat extends GuiNewChat {
         PrecisionChatComponentText precisionComponent = (PrecisionChatComponentText)component;
 
         // there will be no siblings - only one Precision component is supported per line
-        return precisionComponent.getComponentAtGuiPosition(x, maxX, false, this.minecraft.fontRendererObj);
+        return precisionComponent.getComponentAtGuiPosition(x, maxX, false, this.fontEngine);
 
       } else if (component instanceof ImageChatComponent) {
         ImageChatComponent imageComponent = (ImageChatComponent)component;
         lineX += imageComponent.paddingGuiLeft;
 
-        int width = (int)Math.ceil(imageComponent.getImageWidth(this.minecraft.fontRendererObj.FONT_HEIGHT));
+        int width = (int)Math.ceil(imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT));
         if (lineX <= x && lineX + width >= x) {
           return originalComponent;
         }
@@ -560,13 +564,13 @@ public class CustomGuiNewChat extends GuiNewChat {
     int visibleLines = Math.min(this.getLineCount(), this.chatLines.size());
 
     int maxX = this.getLineWidth();
-    int maxY = this.minecraft.fontRendererObj.FONT_HEIGHT * visibleLines + 1;
+    int maxY = this.fontEngine.FONT_HEIGHT * visibleLines + 1;
     if (mappedX > maxX || mappedY > maxY) {
       return null;
     }
 
     // the line index at the current y-position
-    int lineIndex = mappedY / this.minecraft.fontRendererObj.FONT_HEIGHT + this.scrollPos;
+    int lineIndex = mappedY / this.fontEngine.FONT_HEIGHT + this.scrollPos;
     if (lineIndex < 0 || lineIndex >= this.chatLines.size()) {
       return null;
     }

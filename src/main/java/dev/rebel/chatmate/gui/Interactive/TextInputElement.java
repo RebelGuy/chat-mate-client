@@ -430,7 +430,7 @@ public class TextInputElement extends InputElement {
     Dim left = this.getContentBox().getX();
     Dim top = this.getContentBox().getY();
     int color = this.disabledColor;
-    this.font.drawString("§o" + this.placeholder, left.getGui(), top.getGui(), color, false);
+    this.context.fontEngine.drawString("§o" + this.placeholder, left.getGui(), top.getGui(), color, false);
   }
 
   private void drawEditableText() {

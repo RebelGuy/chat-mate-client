@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
@@ -223,7 +224,7 @@ public class RendererHelpers {
     tessellator.draw();
   }
 
-  public static void drawTooltip(DimFactory df, FontRenderer font, DimPoint mousePos, String tooltip) {
+  public static void drawTooltip(DimFactory df, FontEngine font, DimPoint mousePos, String tooltip) {
     Dim screenWidth = df.getMinecraftSize().getX();
     RectExtension padding = new RectExtension(df.fromGui(3));
     List<String> lines = TextHelpers.splitText(tooltip, (int)screenWidth.over(2).minus(padding.getExtendedWidth()).getGui(), font);
@@ -398,7 +399,7 @@ public class RendererHelpers {
     GlStateManager.disableAlpha();
     GlStateManager.disableTexture2D();
     GlStateManager.depthMask(false); // this ensures we can draw multiple transparent things on top of each other
-    GlStateManager.shadeModel(7425); // for being able to draw colour gradients
+    GlStateManager.shadeModel(GL11.GL_SMOOTH); // for being able to draw colour gradients
 
     Tessellator tessellator = Tessellator.getInstance();
     WorldRenderer worldRenderer = tessellator.getWorldRenderer();
@@ -442,7 +443,7 @@ public class RendererHelpers {
     GlStateManager.enableAlpha();
     GlStateManager.enableTexture2D();
     GlStateManager.depthMask(true);
-    GlStateManager.shadeModel(7424);
+    GlStateManager.shadeModel(GL11.GL_FLAT);
     GlStateManager.popMatrix();
   }
 

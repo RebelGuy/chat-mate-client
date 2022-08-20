@@ -44,6 +44,7 @@ public class GuiService {
   private final Environment environment;
   private final MinecraftChatService minecraftChatService;
   private final CustomGuiIngame customGuiIngame;
+  private final FontEngine fontEngine;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -65,7 +66,8 @@ public class GuiService {
                     ChatMateEndpointProxy chatMateEndpointProxy,
                     Environment environment,
                     MinecraftChatService minecraftChatService,
-                    CustomGuiIngame customGuiIngame) {
+                    CustomGuiIngame customGuiIngame,
+                    FontEngine fontEngine) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -87,6 +89,7 @@ public class GuiService {
     this.environment = environment;
     this.minecraftChatService = minecraftChatService;
     this.customGuiIngame = customGuiIngame;
+    this.fontEngine = fontEngine;
 
     this.addEventHandlers();
   }
@@ -197,7 +200,7 @@ public class GuiService {
         this.keyboardEventService,
         this.dimFactory,
         this.minecraft,
-        this.minecraft.fontRendererObj,
+        this.fontEngine,
         this.clipboardService,
         this.soundService,
         this.cursorService,

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
@@ -37,6 +38,7 @@ public class McChatService {
   private final MessageService messageService;
   private final ImageService imageService;
   private final Config config;
+  private final FontEngine fontEngine;
 
   public McChatService(MinecraftProxyService minecraftProxyService,
                        LogService logService,
@@ -46,7 +48,8 @@ public class McChatService {
                        MessageService messageService,
                        ImageService imageService,
                        Config config,
-                       ChatMateChatService chatMateChatService) {
+                       ChatMateChatService chatMateChatService,
+                       FontEngine fontEngine) {
     this.minecraftProxyService = minecraftProxyService;
     this.logService = logService;
     this.filterService = filterService;
@@ -55,6 +58,7 @@ public class McChatService {
     this.messageService = messageService;
     this.imageService = imageService;
     this.config = config;
+    this.fontEngine = fontEngine;
 
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower, null);
@@ -82,7 +86,7 @@ public class McChatService {
       IChatComponent platform = new PlatformViewerTagComponent(this.config, item.platform);
       IChatComponent rank = this.messageService.getRankComponent(Collections.map(Collections.list(item.author.activeRanks), r -> r.rank));
       IChatComponent player = this.messageService.getUserComponent(item.author);
-      McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
+      McChatResult mcChatResult = this.ytChatToMcChat(item, this.fontEngine);
 
       IChatComponent joinedMessage = joinComponents("", mcChatResult.chatComponents);
       joinedMessage = this.messageService.ensureNonempty(joinedMessage, "Empty message...");
@@ -149,7 +153,7 @@ public class McChatService {
 
     PublicRankedUser highlightUser = highlightIndex == null ? null : users[highlightIndex];
     LeaderboardRenderer renderer = new LeaderboardRenderer(this.messageService, highlightUser);
-    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.messageService, renderer, users, 10, "Experience Leaderboard");
+    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.messageService, this.fontEngine, renderer, users, 10, "Experience Leaderboard");
     pagination.render();
   }
 
@@ -160,7 +164,7 @@ public class McChatService {
     }
 
     UserNameRenderer renderer = new UserNameRenderer(this.messageService);
-    ChatPagination<PublicUserNames> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.messageService, renderer, users, 10, "Search Results");
+    ChatPagination<PublicUserNames> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.messageService, this.fontEngine, renderer, users, 10, "Search Results");
     pagination.render();
   }
 
@@ -175,7 +179,7 @@ public class McChatService {
     this.minecraftProxyService.printChatMessage("Info", info);
   }
 
-  private McChatResult ytChatToMcChat(PublicChatItem item, FontRenderer fontRenderer) throws Exception {
+  private McChatResult ytChatToMcChat(PublicChatItem item, FontEngine fontEngine) throws Exception {
     ArrayList<IChatComponent> components = new ArrayList<>();
     boolean includesMention = false;
 
@@ -196,7 +200,7 @@ public class McChatService {
 
         // the name could be the literal emoji unicode character
         // check if the resource pack supports it - if so, use it!
-        if (nameChars.length == 1 && fontRenderer.getCharWidth(nameChars[0]) > 0) {
+        if (nameChars.length == 1 && fontEngine.getCharWidth(nameChars[0]) > 0) {
           text = name;
           style = YT_CHAT_MESSAGE_TEXT_STYLE;
         } else {

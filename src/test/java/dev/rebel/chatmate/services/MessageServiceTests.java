@@ -1,10 +1,10 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import org.junit.Assert;
@@ -20,17 +20,15 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class MessageServiceTests {
   @Mock LogService logService;
-  @Mock MinecraftProxyService minecraftProxyService;
-  @Mock FontRenderer fontRenderer;
+  @Mock FontEngine fontEngine;
 
   MessageService messageService;
 
   @Before
   public void setup() {
-    this.messageService = new MessageService(this.logService, this.minecraftProxyService);
+    this.messageService = new MessageService(this.logService, this.fontEngine);
 
-    when(this.minecraftProxyService.getChatFontRenderer()).thenReturn(this.fontRenderer);
-    when(this.fontRenderer.getStringWidth(anyString())).thenAnswer(i -> ((String)i.getArgument(0)).length());
+    when(this.fontEngine.getStringWidth(anyString())).thenAnswer(i -> ((String)i.getArgument(0)).length());
   }
 
   @Test
@@ -77,7 +75,7 @@ public class MessageServiceTests {
 
   @Test
   public void getUserComponent_UnrenderableName_ReplacesWithPlaceholder() {
-    when(this.fontRenderer.getStringWidth("x")).thenReturn(0);
+    when(this.fontEngine.getStringWidth("x")).thenReturn(0);
     PublicUser user = new PublicUser() {{
       id = 5;
       userInfo = new PublicChannelInfo() {{

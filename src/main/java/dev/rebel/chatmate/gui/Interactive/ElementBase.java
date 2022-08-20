@@ -1,14 +1,12 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
-import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -35,7 +33,7 @@ public abstract class ElementBase implements IElement {
   protected final InteractiveContext context;
   protected IElement parent;
   protected final Dim ZERO;
-  protected final FontRenderer font;
+  protected final FontEngine font;
   protected String name;
 
   /** Full size. */
@@ -61,7 +59,7 @@ public abstract class ElementBase implements IElement {
     this.context = context;
     this.parent = parent;
     this.ZERO = context.dimFactory.zeroGui();
-    this.font = context.fontRenderer;
+    this.font = context.fontEngine;
 
     this.box = null;
     this.padding = new RectExtension(context.dimFactory.zeroGui());

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
@@ -35,11 +36,11 @@ public class MessageService {
 
   private final Random random = new Random();
   private final LogService logService;
-  private final MinecraftProxyService minecraftProxyService;
+  private final FontEngine fontEngine;
 
-  public MessageService(LogService logService, MinecraftProxyService minecraftProxyService) {
+  public MessageService(LogService logService, FontEngine fontEngine) {
     this.logService = logService;
-    this.minecraftProxyService = minecraftProxyService;
+    this.fontEngine = fontEngine;
   }
 
   public IChatComponent getErrorMessage(String msg) {
@@ -79,11 +80,9 @@ public class MessageService {
     // #24 ShiroTheS... 41 |⣿⣿⣿⣿⣿     | 42
     // rank name levelStart barStart barFilled barBlank barEnd levelEnd
 
-    FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
-    assert fontRenderer != null;
     int padding = 4;
 
-    int rankNumberWidth = fontRenderer.getStringWidth("#" + String.join("", Collections.nCopies(rankDigits, "4")));
+    int rankNumberWidth = this.fontEngine.getStringWidth("#" + String.join("", Collections.nCopies(rankDigits, "4")));
     PrecisionLayout rankLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(rankNumberWidth), PrecisionAlignment.RIGHT);
     String rankText = "#" + entry.rank;
     int x = rankNumberWidth + padding;
@@ -91,22 +90,22 @@ public class MessageService {
     PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(nameWidth), PrecisionAlignment.LEFT);
     x += nameWidth + padding;
 
-    int levelNumberWidth = fontRenderer.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")));
+    int levelNumberWidth = this.fontEngine.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")));
     PrecisionLayout levelStartLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(levelNumberWidth), PrecisionAlignment.CENTRE);
     String levelStart = String.valueOf(entry.user.levelInfo.level);
     x += levelNumberWidth + padding;
 
     String barStart = "|";
-    int barStartWidth = fontRenderer.getStringWidth(barStart);
+    int barStartWidth = this.fontEngine.getStringWidth(barStart);
     PrecisionLayout barStartLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(barStartWidth), PrecisionAlignment.RIGHT);
     x += barStartWidth; // no padding
 
     String barEnd = "|";
-    int barEndWidth = fontRenderer.getStringWidth(barStart) + padding;
+    int barEndWidth = this.fontEngine.getStringWidth(barStart) + padding;
 
     int barBodyWidth = messageWidth - x - barEndWidth - levelNumberWidth;
     int fillWidth = Math.round(barBodyWidth * entry.user.levelInfo.levelProgress);
-    String filledBar = stringWithWidth(fontRenderer, "", "", '⣿', fillWidth) + "⣿";
+    String filledBar = stringWithWidth(this.fontEngine, "", "", '⣿', fillWidth) + "⣿";
     PrecisionLayout filledBarLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(fillWidth), PrecisionAlignment.LEFT, "");
     x += fillWidth; // no padding
 
@@ -135,10 +134,8 @@ public class MessageService {
 
   public IChatComponent getChannelNamesMessage(PublicUserNames userNames, int messageWidth) {
     // since different users may share the same channel name, it is helpful to also show each user's current level
-    FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
-    assert fontRenderer != null;
     String level = String.valueOf(userNames.user.levelInfo.level);
-    int levelNumberWidth = fontRenderer.getStringWidth("444");
+    int levelNumberWidth = this.fontEngine.getStringWidth("444");
     PrecisionLayout levelLayout = new PrecisionLayout(new PrecisionValue(4), new PrecisionValue(levelNumberWidth), PrecisionAlignment.RIGHT);
 
     // todo CHAT-270: at the moment we are only showing the default channel name, but in the future it is possible that a single user
@@ -154,32 +151,29 @@ public class MessageService {
   }
 
   public IChatComponent getPaginationFooterMessage(int messageWidth, int currentPage, int maxPage, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
-    FontRenderer fontRenderer = this.minecraftProxyService.getChatFontRenderer();
-    assert fontRenderer != null;
-
     if (onPrevPage == null && onNextPage == null) {
-      IChatComponent footer = styledText(stringWithWidth(fontRenderer, "", "", '-', messageWidth), INFO_MSG_STYLE);
+      IChatComponent footer = styledText(stringWithWidth(this.fontEngine, "", "", '-', messageWidth), INFO_MSG_STYLE);
       PrecisionLayout footerLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(messageWidth), PrecisionAlignment.CENTRE);
       return new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(footerLayout, footer)));
     }
 
     String padding = "  ";
-    int paddingWidth = fontRenderer.getStringWidth(padding);
+    int paddingWidth = this.fontEngine.getStringWidth(padding);
 
     String shortPageString = String.valueOf(currentPage);
-    int shortPageStringWidth = fontRenderer.getStringWidth(shortPageString);
+    int shortPageStringWidth = this.fontEngine.getStringWidth(shortPageString);
 
     String longPageString = String.format("%d of %d", currentPage, maxPage);
-    int longPageStringWidth = fontRenderer.getStringWidth(longPageString);
+    int longPageStringWidth = this.fontEngine.getStringWidth(longPageString);
 
     // we use layouts for the buttons because we want them to be fixed, even if the footer contents change sizes slightly
     // (e.g. the page number width could change - we don't want the buttons to slightly shift their positions as a result)
     String prevPageMsg = "<< Previous";
-    int prevPageMsgWidth = fontRenderer.getStringWidth(prevPageMsg);
+    int prevPageMsgWidth = this.fontEngine.getStringWidth(prevPageMsg);
     PrecisionLayout prevPageLayout = new PrecisionLayout(new PrecisionValue(paddingWidth), new PrecisionValue(messageWidth - paddingWidth), PrecisionAlignment.LEFT);
 
     String nextPageMsg = "Next >>";
-    int nextPageMsgWidth = fontRenderer.getStringWidth(nextPageMsg);
+    int nextPageMsgWidth = this.fontEngine.getStringWidth(nextPageMsg);
     PrecisionLayout nextPageLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(messageWidth - paddingWidth), PrecisionAlignment.RIGHT);
 
     // we now have to decide what we want to render in the centre of the footer. this is how much free room we have:
@@ -188,7 +182,7 @@ public class MessageService {
     String interior;
     if (interiorWidth < shortPageStringWidth) {
       // fill with `-`
-      interior = stringWithWidth(fontRenderer, "", "", '-', interiorWidth);
+      interior = stringWithWidth(this.fontEngine, "", "", '-', interiorWidth);
     } else if (interiorWidth < longPageStringWidth) {
       interior = shortPageString;
     } else {
@@ -196,9 +190,9 @@ public class MessageService {
     }
 
     // now try to also add some `-` fills to the left and right of the interior, if there is enough room.
-    int availableToFillSides = (interiorWidth - (fontRenderer.getStringWidth(interior) + paddingWidth + paddingWidth)) / 2;
-    if (availableToFillSides >= fontRenderer.getStringWidth("-")) {
-      String interiorSides = stringWithWidth(fontRenderer, "", "", '-', availableToFillSides);
+    int availableToFillSides = (interiorWidth - (this.fontEngine.getStringWidth(interior) + paddingWidth + paddingWidth)) / 2;
+    if (availableToFillSides >= this.fontEngine.getStringWidth("-")) {
+      String interiorSides = stringWithWidth(this.fontEngine, "", "", '-', availableToFillSides);
       interior = interiorSides + padding + interior + padding + interiorSides;
     }
     // centre the interior exactly between the outer buttons
@@ -273,7 +267,7 @@ public class MessageService {
     String unstyledName = extractedFormatting.unformattedText.trim();
 
     // make sure we don't try to print an empty user name
-    if (this.minecraftProxyService.getChatFontRenderer().getStringWidth(unstyledName) == 0) {
+    if (this.fontEngine.getStringWidth(unstyledName) == 0) {
       unstyledName = "User " + user.id;
     }
 
@@ -326,7 +320,7 @@ public class MessageService {
     }
 
     String text = sb.toString().trim();
-    if (this.minecraftProxyService.getChatFontRenderer().getStringWidth(text) == 0) {
+    if (this.fontEngine.getStringWidth(text) == 0) {
       return styledText(msgIfEmpty, INFO_SUBTLE_MSG_STYLE);
     } else {
       return component;

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -103,7 +104,7 @@ public class LabelElement extends SingleElement {
 
   /** Returns the full box width that would be required to contain the longest word of this label on a single line. */
   public Dim calculateWidthToFitLongestWord() {
-    List<Integer> widths = Collections.map(Collections.list(this.text.split(" ")), this.context.fontRenderer::getStringWidth);
+    List<Integer> widths = Collections.map(Collections.list(this.text.split(" ")), this.context.fontEngine::getStringWidth);
     Dim maxWidth = this.context.dimFactory.fromGui(this.fontScale * Collections.max(widths));
     return super.getFullBoxWidth(maxWidth);
   }
@@ -131,7 +132,7 @@ public class LabelElement extends SingleElement {
 
   @Override
   public DimPoint calculateThisSize(Dim maxContentSize) {
-    FontRenderer font = this.context.fontRenderer;
+    FontEngine font = this.context.fontEngine;
     DimFactory factory = this.context.dimFactory;
     Dim fontHeight = factory.fromGui(font.FONT_HEIGHT);
     maxContentSize = maxContentSize.over(this.fontScale);
@@ -182,7 +183,7 @@ public class LabelElement extends SingleElement {
 
   @Override
   public void renderElement() {
-    FontRenderer font = this.context.fontRenderer;
+    FontEngine font = this.context.fontEngine;
     DimFactory factory = this.context.dimFactory;
 
     Dim fontHeight = factory.fromGui(font.FONT_HEIGHT).times(this.fontScale);
@@ -203,7 +204,7 @@ public class LabelElement extends SingleElement {
       }
 
       RendererHelpers.withMapping(new DimPoint(x, y), this.fontScale, () -> {
-        font.drawStringWithShadow(line, 0, 0, this.colour.toInt());
+        super.context.fontEngine.drawStringWithShadow(line, 0, 0, this.colour.toInt());
       });
 
       y = y.plus(fontHeight).plus(this.linePadding);

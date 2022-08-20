@@ -5,10 +5,7 @@ import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
-import dev.rebel.chatmate.gui.ContextMenuStore;
-import dev.rebel.chatmate.gui.CustomGuiIngame;
-import dev.rebel.chatmate.gui.CustomGuiNewChat;
-import dev.rebel.chatmate.gui.GuiChatMateHud;
+import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
@@ -23,6 +20,7 @@ import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.launchwrapper.Launch;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -49,6 +47,7 @@ public class ChatMate {
     MinecraftForge.EVENT_BUS.register(forgeEventService);
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
+    FontEngine fontEngine = new FontEngine(minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
 
     ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV2.class, logService, fileService);
     Config config = new Config(logService, configPersistorService);
@@ -78,7 +77,7 @@ public class ChatMate {
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory);
-    MessageService messageService = new MessageService(logService, minecraftProxyService);
+    MessageService messageService = new MessageService(logService, fontEngine);
     ImageService imageService = new ImageService(minecraft);
     McChatService mcChatService = new McChatService(minecraftProxyService,
         logService,
@@ -88,13 +87,14 @@ public class ChatMate {
         messageService,
         imageService,
         config,
-        chatMateChatService);
+        chatMateChatService,
+        fontEngine);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory);
 
     RenderService renderService = new RenderService(minecraft, forgeEventService);
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
     ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
-    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, dimFactory, forgeEventService, statusService, config, serverLogEventService);
+    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, fontEngine, dimFactory, forgeEventService, statusService, config, serverLogEventService);
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory);
     ClipboardService clipboardService = new ClipboardService();
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, guiChatMateHud);
@@ -119,7 +119,8 @@ public class ChatMate {
         environment,
         logService,
         rankEndpointProxy,
-        minecraftChatService);
+        minecraftChatService,
+        fontEngine);
 
     CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
         minecraft,
@@ -128,7 +129,8 @@ public class ChatMate {
         forgeEventService,
         dimFactory,
         mouseEventService,
-        contextMenuStore);
+        contextMenuStore,
+        fontEngine);
     CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
     GuiService guiService = new GuiService(this.isDev,
         logService,
@@ -150,7 +152,8 @@ public class ChatMate {
         chatMateEndpointProxy,
         environment,
         minecraftChatService,
-        customGuiIngame);
+        customGuiIngame,
+        fontEngine);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

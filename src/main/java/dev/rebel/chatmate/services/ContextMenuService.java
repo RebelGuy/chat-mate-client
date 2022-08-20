@@ -5,6 +5,7 @@ import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.rank.ManageRanksModal;
@@ -41,6 +42,7 @@ public class ContextMenuService {
   private final LogService logService;
   private final RankEndpointProxy rankEndpointProxy;
   private final MinecraftChatService minecraftChatService;
+  private final FontEngine fontEngine;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -60,7 +62,8 @@ public class ContextMenuService {
                             Environment environment,
                             LogService logService,
                             RankEndpointProxy rankEndpointProxy,
-                            MinecraftChatService minecraftChatService) {
+                            MinecraftChatService minecraftChatService,
+                            FontEngine fontEngine) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -80,6 +83,7 @@ public class ContextMenuService {
     this.logService = logService;
     this.rankEndpointProxy = rankEndpointProxy;
     this.minecraftChatService = minecraftChatService;
+    this.fontEngine = fontEngine;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -160,7 +164,7 @@ public class ContextMenuService {
         this.keyboardEventService,
         this.dimFactory,
         this.minecraft,
-        this.minecraft.fontRendererObj,
+        this.fontEngine,
         this.clipboardService,
         this.soundService,
         this.cursorService,

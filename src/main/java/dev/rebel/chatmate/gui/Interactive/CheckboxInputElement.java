@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -145,7 +146,7 @@ public class CheckboxInputElement extends InputElement {
     RendererHelpers.drawRect(0, checkbox, background, borderWidth, borderColour, cornerRadius, shadowDistance, shadowColour);
 
     RendererHelpers.withMapping(checkbox.getCentre(), this.isChecked.getFrac(), () -> {
-      FontRenderer font = super.context.fontRenderer;
+      FontEngine font = super.context.fontEngine;
       Dim height = gui(font.FONT_HEIGHT);
       Dim width = gui(font.getCharWidth('x'));
       font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), Colour.WHITE.toInt(), false);

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
@@ -218,7 +219,7 @@ public class ElementHelpers {
       parent = parent.getParent();
     }
 
-    FontRenderer font = context.fontRenderer;
+    FontEngine font = context.fontEngine;
     float scale = 0.5f;
     RendererHelpers.withMapping(new DimPoint(ZERO, ZERO), scale, () -> {
       float y = 0;
