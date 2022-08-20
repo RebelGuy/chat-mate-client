@@ -5,6 +5,7 @@ import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart.MessagePartType;
+import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
@@ -59,9 +60,10 @@ public class McChatService {
   }
 
   public void printStreamChatItem(PublicChatItem item) {
-    if (item.author.activePunishments.length > 0) {
+    PublicUserRank[] activePunishments = item.author.getActivePunishments();
+    if (activePunishments.length > 0) {
       String name = item.author.userInfo.channelName;
-      String punishments = String.join(",", Collections.map(Collections.list(item.author.activePunishments), p -> p.type.toString()));
+      String punishments = String.join(",", Collections.map(Collections.list(activePunishments), p -> p.rank.name.toString()));
       this.logService.logDebug(this, String.format("Ignoring chat message from user '%s' because of the following active punishments: %s", name, punishments));
       return;
     }
@@ -69,7 +71,8 @@ public class McChatService {
     try {
       Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
-      IChatComponent rank = new ViewerTagComponent(this.config, item.platform);
+      IChatComponent platform = new PlatformViewerTagComponent(this.config, item.platform);
+      IChatComponent rank = this.messageService.getRankComponent(Collections.map(Collections.list(item.author.activeRanks), r -> r.rank));
       IChatComponent player = this.messageService.getUserComponent(item.author);
       McChatResult mcChatResult = this.ytChatToMcChat(item, this.minecraftProxyService.getChatFontRenderer());
 
@@ -78,10 +81,11 @@ public class McChatService {
 
       ArrayList<IChatComponent> components = new ArrayList<>();
       components.add(level);
+      components.add(platform);
       components.add(rank);
       components.add(player);
       components.add(joinedMessage);
-      IChatComponent message = joinComponents(" ", components);
+      IChatComponent message = joinComponents(" ", components, c -> c == platform);
 
       this.minecraftProxyService.printChatMessage("YouTube chat", message);
       if (mcChatResult.includesMention) {
@@ -197,7 +201,7 @@ public class McChatService {
         prevText = null;
 
         assert msg.customEmojiData != null;
-        components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData)));
+        components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData), 1, 1));
         continue;
 
       } else if (msg.type == MessagePartType.cheer) {
@@ -208,7 +212,7 @@ public class McChatService {
       } else throw new Exception("Invalid partial message type " + msg.type);
 
       // add space between components except when we have two text types after one another.
-      if (prevType != null && !(msg.type == MessagePartType.text && prevType == MessagePartType.text)) {
+      if (prevType != null && prevType != MessagePartType.customEmoji && !(msg.type == MessagePartType.text && prevType == MessagePartType.text)) {
         if (text.startsWith(" ") || (prevText != null && prevText.endsWith(" "))) {
           // already spaced out
         } else {

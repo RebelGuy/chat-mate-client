@@ -1,11 +1,11 @@
-package dev.rebel.chatmate.models.publicObjects.punishment;
+package dev.rebel.chatmate.models.publicObjects.rank;
 
 import com.google.gson.annotations.SerializedName;
 import dev.rebel.chatmate.models.publicObjects.PublicObject;
 
 import javax.annotation.Nullable;
 
-public class PublicChannelPunishment extends PublicObject {
+public class PublicChannelRankChange extends PublicObject {
   @Override
   public Integer GetExpectedSchema() { return 1; }
 

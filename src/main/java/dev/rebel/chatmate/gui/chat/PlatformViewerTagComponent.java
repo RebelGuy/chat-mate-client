@@ -6,18 +6,18 @@ import net.minecraft.util.ChatComponentText;
 
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.models.Styles.VIEWER_RANK_STYLE;
-import static dev.rebel.chatmate.models.Styles.styledText;
+import static dev.rebel.chatmate.Asset.LOGO_TWITCH;
+import static dev.rebel.chatmate.Asset.LOGO_YOUTUBE;
 
-public class ViewerTagComponent extends ContainerChatComponent {
-  private final static ChatComponentText VIEWER_COMPONENT = styledText("VIEWER", VIEWER_RANK_STYLE);
-  private final static ChatComponentText YOUTUBE_COMPONENT = styledText("YOUTUBE", VIEWER_RANK_STYLE);
-  private final static ChatComponentText TWITCH_COMPONENT = styledText("TWITCH", VIEWER_RANK_STYLE);
+public class PlatformViewerTagComponent extends ContainerChatComponent {
+  // since we are drawing these as part of the list of components that make up a chat message, we add artificial leading padding equivalent to an empty character
+  private final static ImageChatComponent YOUTUBE_COMPONENT = new ImageChatComponent(() -> LOGO_YOUTUBE, 3.5f, 0);
+  private final static ImageChatComponent TWITCH_COMPONENT = new ImageChatComponent(() -> LOGO_TWITCH, 3.5f, 0);
 
   private final ChatPlatform platform;
   private final Consumer<Boolean> _onChangeIdentifyPlatforms = this::setComponent;
 
-  public ViewerTagComponent(Config config, ChatPlatform platform) {
+  public PlatformViewerTagComponent(Config config, ChatPlatform platform) {
     this.platform = platform;
     this.setComponent(config.getIdentifyPlatforms().get());
     config.getIdentifyPlatforms().onChange(this._onChangeIdentifyPlatforms, this);
@@ -27,7 +27,7 @@ public class ViewerTagComponent extends ContainerChatComponent {
     if (identifyPlatforms) {
       super.component = this.platform == ChatPlatform.Youtube ? YOUTUBE_COMPONENT : TWITCH_COMPONENT;
     } else {
-      super.component = VIEWER_COMPONENT;
+      super.component = new ChatComponentText("");
     }
   }
 }

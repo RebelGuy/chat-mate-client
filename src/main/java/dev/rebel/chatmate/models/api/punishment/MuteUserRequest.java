@@ -10,7 +10,7 @@ public class MuteUserRequest extends ApiRequestBase {
   public final int durationSeconds;
 
   public MuteUserRequest(int userId, @Nullable String message, int durationSeconds) {
-    super(1);
+    super(2);
     this.userId = userId;
     this.message = message;
     this.durationSeconds = durationSeconds;

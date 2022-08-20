@@ -7,6 +7,8 @@ public class Colour {
   public static final Colour WHITE = new Colour(Color.WHITE);
   public static final Colour BLACK = new Colour(Color.BLACK);
   public static final Colour RED = new Colour(Color.RED);
+  public static final Colour DARK_RED = new Colour(170, 0, 0); // same as Minecraft's DARK_RED style
+  public static final Colour LIGHT_RED = new Colour(255, 85, 85); // same as Minecraft's RED style
   public static final Colour BLUE = new Colour(Color.BLUE);
   public static final Colour CYAN = new Colour(Color.CYAN);
   public static final Colour DKGREY = new Colour(Color.DKGREY);

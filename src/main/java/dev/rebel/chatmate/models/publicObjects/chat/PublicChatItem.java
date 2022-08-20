@@ -6,7 +6,7 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 
 public class PublicChatItem extends PublicObject {
   @Override
-  public Integer GetExpectedSchema() { return 3; }
+  public Integer GetExpectedSchema() { return 4; }
 
   public Integer id;
   public Long timestamp;

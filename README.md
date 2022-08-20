@@ -70,6 +70,12 @@ List of unicode emojis that can be printed directly in chat: https://archive.ph/
 
 # Change Log
 
+## v1.16 - The Rank Update [15/8/2022]
+- Added a modal for managing standard ranks, which shares its implementation with the punishment modal
+- Chat messages now show the user's current highest rank, instead of the default "VIEWER"
+- Improved platform separation to show a little YouTube/Twitch logo, instead of changing the rank text
+- Improved API error handling
+
 ## v1.15 - The Stress Test Update [30/7/2022]
 - Extended the capabilities of the vertical layout algorithm in the container element
 - Improved cursor mechanics, and added the "click" cursor to more elements when hovering
