@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.commands.handlers;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.hud.TitleComponent;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -23,8 +24,8 @@ public class CountdownHandler {
   private @Nullable Integer secondsRemaining = null;
   private @Nullable String title = null;
 
-  public CountdownHandler(DimFactory dimFactory, Minecraft minecraft, GuiChatMateHud guiChatMateHud) {
-    this.titleComponent = new TitleComponent(dimFactory, minecraft, true, true);
+  public CountdownHandler(DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine, GuiChatMateHud guiChatMateHud) {
+    this.titleComponent = new TitleComponent(dimFactory, minecraft, fontEngine, true, true);
     this.guiChatMateHud = guiChatMateHud;
   }
 

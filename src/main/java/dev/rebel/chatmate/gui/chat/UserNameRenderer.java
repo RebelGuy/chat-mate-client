@@ -5,7 +5,6 @@ import dev.rebel.chatmate.gui.chat.ChatPagination.PaginationRenderer;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.IChatComponent;
 
 import java.util.List;

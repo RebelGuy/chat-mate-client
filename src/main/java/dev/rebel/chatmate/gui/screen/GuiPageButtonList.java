@@ -5,6 +5,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
 import java.util.List;
+import dev.rebel.chatmate.gui.FontEngineProxy;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.IntHashMap;
@@ -22,15 +23,17 @@ public class GuiPageButtonList extends GuiListExtended
   private final List<GuiTextField> textFields = Lists.newArrayList();
   private final GuiPageButtonList.GuiListEntry[][] allPageContents;
   private int pageIndex;
+  private final FontEngineProxy fontEngineProxy;
   private final GuiPageButtonList.GuiResponder responder;
   private Gui focusedElement;
 
   /** Draws each array of entries on a page as a list with scrollbars. Each page is divided into two columns.
    * Null is allowed if an element should be by itself in a row. If a label is by itself, it will automatically be centred.
    */
-  public GuiPageButtonList(Minecraft mc, int width, int height, int top, int bottom, int slotHeight, GuiPageButtonList.GuiResponder responder, GuiPageButtonList.GuiListEntry[]... allPageContents)
+  public GuiPageButtonList(Minecraft mc, FontEngineProxy fontEngineProxy, int width, int height, int top, int bottom, int slotHeight, GuiPageButtonList.GuiResponder responder, GuiPageButtonList.GuiListEntry[]... allPageContents)
   {
     super(mc, width, height, top, bottom, slotHeight);
+    this.fontEngineProxy = fontEngineProxy;
     this.responder = responder;
     this.allPageContents = allPageContents;
     this.field_148163_i = false;
@@ -205,7 +208,7 @@ public class GuiPageButtonList extends GuiListExtended
 
   private GuiTextField instantiateTextBox(int xPosition, int yPosition, GuiPageButtonList.EditBoxEntry entry)
   {
-    GuiTextField guitextfield = new GuiTextField(entry.getId(), this.mc.fontRendererObj, xPosition, yPosition, 150, 20);
+    GuiTextField guitextfield = new GuiTextField(entry.getId(), this.fontEngineProxy, xPosition, yPosition, 150, 20);
     guitextfield.setText(entry.getLabel());
     // register the GUI responder
     guitextfield.func_175207_a(new ProxyGuiResponderToMc(this.responder));
@@ -220,11 +223,11 @@ public class GuiPageButtonList extends GuiListExtended
 
     if (centreOnRow)
     {
-      guilabel = new GuiLabel(this.mc.fontRendererObj, entry.getId(), xPosition, yPosition, this.width - xPosition * 2, 20, -1);
+      guilabel = new GuiLabel(this.fontEngineProxy, entry.getId(), xPosition, yPosition, this.width - xPosition * 2, 20, -1);
     }
     else
     {
-      guilabel = new GuiLabel(this.mc.fontRendererObj, entry.getId(), xPosition, yPosition, 150, 20, -1);
+      guilabel = new GuiLabel(this.fontEngineProxy, entry.getId(), xPosition, yPosition, 150, 20, -1);
     }
 
     guilabel.visible = entry.isVisible();

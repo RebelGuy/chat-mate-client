@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.commands.handlers;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
 import dev.rebel.chatmate.gui.hud.Observable;
@@ -10,7 +11,6 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.KeyBindingService;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 
 import javax.annotation.Nullable;
 
@@ -19,13 +19,15 @@ public class CounterHandler {
   private final GuiChatMateHud guiChatMateHud;
   private final DimFactory dimFactory;
   private final Minecraft minecraft;
+  private final FontEngine fontEngine;
   private Counter counter;
 
-  public CounterHandler(KeyBindingService keyBindingService, GuiChatMateHud guiChatMateHud, DimFactory dimFactory, Minecraft minecraft) {
+  public CounterHandler(KeyBindingService keyBindingService, GuiChatMateHud guiChatMateHud, DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine) {
     this.keyBindingService = keyBindingService;
     this.guiChatMateHud = guiChatMateHud;
     this.dimFactory = dimFactory;
     this.minecraft = minecraft;
+    this.fontEngine = fontEngine;
 
     this.keyBindingService.on(ChatMateKeyEvent.DECREMENT_COUNTER, this::decrementCounter);
     this.keyBindingService.on(ChatMateKeyEvent.INCREMENT_COUNTER, this::incrementCounter);
@@ -33,7 +35,7 @@ public class CounterHandler {
 
   public void createCounter(int startValue, int incrementValue, float scale, @Nullable String title) {
     this.deleteCounter();
-    this.counter = new Counter(this.guiChatMateHud, this.dimFactory, this.minecraft, startValue, incrementValue, scale, title);
+    this.counter = new Counter(this.guiChatMateHud, this.dimFactory, this.minecraft, this.fontEngine, startValue, incrementValue, scale, title);
   }
 
   public void deleteCounter() {
@@ -72,7 +74,7 @@ public class CounterHandler {
     private final Observable<String> observableString;
     private int value;
 
-    public Counter(GuiChatMateHud guiChatMateHud, DimFactory dimFactory, Minecraft minecraft, int startValue, int incrementValue, float scale, @Nullable String title) {
+    public Counter(GuiChatMateHud guiChatMateHud, DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine, int startValue, int incrementValue, float scale, @Nullable String title) {
       this.guiChatMateHud = guiChatMateHud;
       this.value = startValue;
       this.incrementValue = incrementValue;
@@ -82,7 +84,7 @@ public class CounterHandler {
       DimPoint centre = dimFactory.getMinecraftRect().getCentre();
       Dim x = centre.getX();
       Dim y = centre.getY();
-      this.textComponent = new TextComponent(dimFactory, minecraft, x, y, scale, true, true, Anchor.MIDDLE, true, this.observableString);
+      this.textComponent = new TextComponent(dimFactory, minecraft, fontEngine, x, y, scale, true, true, Anchor.MIDDLE, true, this.observableString);
       this.guiChatMateHud.hudComponents.add(this.textComponent);
     }
 

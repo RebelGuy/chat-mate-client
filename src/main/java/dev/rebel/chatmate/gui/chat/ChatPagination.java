@@ -8,7 +8,6 @@ import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import scala.Tuple2;

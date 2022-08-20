@@ -2,7 +2,6 @@ package dev.rebel.chatmate.gui.chat;
 
 import com.google.common.collect.Iterators;
 import dev.rebel.chatmate.gui.FontEngine;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
@@ -16,7 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static net.minecraft.client.gui.FontRenderer.getFormatFromString;
 import static net.minecraft.util.ChatComponentStyle.createDeepCopyIterator;
 
 /** A single-line chat component that is used to draw children components at precise x-values. When printing to chat,

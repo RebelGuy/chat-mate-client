@@ -14,7 +14,6 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.gui.FontRenderer;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;

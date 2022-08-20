@@ -11,7 +11,6 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.models.Line;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.gui.FontRenderer;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;

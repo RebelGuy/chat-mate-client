@@ -4,7 +4,6 @@ import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ChatPagination.PaginationRenderer;
 import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.services.MessageService;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.IChatComponent;
 
 import javax.annotation.Nullable;

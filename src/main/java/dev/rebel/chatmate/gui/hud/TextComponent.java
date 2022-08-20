@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.GuiChatMateHudScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.RenderContext;
@@ -8,23 +9,21 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
 
 public class TextComponent extends Box implements IHudComponent {
   private final Minecraft minecraft;
   private final boolean drawOnTop;
   private float scale;
+  private final FontEngine fontEngine;
   private Anchor anchor;
 
   private String text;
 
-  public TextComponent(DimFactory dimFactory, Minecraft minecraft, Dim x, Dim y, float scale, boolean canTranslate, boolean canResize, Anchor anchor, boolean drawOnTop, Observable<String> text) {
+  public TextComponent(DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine, Dim x, Dim y, float scale, boolean canTranslate, boolean canResize, Anchor anchor, boolean drawOnTop, Observable<String> text) {
     super(dimFactory, x, y, dimFactory.zeroGui(), dimFactory.zeroGui(), canTranslate, canResize);
     this.minecraft = minecraft;
+    this.fontEngine = fontEngine;
     this.anchor = anchor;
     this.drawOnTop = drawOnTop;
     this.text = text.getValue();
@@ -36,9 +35,8 @@ public class TextComponent extends Box implements IHudComponent {
 
   private void updateSize(String text) {
     this.text = text;
-    FontRenderer font = this.minecraft.fontRendererObj;
-    Dim width = this.dimFactory.fromGui(font.getStringWidth(text) * this.scale);
-    Dim height = this.dimFactory.fromGui(font.FONT_HEIGHT * this.scale);
+    Dim width = this.dimFactory.fromGui(this.fontEngine.getStringWidth(text) * this.scale);
+    Dim height = this.dimFactory.fromGui(this.fontEngine.FONT_HEIGHT * this.scale);
     super.onResize(width, height, this.anchor);
   }
 

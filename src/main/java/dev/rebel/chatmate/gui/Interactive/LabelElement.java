@@ -11,7 +11,6 @@ import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.TextHelpers;
-import net.minecraft.client.gui.FontRenderer;
 import org.lwjgl.util.Color;
 
 import javax.annotation.Nullable;

@@ -1,12 +1,12 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.RenderContext;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;
@@ -24,6 +24,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private final float initialScale;
   private final StatusService statusService;
   private final Minecraft minecraft;
+  private final FontEngine fontEngine;
 
   private boolean initialised;
   private float scale;
@@ -33,7 +34,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private final Consumer<Boolean> _onShowLiveViewers = this::onShowLiveViewers;
   private final Consumer<Boolean> _onIdentifyPlatforms = this::onIdentifyPlatforms;
 
-  public LiveViewersComponent(DimFactory dimFactory, float initialScale, StatusService statusService, Config config, Minecraft minecraft) {
+  public LiveViewersComponent(DimFactory dimFactory, float initialScale, StatusService statusService, Config config, Minecraft minecraft, FontEngine fontEngine) {
     super(dimFactory, dimFactory.fromGui(INITIAL_X_GUI), dimFactory.fromGui(INITIAL_Y_GUI), dimFactory.zeroGui(), dimFactory.zeroGui(), true, true);
     this.dimFactory = dimFactory;
     this.config = config;
@@ -41,11 +42,12 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.scale = initialScale;
     this.statusService = statusService;
     this.minecraft = minecraft;
+    this.fontEngine = fontEngine;
 
     this.initialised = false;
 
-    this.reel1 = new DigitReel(minecraft, dimFactory);
-    this.reel2 = new DigitReel(minecraft, dimFactory);
+    this.reel1 = new DigitReel(minecraft, dimFactory, fontEngine);
+    this.reel2 = new DigitReel(minecraft, dimFactory, fontEngine);
 
     this.config.getShowLiveViewersEmitter().onChange(this._onShowLiveViewers, this);
     this.config.getIdentifyPlatforms().onChange(this._onIdentifyPlatforms, this);
@@ -76,7 +78,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   @Override
   public void render(RenderContext context) {
-    if (!this.config.getShowLiveViewersEmitter().get() || this.getFontRenderer() == null) {
+    if (!this.config.getShowLiveViewersEmitter().get()) {
       return;
     }
 
@@ -105,9 +107,9 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
     String text = this.getText(viewCount);
     if (viewCount == null || viewCount > MAX_REEL_VALUE) {
-      this.getFontRenderer().drawStringWithShadow(text, 0, 0, COLOR);
+      this.fontEngine.drawStringWithShadow(text, 0, 0, COLOR);
     } else {
-      Dim digitWidth = this.dimFactory.fromGui(this.getFontRenderer().getCharWidth('0'));
+      Dim digitWidth = this.dimFactory.fromGui(this.fontEngine.getCharWidth('0'));
       Dim digitPadding = this.dimFactory.fromGui(1);
       Dim digitHeight = this.getTextHeight();
       reel.drawReel(text, digitWidth, digitPadding, digitHeight);
@@ -125,8 +127,8 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     Dim height = this.getUnscaledHeight().times(this.scale);
     this.setRect(x, y, width, height);
 
-    this.reel1 = new DigitReel(minecraft, dimFactory);
-    this.reel2 = new DigitReel(minecraft, dimFactory);
+    this.reel1 = new DigitReel(minecraft, dimFactory, this.fontEngine);
+    this.reel2 = new DigitReel(minecraft, dimFactory, this.fontEngine);
   }
 
   private void onIdentifyPlatforms(boolean identifyPlatforms) {
@@ -141,27 +143,19 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   }
 
   private Dim getTextWidth() {
-    if (this.getFontRenderer() == null) {
-      return this.dimFactory.zeroGui();
+    String text1, text2;
+    if (this.config.getIdentifyPlatforms().get()) {
+      text1 = this.getText(this.statusService.getYoutubeLiveViewerCount());
+      text2 = this.getText(this.statusService.getTwitchLiveViewerCount());
     } else {
-      String text1, text2;
-      if (this.config.getIdentifyPlatforms().get()) {
-        text1 = this.getText(this.statusService.getYoutubeLiveViewerCount());
-        text2 = this.getText(this.statusService.getTwitchLiveViewerCount());
-      } else {
-        text1 = this.getText(this.statusService.getTotalLiveViewerCount());
-        text2 = "";
-      }
-      return this.dimFactory.fromGui(Math.max(this.getFontRenderer().getStringWidth(text1), this.getFontRenderer().getStringWidth(text2)));
+      text1 = this.getText(this.statusService.getTotalLiveViewerCount());
+      text2 = "";
     }
+    return this.dimFactory.fromGui(Math.max(this.fontEngine.getStringWidth(text1), this.fontEngine.getStringWidth(text2)));
   }
 
   private Dim getTextHeight() {
-    if (this.getFontRenderer() == null) {
-      return this.dimFactory.zeroGui();
-    } else {
-      return this.dimFactory.fromGui(this.getFontRenderer().FONT_HEIGHT);
-    }
+    return this.dimFactory.fromGui(this.fontEngine.FONT_HEIGHT);
   }
 
   private String getText(@Nullable Integer viewCount) {
@@ -170,10 +164,6 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     } else {
       return String.format("%02d", viewCount);
     }
-  }
-
-  private @Nullable FontRenderer getFontRenderer() {
-    return this.minecraft.fontRendererObj;
   }
 
   private Dim getUnscaledHeight() {

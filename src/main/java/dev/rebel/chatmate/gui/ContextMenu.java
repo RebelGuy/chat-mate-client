@@ -4,9 +4,7 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.util.Memoiser;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
 import org.lwjgl.util.Color;
 import scala.Tuple2;
 
@@ -50,7 +48,7 @@ public class ContextMenu {
 
   // Adapted from GuiUtils::drawHoveringText.
   // todo: use float values for positions/distances instead
-  public void drawMenu(Dim mouseX, Dim mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontRenderer font)
+  public void drawMenu(Dim mouseX, Dim mouseY, final int screenWidth, final int screenHeight, final int maxTextWidth, FontEngine font)
   {
     int x = (int)this.x.getGui();
     int y = (int)this.y.getGui();
@@ -93,7 +91,7 @@ public class ContextMenu {
   }
 
   /** Draws the options, starting at the given x-y position. */
-  private void drawOptions(List<OptionBox> boxes, int x, int y, Dim mouseX, Dim mouseY, FontRenderer font) {
+  private void drawOptions(List<OptionBox> boxes, int x, int y, Dim mouseX, Dim mouseY, FontEngine font) {
     for (OptionBox box : boxes) {
       boolean hoveringOverBox = box.testPosition(mouseX, mouseY);
       int color = hoveringOverBox ? -1 : new Colour(Color.LTGREY).toInt();
@@ -105,7 +103,7 @@ public class ContextMenu {
     }
   }
 
-  private List<OptionBox> constructBoxes(int screenWidth, int screenHeight, int maxTextWidth, FontRenderer font) {
+  private List<OptionBox> constructBoxes(int screenWidth, int screenHeight, int maxTextWidth, FontEngine font) {
     return this.memoiser.memoise("Context menu hitboxes", () -> {
 
       List<OptionBox> optionBoxes = new ArrayList<>();

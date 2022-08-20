@@ -35,7 +35,7 @@ public class GuiChatMateHud {
     this.fontEngine = fontEngine;
 
     this.statusIndicatorComponent = new StatusIndicatorComponent(dimFactory, 0.5f, statusService, config, serverLogEventService);
-    this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft);
+    this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft, fontEngine);
     this.serverLogsTimeSeriesComponent = new ServerLogsTimeSeriesComponent(dimFactory, serverLogEventService, config);
 
     this.hudComponents = new ArrayList<>();

@@ -3,7 +3,6 @@ package dev.rebel.chatmate.services.util;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
@@ -86,7 +85,7 @@ public class ChatHelpers {
     }
   }
 
-  public static char getThinnestCharacter(FontRenderer renderer) {
+  public static char getThinnestCharacter(FontEngine fontEngine) {
     char hairSpace = '\u200a'; // ?
     char thinSpace = '\u2009'; // ?
     char punctuationSpace = '\u2008'; // 2?

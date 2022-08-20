@@ -19,6 +19,7 @@ import dev.rebel.chatmate.services.util.FileHelpers;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -48,6 +49,16 @@ public class ChatMate {
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
     FontEngine fontEngine = new FontEngine(minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
+    FontEngineProxy fontEngineProxy = new FontEngineProxy(fontEngine, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
+
+    // mirror the fontRendererObj operation that are performed within the Minecraft::startGame method, since we missed those
+    minecraft.fontRendererObj = fontEngineProxy;
+    if (minecraft.gameSettings.language != null) {
+      fontEngineProxy.setUnicodeFlag(minecraft.isUnicode());
+      fontEngineProxy.setBidiFlag(minecraft.getLanguageManager().isCurrentLanguageBidirectional());
+    }
+    IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
+    reloadableResourceManager.registerReloadListener(fontEngineProxy);
 
     ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV2.class, logService, fileService);
     Config config = new Config(logService, configPersistorService);
@@ -91,14 +102,14 @@ public class ChatMate {
         fontEngine);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory);
 
-    RenderService renderService = new RenderService(minecraft, forgeEventService);
+    RenderService renderService = new RenderService(minecraft, forgeEventService, fontEngine);
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
     ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, fontEngine, dimFactory, forgeEventService, statusService, config, serverLogEventService);
-    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory);
+    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ClipboardService clipboardService = new ClipboardService();
-    CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, guiChatMateHud);
-    CounterHandler counterHandler = new CounterHandler(keyBindingService, guiChatMateHud, dimFactory, minecraft);
+    CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, guiChatMateHud);
+    CounterHandler counterHandler = new CounterHandler(keyBindingService, guiChatMateHud, dimFactory, minecraft, fontEngine);
     BrowserService browserService = new BrowserService(logService);
     MinecraftChatService minecraftChatService = new MinecraftChatService(minecraftProxyService);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
@@ -153,7 +164,8 @@ public class ChatMate {
         environment,
         minecraftChatService,
         customGuiIngame,
-        fontEngine);
+        fontEngine,
+        fontEngineProxy);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

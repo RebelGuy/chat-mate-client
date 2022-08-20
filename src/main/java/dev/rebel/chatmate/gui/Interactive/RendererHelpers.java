@@ -8,7 +8,6 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.*;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.TextHelpers;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;

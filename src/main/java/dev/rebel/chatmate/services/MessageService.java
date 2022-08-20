@@ -17,7 +17,6 @@ import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay.Options;
@@ -27,13 +28,15 @@ public class RenderService {
 
   private final Minecraft minecraft;
   private final ForgeEventService forgeEventService;
+  private final FontEngine fontEngine;
 
   // until adding custom layouts, we only allow drawing one text object at a time
   private WeakReference<DrawnText> drawnText; // (fancy weak reference!)
 
-  public RenderService(Minecraft minecraft, ForgeEventService forgeEventService) {
+  public RenderService(Minecraft minecraft, ForgeEventService forgeEventService, FontEngine fontEngine) {
     this.minecraft = minecraft;
     this.forgeEventService = forgeEventService;
+    this.fontEngine = fontEngine;
 
     this.registerHandlers();
   }
@@ -58,7 +61,7 @@ public class RenderService {
 
     DrawnText drawnText = this.drawnText.get();
     if (drawnText.isVisible) {
-      int fontHeight = this.minecraft.fontRendererObj.FONT_HEIGHT;
+      int fontHeight = this.fontEngine.FONT_HEIGHT;
       int color = 0xFFFFFFFF; // todo
 
       // we scale in the "push-pop" block only.
@@ -70,7 +73,7 @@ public class RenderService {
       for (int i = 0; i < drawnText.lines.length; i++) {
         String text = drawnText.lines[i];
         int lineY = drawnText.y + (fontHeight + VERTICAL_PADDING) * i;
-        this.minecraft.fontRendererObj.drawStringWithShadow(text, drawnText.x, lineY, color);
+        this.fontEngine.drawStringWithShadow(text, drawnText.x, lineY, color);
       }
 
       GlStateManager.popMatrix();

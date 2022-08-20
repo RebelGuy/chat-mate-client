@@ -1,9 +1,9 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 
 import java.util.Date;
@@ -15,6 +15,7 @@ public class DigitReel {
   private final Cyclic cyclic = new Cyclic(0, PI * 2);
   private final Minecraft minecraft;
   private final DimFactory dimFactory;
+  private final FontEngine fontEngine;
 
   // all floats are in radians.
   // e.g. to represent the number 10, the tens-reel moves by 0.1*(2*pi) radians, while the ones wheel moves by 1*(2*pi) radians.
@@ -23,9 +24,10 @@ public class DigitReel {
   private float currentFrac = 0;
   private long prevUpdate = 0;
 
-  public DigitReel(Minecraft minecraft, DimFactory dimFactory) {
+  public DigitReel(Minecraft minecraft, DimFactory dimFactory, FontEngine fontEngine) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
+    this.fontEngine = fontEngine;
   }
 
   public void drawReel(String text, Dim digitWidth, Dim digitPadding, Dim digitHeight) {
@@ -175,7 +177,7 @@ public class DigitReel {
 
   private void drawDigit(Dim x, Dim y, int digit, float scaleX, float scaleY, float alpha) {
     String text = String.valueOf(digit);
-    float wGui = this.minecraft.fontRendererObj.getStringWidth(text);
+    float wGui = this.fontEngine.getStringWidth(text);
     float xGui = x.getGui();
     float yGui = y.getGui();
 
@@ -186,7 +188,7 @@ public class DigitReel {
     GlStateManager.scale(scaleX, scaleY, 1);
 
     Colour color = new Colour(1, 1, 1, alpha);
-    this.minecraft.fontRendererObj.drawStringWithShadow(text, 0, 0, color.toSafeInt());
+    this.fontEngine.drawStringWithShadow(text, 0, 0, color.toSafeInt());
 
     GlStateManager.popMatrix();
   }

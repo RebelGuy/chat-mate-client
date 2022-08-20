@@ -45,6 +45,7 @@ public class GuiService {
   private final MinecraftChatService minecraftChatService;
   private final CustomGuiIngame customGuiIngame;
   private final FontEngine fontEngine;
+  private final FontEngineProxy fontEngineProxy;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -67,7 +68,8 @@ public class GuiService {
                     Environment environment,
                     MinecraftChatService minecraftChatService,
                     CustomGuiIngame customGuiIngame,
-                    FontEngine fontEngine) {
+                    FontEngine fontEngine,
+                    FontEngineProxy fontEngineProxy) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -90,6 +92,7 @@ public class GuiService {
     this.minecraftChatService = minecraftChatService;
     this.customGuiIngame = customGuiIngame;
     this.fontEngine = fontEngine;
+    this.fontEngineProxy = fontEngineProxy;
 
     this.addEventHandlers();
   }
@@ -130,7 +133,7 @@ public class GuiService {
 
   private OpenGui.Out onOpenGuiModList(OpenGui.In eventIn) {
     // : - <|
-    GuiScreen replaceWithGui = new CustomGuiModList(null, this.minecraft, this.config, this);
+    GuiScreen replaceWithGui = new CustomGuiModList(null, this.minecraft, this.config, this, this.fontEngineProxy);
     return new OpenGui.Out(replaceWithGui);
   }
 

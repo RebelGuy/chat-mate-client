@@ -17,7 +17,6 @@ import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.*;
 
 import javax.annotation.Nullable;

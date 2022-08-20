@@ -1,14 +1,14 @@
 package dev.rebel.chatmate.gui.builder;
 
+import dev.rebel.chatmate.gui.FontEngineProxy;
 import dev.rebel.chatmate.gui.builder.ContentLayout.NO_ACTION;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiLabel;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class LabelLayout extends ContentLayout<GuiLabel, NO_ACTION> {
-  private final FontRenderer fontRenderer;
+  private final FontEngineProxy fontEngineProxy;
   private final int id;
   private final Supplier<String> onRenderText;
   private final int color;
@@ -18,9 +18,9 @@ public class LabelLayout extends ContentLayout<GuiLabel, NO_ACTION> {
   private GuiLabel label;
 
   // use 0xFFFFFF for white
-  public LabelLayout(FontRenderer fontRenderer, String[] width, Supplier<String> onRenderText, int color) {
+  public LabelLayout(FontEngineProxy fontEngineProxy, String[] width, Supplier<String> onRenderText, int color) {
     super(width);
-    this.fontRenderer = fontRenderer;
+    this.fontEngineProxy = fontEngineProxy;
     this.id = (int)Math.round(Math.random() * Integer.MAX_VALUE);
     this.onRenderText = onRenderText;
     this.color = color;
@@ -31,7 +31,7 @@ public class LabelLayout extends ContentLayout<GuiLabel, NO_ACTION> {
   }
 
   public GuiLabel instantiateGui(int x, int y, int width, int height) {
-    this.lastInstantiator = () -> new GuiLabel(this.fontRenderer, this.id, x, y, width, height, this.color);
+    this.lastInstantiator = () -> new GuiLabel(this.fontEngineProxy, this.id, x, y, width, height, this.color);
     this.refreshContents();
     return this.label;
   }
