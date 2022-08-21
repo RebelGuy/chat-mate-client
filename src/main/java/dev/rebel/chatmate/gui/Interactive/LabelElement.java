@@ -7,6 +7,8 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.util.Collections;
@@ -35,7 +37,7 @@ public class LabelElement extends SingleElement {
     this.overflow = TextOverflow.TRUNCATE;
     super.setSizingMode(SizingMode.MINIMISE);
     this.linePadding = context.dimFactory.fromGui(1);
-    this.colour = new Colour(Color.WHITE);
+    this.colour = Colour.WHITE;
     this.fontScale = 1.0f;
     this.maxLines = null;
     this.onClick = null;
@@ -182,15 +184,15 @@ public class LabelElement extends SingleElement {
 
   @Override
   public void renderElement() {
-    FontEngine font = this.context.fontEngine;
+    FontEngine fontEngine = this.context.fontEngine;
     DimFactory factory = this.context.dimFactory;
 
-    Dim fontHeight = factory.fromGui(font.FONT_HEIGHT).times(this.fontScale);
+    Dim fontHeight = factory.fromGui(fontEngine.FONT_HEIGHT).times(this.fontScale);
     DimRect box = this.getContentBox();
     Dim y = this.getContentBox().getY();
 
     for (String line : this.lines) {
-      Dim width = factory.fromGui(font.getStringWidth(line) * this.fontScale); // todo: simplify scaling by creating a FontRender wrapper with extra options
+      Dim width = factory.fromGui(fontEngine.getStringWidth(line) * this.fontScale); // todo: simplify scaling by creating a FontRender wrapper with extra options
       Dim x;
       if (this.alignment == TextAlignment.LEFT) {
         x = box.getX();
@@ -202,8 +204,9 @@ public class LabelElement extends SingleElement {
         throw new RuntimeException("Invalid TextAlignment " + this.alignment);
       }
 
+      Font font = new Font().withColour(this.colour).withShadow(new Shadow(super.context.dimFactory));
       RendererHelpers.withMapping(new DimPoint(x, y), this.fontScale, () -> {
-        super.context.fontEngine.drawStringWithShadow(line, 0, 0, this.colour.toInt());
+        super.context.fontEngine.drawString(line, 0, 0, font);
       });
 
       y = y.plus(fontHeight).plus(this.linePadding);

@@ -24,6 +24,10 @@ public class Colour {
   public final int green;
   public final int blue;
   public final int alpha;
+  public final float redf;
+  public final float greenf;
+  public final float bluef;
+  public final float alphaf;
 
   public Colour(int red, int green, int blue) {
     this(red, green, blue, 255);
@@ -55,6 +59,11 @@ public class Colour {
     this.green = green;
     this.blue = blue;
     this.alpha = alpha;
+
+    this.redf = red / 255.0f;
+    this.greenf = green / 255.0f;
+    this.bluef = blue / 255.0f;
+    this.alphaf = alpha / 255.0f;
   }
 
   public Colour(float red, float green, float blue) {
@@ -65,9 +74,9 @@ public class Colour {
     this((int)(red * 255), (int)(green * 255), (int)(blue * 255), (int)(alpha * 255));
   }
 
-  /** Inverse of Colour.toInt() */
+  /** Inverse of Colour.toInt(). Note that if the alpha component is 0, it will be automatically set to 100% as that is most likely the intention. */
   public Colour(int intValue) {
-    this(intValue >> 16 & 255, intValue >> 8 & 255, intValue & 255, intValue >> 24 & 255);
+    this(intValue >> 16 & 255, intValue >> 8 & 255, intValue & 255, ((intValue >> 24 & 255) == 0) ? 255 : intValue >> 24 & 255);
   }
 
   public int toInt() {

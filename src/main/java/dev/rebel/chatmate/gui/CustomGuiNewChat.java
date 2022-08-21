@@ -9,9 +9,10 @@ import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.ChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
@@ -226,8 +227,8 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     } else if (component instanceof ChatComponentText) {
       String formattedText = getFormattedText((ChatComponentText)component);
-      int textColour = 16777215 + (opacity << 24);
-      this.fontEngine.drawStringWithShadow(formattedText, x, lineBottom - 8, textColour);
+      Font font = new Font().withColour(Colour.WHITE.withAlpha(opacity)).withShadow(new Shadow(dimFactory));
+      this.fontEngine.drawString(formattedText, x, lineBottom - 8, font);
       return this.fontEngine.getStringWidth(formattedText);
 
     } else if (component instanceof ImageChatComponent) {

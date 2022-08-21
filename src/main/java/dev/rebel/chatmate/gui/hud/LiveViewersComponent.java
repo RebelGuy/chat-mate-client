@@ -1,9 +1,11 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.RenderContext;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import net.minecraft.client.Minecraft;
@@ -13,7 +15,6 @@ import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public class LiveViewersComponent extends Box implements IHudComponent {
-  private final static int COLOR = 0xFFFFFFFF;
   private final static int MAX_REEL_VALUE = 99;
   private final static int INITIAL_X_GUI = 23;
   private final static int INITIAL_Y_GUI = 10;
@@ -25,6 +26,8 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private final StatusService statusService;
   private final Minecraft minecraft;
   private final FontEngine fontEngine;
+
+  private final Font indicatorFont;
 
   private boolean initialised;
   private float scale;
@@ -44,8 +47,9 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.minecraft = minecraft;
     this.fontEngine = fontEngine;
 
-    this.initialised = false;
+    this.indicatorFont = new Font().withShadow(new Shadow(dimFactory));
 
+    this.initialised = false;
     this.reel1 = new DigitReel(minecraft, dimFactory, fontEngine);
     this.reel2 = new DigitReel(minecraft, dimFactory, fontEngine);
 
@@ -107,7 +111,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
     String text = this.getText(viewCount);
     if (viewCount == null || viewCount > MAX_REEL_VALUE) {
-      this.fontEngine.drawStringWithShadow(text, 0, 0, COLOR);
+      this.fontEngine.drawString(text, 0, 0, this.indicatorFont);
     } else {
       Dim digitWidth = this.dimFactory.fromGui(this.fontEngine.getCharWidth('0'));
       Dim digitPadding = this.dimFactory.fromGui(1);

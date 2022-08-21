@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.*;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import net.minecraft.client.renderer.GlStateManager;
@@ -253,7 +254,7 @@ public class RendererHelpers {
     // render text
     int y = 0;
     for (String line : lines) {
-      font.drawString(line, contentRect.getX().getGui(), contentRect.getY().getGui() + y, Colour.WHITE.toInt(), false);
+      font.drawString(line, contentRect.getX().getGui(), contentRect.getY().getGui() + y, new Font().withColour(Colour.WHITE));
       y += font.FONT_HEIGHT;
     }
   }

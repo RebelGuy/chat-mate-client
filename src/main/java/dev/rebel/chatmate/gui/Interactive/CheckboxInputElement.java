@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.util.Collections;
@@ -148,7 +149,7 @@ public class CheckboxInputElement extends InputElement {
       FontEngine font = super.context.fontEngine;
       Dim height = gui(font.FONT_HEIGHT);
       Dim width = gui(font.getCharWidth('x'));
-      font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), Colour.WHITE.toInt(), false);
+      font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), new Font().withColour(Colour.WHITE));
     });
 
     this.labelElement.render();

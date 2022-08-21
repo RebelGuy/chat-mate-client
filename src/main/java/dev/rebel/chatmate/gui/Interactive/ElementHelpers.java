@@ -10,6 +10,8 @@ import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.models.Line;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.util.Collections;
 
 import javax.annotation.Nullable;
@@ -218,15 +220,16 @@ public class ElementHelpers {
       parent = parent.getParent();
     }
 
-    FontEngine font = context.fontEngine;
+    FontEngine fontEngine = context.fontEngine;
+    Font font = new Font().withShadow(new Shadow(context.dimFactory));
     float scale = 0.5f;
     RendererHelpers.withMapping(new DimPoint(ZERO, ZERO), scale, () -> {
       float y = 0;
       float right = context.dimFactory.getMinecraftSize().getX().getGui();
       for (String line : lines) {
-        float x = right / scale - (float)font.getStringWidth(line);
-        font.drawStringWithShadow(line, x, y, Colour.WHITE.toSafeInt());
-        y += font.FONT_HEIGHT;
+        float x = right / scale - (float)fontEngine.getStringWidth(line);
+        fontEngine.drawString(line, x, y, font);
+        y += fontEngine.FONT_HEIGHT;
       }
     });
   }

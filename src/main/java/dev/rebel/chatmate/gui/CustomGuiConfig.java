@@ -19,16 +19,16 @@ import java.util.ArrayList;
 
 public class CustomGuiConfig extends GuiConfig {
   private final Config config;
+  private final FontEngineProxy fontEngineProxy;
   private TableLayout tableLayout;
-  private FontEngineProxy fontEngineProxy;
 
   // fantastic tutorial here: http://jabelarminecraft.blogspot.com/p/minecraft-modding-configuration-guis.html
   // (use the above when we have config files one day)
   public CustomGuiConfig(GuiScreen parent, Config config, FontEngineProxy fontEngineProxy)
   {
     super(parent, new ArrayList<>(), "chatmate", false, false, "Configure ChatMate");
-    titleLine2 = "Mod Settings";
     this.config = config;
+    this.fontEngineProxy = fontEngineProxy;
     this.config.listenAny(this::onConfigUpdate);
   }
 

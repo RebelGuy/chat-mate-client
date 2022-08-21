@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.GuiChatMateHudScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
@@ -8,6 +9,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.style.Shadow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
@@ -187,8 +189,7 @@ public class TitleComponent implements IHudComponent {
     }
     
     if (alpha > 4) {
-      int alphaComponent = alpha << 24 & -16777216;
-      int colour = 16777215 | alphaComponent;
+      Font font = new Font().withColour(Colour.WHITE.withAlpha(alpha)).withShadow(new Shadow(this.dimFactory));
 
       GlStateManager.enableBlend();
       GlStateManager.tryBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
@@ -196,13 +197,13 @@ public class TitleComponent implements IHudComponent {
       DimPoint titleTranslation = new DimPoint(this.x, this.y.plus(this.yOffsetTitle));
       RendererHelpers.withMapping(titleTranslation, this.mainTitleScale, () -> {
         float titleWidth = this.fontEngine.getStringWidth(this.title);
-        this.fontEngine.drawStringWithShadow(this.title, -titleWidth / 2, 0, colour);
+        this.fontEngine.drawString(this.title, -titleWidth / 2, 0, font);
       });
 
       DimPoint subtitleTranslation = new DimPoint(this.x, this.y.plus(this.yOffsetSubtitle));
       RendererHelpers.withMapping(subtitleTranslation, this.subTitleScale, () -> {
         float subtitleWidth = this.fontEngine.getStringWidth(this.subTitle);
-        this.fontEngine.drawStringWithShadow(this.subTitle, -subtitleWidth / 2, 0, colour);
+        this.fontEngine.drawString(this.subTitle, -subtitleWidth / 2, 0, font);
       });
 
       GlStateManager.disableBlend();

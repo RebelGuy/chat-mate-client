@@ -32,7 +32,7 @@ public abstract class ElementBase implements IElement {
   protected final InteractiveContext context;
   protected IElement parent;
   protected final Dim ZERO;
-  protected final FontEngine font;
+  protected final FontEngine fontEngine;
   protected String name;
 
   /** Full size. */
@@ -58,7 +58,7 @@ public abstract class ElementBase implements IElement {
     this.context = context;
     this.parent = parent;
     this.ZERO = context.dimFactory.zeroGui();
-    this.font = context.fontEngine;
+    this.fontEngine = context.fontEngine;
 
     this.box = null;
     this.padding = new RectExtension(context.dimFactory.zeroGui());

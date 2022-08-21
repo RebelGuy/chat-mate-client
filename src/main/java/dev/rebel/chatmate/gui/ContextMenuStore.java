@@ -69,7 +69,7 @@ public class ContextMenuStore {
   }
 
   public void showContextMenu(Dim x, Dim y, ContextMenuOption... options) {
-    this.currentMenu = new ContextMenu(x, y, options);
+    this.currentMenu = new ContextMenu(this.dimFactory, x, y, options);
     this.setClear = false;
   }
 

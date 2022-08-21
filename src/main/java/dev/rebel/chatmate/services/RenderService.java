@@ -1,6 +1,10 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay.Options;
@@ -29,14 +33,18 @@ public class RenderService {
   private final Minecraft minecraft;
   private final ForgeEventService forgeEventService;
   private final FontEngine fontEngine;
+  private final DimFactory dimFactory;
+  private final Font font;
 
   // until adding custom layouts, we only allow drawing one text object at a time
   private WeakReference<DrawnText> drawnText; // (fancy weak reference!)
 
-  public RenderService(Minecraft minecraft, ForgeEventService forgeEventService, FontEngine fontEngine) {
+  public RenderService(Minecraft minecraft, ForgeEventService forgeEventService, FontEngine fontEngine, DimFactory dimFactory) {
     this.minecraft = minecraft;
     this.forgeEventService = forgeEventService;
     this.fontEngine = fontEngine;
+    this.dimFactory = dimFactory;
+    this.font = new Font().withShadow(new Shadow(dimFactory));
 
     this.registerHandlers();
   }
@@ -62,7 +70,6 @@ public class RenderService {
     DrawnText drawnText = this.drawnText.get();
     if (drawnText.isVisible) {
       int fontHeight = this.fontEngine.FONT_HEIGHT;
-      int color = 0xFFFFFFFF; // todo
 
       // we scale in the "push-pop" block only.
       // see https://forums.minecraftforge.net/topic/44188-111-is-it-possible-to-change-the-font-size-of-a-string/
@@ -73,7 +80,7 @@ public class RenderService {
       for (int i = 0; i < drawnText.lines.length; i++) {
         String text = drawnText.lines[i];
         int lineY = drawnText.y + (fontHeight + VERTICAL_PADDING) * i;
-        this.fontEngine.drawStringWithShadow(text, drawnText.x, lineY, color);
+        this.fontEngine.drawString(text, drawnText.x, lineY, this.font);
       }
 
       GlStateManager.popMatrix();

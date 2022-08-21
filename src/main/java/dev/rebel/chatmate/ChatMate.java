@@ -48,8 +48,8 @@ public class ChatMate {
     MinecraftForge.EVENT_BUS.register(forgeEventService);
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
-    FontEngine fontEngine = new FontEngine(minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
-    FontEngineProxy fontEngineProxy = new FontEngineProxy(fontEngine, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
+    FontEngine fontEngine = new FontEngine(dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
+    FontEngineProxy fontEngineProxy = new FontEngineProxy(fontEngine, dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
 
     // mirror the fontRendererObj operation that are performed within the Minecraft::startGame method, since we missed those
     minecraft.fontRendererObj = fontEngineProxy;
@@ -102,7 +102,7 @@ public class ChatMate {
         fontEngine);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory);
 
-    RenderService renderService = new RenderService(minecraft, forgeEventService, fontEngine);
+    RenderService renderService = new RenderService(minecraft, forgeEventService, fontEngine, dimFactory);
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
     ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, fontEngine, dimFactory, forgeEventService, statusService, config, serverLogEventService);

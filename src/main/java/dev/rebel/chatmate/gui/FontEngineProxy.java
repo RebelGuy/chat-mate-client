@@ -1,5 +1,9 @@
 package dev.rebel.chatmate.gui;
 
+import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.IResourceManager;
@@ -12,11 +16,13 @@ import java.util.List;
 
 public class FontEngineProxy extends FontRenderer {
   private final FontEngine fontEngine;
+  private final DimFactory dimFactory;
 
-  public FontEngineProxy(FontEngine fontEngine, GameSettings gameSettingsIn, ResourceLocation location, TextureManager textureManagerIn, boolean unicode) {
+  public FontEngineProxy(FontEngine fontEngine, DimFactory dimFactory, GameSettings gameSettingsIn, ResourceLocation location, TextureManager textureManagerIn, boolean unicode) {
     super(gameSettingsIn, location, textureManagerIn, unicode);
 
     this.fontEngine = fontEngine;
+    this.dimFactory = dimFactory;
   }
 
   @Override
@@ -26,32 +32,35 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   protected final float renderDefaultChar(int ch, boolean italic) {
-    return this.fontEngine.renderDefaultChar(ch, italic);
+    // only called by the underlying FontRenderer
+    return this.fontEngine.renderDefaultChar(ch, new Font().withItalic(italic));
   }
 
   @Override
   protected final float renderUnicodeChar(char ch, boolean italic) {
-    return this.fontEngine.renderUnicodeChar(ch, italic);
+    // only called by the underlying FontRenderer
+    return this.fontEngine.renderUnicodeChar(ch, new Font().withItalic(italic));
   }
 
   @Override
   public final int drawStringWithShadow(String text, float x, float y, int color) {
-    return this.fontEngine.drawStringWithShadow(text, x, y, color);
+    return this.drawString(text, x, y, color, true);
   }
 
   @Override
   public final int drawString(String text, int x, int y, int color) {
-    return this.fontEngine.drawString(text, x, y, color);
+    return this.drawString(text, (float)x, (float)y, color, false);
   }
 
   @Override
   public final int drawString(String text, float x, float y, int color, boolean dropShadow) {
-    return this.fontEngine.drawString(text, x, y, color, dropShadow);
+    return this.fontEngine.drawString(text, x, y, new Font().withColour(new Colour(color)).withShadow(dropShadow ? new Shadow(this.dimFactory) : null));
   }
 
   @Override
   protected final void doDraw(float f) {
-    this.fontEngine.doDraw(f);
+    // only called by the underlying FontRenderer
+    this.fontEngine.drawStylisedArtifacts(f, new Font());
   }
 
   @Override
@@ -76,7 +85,7 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final void drawSplitString(String str, int x, int y, int wrapWidth, int textColor) {
-    this.fontEngine.drawSplitString(str, x, y, wrapWidth, textColor);
+    this.fontEngine.drawSplitString(str, x, y, wrapWidth, textColor, new Font());
   }
 
   @Override
@@ -96,7 +105,7 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final void setBidiFlag(boolean bidiFlagIn) {
-    this.fontEngine.setBidiFlag(bidiFlagIn);
+    // bi-directional text is not supported
   }
 
   @Override
@@ -111,17 +120,18 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final boolean getBidiFlag() {
-    return this.fontEngine.getBidiFlag();
+    // bi-directional text is not supported
+    return false;
   }
 
   @Override
   protected final void setColor(float r, float g, float b, float a) {
-    this.fontEngine.setColor(r, g, b, a);
+    this.fontEngine.setColor(new Colour(r, g, b, a));
   }
 
   @Override
   protected final void enableAlpha() {
-    this.fontEngine.enableAlpha();
+    // automatically enabled during rendering
   }
 
   @Override

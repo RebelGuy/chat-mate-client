@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.GuiChatMateHudScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
@@ -8,6 +9,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Shadow;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 
@@ -16,6 +18,7 @@ public class TextComponent extends Box implements IHudComponent {
   private final boolean drawOnTop;
   private float scale;
   private final FontEngine fontEngine;
+  private final Font font;
   private Anchor anchor;
 
   private String text;
@@ -24,6 +27,7 @@ public class TextComponent extends Box implements IHudComponent {
     super(dimFactory, x, y, dimFactory.zeroGui(), dimFactory.zeroGui(), canTranslate, canResize);
     this.minecraft = minecraft;
     this.fontEngine = fontEngine;
+    this.font = new Font().withShadow(new Shadow(dimFactory));;
     this.anchor = anchor;
     this.drawOnTop = drawOnTop;
     this.text = text.getValue();
@@ -129,7 +133,7 @@ public class TextComponent extends Box implements IHudComponent {
     }
 
     RendererHelpers.withMapping(new DimPoint(this.x, this.y), this.scale, () -> {
-      context.fontEngine.drawStringWithShadow(this.text, 0, 0, Colour.WHITE.toInt());
+      context.fontEngine.drawString(this.text, 0, 0, this.font);
     });
   }
 }
