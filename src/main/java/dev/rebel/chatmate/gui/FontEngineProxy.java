@@ -32,14 +32,12 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   protected final float renderDefaultChar(int ch, boolean italic) {
-    // only called by the underlying FontRenderer
-    return this.fontEngine.renderDefaultChar(ch, new Font().withItalic(italic));
+    return 0;
   }
 
   @Override
   protected final float renderUnicodeChar(char ch, boolean italic) {
-    // only called by the underlying FontRenderer
-    return this.fontEngine.renderUnicodeChar(ch, new Font().withItalic(italic));
+    return 0;
   }
 
   @Override
@@ -60,7 +58,6 @@ public class FontEngineProxy extends FontRenderer {
   @Override
   protected final void doDraw(float f) {
     // only called by the underlying FontRenderer
-    this.fontEngine.drawStylisedArtifacts(f, new Font());
   }
 
   @Override
@@ -126,7 +123,7 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   protected final void setColor(float r, float g, float b, float a) {
-    this.fontEngine.setColor(new Colour(r, g, b, a));
+    // internal method
   }
 
   @Override

@@ -56,7 +56,9 @@ public class Shadow {
     return this._blurRadius;
   }
 
-  /** If set, the shadow will have a static colour. If null, the shadow's colour will be dynamically generated based on the font colour that it is shadowing. */
+  /** If set, the shadow will have a static colour (the RGB component is independent of the font colour).
+   * If null, the shadow's colour will be dynamically generated based on the font colour that it is shadowing.
+   * Note that the transparency component is always interpreted relative to the font's transparency. */
   public Shadow withColour(@Nullable Colour colour) {
     return this.update(shadow -> shadow._colour = colour);
   }

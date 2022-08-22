@@ -246,7 +246,7 @@ public class TableElement<T> extends ContainerElement {
     @Override
     public void onMouseEnter(IEvent<In> e) {
       if (!this.isHeader) {
-        this.state.setState(s -> s.hovering.set(true));
+        this.state.accessState(s -> s.hovering.set(true));
       }
 
       if (this.item != null) {
@@ -256,7 +256,7 @@ public class TableElement<T> extends ContainerElement {
 
     @Override
     public void onMouseExit(IEvent<In> e) {
-      this.state.setState(s -> s.hovering.set(false));
+      this.state.accessState(s -> s.hovering.set(false));
       this.context.cursorService.untoggleCursor(this);
     }
 

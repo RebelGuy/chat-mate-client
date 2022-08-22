@@ -42,6 +42,22 @@ public class RendererHelpers {
     GlStateManager.popMatrix();
   }
 
+  /** Make attrib contexts more readable by wrapping them into this function. */
+  public static void withAttrib(int glAttribMask, Runnable onRender) {
+    withConditionalAttrib(true, glAttribMask, onRender);
+  }
+
+  /** Make conditional attrib contexts more readable by wrapping them into this function. */
+  public static void withConditionalAttrib(boolean condition, int glAttribMask, Runnable onRender) {
+    if (!condition) {
+      return;
+    }
+
+    GL11.glPushAttrib(glAttribMask);
+    onRender.run();
+    GL11.glPopAttrib();
+  }
+
   /** Draws a coloured rect. */
   public static void drawRect(int zLevel, DimRect rect, Colour colour) {
     drawRect(zLevel, rect, colour, null, null);
