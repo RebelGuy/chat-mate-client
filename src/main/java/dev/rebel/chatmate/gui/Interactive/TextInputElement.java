@@ -463,8 +463,7 @@ public class TextInputElement extends InputElement {
     if (!cursorIsWithinRange) {
       x1 = cursorStartIndex > 0 ? right : left;
     } else if (interiorCursor) {
-      currentX = currentX.minus(gui(1));
-      x1 = currentX;
+      x1 = currentX.minus(gui(1));
     }
 
     // draw part after cursor

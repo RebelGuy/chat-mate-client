@@ -52,7 +52,7 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final int drawString(String text, float x, float y, int color, boolean dropShadow) {
-    return this.fontEngine.drawString(text, x, y, new Font().withColour(new Colour(color)).withShadow(dropShadow ? new Shadow(this.dimFactory) : null));
+    return (int)this.fontEngine.drawString(text, x, y, new Font().withColour(new Colour(color)).withShadow(dropShadow ? new Shadow(this.dimFactory) : null));
   }
 
   @Override

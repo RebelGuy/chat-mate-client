@@ -18,6 +18,7 @@ import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 import javax.annotation.Nullable;
 import java.awt.image.BufferedImage;
@@ -183,18 +184,18 @@ public class FontEngine {
     float offsetMultiplier = isUnicode ? UNICODE_SCALING_FACTOR : 1;
     float boldOffsetX = 1 * offsetMultiplier;
 
-    // todo: current known bugs:
-    // - unfocused chat fading out appearance doesn't work properly
-    // - text input elements, when not focussed, draw their text at x = 0
-    // - open gl is spamming the console with errors - is there an illegal attrib bit we are masking?
-
-    // todo: we are rendering bold font twice - is it better to just stretch it in the x direction by 1 pixel?
-    // todo: underline/strikethrough don't respect alpha
     // set the main layer
     // for some reason we can't use the GlStateManager with pushAttrib(), so instead we have to use the raw GL11 API
     // https://www.cs.sfu.ca/~haoz/teaching/htmlman/pushattrib.html
-    withAttrib(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT, () -> {
-      GL11.glEnable(GL11.GL_ALPHA);
+    withAttrib(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_DEPTH_BUFFER_BIT, () -> {
+
+      GL11.glDepthMask(false); // enable writing to the depth buffer
+      GL11.glDisable(GL11.GL_DEPTH_TEST); // required to draw multiple on top
+      GL11.glDepthFunc(GL11.GL_LESS);
+
+      GL11.glEnable(GL11.GL_ALPHA_TEST);
+      GL11.glAlphaFunc(GL11.GL_ALWAYS, -1);
+
       GL11.glEnable(GL11.GL_BLEND);
       GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
@@ -202,43 +203,37 @@ public class FontEngine {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
       }
 
-      Colour fontColour = font.getColour();
-      GL11.glColor4f(fontColour.redf, fontColour.greenf, fontColour.bluef, fontColour.alphaf);
-
       // transparency must be extracted from the font colour and applied to the layer on which the characters are drawn,
       // otherwise we get issues where overlaps between text (e.g. shadows, bold text) causes double-transparency artifacts.
+      Colour fontColour = font.getColour();
 
       @Nullable Shadow shadow = font.getShadow();
-      withConditionalAttrib(shadow != null, GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT, () -> {
-        // we want to keep the relative shadow transparency the same
+      withConditionalAttrib(shadow != null, GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_DEPTH_BUFFER_BIT, () -> {
 
         Colour shadowColour = shadow.getColour(font);
-        float shadowAlpha = shadowColour.alphaf;
-
-        // if `alpha` now represents "no transparency", rescale the shadow alpha accordingly.
-        // shadows may still be transparent on our font layer, but since the actual font is drawn on
-        // top with no transparency, we won't come across any additive transparency issues again.
-        float relative = shadowAlpha / fontColour.alphaf;
-        shadowColour = shadowColour.withAlpha(relative);
 
         GL11.glColor4f(shadowColour.redf, shadowColour.greenf, shadowColour.bluef, shadowColour.alphaf);
+        GlStateManager.color(shadowColour.redf, shadowColour.greenf, shadowColour.bluef, shadowColour.alphaf);
 
         float shadowX = x + shadow.getOffset().getX().getGui() * offsetMultiplier;
         float shadowY = y + shadow.getOffset().getX().getGui() * offsetMultiplier;
         float shadowWidth = 0;
-        shadowWidth += this.renderCharTexture(ch, font.getItalic(), shadowX, shadowY);
+        shadowWidth += this.renderCharTexture(ch, font.getItalic(), shadowX, shadowY, -1);
 
         if (font.getBold()) {
-          shadowWidth += this.renderCharTexture(ch, font.getItalic(), shadowX + boldOffsetX, shadowY);
+          this.renderCharTexture(ch, font.getItalic(), shadowX + boldOffsetX, shadowY, -2);
+          shadowWidth += boldOffsetX;
         }
 
         drawStylisedArtifacts(shadowX, shadowY, shadowWidth, font);
       });
 
-      width.setState(w -> w + this.renderCharTexture(ch, font.getItalic(), x, y));
+      GL11.glColor4f(fontColour.redf, fontColour.greenf, fontColour.bluef, fontColour.alphaf);
+
+      width.setState(w -> w + this.renderCharTexture(ch, font.getItalic(), x, y, 2));
 
       if (font.getBold()) {
-        this.renderCharTexture(ch, font.getItalic(), x + boldOffsetX, y);
+        this.renderCharTexture(ch, font.getItalic(), x + boldOffsetX, y, 1);
         width.setState(w -> w + boldOffsetX);
       }
 
@@ -249,18 +244,18 @@ public class FontEngine {
   }
 
   /** Returns the width of the rendered texture. */
-  private float renderCharTexture(char ch, boolean isItalic, float x, float y) {
+  private float renderCharTexture(char ch, boolean isItalic, float x, float y, float z) {
     int asciiIndex = ASCII_CHARACTERS.indexOf(ch);
     boolean isUnicode = asciiIndex == -1 || this.unicodeFlag;
     if (isUnicode) {
-      return this.renderUnicodeChar(ch, isItalic, x, y);
+      return this.renderUnicodeChar(ch, isItalic, x, y, z);
     } else {
-      return this.renderDefaultChar(asciiIndex, isItalic, x, y);
+      return this.renderDefaultChar(asciiIndex, isItalic, x, y, z);
     }
   }
 
   /** Render a single character with the default.png font at current (posX,posY) location... */
-  protected float renderDefaultChar(int asciiIndex, boolean isItalic, float x, float y) {
+  protected float renderDefaultChar(int asciiIndex, boolean isItalic, float x, float y, float z) {
     float col = (float)(asciiIndex % 16 * 8);
     float row = (float)(asciiIndex / 16 * 8);
     float italicTransform = isItalic ? 0.75f : 0;
@@ -282,13 +277,13 @@ public class FontEngine {
 
     GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
     GL11.glTexCoord2f((col + paddingLeft) / 128.0F, (row + paddingTop) / 128.0F);
-    GL11.glVertex3f(x + paddingLeft + italicTransform, y + paddingTop, 0.0F);
+    GL11.glVertex3f(x + paddingLeft + italicTransform, y + paddingTop, z);
     GL11.glTexCoord2f((col + paddingLeft) / 128.0F, (row + (8 - paddingBottom)) / 128.0F);
-    GL11.glVertex3f(x + paddingLeft - italicTransform, y + (8 - paddingBottom), 0.0F);
+    GL11.glVertex3f(x + paddingLeft - italicTransform, y + (8 - paddingBottom), z);
     GL11.glTexCoord2f((col + texCharWidth - paddingRight) / 128.0F, (row + paddingTop) / 128.0F);
-    GL11.glVertex3f(x + texCharWidth * drawnScaleX - paddingRight + italicTransform, y + paddingTop, 0.0F);
+    GL11.glVertex3f(x + texCharWidth * drawnScaleX - paddingRight + italicTransform, y + paddingTop, z);
     GL11.glTexCoord2f((col + texCharWidth - paddingRight) / 128.0F, (row + (8 - paddingBottom)) / 128.0F);
-    GL11.glVertex3f(x + texCharWidth * drawnScaleX - paddingRight - italicTransform, y + (8 - paddingBottom), 0.0F);
+    GL11.glVertex3f(x + texCharWidth * drawnScaleX - paddingRight - italicTransform, y + (8 - paddingBottom), z);
     GL11.glEnd();
 
     return charWidth;
@@ -308,7 +303,7 @@ public class FontEngine {
   }
 
   /** Render a single Unicode character at current (posX,posY) location using one of the /font/glyph_XX.png files... */
-  protected float renderUnicodeChar(char ch, boolean isItalic, float x, float y) {
+  protected float renderUnicodeChar(char ch, boolean isItalic, float x, float y, float z) {
     if (this.glyphWidth[ch] == 0) {
       return 0.0F;
     } else {
@@ -337,11 +332,10 @@ public class FontEngine {
     }
   }
 
-  /** Render a single line string at the current (posX,posY) and update posX, respecting the styles contained in the string. Returns the new x-position of the cursor. */
-  public int drawString(String text, float x, float y, Font baseFont) {
+  /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor. */
+  public float drawString(String text, float x, float y, Font baseFont) {
     if (text == null || text.length() == 0) {
-      // this is technically incorrect, but mirrors the vanilla implementation.
-      return 0;
+      return x;
     }
 
     Font currentFont = baseFont;
@@ -401,15 +395,14 @@ public class FontEngine {
         float charWidth = this.renderChar(c, currentFont, x, y);
 
         x += charWidth;
-        // x += (float)((int)charWidth); // todo: why is it purposefully rounding down? don't we want to keep the precision?L
+//         x += (float)((int)charWidth); // todo: why is it purposefully rounding down? don't we want to keep the precision?L
       }
     }
 
-    return (int)x;
+    return x;
   }
 
   protected void drawStylisedArtifacts(float x, float y, float width, Font font) {
-    // todo: needs to respect bold/shadow
     if (font.getStrikethrough()) {
       Tessellator tessellator = Tessellator.getInstance();
       WorldRenderer worldrenderer = tessellator.getWorldRenderer();
@@ -428,11 +421,10 @@ public class FontEngine {
       WorldRenderer worldrenderer1 = tessellator1.getWorldRenderer();
       GlStateManager.disableTexture2D();
       worldrenderer1.begin(7, DefaultVertexFormats.POSITION);
-      int xCorrection = -1; // no idea why this is applied only on the left, but not on the right
-      worldrenderer1.pos((x + (float)xCorrection), (y + (float)this.FONT_HEIGHT), 0.0D).endVertex();
+      worldrenderer1.pos(x, (y + (float)this.FONT_HEIGHT), 0.0D).endVertex();
       worldrenderer1.pos((x + width), (y + (float)this.FONT_HEIGHT), 0.0D).endVertex();
       worldrenderer1.pos((x + width), (y + (float)this.FONT_HEIGHT - 1.0F), 0.0D).endVertex();
-      worldrenderer1.pos((x + (float)xCorrection), (y + (float)this.FONT_HEIGHT - 1.0F), 0.0D).endVertex();
+      worldrenderer1.pos(x, (y + (float)this.FONT_HEIGHT - 1.0F), 0.0D).endVertex();
       tessellator1.draw();
       GlStateManager.enableTexture2D();
     }

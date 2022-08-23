@@ -58,14 +58,18 @@ public class Shadow {
 
   /** If set, the shadow will have a static colour (the RGB component is independent of the font colour).
    * If null, the shadow's colour will be dynamically generated based on the font colour that it is shadowing.
-   * Note that the transparency component is always interpreted relative to the font's transparency. */
+   * Note that the transparency component is always interpreted relative to the font's transparency.
+   * For example, a shadow alpha of 50% and a font alpha with 50% transparency will result in a 25% shadow alpha. */
   public Shadow withColour(@Nullable Colour colour) {
     return this.update(shadow -> shadow._colour = colour);
   }
 
-  /** If the shadow's colour is static, will return that colour. Otherwise, will generate the shadow colour based on the font colour that is being shadowed. */
+  /** Generates the shadow colour, which partially or fully depends on the font colour. */
   public @Nullable Colour getColour(Font font) {
-    return this._colour == null ? font.getColour().withBrightness(0.25f) : this._colour;
+    Colour colour = this._colour == null ? font.getColour().withBrightness(0.25f) : this._colour;
+
+    // simulate layered transparency
+    return colour.withAlpha(colour.alphaf * font.getColour().alphaf);
   }
 
   private Shadow update(Consumer<Shadow> updater) {
