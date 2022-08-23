@@ -10,7 +10,6 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
-import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
@@ -26,8 +25,6 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLModDisabledEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 // refer to mcmod.info for more settings.
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
@@ -110,7 +107,7 @@ public class ChatMate {
     ClipboardService clipboardService = new ClipboardService();
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, guiChatMateHud);
     CounterHandler counterHandler = new CounterHandler(keyBindingService, guiChatMateHud, dimFactory, minecraft, fontEngine);
-    BrowserService browserService = new BrowserService(logService);
+    UrlService urlService = new UrlService(logService);
     MinecraftChatService minecraftChatService = new MinecraftChatService(minecraftProxyService);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
@@ -126,7 +123,7 @@ public class ChatMate {
         counterHandler,
         minecraftProxyService,
         cursorService,
-        browserService,
+        urlService,
         environment,
         logService,
         rankEndpointProxy,
@@ -159,7 +156,7 @@ public class ChatMate {
         cursorService,
         keyboardEventService,
         clipboardService,
-        browserService,
+        urlService,
         chatMateEndpointProxy,
         environment,
         minecraftChatService,

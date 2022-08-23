@@ -5,7 +5,7 @@ import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.services.BrowserService;
+import dev.rebel.chatmate.services.UrlService;
 import dev.rebel.chatmate.services.ContextMenuService;
 import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.CursorService.CursorType;
@@ -16,26 +16,19 @@ import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.Tick;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiConfirmOpenLink;
 import net.minecraft.client.gui.stream.GuiTwitchUserMode;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.util.IChatComponent;
-import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.input.Cursor;
-import org.lwjgl.input.Mouse;
 import tv.twitch.chat.ChatUserInfo;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.IntBuffer;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -48,7 +41,7 @@ public class CustomGuiChat extends GuiChat {
   private final ContextMenuStore contextMenuStore;
   private final ContextMenuService contextMenuService;
   private final CursorService cursorService;
-  private final BrowserService browserService;
+  private final UrlService urlService;
   private final ForgeEventService forgeEventService;
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseDown = this::onMouseDown;
 
@@ -60,7 +53,7 @@ public class CustomGuiChat extends GuiChat {
                        ContextMenuStore contextMenuStore,
                        ContextMenuService contextMenuService,
                        CursorService cursorService,
-                       BrowserService browserService,
+                       UrlService urlService,
                        ForgeEventService forgeEventService) {
     super(defaultInput);
 
@@ -69,7 +62,7 @@ public class CustomGuiChat extends GuiChat {
     this.contextMenuStore = contextMenuStore;
     this.contextMenuService = contextMenuService;
     this.cursorService = cursorService;
-    this.browserService = browserService;
+    this.urlService = urlService;
     this.forgeEventService = forgeEventService;
 
     this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(), this);
@@ -211,7 +204,7 @@ public class CustomGuiChat extends GuiChat {
             this.clickedLinkURI = uri;
             this.mc.displayGuiScreen(new GuiConfirmOpenLink(this, clickevent.getValue(), 31102009, false));
           } else {
-            this.browserService.openWebLink(uri);
+            this.urlService.openUrl(uri);
           }
         } catch (URISyntaxException urisyntaxexception) {
           LOGGER.error((String)("Can\'t open url for " + clickevent), (Throwable)urisyntaxexception);
@@ -219,7 +212,7 @@ public class CustomGuiChat extends GuiChat {
 
       } else if (clickevent.getAction() == ClickEvent.Action.OPEN_FILE) {
         URI uri1 = (new File(clickevent.getValue())).toURI();
-        this.browserService.openWebLink(uri1);
+        this.urlService.openUrl(uri1);
 
       } else if (clickevent.getAction() == ClickEvent.Action.SUGGEST_COMMAND) {
         this.setText(clickevent.getValue(), true);
@@ -254,7 +247,7 @@ public class CustomGuiChat extends GuiChat {
     {
       if (result)
       {
-        this.browserService.openWebLink(this.clickedLinkURI);
+        this.urlService.openUrl(this.clickedLinkURI);
       }
 
       this.clickedLinkURI = null;

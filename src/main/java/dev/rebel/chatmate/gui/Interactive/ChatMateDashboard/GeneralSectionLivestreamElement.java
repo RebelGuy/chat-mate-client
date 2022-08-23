@@ -157,11 +157,16 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
   }
 
   private void onOpenInBrowser() {
+    boolean result;
     try {
       URI url = new URI(this.livestream);
-      super.context.browserService.openWebLink(url);
-    } catch (Exception e) {
-      this.setTemporaryTooltip("Unable to open browser: " + e.getMessage(), 4000L);
+      result = super.context.urlService.openUrl(url);
+    } catch (Exception ignore) {
+      result = false;
+    }
+
+    if (!result) {
+      this.setTemporaryTooltip("Unable to open the browser", 4000L);
     }
   }
 

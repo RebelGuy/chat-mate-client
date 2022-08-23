@@ -21,7 +21,6 @@ import scala.Tuple2;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 public class SidebarElement extends ContainerElement {
   private final DashboardStore store;
@@ -68,7 +67,7 @@ public class SidebarElement extends ContainerElement {
 
   private void onOpenStudio() {
     try {
-      super.context.browserService.openWebLink(new URI(super.context.environment.studioUrl));
+      super.context.urlService.openUrl(new URI(super.context.environment.studioUrl));
     } catch (Exception e) {
       super.context.logService.logError(this, "Unable to open Studio in the web browser", e);
     }

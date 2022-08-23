@@ -39,7 +39,7 @@ public class GuiService {
   private final CursorService cursorService;
   private final KeyboardEventService keyboardEventService;
   private final ClipboardService clipboardService;
-  private final BrowserService browserService;
+  private final UrlService urlService;
   private final ChatMateEndpointProxy chatMateEndpointProxy;
   private final Environment environment;
   private final MinecraftChatService minecraftChatService;
@@ -63,7 +63,7 @@ public class GuiService {
                     CursorService cursorService,
                     KeyboardEventService keyboardEventService,
                     ClipboardService clipboardService,
-                    BrowserService browserService,
+                    UrlService urlService,
                     ChatMateEndpointProxy chatMateEndpointProxy,
                     Environment environment,
                     MinecraftChatService minecraftChatService,
@@ -86,7 +86,7 @@ public class GuiService {
     this.cursorService = cursorService;
     this.keyboardEventService = keyboardEventService;
     this.clipboardService = clipboardService;
-    this.browserService = browserService;
+    this.urlService = urlService;
     this.chatMateEndpointProxy = chatMateEndpointProxy;
     this.environment = environment;
     this.minecraftChatService = minecraftChatService;
@@ -167,7 +167,7 @@ public class GuiService {
         this.contextMenuStore,
         this.contextMenuService,
         this.cursorService,
-        this.browserService,
+        this.urlService,
         this.forgeEventService);
     return new OpenGui.Out(replaceWithGui);
   }
@@ -208,7 +208,7 @@ public class GuiService {
         this.soundService,
         this.cursorService,
         this.minecraftProxyService,
-        this.browserService,
+        this.urlService,
         this.environment,
         this.logService,
         this.minecraftChatService);

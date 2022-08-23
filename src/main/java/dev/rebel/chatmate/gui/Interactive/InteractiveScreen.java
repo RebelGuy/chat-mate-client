@@ -637,7 +637,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final SoundService soundService;
     public final CursorService cursorService;
     public final MinecraftProxyService minecraftProxyService;
-    public final BrowserService browserService;
+    public final UrlService urlService;
     public final Environment environment;
     public final LogService logService;
     public final MinecraftChatService minecraftChatService;
@@ -657,7 +657,7 @@ public class InteractiveScreen extends Screen implements IElement {
                               SoundService soundService,
                               CursorService cursorService,
                               MinecraftProxyService minecraftProxyService,
-                              BrowserService browserService,
+                              UrlService urlService,
                               Environment environment,
                               LogService logService,
                               MinecraftChatService minecraftChatService) {
@@ -671,7 +671,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.soundService = soundService;
       this.cursorService = cursorService;
       this.minecraftProxyService = minecraftProxyService;
-      this.browserService = browserService;
+      this.urlService = urlService;
       this.environment = environment;
       this.logService = logService;
       this.minecraftChatService = minecraftChatService;

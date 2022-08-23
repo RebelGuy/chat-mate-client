@@ -37,7 +37,7 @@ public class ContextMenuService {
   private final CounterHandler counterHandler;
   private final MinecraftProxyService minecraftProxyService;
   private final CursorService cursorService;
-  private final BrowserService browserService;
+  private final UrlService urlService;
   private final Environment environment;
   private final LogService logService;
   private final RankEndpointProxy rankEndpointProxy;
@@ -58,7 +58,7 @@ public class ContextMenuService {
                             CounterHandler counterHandler,
                             MinecraftProxyService minecraftProxyService,
                             CursorService cursorService,
-                            BrowserService browserService,
+                            UrlService urlService,
                             Environment environment,
                             LogService logService,
                             RankEndpointProxy rankEndpointProxy,
@@ -78,7 +78,7 @@ public class ContextMenuService {
     this.counterHandler = counterHandler;
     this.minecraftProxyService = minecraftProxyService;
     this.cursorService = cursorService;
-    this.browserService = browserService;
+    this.urlService = urlService;
     this.environment = environment;
     this.logService = logService;
     this.rankEndpointProxy = rankEndpointProxy;
@@ -169,7 +169,7 @@ public class ContextMenuService {
         this.soundService,
         this.cursorService,
         this.minecraftProxyService,
-        this.browserService,
+        this.urlService,
         this.environment,
         this.logService,
         this.minecraftChatService);
