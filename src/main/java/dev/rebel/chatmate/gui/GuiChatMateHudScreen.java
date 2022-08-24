@@ -97,9 +97,11 @@ public class GuiChatMateHudScreen extends GuiScreen {
 
     for (IHudComponent component : this.guiChatMateHud.hudComponents) {
       if (containsPoint(component, this.mousePositionData.point)) {
-        DimRect rect = new DimRect(component.getX(), component.getY(), component.getWidth(), component.getHeight());
-        float alpha = this.draggingComponent == component ? 0.2f : 0.1f;
-        RendererHelpers.drawRect(0, rect, Colour.BLACK.withAlpha(alpha));
+        if (component.canTranslate() || component.canResizeBox()) {
+          DimRect rect = new DimRect(component.getX(), component.getY(), component.getWidth(), component.getHeight());
+          float alpha = this.draggingComponent == component ? 0.2f : 0.1f;
+          RendererHelpers.drawRect(0, rect, Colour.BLACK.withAlpha(alpha));
+        }
       }
     }
   }

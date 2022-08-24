@@ -52,7 +52,7 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final int drawString(String text, float x, float y, int color, boolean dropShadow) {
-    return (int)this.fontEngine.drawString(text, x, y, new Font().withColour(new Colour(color)).withShadow(dropShadow ? new Shadow(this.dimFactory) : null));
+    return (int)this.fontEngine.drawString(text, this.dimFactory.fromGui(x), this.dimFactory.fromGui(y), new Font().withColour(new Colour(color)).withShadow(dropShadow ? new Shadow(this.dimFactory) : null)).getGui();
   }
 
   @Override
@@ -62,7 +62,7 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final int getStringWidth(String text) {
-    return this.fontEngine.getStringWidth(text);
+    return (int)this.fontEngine.getStringWidthDim(text).getGui();
   }
 
   @Override
@@ -82,12 +82,12 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final void drawSplitString(String str, int x, int y, int wrapWidth, int textColor) {
-    this.fontEngine.drawSplitString(str, x, y, wrapWidth, textColor, new Font());
+    this.fontEngine.drawSplitString(str, this.dimFactory.fromGui(x), this.dimFactory.fromGui(y), this.dimFactory.fromGui(wrapWidth), new Font().withColour(new Colour(textColor)));
   }
 
   @Override
   public final int splitStringWidth(String str, int maxLength) {
-    return this.fontEngine.splitStringWidth(str, maxLength);
+    return this.fontEngine.splitStringWidth(str, this.dimFactory.fromGui(maxLength));
   }
 
   @Override
@@ -107,12 +107,12 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final List<String> listFormattedStringToWidth(String str, int wrapWidth) {
-    return this.fontEngine.listFormattedStringToWidth(str, wrapWidth);
+    return this.fontEngine.listFormattedStringToWidth(str, this.dimFactory.fromGui(wrapWidth));
   }
 
   // can't use @Override here, wtf?!
   public final String wrapFormattedStringToWidth(String str, int wrapWidth) {
-    return this.fontEngine.wrapFormattedStringToWidth(str, wrapWidth);
+    return this.fontEngine.wrapFormattedStringToWidth(str, this.dimFactory.fromGui(wrapWidth));
   }
 
   @Override

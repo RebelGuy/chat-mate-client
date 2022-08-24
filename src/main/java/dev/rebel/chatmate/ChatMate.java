@@ -75,6 +75,7 @@ public class ChatMate {
     PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, apiPath);
     LogEndpointProxy logEndpointProxy = new LogEndpointProxy(logService, apiRequestService, apiPath);
     RankEndpointProxy rankEndpointProxy = new RankEndpointProxy(logService, apiRequestService, apiPath);
+    DonationEndpointProxy donationEndpointProxy = new DonationEndpointProxy(logService, apiRequestService, apiPath);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -130,6 +131,7 @@ public class ChatMate {
         minecraftChatService,
         fontEngine);
 
+    ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
     CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
         minecraft,
         logService,
@@ -138,7 +140,8 @@ public class ChatMate {
         dimFactory,
         mouseEventService,
         contextMenuStore,
-        fontEngine);
+        fontEngine,
+        chatComponentRenderer);
     CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
     GuiService guiService = new GuiService(this.isDev,
         logService,
@@ -162,7 +165,8 @@ public class ChatMate {
         minecraftChatService,
         customGuiIngame,
         fontEngine,
-        fontEngineProxy);
+        fontEngineProxy,
+        donationEndpointProxy);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
-import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedSelection;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.hud.Colour;
@@ -9,8 +8,6 @@ import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.ChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.gui.style.Font;
-import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -56,6 +53,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final MouseEventService mouseEventService;
   private final ContextMenuStore contextMenuStore;
   private final FontEngine fontEngine;
+  private final ChatComponentRenderer chatComponentRenderer;
 
   private final List<String> sentMessages = Lists.newArrayList();
   private final List<AbstractChatLine> abstractChatLines = Lists.newArrayList();
@@ -73,7 +71,8 @@ public class CustomGuiNewChat extends GuiNewChat {
                           DimFactory dimFactory,
                           MouseEventService mouseEventService,
                           ContextMenuStore contextMenuStore,
-                          FontEngine fontEngine) {
+                          FontEngine fontEngine,
+                          ChatComponentRenderer chatComponentRenderer) {
     super(minecraft);
     this.minecraft = minecraft;
     this.logService = logService;
@@ -83,6 +82,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.mouseEventService = mouseEventService;
     this.contextMenuStore = contextMenuStore;
     this.fontEngine = fontEngine;
+    this.chatComponentRenderer = chatComponentRenderer;
 
     this.hoveredLine = new AnimatedSelection<>(150L);
     this.selectedLine = new AnimatedSelection<>(100L);
@@ -174,10 +174,11 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   private void drawLine(ChatLine line, int index, int opacity, int width) {
     int lineLeft = LEFT_PADDING;
-    int lineBottom = -index * 9; // negative because we iterate from the bottom line to the top line
+    int lineBottom = -index * this.fontEngine.FONT_HEIGHT; // negative because we iterate from the bottom line to the top line
+    int lineTop = lineBottom - this.fontEngine.FONT_HEIGHT;
 
     Colour backgroundColour = this.getBackgroundColour(line, opacity);
-    drawRect(0, lineBottom - 9, lineLeft + width + 4, lineBottom, backgroundColour.toSafeInt());
+    drawRect(0, lineTop, lineLeft + width + 4, lineBottom, backgroundColour.toSafeInt());
     GlStateManager.enableBlend();
 
     // unpack the container
@@ -191,12 +192,12 @@ public class CustomGuiNewChat extends GuiNewChat {
       PrecisionChatComponentText component = (PrecisionChatComponentText)chatComponent;
       for (Tuple2<PrecisionChatComponentText.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.fontEngine, width)) {
         int left = lineLeft + pair._1.position.getGuiValue(width);
-        this.drawChatComponent(pair._2, left, lineBottom, opacity);
+        this.chatComponentRenderer.drawChatComponent(pair._2, left, lineTop, opacity);
       }
     } else {
       int x = 0;
       for (IChatComponent component : chatComponent) {
-        x += this.drawChatComponent(component, lineLeft + x, lineBottom, opacity);
+        x += this.chatComponentRenderer.drawChatComponent(component, lineLeft + x, lineTop, opacity);
       }
     }
 
@@ -217,65 +218,6 @@ public class CustomGuiNewChat extends GuiNewChat {
     // anyway. I guess a solution is to modify the AnimatedSelection to work with floats rather than booleans, and a value
     // of 0.5 to represent hover, and 1 to represent selection.
     return Colour.lerp(standardBackground, selectedColour, Math.min(1, hoveredFrac / 2 + selectedFrac));
-  }
-
-  /** Returns the width of the drawn component. */
-  private int drawChatComponent(IChatComponent component, int x, int lineBottom, int opacity) {
-    if (component instanceof ContainerChatComponent) {
-      ContainerChatComponent container = (ContainerChatComponent)component;
-      return drawChatComponent(container.getComponent(), x, lineBottom, opacity);
-
-    } else if (component instanceof ChatComponentText) {
-      String formattedText = getFormattedText((ChatComponentText)component);
-      Font font = new Font().withColour(Colour.WHITE.withAlpha(opacity)).withShadow(new Shadow(dimFactory));
-      this.fontEngine.drawString(formattedText, x, lineBottom - 8, font);
-      return this.fontEngine.getStringWidth(formattedText);
-
-    } else if (component instanceof ImageChatComponent) {
-      ImageChatComponent imageComponent = (ImageChatComponent)component;
-      Texture texture = imageComponent.getTexture();
-      if (texture == null) {
-        return 0;
-      }
-
-      // if the image is not square, it's possible that it will not be positioned properly in the dedicated space in the chat line
-      // due to rounding error. the following adjustment will fix that
-      float requiredWidth = imageComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT);
-      int requiredWidthInt = (int)Math.ceil(requiredWidth);
-      float xAdjustment = (requiredWidthInt - requiredWidth) / 2;
-
-      Dim targetHeight = this.dimFactory.fromGui(this.fontEngine.FONT_HEIGHT);
-      Dim currentHeight = this.dimFactory.fromScreen(texture.height);
-      float imageX = x + imageComponent.paddingGuiLeft + xAdjustment;
-      float imageY = lineBottom - targetHeight.getGui();
-
-      float scaleToReachTarget = targetHeight.getGui() / currentHeight.getGui();
-      float scaleY = currentHeight.getGui() / 256 * scaleToReachTarget;
-      float aspectRatio = imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT) / targetHeight.getGui();
-      float scaleX = aspectRatio * scaleY;
-
-      GlStateManager.pushMatrix();
-      GlStateManager.scale(scaleX, scaleY, 1);
-      GlStateManager.enableBlend();
-
-      // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
-      GlStateManager.color(1.0f, 1.0f, 1.0f, opacity < 4 ? 0 : opacity / 255.0f);
-      GlStateManager.disableLighting();
-
-      // undo the scaling
-      float scaledX = imageX / scaleX;
-      float scaledY = imageY / scaleY;
-      int u = 0, v = 0;
-      this.minecraft.getTextureManager().bindTexture(texture.resourceLocation);
-      this.drawTexturedModalRect(scaledX, scaledY, u, v, 256, 256);
-
-      GlStateManager.popMatrix();
-
-      return requiredWidthInt;
-
-    } else {
-      throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());
-    }
   }
 
   /** Given the lineCount (total lines) and the renderedLines (how many lines are visible on screen), draws the scrollbar to the left of the chat GUI. */

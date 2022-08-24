@@ -3,11 +3,13 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
@@ -20,6 +22,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
 public class GuiService {
@@ -46,6 +49,7 @@ public class GuiService {
   private final CustomGuiIngame customGuiIngame;
   private final FontEngine fontEngine;
   private final FontEngineProxy fontEngineProxy;
+  private final DonationEndpointProxy donationEndpointProxy;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -69,7 +73,8 @@ public class GuiService {
                     MinecraftChatService minecraftChatService,
                     CustomGuiIngame customGuiIngame,
                     FontEngine fontEngine,
-                    FontEngineProxy fontEngineProxy) {
+                    FontEngineProxy fontEngineProxy,
+                    DonationEndpointProxy donationEndpointProxy) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -93,14 +98,19 @@ public class GuiService {
     this.customGuiIngame = customGuiIngame;
     this.fontEngine = fontEngine;
     this.fontEngineProxy = fontEngineProxy;
+    this.donationEndpointProxy = donationEndpointProxy;
 
     this.addEventHandlers();
   }
 
-  public void onDisplayDashboard() {
+  public void displayDashboard() {
+    this.displayDashboard(null);
+  }
+
+  public void displayDashboard(@Nullable DashboardRoute route) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
-    screen.setMainElement(new ChatMateDashboardElement(context, screen, this.chatMateEndpointProxy));
+    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.donationEndpointProxy));
     this.minecraft.displayGuiScreen(screen);
   }
 

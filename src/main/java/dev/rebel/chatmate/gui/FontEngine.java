@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
@@ -18,7 +18,6 @@ import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 
 import javax.annotation.Nullable;
 import java.awt.image.BufferedImage;
@@ -48,6 +47,7 @@ public class FontEngine {
   protected int[] charWidth = new int[256];
   /** the height in pixels of default text */
   public int FONT_HEIGHT = 9;
+  public Dim FONT_HEIGHT_DIM;
   public Random fontRandom = new Random();
   /** Array of the start/end column (in upper/lower nibble) for every glyph in the /font directory. */
   protected byte[] glyphWidth = new byte[65536];
@@ -65,6 +65,8 @@ public class FontEngine {
     this.locationFontTexture = location;
     this.renderEngine = textureManagerIn;
     this.unicodeFlag = unicode;
+    this.FONT_HEIGHT_DIM = this.dimFactory.fromGui(9);
+
     bindTexture(this.locationFontTexture);
 
     // initialise preset colours (first 16), as well as their corresponding shadow colour (next 16)
@@ -170,19 +172,19 @@ public class FontEngine {
   }
 
   /** Render the given char at the position. */
-  private float renderChar(char ch, Font font, float x, float y) {
+  private Dim renderChar(char ch, Font font, Dim x, Dim y) {
     if (ch == CHAR_SPACE) {
-      return 4.0F;
+      return this.dimFactory.fromGui(4);
     }
 
     // this method can probably be refactored into a much more elegant approach, but it'll do for now.
-    final State<Float> width = new State<>(0f); // hack so we can modify this inside the lambdas... thanks java
+    final State<Dim> width = new State<>(this.dimFactory.zeroGui()); // hack so we can modify this inside the lambdas... thanks java
 
     // the unicode scaling is applied as per the vanilla implementation, probably because the unicode characters are thinner
     int asciiIndex = ASCII_CHARACTERS.indexOf(ch);
     boolean isUnicode = asciiIndex == -1 || this.unicodeFlag;
     float offsetMultiplier = isUnicode ? UNICODE_SCALING_FACTOR : 1;
-    float boldOffsetX = 1 * offsetMultiplier;
+    Dim boldOffsetX = this.dimFactory.fromGui(1).times(offsetMultiplier);
 
     // set the main layer
     // for some reason we can't use the GlStateManager with pushAttrib(), so instead we have to use the raw GL11 API
@@ -215,14 +217,14 @@ public class FontEngine {
         GL11.glColor4f(shadowColour.redf, shadowColour.greenf, shadowColour.bluef, shadowColour.alphaf);
         GlStateManager.color(shadowColour.redf, shadowColour.greenf, shadowColour.bluef, shadowColour.alphaf);
 
-        float shadowX = x + shadow.getOffset().getX().getGui() * offsetMultiplier;
-        float shadowY = y + shadow.getOffset().getX().getGui() * offsetMultiplier;
-        float shadowWidth = 0;
-        shadowWidth += this.renderCharTexture(ch, font.getItalic(), shadowX, shadowY, -1);
+        Dim shadowX = x.plus(shadow.getOffset().getX().times(offsetMultiplier));
+        Dim shadowY = y.plus(shadow.getOffset().getX().times(offsetMultiplier));
+        Dim shadowWidth = this.dimFactory.zeroGui();
+        shadowWidth = shadowWidth.plus(this.renderCharTexture(ch, font.getItalic(), shadowX, shadowY, -1));
 
         if (font.getBold()) {
-          this.renderCharTexture(ch, font.getItalic(), shadowX + boldOffsetX, shadowY, -2);
-          shadowWidth += boldOffsetX;
+          this.renderCharTexture(ch, font.getItalic(), shadowX.plus(boldOffsetX), shadowY, -2);
+          shadowWidth = shadowWidth.plus(boldOffsetX);
         }
 
         drawStylisedArtifacts(shadowX, shadowY, shadowWidth, font);
@@ -230,11 +232,11 @@ public class FontEngine {
 
       GL11.glColor4f(fontColour.redf, fontColour.greenf, fontColour.bluef, fontColour.alphaf);
 
-      width.setState(w -> w + this.renderCharTexture(ch, font.getItalic(), x, y, 2));
+      width.setState(w -> w.plus(this.renderCharTexture(ch, font.getItalic(), x, y, 2)));
 
       if (font.getBold()) {
-        this.renderCharTexture(ch, font.getItalic(), x + boldOffsetX, y, 1);
-        width.setState(w -> w + boldOffsetX);
+        this.renderCharTexture(ch, font.getItalic(), x.plus(boldOffsetX), y, 1);
+        width.setState(w -> w.plus(boldOffsetX));
       }
 
       drawStylisedArtifacts(x, y, width.getState(), font);
@@ -244,7 +246,7 @@ public class FontEngine {
   }
 
   /** Returns the width of the rendered texture. */
-  private float renderCharTexture(char ch, boolean isItalic, float x, float y, float z) {
+  private Dim renderCharTexture(char ch, boolean isItalic, Dim x, Dim y, float z) {
     int asciiIndex = ASCII_CHARACTERS.indexOf(ch);
     boolean isUnicode = asciiIndex == -1 || this.unicodeFlag;
     if (isUnicode) {
@@ -255,7 +257,7 @@ public class FontEngine {
   }
 
   /** Render a single character with the default.png font at current (posX,posY) location... */
-  protected float renderDefaultChar(int asciiIndex, boolean isItalic, float x, float y, float z) {
+  protected Dim renderDefaultChar(int asciiIndex, boolean isItalic, Dim xDim, Dim yDim, float z) {
     float col = (float)(asciiIndex % 16 * 8);
     float row = (float)(asciiIndex / 16 * 8);
     float italicTransform = isItalic ? 0.75f : 0;
@@ -275,6 +277,8 @@ public class FontEngine {
     float drawnScaleX = 1f; // adjusting this squishes/expands the text in the x direction, drastically changing the look of the font
     float charWidth = texCharWidth * drawnScaleX; // draws them closer together/farther apart
 
+    float x = xDim.getGui();
+    float y = yDim.getGui();
     GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
     GL11.glTexCoord2f((col + paddingLeft) / 128.0F, (row + paddingTop) / 128.0F);
     GL11.glVertex3f(x + paddingLeft + italicTransform, y + paddingTop, z);
@@ -286,7 +290,7 @@ public class FontEngine {
     GL11.glVertex3f(x + texCharWidth * drawnScaleX - paddingRight - italicTransform, y + (8 - paddingBottom), z);
     GL11.glEnd();
 
-    return charWidth;
+    return this.dimFactory.fromGui(charWidth);
   }
 
   private ResourceLocation getUnicodePageLocation(int page) {
@@ -303,9 +307,9 @@ public class FontEngine {
   }
 
   /** Render a single Unicode character at current (posX,posY) location using one of the /font/glyph_XX.png files... */
-  protected float renderUnicodeChar(char ch, boolean isItalic, float x, float y, float z) {
+  protected Dim renderUnicodeChar(char ch, boolean isItalic, Dim xDim, Dim yDim, float z) {
     if (this.glyphWidth[ch] == 0) {
-      return 0.0F;
+      return this.dimFactory.zeroGui();
     } else {
       // this is so similar to the renderDefaultChar method, but I just can't quite get my hand on it.
       // ideally we want to generalise both methods, perhaps even represent the unicode flag in the font.
@@ -318,6 +322,8 @@ public class FontEngine {
       float row = (float)((ch & 255) / 16 * 16);
       float texCharWidth = nextCharStart - charStart - 0.02F;
       float italicTransform = isItalic ? 1.0F : 0.0F;
+      float x = xDim.getGui();
+      float y = yDim.getGui();
       GL11.glBegin(GL11.GL_TRIANGLE_STRIP);
       GL11.glTexCoord2f(col / 256.0F, row / 256.0F);
       GL11.glVertex3f(x + italicTransform, y, 0.0F);
@@ -328,12 +334,16 @@ public class FontEngine {
       GL11.glTexCoord2f((col + texCharWidth) / 256.0F, (row + 15.98F) / 256.0F);
       GL11.glVertex3f(x + texCharWidth * UNICODE_SCALING_FACTOR - italicTransform, y + 7.99F, 0.0F);
       GL11.glEnd();
-      return (nextCharStart - charStart) * UNICODE_SCALING_FACTOR + 1.0F;
+      return this.dimFactory.fromGui(nextCharStart - charStart).times(UNICODE_SCALING_FACTOR).plus(this.dimFactory.fromGui(1));
     }
   }
 
-  /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor. */
   public float drawString(String text, float x, float y, Font baseFont) {
+    return this.drawString(text, this.dimFactory.fromGui(x), this.dimFactory.fromGui(y), baseFont).getGui();
+  }
+
+  /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor. */
+  public Dim drawString(String text, Dim x, Dim y, Font baseFont) {
     if (text == null || text.length() == 0) {
       return x;
     }
@@ -392,9 +402,9 @@ public class FontEngine {
           c = c1;
         }
 
-        float charWidth = this.renderChar(c, currentFont, x, y);
+        Dim charWidth = this.renderChar(c, currentFont, x, y);
 
-        x += charWidth;
+        x = x.plus(charWidth);
 //         x += (float)((int)charWidth); // todo: why is it purposefully rounding down? don't we want to keep the precision?L
       }
     }
@@ -402,38 +412,47 @@ public class FontEngine {
     return x;
   }
 
-  protected void drawStylisedArtifacts(float x, float y, float width, Font font) {
+  protected void drawStylisedArtifacts(Dim xDim, Dim yDim, Dim widthDim, Font font) {
+    float x1 = xDim.getGui();
+    float x2 = xDim.plus(widthDim).getGui();
+
     if (font.getStrikethrough()) {
+      float y = yDim.plus(this.FONT_HEIGHT_DIM.over(2)).getGui();
       Tessellator tessellator = Tessellator.getInstance();
       WorldRenderer worldrenderer = tessellator.getWorldRenderer();
       GlStateManager.disableTexture2D();
       worldrenderer.begin(7, DefaultVertexFormats.POSITION);
-      worldrenderer.pos(x, (y + (float)(this.FONT_HEIGHT / 2)), 0.0D).endVertex();
-      worldrenderer.pos((x + width), (y + (float)(this.FONT_HEIGHT / 2)), 0.0D).endVertex();
-      worldrenderer.pos((x + width), (y + (float)(this.FONT_HEIGHT / 2) - 1.0F), 0.0D).endVertex();
-      worldrenderer.pos(x, (y + (float)(this.FONT_HEIGHT / 2) - 1.0F), 0.0D).endVertex();
+      worldrenderer.pos(x1, y, 0).endVertex();
+      worldrenderer.pos(x2, y, 0).endVertex();
+      worldrenderer.pos(x2, y - 1, 0).endVertex();
+      worldrenderer.pos(x1, y - 1, 0).endVertex();
       tessellator.draw();
       GlStateManager.enableTexture2D();
     }
 
     if (font.getUnderlined()) {
+      float y = yDim.plus(this.FONT_HEIGHT_DIM).getGui();
       Tessellator tessellator1 = Tessellator.getInstance();
       WorldRenderer worldrenderer1 = tessellator1.getWorldRenderer();
       GlStateManager.disableTexture2D();
       worldrenderer1.begin(7, DefaultVertexFormats.POSITION);
-      worldrenderer1.pos(x, (y + (float)this.FONT_HEIGHT), 0.0D).endVertex();
-      worldrenderer1.pos((x + width), (y + (float)this.FONT_HEIGHT), 0.0D).endVertex();
-      worldrenderer1.pos((x + width), (y + (float)this.FONT_HEIGHT - 1.0F), 0.0D).endVertex();
-      worldrenderer1.pos(x, (y + (float)this.FONT_HEIGHT - 1.0F), 0.0D).endVertex();
+      worldrenderer1.pos(x1, y, 0).endVertex();
+      worldrenderer1.pos(x2, y, 0).endVertex();
+      worldrenderer1.pos(x2, y - 1, 0).endVertex();
+      worldrenderer1.pos(x1, y - 1, 0).endVertex();
       tessellator1.draw();
       GlStateManager.enableTexture2D();
     }
   }
 
-  /** Returns the width of this string. Equivalent of FontMetrics.stringWidth(String s). */
   public int getStringWidth(String text) {
+    return (int)this.getStringWidthDim(text).getGui();
+  }
+
+  /** Returns the width of this string. Equivalent of FontMetrics.stringWidth(String s). */
+  public Dim getStringWidthDim(String text) {
     if (text == null) {
-      return 0;
+      return this.dimFactory.zeroGui();
     } else {
       int i = 0;
       boolean flag = false;
@@ -464,7 +483,7 @@ public class FontEngine {
         }
       }
 
-      return i;
+      return this.dimFactory.fromGui(i);
     }
   }
 
@@ -472,7 +491,7 @@ public class FontEngine {
   public int getCharWidth(char character) {
     if (character == CHAR_SECTION_SIGN) {
       return -1;
-    } else if (character == 32) {
+    } else if (character == CHAR_SPACE) {
       return 4;
     } else {
       int i = ASCII_CHARACTERS.indexOf(character);
@@ -554,12 +573,12 @@ public class FontEngine {
   }
 
   /** Splits and draws a String with wordwrap (maximum length is parameter k) */
-  public void drawSplitString(String str, int x, int y, int wrapWidth, int textColor, Font font) {
+  public void drawSplitString(String str, Dim x, Dim y, Dim wrapWidth, Font font) {
     str = this.trimStringNewline(str);
 
     for (String s : this.listFormattedStringToWidth(str, wrapWidth)) {
-      this.drawString(s, x, y, font.withColour(new Colour(textColor)));
-      y += this.FONT_HEIGHT;
+      this.drawString(s, x, y, font);
+      y = y.plus(this.FONT_HEIGHT_DIM);
     }
   }
 
@@ -567,7 +586,7 @@ public class FontEngine {
    *
    * @param str The string to split
    * @param maxLength The maximum length of a word */
-  public int splitStringWidth(String str, int maxLength) {
+  public int splitStringWidth(String str, Dim maxLength) {
     return this.FONT_HEIGHT * this.listFormattedStringToWidth(str, maxLength).size();
   }
 
@@ -584,11 +603,15 @@ public class FontEngine {
   }
 
   public List<String> listFormattedStringToWidth(String str, int wrapWidth) {
+    return this.listFormattedStringToWidth(str, this.dimFactory.fromGui(wrapWidth));
+  }
+
+  public List<String> listFormattedStringToWidth(String str, Dim wrapWidth) {
     return Arrays.<String>asList(this.wrapFormattedStringToWidth(str, wrapWidth).split("\n"));
   }
 
   /** Inserts newline and formatting into a string to wrap it within the specified width. */
-  String wrapFormattedStringToWidth(String str, int wrapWidth) {
+  String wrapFormattedStringToWidth(String str, Dim wrapWidth) {
     int i = this.sizeStringToWidth(str, wrapWidth);
 
     if (str.length() <= i) {
@@ -603,7 +626,7 @@ public class FontEngine {
   }
 
   /** Determines how many characters from the string will fit into the specified width. */
-  private int sizeStringToWidth(String str, int wrapWidth) {
+  private int sizeStringToWidth(String str, Dim wrapWidth) {
     int i = str.length();
     int j = 0;
     int k = 0;
@@ -648,7 +671,7 @@ public class FontEngine {
         break;
       }
 
-      if (j > wrapWidth) {
+      if (j > wrapWidth.getGui()) {
         break;
       }
     }

@@ -1,6 +1,9 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.DonationRoute;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.GeneralRoute;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.Events.SizeData;
@@ -11,11 +14,15 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import scala.Tuple2;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static dev.rebel.chatmate.services.util.Objects.castOrNull;
 
 /** The main element that should be rendered into the interactive screen. */
 public class ChatMateDashboardElement extends ContainerElement {
@@ -31,14 +38,15 @@ public class ChatMateDashboardElement extends ContainerElement {
 
   private final GeneralSectionElement generalSection;
   private final HudSectionElement hudSection;
+  private final DonationSectionElement donationSection;
 
   private final SidebarElement sidebar;
   private final WrapperElement contentWrapper;
   private final ElementReference content;
 
-  public ChatMateDashboardElement(InteractiveContext context, IElement parent, ChatMateEndpointProxy chatMateEndpointProxy) {
+  public ChatMateDashboardElement(InteractiveContext context, IElement parent, @Nullable DashboardRoute route, ChatMateEndpointProxy chatMateEndpointProxy, DonationEndpointProxy donationEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
-    super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // clear the HUD indicator
+    super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
     super.setPadding(new RectExtension(gui(8)));
 
@@ -47,8 +55,9 @@ public class ChatMateDashboardElement extends ContainerElement {
 
     this.sidebarMaxWidth = gui(80);
 
-    this.generalSection = new GeneralSectionElement(context, this, this.chatMateEndpointProxy);
-    this.hudSection = new HudSectionElement(context, this);
+    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy);
+    this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route));
+    this.donationSection = new DonationSectionElement(context, this, castOrNull(DonationRoute.class, route), donationEndpointProxy);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))
@@ -63,7 +72,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     super.addElement(this.contentWrapper);
 
     this.store.onSettingsPageChange(this::onSettingsPageChange);
-    this.onSettingsPageChange(SettingsPage.GENERAL);
+    this.onSettingsPageChange(route ==  null ? SettingsPage.GENERAL : route.page);
   }
 
   private void onSettingsPageChange(SettingsPage settingsPage) {
@@ -74,6 +83,9 @@ public class ChatMateDashboardElement extends ContainerElement {
         break;
       case HUD:
         newElement = this.hudSection;
+        break;
+      case DONATION:
+        newElement = this.donationSection;
         break;
       default:
         throw EnumHelpers.<SettingsPage>assertUnreachable(settingsPage);

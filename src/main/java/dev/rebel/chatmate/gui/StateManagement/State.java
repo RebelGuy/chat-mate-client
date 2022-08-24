@@ -22,6 +22,9 @@ public class State<TState> {
     if (ClassUtils.isPrimitiveOrWrapper(state.getClass())) {
       this.state = state;
       return;
+    } else if (!OuterState.class.isAssignableFrom(state.getClass())) {
+      this.state = state;
+      return;
     }
 
     for (Field field : state.getClass().getFields()) {
@@ -49,4 +52,7 @@ public class State<TState> {
   public TState getState() {
     return this.state;
   }
+
+  /** If your state type extends this class, you can set the state of individual fields (equivalent to having multiple State<> objects). */
+  public static class OuterState { }
 }
