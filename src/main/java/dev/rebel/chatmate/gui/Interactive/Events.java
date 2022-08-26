@@ -75,8 +75,8 @@ public class Events {
   }
 
   public enum FocusReason {
-    CLICK, TAB,
-    AUTO // can only fire when the InteractiveScreen is first shown - never again after that
+    CLICK, TAB, // the focus was triggered by the  user
+    AUTO // the focus was triggered by the InteractiveScreen
   }
 
   public static class SizeData {

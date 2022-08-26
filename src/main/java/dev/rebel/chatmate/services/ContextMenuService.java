@@ -18,6 +18,7 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
 import dev.rebel.chatmate.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import net.minecraft.client.Minecraft;
@@ -43,6 +44,7 @@ public class ContextMenuService {
   private final RankEndpointProxy rankEndpointProxy;
   private final MinecraftChatService minecraftChatService;
   private final FontEngine fontEngine;
+  private final ForgeEventService forgeEventService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -63,7 +65,8 @@ public class ContextMenuService {
                             LogService logService,
                             RankEndpointProxy rankEndpointProxy,
                             MinecraftChatService minecraftChatService,
-                            FontEngine fontEngine) {
+                            FontEngine fontEngine,
+                            ForgeEventService forgeEventService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -84,6 +87,7 @@ public class ContextMenuService {
     this.rankEndpointProxy = rankEndpointProxy;
     this.minecraftChatService = minecraftChatService;
     this.fontEngine = fontEngine;
+    this.forgeEventService = forgeEventService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -172,6 +176,7 @@ public class ContextMenuService {
         this.urlService,
         this.environment,
         this.logService,
-        this.minecraftChatService);
+        this.minecraftChatService,
+        this.forgeEventService);
   }
 }

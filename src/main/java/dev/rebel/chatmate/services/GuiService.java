@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardEle
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
+import dev.rebel.chatmate.gui.hud.ChatMateHudScreen;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
@@ -50,6 +51,8 @@ public class GuiService {
   private final FontEngine fontEngine;
   private final FontEngineProxy fontEngineProxy;
   private final DonationEndpointProxy donationEndpointProxy;
+
+  private final ChatMateHudScreen chatMateHudScreen;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -99,6 +102,8 @@ public class GuiService {
     this.fontEngine = fontEngine;
     this.fontEngineProxy = fontEngineProxy;
     this.donationEndpointProxy = donationEndpointProxy;
+
+    this.chatMateHudScreen = new ChatMateHudScreen(this.createInteractiveContext(), this.config);
 
     this.addEventHandlers();
   }
@@ -198,9 +203,7 @@ public class GuiService {
 
   private Boolean onOpenChatMateHud() {
     if (this.config.getHudEnabledEmitter().get()) {
-      // key events don't fire when we are in a menu, so don't need to worry about closing this GUI when the key is pressed again
-      GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.mouseEventService, this.dimFactory, this.guiChatMateHud, this.contextMenuService);
-      this.minecraft.displayGuiScreen(hudScreen);
+      this.minecraft.displayGuiScreen(this.chatMateHudScreen);
       return true;
     } else {
       return false;
@@ -221,6 +224,7 @@ public class GuiService {
         this.urlService,
         this.environment,
         this.logService,
-        this.minecraftChatService);
+        this.minecraftChatService,
+        this.forgeEventService);
   }
 }

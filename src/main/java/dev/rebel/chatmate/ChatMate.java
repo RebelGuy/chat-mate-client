@@ -129,7 +129,8 @@ public class ChatMate {
         logService,
         rankEndpointProxy,
         minecraftChatService,
-        fontEngine);
+        fontEngine,
+        forgeEventService);
 
     ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
     CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
