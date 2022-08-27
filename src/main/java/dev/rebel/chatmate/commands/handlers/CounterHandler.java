@@ -2,6 +2,12 @@ package dev.rebel.chatmate.commands.handlers;
 
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.GuiChatMateHud;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElementWrapper;
+import dev.rebel.chatmate.gui.Interactive.IElement;
+import dev.rebel.chatmate.gui.Interactive.LabelElement;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
 import dev.rebel.chatmate.gui.hud.Observable;
 import dev.rebel.chatmate.gui.hud.TextComponent;
@@ -16,15 +22,15 @@ import javax.annotation.Nullable;
 
 public class CounterHandler {
   private final KeyBindingService keyBindingService;
-  private final GuiChatMateHud guiChatMateHud;
+  private final ChatMateHudStore chatMateHudStore;
   private final DimFactory dimFactory;
   private final Minecraft minecraft;
   private final FontEngine fontEngine;
   private Counter counter;
 
-  public CounterHandler(KeyBindingService keyBindingService, GuiChatMateHud guiChatMateHud, DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine) {
+  public CounterHandler(KeyBindingService keyBindingService, ChatMateHudStore chatMateHudStore, DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine) {
     this.keyBindingService = keyBindingService;
-    this.guiChatMateHud = guiChatMateHud;
+    this.chatMateHudStore = chatMateHudStore;
     this.dimFactory = dimFactory;
     this.minecraft = minecraft;
     this.fontEngine = fontEngine;
@@ -35,7 +41,7 @@ public class CounterHandler {
 
   public void createCounter(int startValue, int incrementValue, float scale, @Nullable String title) {
     this.deleteCounter();
-    this.counter = new Counter(this.guiChatMateHud, this.dimFactory, this.minecraft, this.fontEngine, startValue, incrementValue, scale, title);
+    this.counter = new Counter(this.chatMateHudStore, this.dimFactory, this.minecraft, this.fontEngine, startValue, incrementValue, scale, title);
   }
 
   public void deleteCounter() {
@@ -67,15 +73,16 @@ public class CounterHandler {
 
   // todo: instead of rendering it here, just add a new component to the hud object, hold on to it, and then remove it when required.
   private static class Counter {
-    private final GuiChatMateHud guiChatMateHud;
+    private final ChatMateHudStore chatMateHudStore;
+    private final HudElementWrapper<LabelElement> hudElement;
     private final int incrementValue;
     private final TextComponent textComponent;
     private final String title;
     private final Observable<String> observableString;
     private int value;
 
-    public Counter(GuiChatMateHud guiChatMateHud, DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine, int startValue, int incrementValue, float scale, @Nullable String title) {
-      this.guiChatMateHud = guiChatMateHud;
+    public Counter(ChatMateHudStore chatMateHudStore, DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine, int startValue, int incrementValue, float scale, @Nullable String title) {
+      this.chatMateHudStore = chatMateHudStore;
       this.value = startValue;
       this.incrementValue = incrementValue;
       this.title = title == null ? "" : title + " ";
@@ -85,7 +92,9 @@ public class CounterHandler {
       Dim x = centre.getX();
       Dim y = centre.getY();
       this.textComponent = new TextComponent(dimFactory, minecraft, fontEngine, x, y, scale, true, true, Anchor.MIDDLE, true, this.observableString);
-      this.guiChatMateHud.hudComponents.add(this.textComponent);
+      this.hudElement = this.chatMateHudStore.addElement(HudElementWrapper::new);
+      this.hudElement.setElement(LabelElement::new)
+          .setText("This is a test text element.");
     }
 
     public void increment() {
@@ -99,7 +108,7 @@ public class CounterHandler {
     }
 
     public void delete() {
-      this.guiChatMateHud.hudComponents.remove(this.textComponent);
+      this.chatMateHudStore.removeElement(this.hudElement);
     }
 
     private void addToValueSafe(int amount) {

@@ -131,11 +131,6 @@ public class GuiChatMateHudScreen extends GuiScreen {
           return new Out(Out.MouseHandlerAction.HANDLED);
         }
       }
-    } else if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
-      if (this.guiChatMateHud.hudComponents.stream().noneMatch(c -> containsPoint(c, position.point))) {
-        // only show context menu if we right click empty space
-        this.contextMenuService.showHudContext(position.x, position.y);
-      }
     }
     return new Out(null);
   }

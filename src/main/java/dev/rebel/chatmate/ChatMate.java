@@ -6,6 +6,10 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
 import dev.rebel.chatmate.gui.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
@@ -25,6 +29,8 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+
+import java.util.function.Supplier;
 
 // refer to mcmod.info for more settings.
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
@@ -106,10 +112,30 @@ public class ChatMate {
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, fontEngine, dimFactory, forgeEventService, statusService, config, serverLogEventService);
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ClipboardService clipboardService = new ClipboardService();
-    CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, guiChatMateHud);
-    CounterHandler counterHandler = new CounterHandler(keyBindingService, guiChatMateHud, dimFactory, minecraft, fontEngine);
     UrlService urlService = new UrlService(logService);
     MinecraftChatService minecraftChatService = new MinecraftChatService(minecraftProxyService);
+
+    InteractiveContext hudContext = new InteractiveContext(
+        new InteractiveScreen.ScreenRenderer(),
+        mouseEventService,
+        keyboardEventService,
+        dimFactory,
+        minecraft,
+        fontEngine,
+        clipboardService,
+        soundService,
+        cursorService,
+        minecraftProxyService,
+        urlService,
+        environment,
+        logService,
+        minecraftChatService,
+        forgeEventService
+    );
+
+    ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
+    CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, guiChatMateHud);
+    CounterHandler counterHandler = new CounterHandler(keyBindingService, chatMateHudStore, dimFactory, minecraft, fontEngine);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
@@ -131,6 +157,7 @@ public class ChatMate {
         minecraftChatService,
         fontEngine,
         forgeEventService);
+    ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
 
     ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
     CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
@@ -152,7 +179,6 @@ public class ChatMate {
         keyBindingService,
         minecraft,
         minecraftProxyService,
-        guiChatMateHud,
         soundService,
         dimFactory,
         contextMenuStore,
@@ -167,7 +193,8 @@ public class ChatMate {
         customGuiIngame,
         fontEngine,
         fontEngineProxy,
-        donationEndpointProxy);
+        donationEndpointProxy,
+        chatMateHudScreen);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

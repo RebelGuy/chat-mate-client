@@ -1,24 +1,37 @@
-package dev.rebel.chatmate.gui.hud;
+package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.services.ContextMenuService;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 
 import java.util.ArrayList;
+import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
+import static dev.rebel.chatmate.gui.ContextMenu.*;
+import static dev.rebel.chatmate.services.util.Objects.casted;
+
+// note: use the `ChatMateHudStore` to add components to this screen.
 public class ChatMateHudScreen extends InteractiveScreen {
+  private final ContextMenuService contextMenuService;
+
   private boolean shown;
 
-  public ChatMateHudScreen(InteractiveContext context, Config config) {
+  public ChatMateHudScreen(ChatMateHudStore chatMateHudStore, ContextMenuService contextMenuService, InteractiveContext context, Config config) {
     super(context, null);
+    this.contextMenuService = contextMenuService;
 
-    super.setMainElement(new ButtonElement(context, this).setChildElement(new LabelElement(context, this).setText("This is a test button.")));
+    super.setMainElement(new MainContainer(chatMateHudStore, this.context, this));
 
     // don't have to worry about unsubscribing because this Screen instance is re-used during the entirety of the application lifetime
-    context.forgeEventService.onRenderGameOverlay(this::onRenderOverlay, new RenderGameOverlay.Options(RenderGameOverlayEvent.ElementType.ALL));
+    this.context.forgeEventService.onRenderGameOverlay(this::onRenderOverlay, new RenderGameOverlay.Options(RenderGameOverlayEvent.ElementType.ALL));
     config.getHudEnabledEmitter().onChange(this::onChangeHudEnabled);
 
     this.onChangeHudEnabled(config.getHudEnabledEmitter().get());
@@ -64,7 +77,13 @@ public class ChatMateHudScreen extends InteractiveScreen {
       return new MouseEventData.Out();
     }
 
-    return super.onMouseDown(in);
+    MouseEventData.Out out = super.onMouseDown(in);
+    if (out.handlerAction == null && in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
+      this.contextMenuService.showHudContext(in.mousePositionData.x, in.mousePositionData.y);
+      return new MouseEventData.Out(MouseHandlerAction.HANDLED);
+    }
+
+    return new MouseEventData.Out();
   }
 
   @Override

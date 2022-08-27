@@ -6,7 +6,7 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardEle
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
-import dev.rebel.chatmate.gui.hud.ChatMateHudScreen;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
@@ -35,7 +35,6 @@ public class GuiService {
   private final KeyBindingService keyBindingService;
   private final Minecraft minecraft;
   private final MinecraftProxyService minecraftProxyService;
-  private final GuiChatMateHud guiChatMateHud;
   private final SoundService soundService;
   private final DimFactory dimFactory;
   private final ContextMenuStore contextMenuStore;
@@ -62,7 +61,6 @@ public class GuiService {
                     KeyBindingService keyBindingService,
                     Minecraft minecraft,
                     MinecraftProxyService minecraftProxyService,
-                    GuiChatMateHud guiChatMateHud,
                     SoundService soundService,
                     DimFactory dimFactory,
                     ContextMenuStore contextMenuStore,
@@ -77,7 +75,8 @@ public class GuiService {
                     CustomGuiIngame customGuiIngame,
                     FontEngine fontEngine,
                     FontEngineProxy fontEngineProxy,
-                    DonationEndpointProxy donationEndpointProxy) {
+                    DonationEndpointProxy donationEndpointProxy,
+                    ChatMateHudScreen chatMateHudScreen) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -86,7 +85,6 @@ public class GuiService {
     this.keyBindingService = keyBindingService;
     this.minecraft = minecraft;
     this.minecraftProxyService = minecraftProxyService;
-    this.guiChatMateHud = guiChatMateHud;
     this.soundService = soundService;
     this.dimFactory = dimFactory;
     this.contextMenuStore = contextMenuStore;
@@ -102,8 +100,7 @@ public class GuiService {
     this.fontEngine = fontEngine;
     this.fontEngineProxy = fontEngineProxy;
     this.donationEndpointProxy = donationEndpointProxy;
-
-    this.chatMateHudScreen = new ChatMateHudScreen(this.createInteractiveContext(), this.config);
+    this.chatMateHudScreen = chatMateHudScreen;
 
     this.addEventHandlers();
   }
@@ -124,7 +121,6 @@ public class GuiService {
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
     this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
     this.forgeEventService.onOpenChat(this::onOpenChat, null);
-    this.forgeEventService.onRenderTick(this::onRender, null);
     this.forgeEventService.onClientTick(this::onClientTick, null);
 
     this.keyBindingService.on(ChatMateKeyEvent.OPEN_CHAT_MATE_HUD, this::onOpenChatMateHud);
@@ -185,20 +181,6 @@ public class GuiService {
         this.urlService,
         this.forgeEventService);
     return new OpenGui.Out(replaceWithGui);
-  }
-
-  private Out onRender(In in) {
-    if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get() && !this.minecraft.gameSettings.showDebugInfo) {
-      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
-        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPreHud();
-      }
-      this.guiChatMateHud.renderGameOverlay();
-      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
-        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPostHud();
-      }
-    }
-
-    return new Out();
   }
 
   private Boolean onOpenChatMateHud() {

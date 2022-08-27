@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.services.util.Objects.casted;
+import static dev.rebel.chatmate.services.util.Objects.ifClass;
 
 public class EndpointProxy {
   private final LogService logService;
@@ -200,7 +200,7 @@ public class EndpointProxy {
       if (msg == null) {
         msg = error.apiResponseError.errorType;
       }
-    } else if (casted(HttpException.class, e, ex -> ex.statusCode != 200)) {
+    } else if (ifClass(HttpException.class, e, ex -> ex.statusCode != 200)) {
       msg = String.format("Something went wrong (code %d).", ((HttpException)e).statusCode);
     } else {
       msg = "Something went wrong.";
