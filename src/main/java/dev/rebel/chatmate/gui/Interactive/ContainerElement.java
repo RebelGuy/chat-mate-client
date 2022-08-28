@@ -298,7 +298,7 @@ public abstract class ContainerElement extends ElementBase {
   public void renderElement() {
     for (IElement element : this.children) {
       if (element.getVisible()) {
-        element.render();
+        element.render(null);
       }
     }
   }

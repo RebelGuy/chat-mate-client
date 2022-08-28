@@ -7,17 +7,20 @@ import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 public class ChatMateHudStore {
   private final InteractiveContext hudContext; // it is essential that this is the same context instance as used for the HUD screen, otherwise elements won't render
   private final List<IHudStoreListener> listeners = new ArrayList<>();
   private final EmptyElement emptyElement = new EmptyElement();
-  public List<HudElement> elements = new ArrayList<>();
+  private boolean hudVisible = false;
+  private List<HudElement> elements = new ArrayList<>();
 
   public ChatMateHudStore(InteractiveContext hudContext) {
     this.hudContext = hudContext;
@@ -35,6 +38,14 @@ public class ChatMateHudStore {
     this.listeners.forEach(listener -> listener.onRemoveElement(elewment));
   }
 
+  public List<HudElement> getElements() {
+    return Collections.list(this.elements);
+  }
+
+  public boolean getVisible() {
+    return this.hudVisible;
+  }
+
   public void addListener(IHudStoreListener listener) {
     this.listeners.add(listener);
   }
@@ -42,6 +53,7 @@ public class ChatMateHudStore {
   public interface IHudStoreListener {
     void onAddElement(HudElement element);
     void onRemoveElement(HudElement element);
+    void onSetVisible(boolean visible);
   }
 
   // this is required because elements require a parent, but not all services that add Hud elements have access to
@@ -105,7 +117,7 @@ public class ChatMateHudStore {
     }
 
     @Override
-    public void render() {
+    public void render(@Nullable Consumer<Runnable> renderContextWrapper) {
 
     }
 

@@ -152,6 +152,6 @@ public class CheckboxInputElement extends InputElement {
       font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), new Font().withColour(Colour.WHITE));
     });
 
-    this.labelElement.render();
+    this.labelElement.render(null);
   }
 }

@@ -8,6 +8,7 @@ import dev.rebel.chatmate.services.util.Collections;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /** An element that acts as a reference for a dynamic child. This means the reference has to be only instantiated once
  * (for example for the purposes of initialising layout lists), but its contents can be freely swapped out.
@@ -127,9 +128,9 @@ public class ElementReference implements IElement {
   }
 
   @Override
-  public void render() {
+  public void render(@Nullable Consumer<Runnable> renderContextWrapper) {
     if (this.underlyingElement != null) {
-      this.underlyingElement.render();
+      this.underlyingElement.render(renderContextWrapper);
     }
 
     if (this.context.debugElement == this && this.underlyingElement != null) {

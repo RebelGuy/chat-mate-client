@@ -15,8 +15,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainContainer extends ElementBase implements IHudStoreListener {
-  private final ChatMateHudStore store;
+public class MainContainer extends ElementBase {
 
   // we have to keep our own list of HudElements (rather than just relying on the store) because additions/removals are run as side effects
   private final List<HudElement> children;
@@ -24,13 +23,11 @@ public class MainContainer extends ElementBase implements IHudStoreListener {
   public MainContainer(ChatMateHudStore store, InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
 
-    this.store = store;
-    this.children = Collections.list(store.elements);
-
-    this.store.addListener(this);
+    this.children = store.getElements();
   }
 
-  public void onAddElement(HudElement hudElement) {
+  // todo: the screen should be the listener, not this element. the screen then calls "MainContainer::addElement", etc
+  public void addElement(HudElement hudElement) {
     if (hudElement == null) {
       return;
     }
@@ -42,7 +39,7 @@ public class MainContainer extends ElementBase implements IHudStoreListener {
     });
   }
 
-  public void onRemoveElement(HudElement hudElement) {
+  public void removeElement(HudElement hudElement) {
     if (hudElement == null) {
       return;
     }
@@ -89,7 +86,7 @@ public class MainContainer extends ElementBase implements IHudStoreListener {
   public void renderElement() {
     for (HudElement element : this.children) {
       if (element.getVisible()) {
-        element.render();
+        element.render(null);
       }
     }
   }

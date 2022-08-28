@@ -27,6 +27,7 @@ import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
@@ -84,7 +85,7 @@ public class InteractiveScreen extends Screen implements IElement {
     this.shouldCloseScreen = true;
   }
 
-  private void doCloseScreen() {
+  protected void doCloseScreen() {
     // fire the MOUSE_EXIT event one last time
     MouseEventData.In in = this.context.mouseEventService.constructSyntheticMoveEvent();
     List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
@@ -153,10 +154,6 @@ public class InteractiveScreen extends Screen implements IElement {
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
     this.context.renderer._executeSideEffects();
-
-    // fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect
-    // it is not clear if we should do this after EVERY side effect execution (if side effects were scheduled), or only after size invalidation - for now, see how we go.
-    this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
   }
 
   @Override
@@ -171,8 +168,16 @@ public class InteractiveScreen extends Screen implements IElement {
     this.recalculateLayout();
 
     this.context.renderer.clear();
-    this.mainElement.render();
+    this.mainElement.render(null);
     this.context.renderer._executeRender();
+
+    // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect
+    // it is not clear if we should do this after EVERY side effect execution (if side effects were scheduled), or only after size invalidation - for now, see how we go.
+    this.context.renderer.runSideEffect(() -> {
+      // if this causes any more side effects, those will be executed immediately as part of this cycle
+      this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
+    });
+
     this.context.renderer._executeSideEffects();
     this.renderTooltip();
 
@@ -539,7 +544,7 @@ public class InteractiveScreen extends Screen implements IElement {
   public void setBox(DimRect box) { }
 
   @Override
-  public void render() { }
+  public void render(@Nullable Consumer<Runnable> renderContextWrapper) { }
 
   @Override
   public boolean getVisible() { return true; }

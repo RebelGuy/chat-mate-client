@@ -167,7 +167,7 @@ public class ButtonElement extends InputElement {
     RendererHelpers.drawTexturedModalRect(rect2, 0, u2, v2);
 
     if (this.childElement != null) {
-      this.childElement.render();
+      this.childElement.render(null);
     }
   }
 

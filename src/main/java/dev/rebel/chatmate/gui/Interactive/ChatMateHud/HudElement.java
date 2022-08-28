@@ -54,6 +54,7 @@ public abstract class HudElement extends ElementBase {
   public void onMouseMove(Events.IEvent<MouseEventData.In> e) {
     if (this.canDrag && this.lastDraggingPosition != null && e.getData().isDragged(MouseButton.LEFT_BUTTON)) {
       DimPoint positionDelta = e.getData().mousePositionData.point.minus(this.lastDraggingPosition).setAnchor(DimAnchor.GUI);
+      this.lastDraggingPosition = e.getData().mousePositionData.point;
       super.setBoxUnsafe(super.getBox().withTranslation(positionDelta));
       super.onInvalidateSize();
     }
@@ -62,7 +63,9 @@ public abstract class HudElement extends ElementBase {
   @Override
   public void onMouseUp(Events.IEvent<MouseEventData.In> e) {
     if (this.lastDraggingPosition != null) {
+      // finished dragging
       this.lastDraggingPosition = null;
+      this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), this.getBox());
       e.stopPropagation();
       super.onInvalidateSize();
     }
@@ -73,6 +76,8 @@ public abstract class HudElement extends ElementBase {
     // the box provided here will be incorrect, we handle our own sizing functionality.
     if (super.getBox() == null) {
       box = new DimRect(this.defaultPosition, this.lastCalculatedSize);
+      // set the initial anchor
+      this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     } else {
       // if there's no resize, the box will stay the same
       box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), this.anchor);

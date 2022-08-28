@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services.util;
 
 import javax.annotation.Nullable;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -10,6 +11,13 @@ public class Objects {
       return fn.apply((T)obj);
     } else {
       return null;
+    }
+  }
+
+  // ffs... can't just overload `casted` because java has trouble detecting whether we are providing a consumer of function
+  public static <T> void castedVoid(Class<T> type, Object obj, Consumer<T> fn) {
+    if (type.isAssignableFrom(obj.getClass())) {
+      fn.accept((T)obj);
     }
   }
 

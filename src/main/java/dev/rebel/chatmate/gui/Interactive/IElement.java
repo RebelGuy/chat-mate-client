@@ -13,6 +13,7 @@ import dev.rebel.chatmate.gui.models.DimRect;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.function.Consumer;
 
 public interface IElement {
   IElement getParent();
@@ -34,7 +35,9 @@ public interface IElement {
   DimPoint getLastCalculatedSize(); // full box size, for caching purposes only - any direct use should probably be avoided
   void setBox(DimRect box); // sets the full box of the element. if the element has any children, it is its responsibility to set the derived boxes of the children too.
   DimRect getBox();
-  void render(); // render the element to the screen renderer. called every frame. if the element has any children, it is its responsibility to render them too.
+  // render the element to the screen renderer. called every frame. if the element has any children, it is its responsibility to render them too.
+  // the element rendering will be performed within the `renderContextWrapper`, if provided. it has to be done this way because rendering is usually deferred, so e.g. changing the GL state before calling `child.render()` won't have an effect.
+  void render(@Nullable Consumer<Runnable> renderContextWrapper); // perhaps instead add a transformation object (same concept) that is a matrix (or perhaps a Consumer<Runnable>, which will apply to only visuals), so we can also apply it to the box, and the debug screen?
 
   boolean getVisible();
   IElement setVisible(boolean visible);

@@ -92,7 +92,10 @@ public class CounterHandler {
       Dim x = centre.getX();
       Dim y = centre.getY();
       this.textComponent = new TextComponent(dimFactory, minecraft, fontEngine, x, y, scale, true, true, Anchor.MIDDLE, true, this.observableString);
-      this.hudElement = this.chatMateHudStore.addElement(HudElementWrapper::new);
+      this.hudElement = this.chatMateHudStore.addElement(HudElementWrapper::new)
+          .setCanDrag(true)
+          .setCanScale(true)
+          .cast();
       this.hudElement.setElement(LabelElement::new)
           .setText("This is a test text element.");
     }

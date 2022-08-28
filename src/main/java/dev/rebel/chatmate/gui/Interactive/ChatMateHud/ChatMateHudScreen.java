@@ -1,6 +1,10 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore.IHudStoreListener;
+import dev.rebel.chatmate.gui.Interactive.Events.EventPhase;
+import dev.rebel.chatmate.gui.Interactive.Events.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.ContextMenuService;
@@ -12,14 +16,16 @@ import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import static dev.rebel.chatmate.gui.ContextMenu.*;
 import static dev.rebel.chatmate.services.util.Objects.casted;
+import static dev.rebel.chatmate.services.util.Objects.castedVoid;
 
 // note: use the `ChatMateHudStore` to add components to this screen.
-public class ChatMateHudScreen extends InteractiveScreen {
+public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreListener {
   private final ContextMenuService contextMenuService;
 
   private boolean shown;
@@ -33,6 +39,7 @@ public class ChatMateHudScreen extends InteractiveScreen {
     // don't have to worry about unsubscribing because this Screen instance is re-used during the entirety of the application lifetime
     this.context.forgeEventService.onRenderGameOverlay(this::onRenderOverlay, new RenderGameOverlay.Options(RenderGameOverlayEvent.ElementType.ALL));
     config.getHudEnabledEmitter().onChange(this::onChangeHudEnabled);
+    chatMateHudStore.addListener(this);
 
     this.onChangeHudEnabled(config.getHudEnabledEmitter().get());
   }
@@ -44,6 +51,9 @@ public class ChatMateHudScreen extends InteractiveScreen {
 
   public void hide() {
     this.shown = false;
+    super.context.renderer.runSideEffect(() -> {
+      this.cleanUp();
+    });
   }
 
   public void initialise() {
@@ -52,8 +62,41 @@ public class ChatMateHudScreen extends InteractiveScreen {
   }
 
   @Override
+  public void onAddElement(HudElement element) {
+    castedVoid(MainContainer.class, this.mainElement, el -> el.addElement(element));
+  }
+
+  @Override
+  public void onRemoveElement(HudElement element) {
+    castedVoid(MainContainer.class, this.mainElement, el -> el.removeElement(element));
+  }
+
+  @Override
+  public void onSetVisible(boolean visible) {
+    if (!visible) {
+      this.show();
+    } else {
+      this.hide();
+    }
+  }
+
+  @Override
   public void onGuiClosed() {
-    // called automatically when the Screen was removed from Minecraft - do some cleaning up of interactivity
+    // called automatically when the Screen was removed from Minecraft - clean up should have already been done
+    if (this.shouldCloseScreen) {
+      // throw, else we would get stuck in an infinite loop
+      throw new RuntimeException("`shouldCloseScreen` should be false after the Screen has been closed.");
+    }
+  }
+
+  @Override
+  protected void doCloseScreen() {
+    this.cleanUp();
+    super.doCloseScreen();
+  }
+
+  /** Cleans up the interactive state. */
+  private void cleanUp() {
     super.setFocussedElement(null, Events.FocusReason.AUTO);
     super.elementsUnderCursor = new ArrayList<>();
     super.blockingElement = null;

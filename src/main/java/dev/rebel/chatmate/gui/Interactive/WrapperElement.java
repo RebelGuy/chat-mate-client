@@ -50,6 +50,6 @@ public class WrapperElement extends SingleElement {
 
   @Override
   public void renderElement() {
-    this.contents.render();
+    this.contents.render(null);
   }
 }

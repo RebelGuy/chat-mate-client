@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import javax.annotation.Nullable;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBox;
 
@@ -266,17 +267,19 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
-  public final void render() {
+  public final void render(@Nullable Consumer<Runnable> renderContextWrapper) {
     initialiseIfRequired();
     if (!this.visible) {
       return;
     }
 
+    Consumer<Runnable> wrapper = renderContextWrapper == null ? Runnable::run : renderContextWrapper;
+
     this.context.renderer.render(this, () -> {
       GlStateManager.pushMatrix();
       GlStateManager.enableBlend();
       GlStateManager.disableLighting();
-      this.renderElement();
+      wrapper.accept(this::renderElement);
       GlStateManager.popMatrix();
     });
   }

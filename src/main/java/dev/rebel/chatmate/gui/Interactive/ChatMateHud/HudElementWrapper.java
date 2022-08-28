@@ -55,13 +55,11 @@ public class HudElementWrapper<TElement extends IElement> extends HudElement {
       return;
     }
 
-    // the label box is implicitly anchored at the top left, so we can safely scale the size like this
-    this.element.setBox(box.withSize(box.getSize().scale(1 / this.currentScale)));
-  }
-
-  @Override
-  protected void onRescaleContent(DimRect oldBox, float oldScale, float newScale) {
-    this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), oldBox);
+    // the underlying element's box is implicitly anchored at the top left, so we can safely scale the size like this.
+    // todo: this causes the child element box to look weird in the debug menu, because it's not scaled. not sure what the correct solution is
+    DimPoint newPosition = new DimPoint(ZERO, ZERO);
+    DimPoint newSize = box.getSize().scale(1 / this.currentScale);
+    this.element.setBox(box.withPosition(newPosition).withSize(newSize));
   }
 
   @Override
@@ -70,8 +68,7 @@ public class HudElementWrapper<TElement extends IElement> extends HudElement {
       return;
     }
 
-    RendererHelpers.withMapping(new DimPoint(ZERO, ZERO), this.currentScale, () -> {
-      this.element.render();
-    });
+    // implicitly anchored at the top left
+    this.element.render(r -> RendererHelpers.withMapping(super.getBox().getPosition(), this.currentScale, r));
   }
 }
