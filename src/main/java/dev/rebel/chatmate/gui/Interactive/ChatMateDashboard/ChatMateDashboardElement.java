@@ -6,7 +6,7 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.Gener
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
-import dev.rebel.chatmate.gui.Interactive.Events.SizeData;
+import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
@@ -110,8 +110,8 @@ public class ChatMateDashboardElement extends ContainerElement {
   }
 
   @Override
-  public void onWindowResize(IEvent<SizeData> e) {
-    this.setContentSizes(e.getData().size);
+  public void onWindowResize(IEvent<ScreenSizeData> e) {
+    this.setContentSizes(e.getData().newSize);
   }
 
   @Override

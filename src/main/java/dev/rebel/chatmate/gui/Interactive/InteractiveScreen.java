@@ -53,6 +53,8 @@ public class InteractiveScreen extends Screen implements IElement {
   protected boolean debugModeEnabled = false;
   protected boolean debugElementSelected = false;
   protected long refreshTimestamp; // for showing a quick tooltip after F5 is pressed
+  protected DimPoint screenSize;
+  protected int minecraftScaleFactor;
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen) {
     super();
@@ -60,6 +62,8 @@ public class InteractiveScreen extends Screen implements IElement {
     this.context = context;
     this.parentScreen = parentScreen;
     this.refreshTimestamp = 0;
+    this.screenSize = context.dimFactory.getMinecraftSize();
+    this.minecraftScaleFactor = context.dimFactory.getScaleFactor();
 
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this._onMouseDown, new MouseEventData.Options(true), this);
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this._onMouseMove, new MouseEventData.Options(true), this);
@@ -103,10 +107,15 @@ public class InteractiveScreen extends Screen implements IElement {
   protected void onScreenSizeUpdated() {
     this.onInvalidateSize();
 
-    SizeData eventData = new SizeData(this.context.dimFactory.getMinecraftSize());
+    int newScaleFactor = this.context.dimFactory.getScaleFactor();
+    DimPoint newSize = this.context.dimFactory.getMinecraftSize();
+    ScreenSizeData eventData = new ScreenSizeData(this.screenSize, this.minecraftScaleFactor, newSize, newScaleFactor);
     for (IElement element : ElementHelpers.getAllChildren(this)) {
       element.onEvent(EventType.WINDOW_RESIZE, new InteractiveEvent<>(EventPhase.TARGET, eventData, element));
     }
+
+    this.screenSize = newSize;
+    this.minecraftScaleFactor = newScaleFactor;
   }
 
   @Override

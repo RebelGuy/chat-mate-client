@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.ElementBase;
 import dev.rebel.chatmate.gui.Interactive.Events;
+import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
@@ -15,7 +16,7 @@ import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollDa
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.List;
+import java.util.function.Function;
 
 public abstract class HudElement extends ElementBase {
   protected @Nonnull DimPoint defaultPosition;
@@ -44,14 +45,14 @@ public abstract class HudElement extends ElementBase {
   }
 
   @Override
-  public void onMouseDown(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseDown(IEvent<MouseEventData.In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.canDrag) {
       this.lastDraggingPosition = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
     }
   }
 
   @Override
-  public void onMouseMove(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseMove(IEvent<MouseEventData.In> e) {
     if (this.canDrag && this.lastDraggingPosition != null && e.getData().isDragged(MouseButton.LEFT_BUTTON)) {
       DimPoint positionDelta = e.getData().mousePositionData.point.minus(this.lastDraggingPosition).setAnchor(DimAnchor.GUI);
       this.lastDraggingPosition = e.getData().mousePositionData.point;
@@ -61,7 +62,7 @@ public abstract class HudElement extends ElementBase {
   }
 
   @Override
-  public void onMouseUp(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseUp(IEvent<MouseEventData.In> e) {
     if (this.lastDraggingPosition != null) {
       // finished dragging
       this.lastDraggingPosition = null;
@@ -94,7 +95,7 @@ public abstract class HudElement extends ElementBase {
   protected void onRescaleContent(DimRect oldBox, float oldScale, float newScale) { }
 
   @Override
-  public void onMouseScroll(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseScroll(IEvent<MouseEventData.In> e) {
     if (this.canScale) {
       int multiplier = e.getData().mouseScrollData.scrollDirection == ScrollDirection.UP ? 1 : -1;
       float newScale = Math.min(5, Math.max(0.1f, this.currentScale + multiplier * 0.1f));
@@ -107,7 +108,111 @@ public abstract class HudElement extends ElementBase {
       super.onInvalidateSize();
     }
   }
-  
+
+  @Override
+  public void onWindowResize(IEvent<Events.ScreenSizeData> e) {
+    // we want to keep the element's GUI position relative to the window the same. use the anchor to determine how we should change the box.
+    // note that we take into consideration whether the box's position is anchored to the GUI or screen when working out the new position.
+    Events.ScreenSizeData screenSizeData = e.getData();
+    DimRect box = super.getBox();
+    DimPoint position = box.getPosition();
+    DimPoint size = box.getSize();
+    Function<DimPoint, Dim> horizontal = DimPoint::getX;
+    Function<DimPoint, Dim> vertical = DimPoint::getY;
+
+    Dim x;
+    Dim y;
+    switch (this.anchor) {
+      case TOP_LEFT:
+        x = alignLower(horizontal, position, size, screenSizeData);
+        y = alignLower(vertical, position, size, screenSizeData);
+        break;
+      case TOP_CENTRE:
+        x = alignMiddle(horizontal, position, size, screenSizeData);
+        y = alignLower(vertical, position, size, screenSizeData);
+        break;
+      case TOP_RIGHT:
+        x = alignUpper(horizontal, position, size, screenSizeData);
+        y = alignLower(vertical, position, size, screenSizeData);
+        break;
+      case LEFT_CENTRE:
+        x = alignLower(horizontal, position, size, screenSizeData);
+        y = alignMiddle(vertical, position, size, screenSizeData);
+        break;
+      case MIDDLE:
+        x = alignMiddle(horizontal, position, size, screenSizeData);
+        y = alignMiddle(vertical, position, size, screenSizeData);
+        break;
+      case RIGHT_CENTRE:
+        x = alignUpper(horizontal, position, size, screenSizeData);
+        y = alignMiddle(vertical, position, size, screenSizeData);
+        break;
+      case BOTTOM_LEFT:
+        x = alignLower(horizontal, position, size, screenSizeData);
+        y = alignUpper(vertical, position, size, screenSizeData);
+        break;
+      case BOTTOM_CENTRE:
+        x = alignMiddle(horizontal, position, size, screenSizeData);
+        y = alignUpper(vertical, position, size, screenSizeData);
+        break;
+      case BOTTOM_RIGHT:
+        x = alignUpper(horizontal, position, size, screenSizeData);
+        y = alignUpper(vertical, position, size, screenSizeData);
+        break;
+      default:
+        throw new RuntimeException("Invalid anchor " + this.anchor);
+    }
+
+    super.setBox(box.withPosition(new DimPoint(x, y)));
+  }
+
+  private static Dim alignLower(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, Events.ScreenSizeData screenSizeData) {
+    Dim x = dimSelector.apply(boxPosition);
+    DimAnchor anchor = x.anchor;
+
+    if (anchor == DimAnchor.SCREEN) {
+      // keep the screen gap on the left side the same
+      return x;
+    }
+
+    Dim oldWidth = dimSelector.apply(screenSizeData.oldSize);
+    Dim newWidth = dimSelector.apply(screenSizeData.newSize);
+    float scaling = (float)screenSizeData.newScaleFactor / screenSizeData.oldScaleFactor; // to determine the GUI position on the old screen
+    float relLeft = x.over(scaling).over(oldWidth);
+    return newWidth.times(relLeft).setAnchor(anchor);
+  }
+
+  private static Dim alignMiddle(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, Events.ScreenSizeData screenSizeData) {
+    Dim x = dimSelector.apply(boxPosition);
+    DimAnchor anchor = x.anchor;
+    Dim w = dimSelector.apply(boxSize);
+    Dim oldWidth = dimSelector.apply(screenSizeData.oldSize);
+    Dim newWidth = dimSelector.apply(screenSizeData.newSize);
+    float scaling = (float)screenSizeData.newScaleFactor / screenSizeData.oldScaleFactor; // to determine the GUI position on the old screen
+    float relCentre = x.plus(w.over(2)).over(scaling).over(oldWidth);
+
+    // obtained by rearranging the relCentre equation
+    return newWidth.times(relCentre).minus(w.over(2)).setAnchor(anchor);
+  }
+
+  private static Dim alignUpper(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, Events.ScreenSizeData screenSizeData) {
+    Dim x = dimSelector.apply(boxPosition);
+    Dim w = dimSelector.apply(boxSize);
+    DimAnchor anchor = x.anchor;
+    Dim oldWidth = dimSelector.apply(screenSizeData.oldSize);
+    Dim newWidth = dimSelector.apply(screenSizeData.newSize);
+
+    if (anchor == DimAnchor.SCREEN) {
+      // keep the screen gap on the right the same
+      Dim absRight = oldWidth.minus(x.plus(w));
+      return newWidth.minus(absRight).minus(w).setAnchor(anchor);
+    } else {
+      float scaling = (float)screenSizeData.newScaleFactor / screenSizeData.oldScaleFactor; // to determine the GUI position on the old screen
+      float relRight = x.plus(w).over(scaling).over(oldWidth);
+      return newWidth.times(relRight).minus(w).setAnchor(anchor);
+    }
+  }
+
   /** Gets the anchor such that, if the component were to be resized about the anchor, the resize will be performed towards the centre of the screen. */
   public static Anchor calculateAnchor(DimRect screen, DimRect componentBox) {
     DimRect left = screen.partial(0, 0.25f, 0, 1);

@@ -79,11 +79,17 @@ public class Events {
     AUTO // the focus was triggered by the InteractiveScreen
   }
 
-  public static class SizeData {
-    public final DimPoint size;
+  public static class ScreenSizeData {
+    public final DimPoint oldSize;
+    public final int oldScaleFactor;
+    public final DimPoint newSize;
+    public final int newScaleFactor;
 
-    public SizeData(DimPoint size) {
-      this.size = size;
+    public ScreenSizeData(DimPoint oldSize, int oldScaleFactor, DimPoint newSize, int newScaleFactor) {
+      this.oldSize = oldSize;
+      this.oldScaleFactor = oldScaleFactor;
+      this.newSize = newSize;
+      this.newScaleFactor = newScaleFactor;
     }
   }
 }

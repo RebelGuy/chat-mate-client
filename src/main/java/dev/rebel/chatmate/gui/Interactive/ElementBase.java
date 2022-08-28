@@ -123,7 +123,7 @@ public abstract class ElementBase implements IElement {
           this.onMouseExit((IEvent<MouseEventData.In>)event);
           break;
         case WINDOW_RESIZE:
-          this.onWindowResize((IEvent<SizeData>)event);
+          this.onWindowResize((IEvent<ScreenSizeData>)event);
           break;
         default:
           throw new RuntimeException("Invalid event type at TARGET phase: " + type);
@@ -203,7 +203,7 @@ public abstract class ElementBase implements IElement {
   public void onCaptureMouseEnter(IEvent<MouseEventData.In> e) {}
   /** This doesn't bubble, it is target-only. there is no way to cancel this. */
   public void onMouseExit(IEvent<MouseEventData.In> e) {}
-  public void onWindowResize(IEvent<SizeData> e) {}
+  public void onWindowResize(IEvent<ScreenSizeData> e) {}
 
   @Override
   public final void onCloseScreen() { this.parent.onCloseScreen(); }
