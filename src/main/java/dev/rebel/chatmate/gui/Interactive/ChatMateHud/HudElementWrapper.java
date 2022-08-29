@@ -63,7 +63,7 @@ public class HudElementWrapper<TElement extends IElement> extends HudElement {
   }
 
   @Override
-  protected void renderElement() {
+  public void onRenderElement() {
     if (this.element == null) {
       return;
     }

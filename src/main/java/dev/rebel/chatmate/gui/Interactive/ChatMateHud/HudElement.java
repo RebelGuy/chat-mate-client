@@ -1,11 +1,9 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DropElement.IDropElementListener;
-import dev.rebel.chatmate.gui.Interactive.ElementBase;
-import dev.rebel.chatmate.gui.Interactive.Events;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
-import dev.rebel.chatmate.gui.Interactive.IElement;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
@@ -24,8 +22,10 @@ import java.util.function.Function;
 
 public abstract class HudElement extends ElementBase implements IDropElementListener {
   protected @Nonnull DimPoint defaultPosition;
+  protected @Nonnull Anchor defaultPositionAnchor;
   protected float currentScale = 1;
   protected Anchor anchor = Anchor.TOP_LEFT;
+  protected boolean hovered = false;
   
   private boolean canDrag = false;
   private boolean canScale = false;
@@ -38,6 +38,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     super(context, parent);
     
     this.defaultPosition = new DimPoint(ZERO, ZERO);
+    this.defaultPositionAnchor = Anchor.TOP_LEFT;
   }
   
   public HudElement setCanDrag(boolean canDrag) {
@@ -50,6 +51,17 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     return this;
   }
 
+  /** Sets the initial position of the HUD element, where the anchored point of the box will be placed at the provided position. */
+  public HudElement setDefaultPosition(@Nonnull DimPoint point, @Nonnull Anchor boxAnchor) {
+    this.defaultPosition = point;
+    this.defaultPositionAnchor = boxAnchor;
+    return this;
+  }
+
+  public HudElement setDefaultScale(float scale) {
+    this.currentScale = scale;
+    return this;
+  }
 
   @Override
   public final @Nullable List<IElement> getChildren() {
@@ -94,11 +106,22 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   }
 
   @Override
+  public void onMouseEnter(IEvent<MouseEventData.In> e) {
+    this.hovered = true;
+  }
+
+  @Override
+  public void onMouseExit(IEvent<MouseEventData.In> e) {
+    this.hovered = false;
+  }
+
+  @Override
   public final void setBox(DimRect box) {
     // the box provided here will be incorrect, we handle our own sizing functionality.
     if (super.getBox() == null) {
-      box = new DimRect(this.defaultPosition, this.lastCalculatedSize);
-      // set the initial anchor
+      box = setBoxPositionAtAnchor(new DimRect(this.defaultPosition, this.lastCalculatedSize), this.defaultPosition, this.defaultPositionAnchor);
+      this.setBoxUnsafe(box);
+      // the initial anchor is determined by the initial box
       this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     } else {
       // if there's no resize, the box will stay the same
@@ -132,6 +155,19 @@ public abstract class HudElement extends ElementBase implements IDropElementList
       super.onInvalidateSize();
     }
   }
+
+  @Override
+  public final void renderElement() {
+    if (this.hovered) {
+      float alpha = this.lastDraggingPosition == null ? 0.1f : 0.2f;
+      RendererHelpers.drawRect(0, super.getBox(), Colour.BLACK.withAlpha(alpha));
+    }
+
+    this.onRenderElement();
+  }
+
+  /** Implement this instead of the standard `renderElement`. */
+  public abstract void onRenderElement();
 
   @Override
   public void onWindowResize(IEvent<Events.ScreenSizeData> e) {
@@ -349,5 +385,63 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     }
 
     return new DimRect(x, y, newW, newH);
+  }
+
+  protected static DimRect setBoxPositionAtAnchor(DimRect box, DimPoint point, Anchor anchor) {
+    // calculate the anchor's position relative to the box's permission
+    Dim x = box.getX();
+    Dim y = box.getY();
+    Dim w = box.getWidth();
+    Dim h = box.getHeight();
+    Dim ZERO = x.setGui(0);
+
+    Dim dx;
+    Dim dy;
+    switch (anchor) {
+      case TOP_LEFT:
+        dx = ZERO;
+        dy = ZERO;
+        break;
+      case LEFT_CENTRE:
+        dx = ZERO;
+        dy = h.over(2);
+        break;
+      case BOTTOM_LEFT:
+        dx = ZERO;
+        dy = h;
+        break;
+
+      case TOP_CENTRE:
+       dx = w.over(2);
+       dy = ZERO;
+        break;
+      case MIDDLE:
+        dx = w.over(2);
+        dy = h.over(2);
+        break;
+      case BOTTOM_CENTRE:
+        dx = w.over(2);
+        dy = h;
+        break;
+
+      case TOP_RIGHT:
+        dx = w;
+        dy = ZERO;
+        break;
+      case RIGHT_CENTRE:
+        dx = w;
+        dy = h.over(2);
+        break;
+      case BOTTOM_RIGHT:
+        dx = w;
+        dy = w;
+        break;
+
+      default:
+        throw new RuntimeException("Invalid anchor: " + anchor);
+    }
+
+    DimPoint newPosition = point.minus(new DimPoint(dx, dy));
+    return box.withPosition(newPosition);
   }
 }

@@ -24,16 +24,12 @@ public class CounterHandler {
   private final KeyBindingService keyBindingService;
   private final ChatMateHudStore chatMateHudStore;
   private final DimFactory dimFactory;
-  private final Minecraft minecraft;
-  private final FontEngine fontEngine;
   private Counter counter;
 
-  public CounterHandler(KeyBindingService keyBindingService, ChatMateHudStore chatMateHudStore, DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine) {
+  public CounterHandler(KeyBindingService keyBindingService, ChatMateHudStore chatMateHudStore, DimFactory dimFactory) {
     this.keyBindingService = keyBindingService;
     this.chatMateHudStore = chatMateHudStore;
     this.dimFactory = dimFactory;
-    this.minecraft = minecraft;
-    this.fontEngine = fontEngine;
 
     this.keyBindingService.on(ChatMateKeyEvent.DECREMENT_COUNTER, this::decrementCounter);
     this.keyBindingService.on(ChatMateKeyEvent.INCREMENT_COUNTER, this::incrementCounter);
@@ -41,7 +37,7 @@ public class CounterHandler {
 
   public void createCounter(int startValue, int incrementValue, float scale, @Nullable String title) {
     this.deleteCounter();
-    this.counter = new Counter(this.chatMateHudStore, this.dimFactory, this.minecraft, this.fontEngine, startValue, incrementValue, scale, title);
+    this.counter = new Counter(this.chatMateHudStore, this.dimFactory, startValue, incrementValue, title);
   }
 
   public void deleteCounter() {
@@ -71,33 +67,29 @@ public class CounterHandler {
     return false;
   }
 
-  // todo: instead of rendering it here, just add a new component to the hud object, hold on to it, and then remove it when required.
   private static class Counter {
     private final ChatMateHudStore chatMateHudStore;
     private final HudElementWrapper<LabelElement> hudElement;
     private final int incrementValue;
-    private final TextComponent textComponent;
     private final String title;
     private final Observable<String> observableString;
     private int value;
 
-    public Counter(ChatMateHudStore chatMateHudStore, DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine, int startValue, int incrementValue, float scale, @Nullable String title) {
+    public Counter(ChatMateHudStore chatMateHudStore, DimFactory dimFactory, int startValue, int incrementValue, @Nullable String title) {
       this.chatMateHudStore = chatMateHudStore;
       this.value = startValue;
       this.incrementValue = incrementValue;
       this.title = title == null ? "" : title + " ";
       this.observableString = new Observable<>(this.getStringToRender());
 
-      DimPoint centre = dimFactory.getMinecraftRect().getCentre();
-      Dim x = centre.getX();
-      Dim y = centre.getY();
-      this.textComponent = new TextComponent(dimFactory, minecraft, fontEngine, x, y, scale, true, true, Anchor.MIDDLE, true, this.observableString);
       this.hudElement = this.chatMateHudStore.addElement(HudElementWrapper::new)
           .setCanDrag(true)
           .setCanScale(true)
+          .setDefaultPosition(dimFactory.getMinecraftRect().getCentre(), Anchor.MIDDLE)
           .cast();
       this.hudElement.setElement(LabelElement::new)
-          .setText("This is a test text element.");
+          .setText(this.observableString.getValue());
+      this.observableString.listen(str -> this.hudElement.element.setText(str));
     }
 
     public void increment() {

@@ -135,7 +135,7 @@ public class ChatMate {
 
     ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, guiChatMateHud);
-    CounterHandler counterHandler = new CounterHandler(keyBindingService, chatMateHudStore, dimFactory, minecraft, fontEngine);
+    CounterHandler counterHandler = new CounterHandler(keyBindingService, chatMateHudStore, dimFactory);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
