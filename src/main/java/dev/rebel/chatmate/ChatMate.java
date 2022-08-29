@@ -179,6 +179,7 @@ public class ChatMate {
         keyBindingService,
         minecraft,
         minecraftProxyService,
+        guiChatMateHud,
         soundService,
         dimFactory,
         contextMenuStore,

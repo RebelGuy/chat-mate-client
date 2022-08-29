@@ -35,6 +35,7 @@ public class GuiService {
   private final KeyBindingService keyBindingService;
   private final Minecraft minecraft;
   private final MinecraftProxyService minecraftProxyService;
+  private final GuiChatMateHud guiChatMateHud;
   private final SoundService soundService;
   private final DimFactory dimFactory;
   private final ContextMenuStore contextMenuStore;
@@ -61,6 +62,7 @@ public class GuiService {
                     KeyBindingService keyBindingService,
                     Minecraft minecraft,
                     MinecraftProxyService minecraftProxyService,
+                    GuiChatMateHud guiChatMateHud,
                     SoundService soundService,
                     DimFactory dimFactory,
                     ContextMenuStore contextMenuStore,
@@ -85,6 +87,7 @@ public class GuiService {
     this.keyBindingService = keyBindingService;
     this.minecraft = minecraft;
     this.minecraftProxyService = minecraftProxyService;
+    this.guiChatMateHud = guiChatMateHud;
     this.soundService = soundService;
     this.dimFactory = dimFactory;
     this.contextMenuStore = contextMenuStore;
@@ -121,6 +124,7 @@ public class GuiService {
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
     this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
     this.forgeEventService.onOpenChat(this::onOpenChat, null);
+    this.forgeEventService.onRenderTick(this::onRender, null);
     this.forgeEventService.onClientTick(this::onClientTick, null);
 
     this.keyBindingService.on(ChatMateKeyEvent.OPEN_CHAT_MATE_HUD, this::onOpenChatMateHud);
@@ -181,6 +185,20 @@ public class GuiService {
         this.urlService,
         this.forgeEventService);
     return new OpenGui.Out(replaceWithGui);
+  }
+
+  private Out onRender(In in) {
+    if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get() && !this.minecraft.gameSettings.showDebugInfo) {
+      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
+        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPreHud();
+      }
+      this.guiChatMateHud.renderGameOverlay();
+      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
+        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPostHud();
+      }
+    }
+
+    return new Out();
   }
 
   private Boolean onOpenChatMateHud() {
