@@ -34,7 +34,7 @@ public class HudElementWrapper<TElement extends IElement> extends HudElement {
   }
 
   @Override
-  public @Nullable List<IElement> getChildren() {
+  public @Nullable List<IElement> onGetChildren() {
     return Collections.list(this.element);
   }
 

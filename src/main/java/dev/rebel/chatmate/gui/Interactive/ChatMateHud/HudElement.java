@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DropElement.IDropElementListener;
 import dev.rebel.chatmate.gui.Interactive.ElementBase;
 import dev.rebel.chatmate.gui.Interactive.Events;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
@@ -13,19 +14,24 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
+import dev.rebel.chatmate.services.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 
-public abstract class HudElement extends ElementBase {
+public abstract class HudElement extends ElementBase implements IDropElementListener {
   protected @Nonnull DimPoint defaultPosition;
   protected float currentScale = 1;
   protected Anchor anchor = Anchor.TOP_LEFT;
   
   private boolean canDrag = false;
   private boolean canScale = false;
-  
+
+  // using the drop element leads to a smoother dragging experience where large deltas don't interrupt the drag flow
+  private @Nullable DropElement dropElement = null;
   private @Nullable DimPoint lastDraggingPosition = null;
 
   public HudElement(InteractiveScreen.InteractiveContext context, IElement parent) {
@@ -44,32 +50,47 @@ public abstract class HudElement extends ElementBase {
     return this;
   }
 
+
+  @Override
+  public final @Nullable List<IElement> getChildren() {
+    @Nullable List<IElement> superChildren = this.onGetChildren();
+
+    if (this.dropElement == null) {
+      return superChildren;
+    } else if (superChildren == null) {
+      superChildren = new ArrayList<>();
+    }
+
+    List<IElement> result = Collections.list(superChildren);
+    result.add(this.dropElement);
+    return result;
+  }
+
+  /** Implement this instead of the standard `getChildren`. */
+  public abstract @Nullable List<IElement> onGetChildren();
+
   @Override
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.canDrag) {
       this.lastDraggingPosition = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
-    }
-  }
-
-  @Override
-  public void onMouseMove(IEvent<MouseEventData.In> e) {
-    if (this.canDrag && this.lastDraggingPosition != null && e.getData().isDragged(MouseButton.LEFT_BUTTON)) {
-      DimPoint positionDelta = e.getData().mousePositionData.point.minus(this.lastDraggingPosition).setAnchor(DimAnchor.GUI);
-      this.lastDraggingPosition = e.getData().mousePositionData.point;
-      super.setBoxUnsafe(super.getBox().withTranslation(positionDelta));
+      this.dropElement = new DropElement(super.context, this, this);
       super.onInvalidateSize();
     }
   }
 
   @Override
-  public void onMouseUp(IEvent<MouseEventData.In> e) {
-    if (this.lastDraggingPosition != null) {
-      // finished dragging
-      this.lastDraggingPosition = null;
-      this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), this.getBox());
-      e.stopPropagation();
-      super.onInvalidateSize();
-    }
+  public void onDrag(DimPoint position) {
+    DimPoint positionDelta = position.minus(this.lastDraggingPosition).setAnchor(DimAnchor.GUI);
+    this.lastDraggingPosition = position;
+    super.setBoxUnsafe(super.getBox().withTranslation(positionDelta));
+    super.onInvalidateSize();
+  }
+
+  @Override
+  public void onDrop(DimPoint position) {
+    this.lastDraggingPosition = null;
+    this.dropElement = null;
+    super.onInvalidateSize();
   }
 
   @Override
@@ -86,6 +107,9 @@ public abstract class HudElement extends ElementBase {
 
     super.setBox(box);
     this.onHudBoxSet(box);
+    if (this.dropElement != null) {
+      this.dropElement.setBox(box);
+    }
   }
 
   /** Called when the box has been set for this element. Provides the positioned box with the size specified by the returned value of `calculateThisSize`. */
