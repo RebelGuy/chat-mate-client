@@ -115,7 +115,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxWidth) {
+  protected DimPoint calculateThisSize(Dim maxWidth) {
     super.calculateThisSize(maxWidth);
 
     // this should take up the whole screen
@@ -123,7 +123,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     // draw a background with a thick, curvy border ;)
     DimRect minecraftRect = this.context.dimFactory.getMinecraftRect();
     RectExtension margin = new RectExtension(screen(4));

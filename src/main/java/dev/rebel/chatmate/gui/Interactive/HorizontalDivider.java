@@ -43,13 +43,13 @@ public class HorizontalDivider extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     // cheating a little - the maxWidth may actually be wider than this, but the important part is that we fill the available width completely
     return new DimPoint(maxContentSize, this.thickness);
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     Dim y = this.getBox().getY().plus(this.thickness.over(2));
     Dim x1, x2;
     if (this.mode == FillMode.PARENT_CONTENT) {

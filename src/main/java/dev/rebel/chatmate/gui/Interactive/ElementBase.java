@@ -284,7 +284,7 @@ public abstract class ElementBase implements IElement {
     });
   }
 
-  /** You should never call super.render() from this method, as it will cause an infinite loop.
+  /** You should never call super.render() from this element, as it will cause an infinite loop.
    * If you need to render a base element, use super.renderElement() instead. */
   protected abstract void renderElement();
 

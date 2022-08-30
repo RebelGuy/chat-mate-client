@@ -53,6 +53,7 @@ public class GuiService {
   private final DonationEndpointProxy donationEndpointProxy;
 
   private final ChatMateHudScreen chatMateHudScreen;
+  private final ChatComponentRenderer chatComponentRenderer;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -78,7 +79,8 @@ public class GuiService {
                     FontEngine fontEngine,
                     FontEngineProxy fontEngineProxy,
                     DonationEndpointProxy donationEndpointProxy,
-                    ChatMateHudScreen chatMateHudScreen) {
+                    ChatMateHudScreen chatMateHudScreen,
+                    ChatComponentRenderer chatComponentRenderer) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -104,6 +106,7 @@ public class GuiService {
     this.fontEngineProxy = fontEngineProxy;
     this.donationEndpointProxy = donationEndpointProxy;
     this.chatMateHudScreen = chatMateHudScreen;
+    this.chatComponentRenderer = chatComponentRenderer;
 
     this.addEventHandlers();
   }
@@ -225,6 +228,7 @@ public class GuiService {
         this.environment,
         this.logService,
         this.minecraftChatService,
-        this.forgeEventService);
+        this.forgeEventService,
+        this.chatComponentRenderer);
   }
 }

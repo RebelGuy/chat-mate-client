@@ -117,12 +117,12 @@ public class TextInputElement extends InputElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     return new DimPoint(maxContentSize, this.textHeight);
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     this.drawTextBox();
   }
 

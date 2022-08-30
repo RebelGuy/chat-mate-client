@@ -135,7 +135,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     }
   }
 
-  /** Called when the box has been set for this element. Provides the positioned box with the size specified by the returned value of `calculateThisSize`. */
+  /** Called when the box has been set for this element (do NOT call `super.setBox`). Provides the positioned box with the size specified by the returned value of `calculateThisSize`. */
   public abstract void onHudBoxSet(DimRect box);
 
   /** Called when the user has changed the scale of the component, before re-rendering occurs. `oldScale` and `newScale` are guaranteed to be different. */

@@ -120,7 +120,7 @@ public class CheckboxInputElement extends InputElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     DimPoint labelSize = this.labelElement.calculateSize(maxContentSize.minus(this.boxSize));
     return new DimPoint(boxSize.plus(labelSize.getX()), Dim.max(boxSize, labelSize.getY()));
   }
@@ -135,7 +135,7 @@ public class CheckboxInputElement extends InputElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     DimRect checkbox = new DimRect(this.getContentBox().getPosition(), new DimPoint(this.boxSize, this.boxSize));
     Colour background = Colour.BLACK.withAlpha(this.isHovering.getFrac() * 0.4f);
     Dim borderWidth = gui(1);

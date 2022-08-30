@@ -51,7 +51,7 @@ public class MainContainer extends ElementBase {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxWidth) {
+  protected DimPoint calculateThisSize(Dim maxWidth) {
     // all children of this element are expected to be floating elements with arbitrary positions
     // regardless of contents, this is always a "fullscreen" element
     this.children.forEach(element -> element.calculateSize(maxWidth));
@@ -83,7 +83,7 @@ public class MainContainer extends ElementBase {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     for (HudElement element : this.children) {
       if (element.getVisible()) {
         element.render(null);

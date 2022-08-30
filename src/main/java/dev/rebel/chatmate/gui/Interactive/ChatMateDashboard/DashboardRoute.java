@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
 import dev.rebel.chatmate.models.publicObjects.donation.PublicDonation;
+import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
 
 /** When supplied to the constructor of the DashboardScreen, it will automatically show the screen with prefilled details */
 public abstract class DashboardRoute {
@@ -28,9 +29,9 @@ public abstract class DashboardRoute {
   }
 
   public static class LinkDonationRoute extends DonationRoute {
-    public final PublicDonation donation;
+    public final PublicDonationData donation;
 
-    public LinkDonationRoute(PublicDonation donation) {
+    public LinkDonationRoute(PublicDonationData donation) {
       this.donation = donation;
     }
   }

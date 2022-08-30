@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Environment;
+import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
@@ -657,6 +658,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final LogService logService;
     public final MinecraftChatService minecraftChatService;
     public final ForgeEventService forgeEventService;
+    public final ChatComponentRenderer chatComponentRenderer;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -677,7 +679,8 @@ public class InteractiveScreen extends Screen implements IElement {
                               Environment environment,
                               LogService logService,
                               MinecraftChatService minecraftChatService,
-                              ForgeEventService forgeEventService) {
+                              ForgeEventService forgeEventService,
+                              ChatComponentRenderer chatComponentRenderer) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -693,6 +696,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.logService = logService;
       this.minecraftChatService = minecraftChatService;
       this.forgeEventService = forgeEventService;
+      this.chatComponentRenderer = chatComponentRenderer;
     }
   }
 

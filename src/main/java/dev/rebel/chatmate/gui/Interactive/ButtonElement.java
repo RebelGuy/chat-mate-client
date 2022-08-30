@@ -101,7 +101,7 @@ public class ButtonElement extends InputElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     maxContentSize = Dim.min(maxContentSize, this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
 
     DimPoint childSize;
@@ -139,7 +139,7 @@ public class ButtonElement extends InputElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     int hoverState = !this.getEnabled() ? 0 : this.hovered ? 2 : 1; // 0 if disabled, 1 if normal, 2 if hovering
 
     this.context.minecraft.getTextureManager().bindTexture(BUTTON_TEXTURES);
@@ -195,7 +195,7 @@ public class ButtonElement extends InputElement {
     }
 
     @Override
-    public void renderElement() {
+    protected void renderElement() {
       int j = 14737632;
       if (!super.getEnabled()) {
         j = 10526880;

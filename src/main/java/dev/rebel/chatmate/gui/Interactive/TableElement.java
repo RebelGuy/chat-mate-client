@@ -129,7 +129,7 @@ public class TableElement<T> extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxWidth) {
+  protected DimPoint calculateThisSize(Dim maxWidth) {
     this.columnWidths = this.getColumnWidths(maxWidth);
     DimPoint calculatedSize = super.calculateThisSize(maxWidth);
     return new DimPoint(calculatedSize.getX(), Dim.max(this.minHeight, calculatedSize.getY()));
@@ -205,7 +205,7 @@ public class TableElement<T> extends ContainerElement {
     }
 
     @Override
-    public DimPoint calculateThisSize(Dim maxWidth) {
+    protected DimPoint calculateThisSize(Dim maxWidth) {
       List<Dim> columnWidths = TableElement.this.columnWidths;
       Dim height = Dim.max(Collections.map(columnWidths, (cWidth, i) -> this.getCell(i).calculateSize(cWidth).getY()));
 
@@ -261,7 +261,7 @@ public class TableElement<T> extends ContainerElement {
     }
 
     @Override
-    public void renderElement() {
+    protected void renderElement() {
       float hoveringIntensity = this.state.getState().hovering.getFrac();
       if (hoveringIntensity > 0) {
         RendererHelpers.drawRect(0, this.getBox(), Colour.LTGREY.withAlpha(0.1f * hoveringIntensity), null, null, gui(2));

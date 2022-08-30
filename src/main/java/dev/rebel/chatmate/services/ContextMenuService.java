@@ -3,10 +3,12 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
+import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.rank.ManageRanksModal;
 import dev.rebel.chatmate.gui.Interactive.rank.PunishmentAdapters;
@@ -14,6 +16,7 @@ import dev.rebel.chatmate.gui.Interactive.rank.RankAdapters;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
@@ -22,6 +25,8 @@ import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import net.minecraft.client.Minecraft;
+
+import java.util.Date;
 
 public class ContextMenuService {
   private final Minecraft minecraft;
@@ -45,6 +50,8 @@ public class ContextMenuService {
   private final MinecraftChatService minecraftChatService;
   private final FontEngine fontEngine;
   private final ForgeEventService forgeEventService;
+  private final ChatComponentRenderer chatComponentRenderer;
+  private final DonationHudStore donationHudStore;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -66,7 +73,9 @@ public class ContextMenuService {
                             RankEndpointProxy rankEndpointProxy,
                             MinecraftChatService minecraftChatService,
                             FontEngine fontEngine,
-                            ForgeEventService forgeEventService) {
+                            ForgeEventService forgeEventService,
+                            ChatComponentRenderer chatComponentRenderer,
+                            DonationHudStore donationHudStore) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -88,6 +97,8 @@ public class ContextMenuService {
     this.minecraftChatService = minecraftChatService;
     this.fontEngine = fontEngine;
     this.forgeEventService = forgeEventService;
+    this.chatComponentRenderer = chatComponentRenderer;
+    this.donationHudStore = donationHudStore;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -102,7 +113,8 @@ public class ContextMenuService {
   public void showHudContext(Dim x, Dim y) {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Add countdown title", this::onCountdown),
-      new ContextMenuOption("Add counter component", this::onCounter)
+      new ContextMenuOption("Add counter component", this::onCounter),
+      new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation)
     );
   }
 
@@ -162,6 +174,18 @@ public class ContextMenuService {
     this.minecraftProxyService.getChatGUI().deleteLine(chatLine);
   }
 
+  private void onGenerateFakeDonation() {
+    PublicDonationData donation = new PublicDonationData() {{
+      time = new Date().getTime();
+      amount = (float)(Math.random() * 100);
+      currency = "USD";
+      name = "A Donator's Name";
+      String msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a";
+      message = msg.substring(0, (int)(Math.random() * msg.length()));
+    }};
+    this.donationHudStore.addDonation(donation);
+  }
+
   private InteractiveScreen.InteractiveContext createInteractiveContext() {
     return new InteractiveScreen.InteractiveContext(new ScreenRenderer(),
         this.mouseEventService,
@@ -177,6 +201,7 @@ public class ContextMenuService {
         this.environment,
         this.logService,
         this.minecraftChatService,
-        this.forgeEventService);
+        this.forgeEventService,
+        this.chatComponentRenderer);
   }
 }

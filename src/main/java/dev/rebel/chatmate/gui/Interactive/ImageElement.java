@@ -80,7 +80,7 @@ public class ImageElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     if (this.image == null) {
       return new DimPoint(ZERO, ZERO);
     }
@@ -92,7 +92,7 @@ public class ImageElement extends SingleElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     if (this.image == null) {
       return;
     }

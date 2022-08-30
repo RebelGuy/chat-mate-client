@@ -141,7 +141,7 @@ public class SidebarElement extends ContainerElement {
     }
 
     @Override
-    public void renderElement() {
+    protected void renderElement() {
       float hoveringFrac = this.isHovering.getFrac();
       if (hoveringFrac > 0) {
         DimRect rect = super.getCollisionBox();

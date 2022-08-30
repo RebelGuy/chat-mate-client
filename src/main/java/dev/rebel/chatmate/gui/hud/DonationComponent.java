@@ -86,13 +86,13 @@ public class DonationComponent extends Box implements IHudComponent {
     String formattedAmount = String.format("$%.2f", this.donation.amount);
     String title = String.format("%s has donated %s!", this.donation.name, formattedAmount);
     List<String> splitTitle = this.fontEngine.listFormattedStringToWidth(title, maxWidth);
-    Dim titleWidth = Dim.max(Collections.map(splitTitle, this.fontEngine::getStringWidthDim));
+    Dim titleWidth = Dim.max(Collections.map(splitTitle, str -> this.fontEngine.getStringWidthDim(str)));
 
     Dim bodyWidth = this.dimFactory.zeroGui();
     List<String> splitBody = new ArrayList<>();
     if (this.donation.message != null) {
       splitBody = this.fontEngine.listFormattedStringToWidth(this.donation.message, maxWidth);
-      bodyWidth = Dim.max(Collections.map(splitBody, this.fontEngine::getStringWidthDim));
+      bodyWidth = Dim.max(Collections.map(splitBody, str -> this.fontEngine.getStringWidthDim(str)));
     }
 
     // set rects

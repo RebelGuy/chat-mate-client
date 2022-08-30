@@ -27,7 +27,7 @@ public class DropElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     // claim to have no size (so it doesn't interfere with the layout), and set the custom box below
     return new DimPoint(ZERO, ZERO);
   }
@@ -55,7 +55,7 @@ public class DropElement extends SingleElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     // not visible
   }
 

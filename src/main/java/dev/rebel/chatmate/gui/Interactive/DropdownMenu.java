@@ -145,7 +145,7 @@ public class DropdownMenu extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     // the element does not take up any space in the layout-space
     // (note that the super method is called in `setBox()`)
     return new DimPoint(ZERO, ZERO);
@@ -216,7 +216,7 @@ public class DropdownMenu extends ContainerElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     if (!this.expanded) {
       return;
     }

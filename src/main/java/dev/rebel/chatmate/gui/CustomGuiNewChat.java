@@ -329,7 +329,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     } else {
       int lineWidth = this.getLineWidth();
-      List<IChatComponent> splitComponents = ComponentHelpers.splitText(chatComponent, lineWidth, this.fontEngine);
+      List<IChatComponent> splitComponents = ComponentHelpers.splitText(chatComponent, lineWidth, this.fontEngine); // useful
       for (IChatComponent component : splitComponents) {
         this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId, parent));
       }

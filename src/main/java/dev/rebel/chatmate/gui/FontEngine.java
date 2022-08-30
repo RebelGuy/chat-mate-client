@@ -180,10 +180,7 @@ public class FontEngine {
     // this method can probably be refactored into a much more elegant approach, but it'll do for now.
     final State<Dim> width = new State<>(this.dimFactory.zeroGui()); // hack so we can modify this inside the lambdas... thanks java
 
-    // the unicode scaling is applied as per the vanilla implementation, probably because the unicode characters are thinner
-    int asciiIndex = ASCII_CHARACTERS.indexOf(ch);
-    boolean isUnicode = asciiIndex == -1 || this.unicodeFlag;
-    float offsetMultiplier = isUnicode ? UNICODE_SCALING_FACTOR : 1;
+    float offsetMultiplier = this.getOffsetMultiplier(ch);
     Dim boldOffsetX = this.dimFactory.fromGui(1).times(offsetMultiplier);
 
     // set the main layer
@@ -243,6 +240,14 @@ public class FontEngine {
     });
 
     return width.getState();
+  }
+
+  /** Returns the multiplier used for font offsets - depends on whether the character is unicode or not. */
+  private float getOffsetMultiplier(char ch) {
+    // the unicode scaling is applied as per the vanilla implementation, probably because the unicode characters are thinner
+    int asciiIndex = ASCII_CHARACTERS.indexOf(ch);
+    boolean isUnicode = asciiIndex == -1 || this.unicodeFlag;
+    return isUnicode ? UNICODE_SCALING_FACTOR : 1;
   }
 
   /** Returns the width of the rendered texture. */
@@ -449,36 +454,41 @@ public class FontEngine {
     return (int)this.getStringWidthDim(text).getGui();
   }
 
-  /** Returns the width of this string. Equivalent of FontMetrics.stringWidth(String s). */
   public Dim getStringWidthDim(String text) {
+    return this.getStringWidthDim(text, new Font());
+  }
+
+  /** Returns the width of this string. Equivalent of FontMetrics.stringWidth(String s). */
+  public Dim getStringWidthDim(String text, Font font) {
     if (text == null) {
       return this.dimFactory.zeroGui();
     } else {
       int i = 0;
-      boolean flag = false;
+      boolean isBold = false;
 
       for (int j = 0; j < text.length(); ++j) {
-        char c0 = text.charAt(j);
-        int k = this.getCharWidth(c0);
+        char thisChar = text.charAt(j);
+        int charWidth = this.getCharWidth(thisChar);
 
-        if (k < 0 && j < text.length() - 1) {
+        // if we have inferred a section char (why not just check if it's the section char??)
+        if (thisChar == CHAR_SECTION_SIGN && j < text.length() - 1) {
           ++j;
-          c0 = text.charAt(j);
+          thisChar = text.charAt(j); // format char
 
-          if (c0 != 108 && c0 != 76) {
-            if (c0 == 114 || c0 == 82) {
-              flag = false;
+          if (thisChar != 108 && thisChar != 76) { // is not `l` (bold)
+            if (thisChar == 114 || thisChar == 82) { // is `r`
+              isBold = false;
             }
           } else {
-            flag = true;
+            isBold = true;
           }
 
-          k = 0;
+          charWidth = 0;
         }
 
-        i += k;
+        i += charWidth;
 
-        if (flag && k > 0) {
+        if ((font.getBold() || isBold) && charWidth > 0) {
           ++i;
         }
       }
@@ -518,45 +528,51 @@ public class FontEngine {
 
   /** Trims a string to a specified width, and will reverse it if par3 is set. */
   public String trimStringToWidth(String text, int width, boolean reverse) {
+    return this.trimStringToWidth(text, this.dimFactory.fromGui(width), new Font(), reverse);
+  }
+
+  /** Trims a string to a specified width, and will reverse it if par4 is set. */
+  public String trimStringToWidth(String text, Dim width, Font font, boolean reverse) {
     StringBuilder stringbuilder = new StringBuilder();
     int i = 0;
     int j = reverse ? text.length() - 1 : 0;
     int k = reverse ? -1 : 1;
-    boolean flag = false;
-    boolean flag1 = false;
+    boolean isSectionSign = false;
+    boolean isBold = false;
 
-    for (int l = j; l >= 0 && l < text.length() && i < width; l += k) {
-      char c0 = text.charAt(l);
-      int i1 = this.getCharWidth(c0);
+    for (int l = j; l >= 0 && l < text.length() && i < width.getGui(); l += k) {
+      char thisChar = text.charAt(l);
+      int thisCharWidth = this.getCharWidth(thisChar);
 
-      if (flag) {
-        flag = false;
+      // todo: clean up this mess... it's even worse than in `getStringWidthDim`
+      if (isSectionSign) {
+        isSectionSign = false;
 
-        if (c0 != 108 && c0 != 76) {
-          if (c0 == 114 || c0 == 82) {
-            flag1 = false;
+        if (thisChar != 108 && thisChar != 76) { // char is not `l` (bold)
+          if (thisChar == 114 || thisChar == 82) { // char is `r` (reset)
+            isBold = false;
           }
         } else {
-          flag1 = true;
+          isBold = true;
         }
-      } else if (i1 < 0) {
-        flag = true;
+      } else if (thisCharWidth < 0) {
+        isSectionSign = true;
       } else {
-        i += i1;
+        i += thisCharWidth;
 
-        if (flag1) {
+        if (isBold || font.getBold()) {
           ++i;
         }
       }
 
-      if (i > width) {
+      if (i > width.getGui()) {
         break;
       }
 
       if (reverse) {
-        stringbuilder.insert(0, c0);
+        stringbuilder.insert(0, thisChar);
       } else {
-        stringbuilder.append(c0);
+        stringbuilder.append(thisChar);
       }
     }
 
