@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.gui.GuiChatMateHud;
+import dev.rebel.chatmate.gui.GuiChatMateHudScreen;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore.IHudStoreListener;
 import dev.rebel.chatmate.gui.Interactive.ElementHelpers;
 import dev.rebel.chatmate.gui.Interactive.Events;
@@ -10,32 +12,37 @@ import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.ContextMenuService;
-import dev.rebel.chatmate.services.events.models.GuiScreenChanged;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import dev.rebel.chatmate.services.events.models.Tick;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.Objects;
-import net.minecraft.client.gui.GuiScreen;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
-import static dev.rebel.chatmate.services.util.Objects.casted;
 import static dev.rebel.chatmate.services.util.Objects.castedVoid;
 
 // note: use the `ChatMateHudStore` to add components to this screen.
 public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreListener {
   private final ContextMenuService contextMenuService;
+  private final Config config;
+  private final GuiChatMateHud legacyHudOverlay;
 
+  // unlike the new HUD screen, the legacy one has to be re-instantiated every time the HUD menu is opened
+  private final Supplier<GuiChatMateHudScreen> legacyHudScreenFactory;
+  private @Nullable GuiChatMateHudScreen legacyHudScreen;
   private boolean shown;
 
-  public ChatMateHudScreen(ChatMateHudStore chatMateHudStore, ContextMenuService contextMenuService, InteractiveContext context, Config config) {
+  public ChatMateHudScreen(ChatMateHudStore chatMateHudStore, ContextMenuService contextMenuService, InteractiveContext context, Config config, GuiChatMateHud guiChatMateHud) {
     super(context, null, InteractiveScreenType.HUD);
     this.contextMenuService = contextMenuService;
+    this.config = config;
+    this.legacyHudOverlay = guiChatMateHud;
+    this.legacyHudScreenFactory = () -> new GuiChatMateHudScreen(context.minecraft, context.mouseEventService, context.dimFactory, guiChatMateHud);
+    this.legacyHudScreen = null;
 
     super.setMainElement(new MainContainer(chatMateHudStore, this.context, this));
 
@@ -50,6 +57,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   public void show() {
     this.shown = true;
     this.initialise();
+    this.legacyHudScreen = this.legacyHudScreenFactory.get();
   }
 
   public void hide() {
@@ -57,6 +65,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
     super.context.renderer.runSideEffect(() -> {
       this.cleanUp();
     });
+    this.legacyHudScreen = null;
   }
 
   public void initialise() {
@@ -180,6 +189,17 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   }
 
   private Tick.Out onRenderTick(Tick.In event) {
+    // render the legacy HUD
+    if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get() && !super.context.minecraft.gameSettings.showDebugInfo) {
+      if (this.legacyHudScreen != null) {
+        this.legacyHudScreen.renderGameOverlayPreHud();
+      }
+      this.legacyHudOverlay.renderGameOverlay();
+      if (this.legacyHudScreen != null) {
+        this.legacyHudScreen.renderGameOverlayPostHud();
+      }
+    }
+
     if (this.shown) {
       super.drawScreen(0, 0, 0);
     }

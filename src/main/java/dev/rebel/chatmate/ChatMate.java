@@ -161,7 +161,7 @@ public class ChatMate {
         forgeEventService,
         chatComponentRenderer,
         donationHudStore);
-    ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
+    ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config, guiChatMateHud);
 
     CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
         minecraft,

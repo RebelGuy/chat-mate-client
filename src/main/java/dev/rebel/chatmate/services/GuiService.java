@@ -128,7 +128,6 @@ public class GuiService {
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
     this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
     this.forgeEventService.onOpenChat(this::onOpenChat, null);
-    this.forgeEventService.onRenderTick(this::onRender, null);
     this.forgeEventService.onClientTick(this::onClientTick, null);
 
     this.keyBindingService.on(ChatMateKeyEvent.OPEN_CHAT_MATE_HUD, this::onOpenChatMateHud);
@@ -189,20 +188,6 @@ public class GuiService {
         this.urlService,
         this.forgeEventService);
     return new OpenGui.Out(replaceWithGui);
-  }
-
-  private Out onRender(In in) {
-    if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get() && !this.minecraft.gameSettings.showDebugInfo) {
-      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
-        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPreHud();
-      }
-      this.guiChatMateHud.renderGameOverlay();
-      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
-        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPostHud();
-      }
-    }
-
-    return new Out();
   }
 
   private Boolean onOpenChatMateHud() {

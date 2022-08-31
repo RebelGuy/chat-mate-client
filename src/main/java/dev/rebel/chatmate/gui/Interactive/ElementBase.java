@@ -288,6 +288,7 @@ public abstract class ElementBase implements IElement {
       GlStateManager.enableBlend();
       GlStateManager.disableLighting();
       wrapper.accept(this::renderElement);
+      GlStateManager.disableBlend();
       GlStateManager.popMatrix();
     });
   }
