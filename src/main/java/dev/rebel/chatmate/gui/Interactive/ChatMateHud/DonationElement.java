@@ -8,6 +8,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
@@ -27,7 +28,8 @@ public class DonationElement extends ContainerElement {
   private final PublicDonationData donation;
   private @Nullable Runnable onDone;
   private final Runnable onLink;
-  private final long start;
+  private long lastTime;
+  private long remaining;
 
   public DonationElement(InteractiveContext context, IElement parent, PublicDonationData donation, Runnable onClickLink, Runnable onDone) {
     super(context, parent, LayoutMode.BLOCK);
@@ -38,7 +40,8 @@ public class DonationElement extends ContainerElement {
     this.donation = donation;
     this.onLink = onClickLink;
     this.onDone = onDone;
-    this.start = new Date().getTime();
+    this.lastTime = new Date().getTime();
+    this.remaining = LIFETIME;
 
     String formattedAmount = String.format("$%.2f", this.donation.amount);
     String title = String.format("%s has donated %s!", this.donation.name, formattedAmount);
@@ -62,11 +65,20 @@ public class DonationElement extends ContainerElement {
     );
   }
 
-  // todo: implement timer bar (pauses on hover), the close button, and the link button (only shown on hover)
-
   @Override
   protected void renderElement() {
-    if (new Date().getTime() - this.start > LIFETIME && this.onDone != null) {
+    long now = new Date().getTime();
+    if (!super.isHovering()) {
+      long diff = now - this.lastTime;
+
+      // a large diff probably means that we weren't rendering this element, so artificially pause the bar
+      if (diff < 500) {
+        this.remaining -= diff;
+      }
+    }
+    this.lastTime = now;
+
+    if (remaining <= 0 && this.onDone != null) {
       this.onDone.run();
       this.onDone = null;
     }
@@ -74,7 +86,30 @@ public class DonationElement extends ContainerElement {
     DimFactory dimFactory = super.context.dimFactory;
     Dim cornerRadius = dimFactory.fromGui(CORNER_RADIUS);
     // todo: drawRect should accept a RectExtension border (while you're at it, also refactor those method overloads...)
-    RendererHelpers.drawRect(0, super.getPaddingBox(), BACKGROUND, super.getBorder().left, BORDER_COLOUR, cornerRadius);
+    RendererHelpers.drawRect(0, super.getPaddingBox(), BACKGROUND, super.getBorder().left, BORDER_COLOUR, cornerRadius, gui(4), Colour.BLACK);
+    this.drawTimerBar();
     super.renderElement();
+  }
+
+  private void drawTimerBar() {
+    Dim x = super.getContentBox().getX();
+    Dim w = super.getContentBox().getWidth();
+    Dim h = gui(2);
+    Dim y = super.getPaddingBox().getBottom().minus(h);
+    DimRect box = new DimRect(x, y, w, h);
+
+    Dim cornerRadius = gui(1f);
+    float frac = (float)Math.max(0, (double)this.remaining / LIFETIME);
+
+    // the min is a circle with radius `cornerRadius`
+    Dim barWidth = Dim.max(cornerRadius.times(2), w.times(frac));
+
+    // the empty bar looks weird, so fade it out
+    float alpha = Math.min(1, w.times(frac).over(cornerRadius.times(2)));
+
+    Colour backgroundColour = Colour.DKGREY.withAlpha(alpha);
+    Colour barColour = Colour.CYAN.withBrightness(0.5f).withAlpha(alpha);
+    RendererHelpers.drawRect(0, box, backgroundColour, null, null, cornerRadius);
+    RendererHelpers.drawRect(0, box.withWidth(barWidth), barColour, null, null, cornerRadius);
   }
 }

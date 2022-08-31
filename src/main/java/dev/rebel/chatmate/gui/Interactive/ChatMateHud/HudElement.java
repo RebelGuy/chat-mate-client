@@ -25,8 +25,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   protected @Nonnull Anchor defaultPositionAnchor;
   protected float currentScale = 1;
   protected Anchor anchor = Anchor.TOP_LEFT;
-  protected boolean hovered = false;
-  
+
   private boolean canDrag = false;
   private boolean canScale = false;
 
@@ -106,16 +105,6 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   }
 
   @Override
-  public void onMouseEnter(IEvent<MouseEventData.In> e) {
-    this.hovered = true;
-  }
-
-  @Override
-  public void onMouseExit(IEvent<MouseEventData.In> e) {
-    this.hovered = false;
-  }
-
-  @Override
   public final void setBox(DimRect box) {
     // the box provided here will be incorrect, we handle our own sizing functionality.
     if (super.getBox() == null) {
@@ -158,7 +147,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
 
   @Override
   public final void renderElement() {
-    if (this.hovered) {
+    if (super.isHovering() && (this.canScale || this.canDrag)) {
       float alpha = this.lastDraggingPosition == null ? 0.1f : 0.2f;
       RendererHelpers.drawRect(0, super.getBox(), Colour.BLACK.withAlpha(alpha));
     }

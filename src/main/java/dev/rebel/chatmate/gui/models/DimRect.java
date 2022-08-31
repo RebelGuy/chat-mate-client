@@ -99,7 +99,7 @@ public class DimRect {
 
   public DimRect withBottom(Dim bottom) { return new DimRect(this.x, this.y, this.width, bottom.minus(this.y)); }
 
-  public DimRect withHWidth(Dim width) { return new DimRect(this.x, this.y, width, this.height); }
+  public DimRect withWidth(Dim width) { return new DimRect(this.x, this.y, width, this.height); }
 
   public DimRect withHeight(Dim height) { return new DimRect(this.x, this.y, this.width, height); }
 

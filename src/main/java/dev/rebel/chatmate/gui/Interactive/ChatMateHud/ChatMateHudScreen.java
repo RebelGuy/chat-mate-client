@@ -1,27 +1,18 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
-import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore.IHudStoreListener;
-import dev.rebel.chatmate.gui.Interactive.Events.EventPhase;
-import dev.rebel.chatmate.gui.Interactive.Events.EventType;
-import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
-import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.Interactive.Events;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.ContextMenuService;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
-import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import dev.rebel.chatmate.services.events.models.Tick;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
 
-import static dev.rebel.chatmate.gui.ContextMenu.*;
-import static dev.rebel.chatmate.services.util.Objects.casted;
 import static dev.rebel.chatmate.services.util.Objects.castedVoid;
 
 // note: use the `ChatMateHudStore` to add components to this screen.
@@ -37,7 +28,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
     super.setMainElement(new MainContainer(chatMateHudStore, this.context, this));
 
     // don't have to worry about unsubscribing because this Screen instance is re-used during the entirety of the application lifetime
-    this.context.forgeEventService.onRenderGameOverlay(this::onRenderOverlay, new RenderGameOverlay.Options(RenderGameOverlayEvent.ElementType.ALL));
+    this.context.forgeEventService.onRenderTick(this::onRenderTick, null);
     config.getHudEnabledEmitter().onChange(this::onChangeHudEnabled);
     chatMateHudStore.addListener(this);
 
@@ -165,11 +156,11 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
     return super.onKeyDown(in);
   }
 
-  private RenderGameOverlay.Out onRenderOverlay(RenderGameOverlay.In in) {
+  private Tick.Out onRenderTick(Tick.In event) {
     if (this.shown) {
       super.drawScreen(0, 0, 0);
     }
-    return new RenderGameOverlay.Out();
+    return new Tick.Out();
   }
 
   private boolean isInteractivityDisabled() {

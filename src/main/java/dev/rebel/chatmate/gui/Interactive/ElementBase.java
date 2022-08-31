@@ -47,6 +47,7 @@ public abstract class ElementBase implements IElement {
   private VerticalAlignment verticalAlignment;
   private SizingMode sizingMode;
   private boolean initialised;
+  private boolean isHovering;
   protected boolean visible;
   private @Nullable String tooltip;
   private @Nullable Dim maxWidth;
@@ -70,6 +71,7 @@ public abstract class ElementBase implements IElement {
     this.verticalAlignment = VerticalAlignment.TOP;
     this.sizingMode = SizingMode.ANY;
     this.initialised = false;
+    this.isHovering = false;
     this.visible = true;
 
     this.tooltip = null;
@@ -106,6 +108,10 @@ public abstract class ElementBase implements IElement {
     return this;
   }
 
+  protected boolean isHovering() {
+    return this.isHovering;
+  }
+
   @Override
   public final void onEvent(EventType type, IEvent<?> event) {
     if (event.getPhase() == EventPhase.TARGET) {
@@ -117,9 +123,11 @@ public abstract class ElementBase implements IElement {
           this.onBlur((IEvent<FocusEventData>)event);
           break;
         case MOUSE_ENTER:
+          this.isHovering = true;
           this.onMouseEnter((IEvent<MouseEventData.In>)event);
           break;
         case MOUSE_EXIT:
+          this.isHovering = false;
           this.onMouseExit((IEvent<MouseEventData.In>)event);
           break;
         case WINDOW_RESIZE:
