@@ -1,22 +1,21 @@
 package dev.rebel.chatmate.commands.handlers;
 
-import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.gui.GuiChatMateHud;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
+import dev.rebel.chatmate.gui.CustomGuiChat;
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElementWrapper;
-import dev.rebel.chatmate.gui.Interactive.IElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
 import dev.rebel.chatmate.gui.hud.Observable;
-import dev.rebel.chatmate.gui.hud.TextComponent;
-import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.KeyBindingService;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiChat;
 
 import javax.annotation.Nullable;
 
@@ -86,9 +85,14 @@ public class CounterHandler {
           .setCanDrag(true)
           .setCanScale(true)
           .setDefaultPosition(dimFactory.getMinecraftRect().getCentre(), Anchor.MIDDLE)
-          .cast();
+          .setHudElementFilter(
+              new HudFilters.HudFilterWhitelistNoScreen(),
+              new HudFilters.HudFilterScreenWhitelist(CustomGuiChat.class),
+              new HudFilters.HudFilterInteractiveScreenTypeBlacklist(InteractiveScreenType.DASHBOARD)
+          ).cast();
       this.hudElement.setElement(LabelElement::new)
-          .setText(this.observableString.getValue());
+          .setText(this.observableString.getValue())
+          .setFont(new Font().withShadow(new Shadow(dimFactory)));
       this.observableString.listen(str -> this.hudElement.element.setText(str));
     }
 

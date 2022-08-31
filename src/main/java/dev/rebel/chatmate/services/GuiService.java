@@ -5,6 +5,7 @@ import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -117,7 +118,7 @@ public class GuiService {
 
   public void displayDashboard(@Nullable DashboardRoute route) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.DASHBOARD);
     screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.donationEndpointProxy));
     this.minecraft.displayGuiScreen(screen);
   }

@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DropElement.IDropElementListener;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
@@ -21,6 +22,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public abstract class HudElement extends ElementBase implements IDropElementListener {
+  private @Nullable List<IHudFilter> hudElementFilter = null;
+
   protected @Nonnull DimPoint defaultPosition;
   protected @Nonnull Anchor defaultPositionAnchor;
   protected float currentScale = 1;
@@ -60,6 +63,16 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   public HudElement setDefaultScale(float scale) {
     this.currentScale = scale;
     return this;
+  }
+
+  /** By default, HUD elements are always shown, but you can provide a list of filters to customise this behaviour. */
+  public HudElement setHudElementFilter(@Nullable IHudFilter... filters) {
+    this.hudElementFilter = filters == null || filters.length == 0 ? null : Collections.list(filters);
+    return this;
+  }
+
+  public @Nullable List<IHudFilter> getHudElementFilter() {
+    return this.hudElementFilter;
   }
 
   @Override

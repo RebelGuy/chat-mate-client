@@ -6,18 +6,21 @@ import dev.rebel.chatmate.gui.hud.IHudComponent;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.services.GuiService;
+import dev.rebel.chatmate.services.SoundService;
 
 public class DonationHudService implements IDonationListener {
   private final DonationHudStore donationHudStore;
   private final ChatMateHudStore chatMateHudStore;
   private final GuiService guiService;
   private final DimFactory dimFactory;
+  private final SoundService soundService;
 
-  public DonationHudService(ChatMateHudStore chatMateHudStore, DonationHudStore donationHudStore, GuiService guiService, DimFactory dimFactory) {
+  public DonationHudService(ChatMateHudStore chatMateHudStore, DonationHudStore donationHudStore, GuiService guiService, DimFactory dimFactory, SoundService soundService) {
     this.donationHudStore = donationHudStore;
     this.chatMateHudStore = chatMateHudStore;
     this.guiService = guiService;
     this.dimFactory = dimFactory;
+    this.soundService = soundService;
 
     donationHudStore.addListener(this);
   }
@@ -26,6 +29,7 @@ public class DonationHudService implements IDonationListener {
   public void onNextDonation(PublicDonationData donation) {
     this.chatMateHudStore.addElement((context, parent) -> new DonationHudElement(context, parent, this.chatMateHudStore, this::onCloseDonation, this::onOpenDashboard, donation))
         .setDefaultPosition(this.dimFactory.getMinecraftRect().getTopCentre(), IHudComponent.Anchor.TOP_CENTRE);
+    this.soundService.playDragonKill(1.2f);
   }
 
   private void onOpenDashboard(PublicDonationData donation) {

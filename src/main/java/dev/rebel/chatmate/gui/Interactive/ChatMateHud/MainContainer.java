@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore.IHudStoreListener;
-import dev.rebel.chatmate.gui.Interactive.ContainerElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.ElementBase;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
@@ -9,11 +8,11 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.util.Collections;
-import scala.Tuple2;
+import net.minecraft.client.gui.GuiScreen;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class MainContainer extends ElementBase {
 
@@ -26,7 +25,23 @@ public class MainContainer extends ElementBase {
     this.children = store.getElements();
   }
 
-  // todo: the screen should be the listener, not this element. the screen then calls "MainContainer::addElement", etc
+  private boolean shouldRenderElement(HudElement element) {
+    if (!element.getVisible()) {
+      return false;
+    }
+
+    List<IHudFilter> filters = element.getHudElementFilter();
+    if (filters == null) {
+      return true;
+    }
+
+    GuiScreen currentScreen = super.context.minecraft.currentScreen;
+    boolean isWhitelisted = Collections.any(filters, f -> Objects.equals(f.isWhitelisted(currentScreen), true));
+    boolean isBlacklisted = Collections.any(filters, f -> Objects.equals(f.isBlacklisted(currentScreen), true));
+
+    return isWhitelisted && !isBlacklisted;
+  }
+
   public void addElement(HudElement hudElement) {
     if (hudElement == null) {
       return;
@@ -85,7 +100,7 @@ public class MainContainer extends ElementBase {
   @Override
   protected void renderElement() {
     for (HudElement element : this.children) {
-      if (element.getVisible()) {
+      if (this.shouldRenderElement(element)) {
         element.render(null);
       }
     }

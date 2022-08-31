@@ -1,18 +1,30 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore.IHudStoreListener;
+import dev.rebel.chatmate.gui.Interactive.ElementHelpers;
 import dev.rebel.chatmate.gui.Interactive.Events;
+import dev.rebel.chatmate.gui.Interactive.Events.EventPhase;
+import dev.rebel.chatmate.gui.Interactive.Events.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
+import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.ContextMenuService;
+import dev.rebel.chatmate.services.events.models.GuiScreenChanged;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import dev.rebel.chatmate.services.events.models.Tick;
+import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.Objects;
+import net.minecraft.client.gui.GuiScreen;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.List;
 
+import static dev.rebel.chatmate.services.util.Objects.casted;
 import static dev.rebel.chatmate.services.util.Objects.castedVoid;
 
 // note: use the `ChatMateHudStore` to add components to this screen.
@@ -22,7 +34,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   private boolean shown;
 
   public ChatMateHudScreen(ChatMateHudStore chatMateHudStore, ContextMenuService contextMenuService, InteractiveContext context, Config config) {
-    super(context, null);
+    super(context, null, InteractiveScreenType.HUD);
     this.contextMenuService = contextMenuService;
 
     super.setMainElement(new MainContainer(chatMateHudStore, this.context, this));
@@ -78,6 +90,8 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
       // throw, else we would get stuck in an infinite loop
       throw new RuntimeException("`shouldCloseScreen` should be false after the Screen has been closed.");
     }
+
+    this.cleanUp();
   }
 
   @Override
@@ -86,8 +100,17 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
     super.doCloseScreen();
   }
 
-  /** Cleans up the interactive state. */
+  /**
+   * Cleans up the interactive state.
+   */
   private void cleanUp() {
+    // fire the MOUSE_EXIT event one last time
+    MouseEventData.In in = this.context.mouseEventService.constructSyntheticMoveEvent();
+    List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
+    for (IElement element : elements) {
+      element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, element));
+    }
+
     super.setFocussedElement(null, Events.FocusReason.AUTO);
     super.elementsUnderCursor = new ArrayList<>();
     super.blockingElement = null;

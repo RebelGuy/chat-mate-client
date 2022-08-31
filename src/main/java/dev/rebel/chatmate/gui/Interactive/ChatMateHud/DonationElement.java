@@ -1,10 +1,12 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
+import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -42,6 +44,10 @@ public class DonationElement extends ContainerElement {
     this.onDone = onDone;
     this.lastTime = new Date().getTime();
     this.remaining = LIFETIME;
+
+    super.addElement(new DonationButtonsElement(context, this, onDone, onClickLink)
+        .setMargin(new RectExtension(ZERO, gui(-4), gui(-8), ZERO)) // move above and to the right of the main content
+    );
 
     String formattedAmount = String.format("$%.2f", this.donation.amount);
     String title = String.format("%s has donated %s!", this.donation.name, formattedAmount);
@@ -111,5 +117,35 @@ public class DonationElement extends ContainerElement {
     Colour barColour = Colour.CYAN.withBrightness(0.5f).withAlpha(alpha);
     RendererHelpers.drawRect(0, box, backgroundColour, null, null, cornerRadius);
     RendererHelpers.drawRect(0, box.withWidth(barWidth), barColour, null, null, cornerRadius);
+  }
+
+  private class DonationButtonsElement extends ContainerElement {
+    public DonationButtonsElement(InteractiveContext context, IElement parent, Runnable onClickClose, Runnable onClickLink) {
+      super(context, parent, LayoutMode.INLINE);
+
+      super.setHorizontalAlignment(Layout.HorizontalAlignment.RIGHT);
+
+      ButtonElement.IconButtonElement linkButton = new ButtonElement.IconButtonElement(context, this)
+          .setImage(Asset.GUI_LINK_ICON)
+          .setMaxContentWidth(gui(6))
+          .setOnClick(onClickLink)
+          .setBorder(new RectExtension(ZERO))
+          .setPadding(new RectExtension(ZERO))
+          .setMargin(new RectExtension(gui(2)))
+          .cast();
+      linkButton.image.setPadding(new RectExtension(ZERO));
+
+      ButtonElement.IconButtonElement closeButton = new ButtonElement.IconButtonElement(context, this)
+          .setImage(Asset.GUI_CLEAR_ICON)
+          .setMaxContentWidth(gui(6))
+          .setOnClick(onClickClose)
+          .setBorder(new RectExtension(ZERO))
+          .setPadding(new RectExtension(ZERO))
+          .setMargin(new RectExtension(gui(2)))
+          .cast();
+      closeButton.image.setPadding(new RectExtension(ZERO));
+
+      super.addElement(linkButton).addElement(closeButton);
+    }
   }
 }

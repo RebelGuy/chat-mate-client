@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.rank.ManageRanksModal;
 import dev.rebel.chatmate.gui.Interactive.rank.PunishmentAdapters;
@@ -130,7 +131,7 @@ public class ContextMenuService {
 
   private void onModifyExperience(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     IElement modal = new ManageExperienceModal(context, screen, user, this.experienceEndpointProxy, this.mcChatService);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -138,7 +139,7 @@ public class ContextMenuService {
 
   private void onManageRanks(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     RankAdapters rankAdapters = new RankAdapters(this.rankEndpointProxy);
     IElement modal = new ManageRanksModal(context, screen, user, rankAdapters);
     screen.setMainElement(modal);
@@ -147,7 +148,7 @@ public class ContextMenuService {
 
   private void onManagePunishments(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     PunishmentAdapters punishmentAdapters = new PunishmentAdapters(this.rankEndpointProxy, this.punishmentEndpointProxy);
     IElement modal = new ManageRanksModal(context, screen, user, punishmentAdapters);
     screen.setMainElement(modal);
@@ -156,7 +157,7 @@ public class ContextMenuService {
 
   private void onCountdown() {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     IElement modal = new CountdownModal(context, screen, this.countdownHandler);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -164,7 +165,7 @@ public class ContextMenuService {
 
   private void onCounter() {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     IElement modal = new CounterModal(context, screen, this.counterHandler);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);

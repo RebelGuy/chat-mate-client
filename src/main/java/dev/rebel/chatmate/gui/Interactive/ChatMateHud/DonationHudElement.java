@@ -1,8 +1,10 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.gui.CustomGuiChat;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -28,6 +30,11 @@ public class DonationHudElement extends HudElement {
 
   public DonationHudElement(InteractiveContext context, IElement parent, ChatMateHudStore chatMateHudStore, Runnable onDone, Consumer<PublicDonationData> onOpenDashboard, PublicDonationData donation) {
     super(context, parent);
+    super.setHudElementFilter(
+        new HudFilters.HudFilterWhitelistNoScreen(),
+        new HudFilters.HudFilterScreenWhitelist(CustomGuiChat.class),
+        new HudFilters.HudFilterInteractiveScreenTypeBlacklist(InteractiveScreenType.DASHBOARD)
+    );
 
     this.chatMateHudStore = chatMateHudStore;
     this.onDone = onDone;

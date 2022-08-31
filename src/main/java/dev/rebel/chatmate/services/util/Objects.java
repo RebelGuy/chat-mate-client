@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 
 public class Objects {
   public static @Nullable <T, R> R casted(Class<T> type, Object obj, Function<T, R> fn) {
-    if (type.isAssignableFrom(obj.getClass())) {
+    if (obj != null && type.isAssignableFrom(obj.getClass())) {
       return fn.apply((T)obj);
     } else {
       return null;
@@ -16,14 +16,14 @@ public class Objects {
 
   // ffs... can't just overload `casted` because java has trouble detecting whether we are providing a consumer of function
   public static <T> void castedVoid(Class<T> type, Object obj, Consumer<T> fn) {
-    if (type.isAssignableFrom(obj.getClass())) {
+    if (obj != null && type.isAssignableFrom(obj.getClass())) {
       fn.accept((T)obj);
     }
   }
 
   /** Convenience method for checking an object's type and asserting a condition in an if-statement. */
   public static <T> boolean ifClass(Class<T> type, Object obj, Predicate<T> predicate) {
-    return type.isAssignableFrom(obj.getClass()) && predicate.test((T)obj);
+    return obj != null && type.isAssignableFrom(obj.getClass()) && predicate.test((T)obj);
   }
 
   public static @Nullable <T> T castOrNull(Class<T> type, @Nullable Object obj) {
@@ -32,5 +32,15 @@ public class Objects {
     }
 
     return type.isAssignableFrom(obj.getClass()) ? (T)obj : null;
+  }
+
+  public static @Nullable <T> T firstOrNull(T... objects) {
+    for (T obj : objects) {
+      if (obj != null) {
+        return obj;
+      }
+    }
+
+    return null;
   }
 }

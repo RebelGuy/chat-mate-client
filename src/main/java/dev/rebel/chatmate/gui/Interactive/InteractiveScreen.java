@@ -35,6 +35,7 @@ import java.util.function.Function;
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
 // the correct way would have been to split IElement up into two interfaces, but it doesn't really matter.
 public class InteractiveScreen extends Screen implements IElement {
+  public final InteractiveScreenType interactiveScreenType;
   protected InteractiveContext context;
   private final @Nullable GuiScreen parentScreen;
 
@@ -57,9 +58,10 @@ public class InteractiveScreen extends Screen implements IElement {
   protected DimPoint screenSize;
   protected int minecraftScaleFactor;
 
-  public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen) {
+  public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen, InteractiveScreenType interactiveScreenType) {
     super();
 
+    this.interactiveScreenType = interactiveScreenType;
     this.context = context;
     this.parentScreen = parentScreen;
     this.refreshTimestamp = 0;
@@ -806,5 +808,11 @@ public class InteractiveScreen extends Screen implements IElement {
     private int getLowestZIndex() {
       return Collections.min(Collections.list(this.collectedRenders.keySet()), i -> i);
     }
+  }
+
+  public enum InteractiveScreenType {
+    MODAL,
+    DASHBOARD,
+    HUD
   }
 }

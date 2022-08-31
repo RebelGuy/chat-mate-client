@@ -200,7 +200,7 @@ public class ChatMate {
         donationEndpointProxy,
         chatMateHudScreen,
         chatComponentRenderer);
-    DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory);
+    DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

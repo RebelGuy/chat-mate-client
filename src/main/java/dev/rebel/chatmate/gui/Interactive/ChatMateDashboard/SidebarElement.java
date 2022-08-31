@@ -46,7 +46,7 @@ public class SidebarElement extends ContainerElement {
                 )
             .addElement(
                 new ImageElement(context, this)
-                    .setImage(Asset.EXTERNAL_ICON)
+                    .setImage(Asset.GUI_EXTERNAL_ICON)
                     .setScale(1.0f / 12)
                     .setPadding(new RectExtension(gui(2), ZERO, ZERO, ZERO))
                     .setSizingMode(SizingMode.MINIMISE)
