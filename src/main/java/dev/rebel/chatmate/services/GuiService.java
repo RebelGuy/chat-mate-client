@@ -55,6 +55,8 @@ public class GuiService {
 
   private final ChatMateHudScreen chatMateHudScreen;
   private final ChatComponentRenderer chatComponentRenderer;
+  private final StatusService statusService;
+  private final ApiRequestService apiRequestService;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -81,7 +83,9 @@ public class GuiService {
                     FontEngineProxy fontEngineProxy,
                     DonationEndpointProxy donationEndpointProxy,
                     ChatMateHudScreen chatMateHudScreen,
-                    ChatComponentRenderer chatComponentRenderer) {
+                    ChatComponentRenderer chatComponentRenderer,
+                    StatusService statusService,
+                    ApiRequestService apiRequestService) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -108,6 +112,8 @@ public class GuiService {
     this.donationEndpointProxy = donationEndpointProxy;
     this.chatMateHudScreen = chatMateHudScreen;
     this.chatComponentRenderer = chatComponentRenderer;
+    this.statusService = statusService;
+    this.apiRequestService = apiRequestService;
 
     this.addEventHandlers();
   }
@@ -119,7 +125,7 @@ public class GuiService {
   public void displayDashboard(@Nullable DashboardRoute route) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.DASHBOARD);
-    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.donationEndpointProxy));
+    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.donationEndpointProxy, this.statusService, this.apiRequestService));
     this.minecraft.displayGuiScreen(screen);
   }
 

@@ -12,6 +12,8 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.util.Collections;
@@ -33,6 +35,7 @@ public class CheckboxInputElement extends InputElement {
 
   public CheckboxInputElement(InteractiveContext context, IElement parent) {
     super(context, parent);
+    super.setCursor(CursorType.CLICK);
 
     this.labelElement = new LabelElement(context, this)
         .setOverflow(TextOverflow.SPLIT)

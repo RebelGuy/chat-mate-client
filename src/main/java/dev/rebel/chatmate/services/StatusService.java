@@ -3,6 +3,7 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.models.publicObjects.status.PublicApiStatus.ApiStatus;
+import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus;
 import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus.LivestreamStatus;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.services.util.TaskWrapper;
@@ -27,6 +28,14 @@ public class StatusService {
     this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, INTERVAL, PollType.CONSTANT_INTERVAL, null);
 
     this.lastStatusResponse = null;
+  }
+
+  public @Nullable PublicLivestreamStatus getLivestreamStatus() {
+    if (this.lastStatusResponse == null) {
+      return null;
+    } else {
+      return this.lastStatusResponse.livestreamStatus;
+    }
   }
 
   public SimpleStatus getYoutubeSimpleStatus() {

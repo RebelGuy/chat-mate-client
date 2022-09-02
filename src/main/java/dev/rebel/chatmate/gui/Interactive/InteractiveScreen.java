@@ -810,6 +810,11 @@ public class InteractiveScreen extends Screen implements IElement {
     }
   }
 
+  @FunctionalInterface
+  public interface ElementFactory<TElement extends IElement> {
+    TElement create(InteractiveContext context, IElement parent);
+  }
+
   public enum InteractiveScreenType {
     MODAL,
     DASHBOARD,

@@ -10,6 +10,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import net.minecraft.client.renderer.GlStateManager;
@@ -53,6 +55,7 @@ public abstract class ElementBase implements IElement {
   private @Nullable Dim maxWidth;
   private @Nullable Dim maxContentWidth;
   private @Nullable Dim targetFullHeight;
+  private @Nullable CursorType cursor;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     ID++;
@@ -78,6 +81,7 @@ public abstract class ElementBase implements IElement {
     this.maxWidth = null;
     this.maxContentWidth = null;
     this.targetFullHeight = null;
+    this.cursor = null;
   }
 
   @Override
@@ -112,6 +116,30 @@ public abstract class ElementBase implements IElement {
     return this.isHovering;
   }
 
+  /** Called when updating the cursor to decide whether the element should display its custom cursor or not. */
+  protected boolean shouldUseCursor() {
+    return this.isHovering();
+  }
+
+  /** Toggles or untoggles the current cursor, if applicable. */
+  protected void updateCursor() {
+    if (this.cursor == null || !this.shouldUseCursor()) {
+      this.context.cursorService.untoggleCursor(this);
+    } else {
+      this.context.cursorService.toggleCursor(this.cursor, this);
+    }
+  }
+
+  /** Automatically sets the cursor when the mouse pointer is hovering over this element. */
+  protected IElement setCursor(@Nullable CursorType cursor) {
+    if (this.cursor != cursor) {
+      this.cursor = cursor;
+      this.updateCursor();
+    }
+
+    return this;
+  }
+
   @Override
   public final void onEvent(EventType type, IEvent<?> event) {
     if (event.getPhase() == EventPhase.TARGET) {
@@ -124,10 +152,12 @@ public abstract class ElementBase implements IElement {
           break;
         case MOUSE_ENTER:
           this.isHovering = true;
+          this.updateCursor();
           this.onMouseEnter((IEvent<MouseEventData.In>)event);
           break;
         case MOUSE_EXIT:
           this.isHovering = false;
+          this.updateCursor();
           this.onMouseExit((IEvent<MouseEventData.In>)event);
           break;
         case WINDOW_RESIZE:

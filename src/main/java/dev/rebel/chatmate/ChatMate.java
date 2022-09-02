@@ -199,7 +199,9 @@ public class ChatMate {
         fontEngineProxy,
         donationEndpointProxy,
         chatMateHudScreen,
-        chatComponentRenderer);
+        chatComponentRenderer,
+        statusService,
+        apiRequestService);
     DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(

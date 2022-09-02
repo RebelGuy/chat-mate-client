@@ -20,16 +20,18 @@ import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.util.Collections;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class TableElement<T> extends ContainerElement {
   private final RectExtension cellPadding;
-  private final List<T> items;
+  private List<T> items;
   private final List<LabelElement> headerLabels;
   private final RowElement headerRow;
-  private final List<RowElement> rows;
+  private final Function<T, List<IElement>> rowGetter;
+  private List<RowElement> rows;
   /** Normalised sizings. */
   private final List<Column> columns;
   /** Evaluated while calculating size. */
@@ -38,10 +40,9 @@ public class TableElement<T> extends ContainerElement {
   private Dim minHeight;
   private @Nullable Consumer<T> onClickItem;
 
-  public TableElement(InteractiveContext context, IElement parent, List<T> items, List<Column> columns, Function<T, List<IElement>> getRow) {
+  public TableElement(InteractiveContext context, IElement parent, List<T> items, List<Column> columns, Function<T, List<IElement>> rowGetter) {
     super(context, parent, LayoutMode.BLOCK);
     this.cellPadding = new RectExtension(context.dimFactory.fromGui(2));
-    this.items = items;
 
     this.headerLabels = Collections.map(columns, c -> new LabelElement(context, this)
         .setText(c.header)
@@ -50,7 +51,8 @@ public class TableElement<T> extends ContainerElement {
         .setAlignment(TextAlignment.CENTRE));
 
     this.headerRow = new RowElement(context, this, this.headerLabels);
-    this.rows = Collections.map(items, item -> new RowElement(context, this, item, getRow.apply(item)));
+    this.rowGetter = rowGetter;
+    this.setItems(items);
 
     float sum = Collections.sumFloat(columns, c -> c.width);
     this.columns = Collections.map(columns, c -> new Column(c.header, c.fontScale, c.width / sum, c.fitWidth));
@@ -74,6 +76,33 @@ public class TableElement<T> extends ContainerElement {
   public TableElement<T> setOnClickItem(Consumer<T> onClickItem) {
     this.onClickItem = onClickItem;
     return this;
+  }
+
+  public TableElement<T> setItems(@Nullable List<T> items) {
+    if (items == null) {
+      items = new ArrayList<>();
+    }
+
+    this.items = items;
+    this.rows = Collections.map(items, item -> new RowElement(context, this, item, this.rowGetter.apply(item)));
+    super.onInvalidateSize();
+    return this;
+  }
+
+  /** Refreshes the row for the given item, if it exists in the list. Accepts the list of cells to render or, if not provided, uses the default row getter. */
+  public void updateItem(T item, @Nullable List<IElement> newRow) {
+    int index = this.items.indexOf(item);
+    if (index == -1) {
+      return;
+    }
+
+    if (newRow == null) {
+      newRow = this.rowGetter.apply(item);
+    }
+
+    this.rows.remove(index);
+    this.rows.add(index, new RowElement(context, this, item, newRow));
+    super.onInvalidateSize();
   }
 
   private List<Dim> getColumnWidths(Dim maxRowWidth) {

@@ -25,7 +25,6 @@ import java.util.List;
 public class ButtonElement extends InputElement {
   private Dim minSize;
   private @Nullable IElement childElement;
-  private boolean hovered;
   private @Nullable Runnable onClick;
   private Dim borderCornerRadius;
 
@@ -34,10 +33,10 @@ public class ButtonElement extends InputElement {
 
     this.minSize = ZERO;
     this.childElement = null;
-    this.hovered = false;
     this.onClick = null;
     this.borderCornerRadius = gui(3.5f);
 
+    super.setCursor(CursorType.CLICK);
     super.setBorder(new RectExtension(gui(0.5f)));
     super.setPadding(new RectExtension(gui(3)));
   }
@@ -75,26 +74,6 @@ public class ButtonElement extends InputElement {
       this.onClick.run();
       e.stopPropagation();
     }
-  }
-
-  @Override
-  public void onMouseEnter(IEvent<In> e) {
-    this.hovered = true;
-    super.context.cursorService.toggleCursor(super.getEnabled() ? CursorType.CLICK : CursorType.DEFAULT, this);
-  }
-
-  @Override
-  public void onMouseExit(IEvent<In> e) {
-    this.hovered = false;
-    super.context.cursorService.untoggleCursor(this);
-  }
-
-  @Override
-  public InputElement setEnabled(Object key, boolean enabled) {
-    if (this.hovered) {
-      super.context.cursorService.toggleCursor(enabled ? CursorType.CLICK : CursorType.DEFAULT, this);
-    }
-    return super.setEnabled(key, enabled);
   }
 
   @Override
@@ -139,15 +118,13 @@ public class ButtonElement extends InputElement {
 
   @Override
   protected void renderElement() {
-    int hoverState = !this.getEnabled() ? 0 : this.hovered ? 2 : 1; // 0 if disabled, 1 if normal, 2 if hovering
-
     // the button border is drawn as the normal border part (around the padding box)
     // the inner border is drawn *around the content box*
 
     Dim borderWidth = super.getBorder().left;
     RendererHelpers.drawRect(0, this.getPaddingBox(), Colour.TRANSPARENT, borderWidth, Colour.BLACK, this.borderCornerRadius);
 
-    if (this.hovered && this.getEnabled()) {
+    if (super.isHovering() && this.getEnabled()) {
       Dim borderDistance = super.getPadding().left;
       Dim innerCornerRadius = Dim.max(screen(6), this.borderCornerRadius.minus(borderDistance));
       RendererHelpers.drawRect(0, this.getContentBox(), Colour.TRANSPARENT, borderWidth, Colour.LTGREY, innerCornerRadius);
@@ -186,7 +163,7 @@ public class ButtonElement extends InputElement {
       int j = 14737632;
       if (!super.getEnabled()) {
         j = 10526880;
-      } else if (super.hovered) {
+      } else if (super.isHovering()) {
         j = 16777120;
       }
       this.label.setColour(new Colour(j));
@@ -248,7 +225,7 @@ public class ButtonElement extends InputElement {
       int j = 14737632;
       if (!super.getEnabled()) {
         j = 10526880;
-      } else if (super.hovered) {
+      } else if (super.isHovering()) {
         j = 16777120;
       }
       this.image.setColour(new Colour(j));

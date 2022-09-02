@@ -36,7 +36,6 @@ public class TextInputElement extends InputElement {
   private String placeholderText = "";
   private String text = "";
   private int maxStringLength = 64;
-  private boolean hovered;
   private final Dim textHeight;
 
   private int scrollOffsetIndex; // if the text doesn't fit on the window, it scrolls to the right
@@ -52,12 +51,12 @@ public class TextInputElement extends InputElement {
   public TextInputElement(InteractiveContext context, IElement parent) {
     super(context, parent);
 
-    this.setFocusable(true);
-    this.setBorder(new Layout.RectExtension(gui(1)));
-    this.setPadding(new Layout.RectExtension(gui(4), gui(2)));
+    super.setCursor(CursorType.TEXT);
+    super.setFocusable(true);
+    super.setBorder(new Layout.RectExtension(gui(1)));
+    super.setPadding(new Layout.RectExtension(gui(4), gui(2)));
 
     this.textHeight = gui(this.fontEngine.FONT_HEIGHT);
-    this.hovered = false;
   }
 
   @Override
@@ -94,26 +93,6 @@ public class TextInputElement extends InputElement {
   public void onBlur(IEvent<Events.FocusEventData> e) {
     this.cursorIndex = 0;
     this.selectionEndIndex = 0;
-  }
-
-  @Override
-  public void onMouseEnter(IEvent<In> e) {
-    this.hovered = true;
-    super.context.cursorService.toggleCursor(super.getEnabled() ? CursorType.TEXT : CursorType.DEFAULT, this);
-  }
-
-  @Override
-  public void onMouseExit(IEvent<In> e) {
-    this.hovered = false;
-    super.context.cursorService.untoggleCursor(this);
-  }
-
-  @Override
-  public InputElement setEnabled(Object key, boolean enabled) {
-    if (this.hovered) {
-      super.context.cursorService.toggleCursor(enabled ? CursorType.TEXT : CursorType.DEFAULT, this);
-    }
-    return super.setEnabled(key, enabled);
   }
 
   @Override

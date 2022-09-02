@@ -1,4 +1,4 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
+package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General;
 
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.GeneralRoute;

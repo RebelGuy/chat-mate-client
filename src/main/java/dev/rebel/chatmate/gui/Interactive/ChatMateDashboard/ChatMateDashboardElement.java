@@ -5,6 +5,9 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.Donat
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.GeneralRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.DonationsSectionElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General.GeneralSectionElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud.HudSectionElement;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -15,6 +18,8 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.proxy.DonationEndpointProxy;
+import dev.rebel.chatmate.services.ApiRequestService;
+import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import scala.Tuple2;
 
@@ -29,6 +34,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final static List<Tuple2<SettingsPage, String>> pageNames = new ArrayList<Tuple2<SettingsPage, String>>() {{
     add(new Tuple2<>(SettingsPage.GENERAL, "General"));
     add(new Tuple2<>(SettingsPage.HUD, "HUD"));
+    add(new Tuple2<>(SettingsPage.DONATION, "Donations"));
   }};
 
   private final DashboardStore store;
@@ -38,13 +44,13 @@ public class ChatMateDashboardElement extends ContainerElement {
 
   private final GeneralSectionElement generalSection;
   private final HudSectionElement hudSection;
-  private final DonationSectionElement donationSection;
+  private final DonationsSectionElement donationSection;
 
   private final SidebarElement sidebar;
   private final WrapperElement contentWrapper;
   private final ElementReference content;
 
-  public ChatMateDashboardElement(InteractiveContext context, IElement parent, @Nullable DashboardRoute route, ChatMateEndpointProxy chatMateEndpointProxy, DonationEndpointProxy donationEndpointProxy) {
+  public ChatMateDashboardElement(InteractiveContext context, IElement parent, @Nullable DashboardRoute route, ChatMateEndpointProxy chatMateEndpointProxy, DonationEndpointProxy donationEndpointProxy, StatusService statusService, ApiRequestService apiRequestService) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
@@ -57,7 +63,7 @@ public class ChatMateDashboardElement extends ContainerElement {
 
     this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route));
-    this.donationSection = new DonationSectionElement(context, this, castOrNull(DonationRoute.class, route), donationEndpointProxy);
+    this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), donationEndpointProxy, statusService, apiRequestService);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))
@@ -72,7 +78,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     super.addElement(this.contentWrapper);
 
     this.store.onSettingsPageChange(this::onSettingsPageChange);
-    this.onSettingsPageChange(route ==  null ? SettingsPage.GENERAL : route.page);
+    this.store.setSettingsPage(route ==  null ? SettingsPage.GENERAL : route.page);
   }
 
   private void onSettingsPageChange(SettingsPage settingsPage) {

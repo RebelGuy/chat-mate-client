@@ -1,18 +1,16 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
+package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.IconButtonElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
 import dev.rebel.chatmate.gui.Interactive.ContainerElement;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
-import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
-import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.TextInputElement;
-import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.models.api.chatMate.SetActiveLivestreamRequest;
@@ -101,15 +99,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
         .setMargin(buttonMargin)
         .cast();
 
-    this.errorLabel = new LabelElement(context, this)
-        .setOverflow(TextOverflow.SPLIT)
-        .setMaxLines(4)
-        .setColour(Colour.RED)
-        .setAlignment(TextAlignment.LEFT)
-        .setFontScale(0.75f)
-        .setSizingMode(SizingMode.FILL)
-        .setVisible(false)
-        .cast();
+    this.errorLabel = SharedElements.ERROR_LABEL.create(context, this);
 
     this.livestream = "";
 
