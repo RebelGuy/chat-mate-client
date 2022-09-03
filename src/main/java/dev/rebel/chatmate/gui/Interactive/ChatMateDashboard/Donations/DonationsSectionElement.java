@@ -16,14 +16,17 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.api.donation.GetDonationsResponse.GetDonationsResponseData;
 import dev.rebel.chatmate.models.api.donation.LinkUserResponse.LinkUserResponseData;
 import dev.rebel.chatmate.models.api.donation.UnlinkUserResponse.UnlinkUserResponseData;
 import dev.rebel.chatmate.models.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus;
+import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.proxy.EndpointProxy;
+import dev.rebel.chatmate.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.util.Collections;
@@ -31,10 +34,7 @@ import dev.rebel.chatmate.services.util.Collections;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.services.util.Objects.casted;
@@ -52,7 +52,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
   private final LabelElement errorLabel;
   private final DonationsTable donationsTable;
 
-  public DonationsSectionElement(InteractiveContext context, IElement parent, @Nullable DonationRoute route, DonationEndpointProxy donationEndpointProxy, StatusService statusService, ApiRequestService apiRequestService) {
+  public DonationsSectionElement(InteractiveContext context, IElement parent, @Nullable DonationRoute route, DonationEndpointProxy donationEndpointProxy, StatusService statusService, ApiRequestService apiRequestService, UserEndpointProxy userEndpointProxy) {
     super(context, parent, LayoutMode.BLOCK);
     super.setSizingMode(SizingMode.FILL);
 
@@ -79,7 +79,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         .setSizingMode(SizingMode.FILL)
         .cast();
 
-    this.donationsTable = new DonationsTable(context, this, this::onError, statusService.getLivestreamStatus(), donationEndpointProxy)
+    this.donationsTable = new DonationsTable(context, this, this::onError, statusService.getLivestreamStatus(), donationEndpointProxy, userEndpointProxy)
         .setVisible(false)
         .setMargin(new RectExtension(ZERO, gui(4)))
         .cast();
@@ -89,6 +89,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     // todo: highlight the donation in the list that we want to link (e.g. outline, or lighter background)
     this.highlightDonation = casted(LinkDonationRoute.class, route, d -> d.donation.id);
 
+    // todo: save checkbox values in config
     super.addElement(this.unlinkedDonationsCheckbox);
     super.addElement(this.currentLivestreamCheckbox);
     super.addElement(this.loadingSpinner);
@@ -137,18 +138,22 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     private final Consumer<Throwable> onError;
     private final @Nullable PublicLivestreamStatus livestreamStatus;
     private final DonationEndpointProxy donationEndpointProxy;
+    private final UserEndpointProxy userEndpointProxy;
     private @Nullable List<PublicDonation> donations = null;
+    private Map<PublicDonation, PublicUser> editingDonations = new HashMap<>();
+    private Map<PublicDonation, IElement> editingElements = new HashMap<>();
     private boolean showCurrentLivestreamOnly = true;
     private boolean showUnlinkedOnly = true;
 
     private final TableElement<PublicDonation> table;
     private final LabelElement nothingToShowLabel;
 
-    public DonationsTable(InteractiveContext context, IElement parent, Consumer<Throwable> onError, @Nullable PublicLivestreamStatus livestreamStatus, DonationEndpointProxy donationEndpointProxy) {
+    public DonationsTable(InteractiveContext context, IElement parent, Consumer<Throwable> onError, @Nullable PublicLivestreamStatus livestreamStatus, DonationEndpointProxy donationEndpointProxy, UserEndpointProxy userEndpointProxy) {
       super(context, parent, LayoutMode.BLOCK);
       this.onError = onError;
       this.livestreamStatus = livestreamStatus;
       this.donationEndpointProxy = donationEndpointProxy;
+      this.userEndpointProxy = userEndpointProxy;
 
       List<TableElement.Column> columns = Collections.list(
         new TableElement.Column("Date", 0.75f, 1, true),
@@ -172,31 +177,69 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       super.addElement(this.nothingToShowLabel);
     }
 
+    // the complexity of this function escalated very quickly and I apologise
     private List<IElement> getRow(PublicDonation donation, boolean isUpdating) {
       String dateStr = dateToDayAccuracy(donation.time);
-      String user = donation.linkedUser == null ? donation.name : donation.linkedUser.userInfo.channelName;
       String formattedAmount = String.format("$%.2f", donation.amount);
 
-      IElement iconElement;
+      IElement actionElement;
+      Dim iconHeight = super.context.fontEngine.FONT_HEIGHT_DIM;
       if (isUpdating) {
-        iconElement = new LoadingSpinnerElement(super.context, this).setTargetHeight(super.context.fontEngine.FONT_HEIGHT_DIM).setHorizontalAlignment(HorizontalAlignment.CENTRE).setVerticalAlignment(VerticalAlignment.MIDDLE);
+        actionElement = new LoadingSpinnerElement(super.context, this).setTargetHeight(iconHeight).setHorizontalAlignment(HorizontalAlignment.CENTRE).setVerticalAlignment(VerticalAlignment.MIDDLE);
+      } else if (this.editingDonations.containsKey(donation)) {
+        // it is invalid to try to link to a null user
+        boolean valid = donation.linkedUser != null || donation.linkedUser == null && this.editingDonations.get(donation) != null;
+        actionElement = new InlineElement(context, this) // todo: make it actually inline
+            .addElement(new IconButtonElement(super.context, this)
+                .setImage(Asset.GUI_TICK_ICON)
+                .setOnClick(() -> this.onConfirmLinkOrUnlink(donation))
+                .setEnabled(this, valid)
+                .setTargetHeight(iconHeight)
+                .setBorder(new RectExtension(ZERO))
+            ).addElement(new IconButtonElement(super.context, this)
+                .setImage(Asset.GUI_CLEAR_ICON)
+                .setOnClick(() -> this.onCancelLinkOrUnlink(donation))
+                .setTargetHeight(iconHeight)
+                .setBorder(new RectExtension(ZERO))
+            );
       } else {
-        Texture icon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_UNLINK_ICON;
+        Texture icon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_BIN_ICON;
         Runnable onClick = () -> this.onLinkOrUnlink(donation);
-        iconElement = new IconButtonElement(super.context, this)
+        actionElement = new IconButtonElement(super.context, this)
             .setImage(icon)
             .setOnClick(onClick)
-            .setTargetHeight(super.context.fontEngine.FONT_HEIGHT_DIM)
+            .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setTooltip(donation.linkedUser == null ? "Link donation to a user" : "Unlink current user from donation");
       }
 
+      IElement userNameElement;
+      if (this.editingDonations.containsKey(donation) && donation.linkedUser == null) {
+        if (this.editingElements.containsKey(donation)) {
+          userNameElement = this.editingElements.get(donation);
+        } else {
+          Consumer<PublicUser> onUserSelected = newUser -> {
+            this.editingDonations.put(donation, newUser);
+            this.table.updateItem(donation, this.getRow(donation, false));
+          };
+          userNameElement = new UserPickerElement(super.context, this, donation.linkedUser, onUserSelected, this.userEndpointProxy);
+          this.editingElements.put(donation, userNameElement);
+        }
+      } else {
+        // if user hasn't been linked, or is to be unlinked, show the donation's default name
+        String user = donation.linkedUser == null || this.editingDonations.containsKey(donation) ? donation.name : donation.linkedUser.userInfo.channelName;
+        userNameElement = new LabelElement(super.context, this).setText(user).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT);
+
+        // clean up, in case we are transitioning from editing to non-editing
+        this.editingElements.remove(donation);
+      }
+
       return Collections.list(
           new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f),
-          new LabelElement(super.context, this).setText(user).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT),
+          userNameElement,
           new LabelElement(super.context, this).setText(formattedAmount).setFontScale(0.75f).setAlignment(TextAlignment.CENTRE),
           new LabelElement(super.context, this).setText(donation.message).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT),
-          iconElement
+          actionElement
       );
     }
 
@@ -213,15 +256,44 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       return this;
     }
 
+    @Override
+    public ContainerElement setVisible(boolean visible) {
+      if (!visible) {
+        // do some cleaning up, since donation object references will no longer match when we next fetch the donations
+        this.editingElements.clear();
+        this.editingDonations.clear();
+      }
+
+      return super.setVisible(visible);
+    }
+
     private void onLinkOrUnlink(PublicDonation donation) {
+      // show the editing UI
+      this.editingDonations.put(donation, null);
+      this.table.updateItem(donation, this.getRow(donation, false));
+    }
+
+    private void onConfirmLinkOrUnlink(PublicDonation donation) {
       if (donation.linkedUser == null) {
-        this.donationEndpointProxy.linkUserAsync(donation.id, 1, r -> this.onResponse(r.updatedDonation, null), e -> this.onResponse(donation, e));
+        PublicUser userToLink = this.editingDonations.get(donation);
+        if (userToLink == null) {
+          // this should never happen
+          this.onError.accept(new Exception("No user selected"));
+          return;
+        }
+        this.donationEndpointProxy.linkUserAsync(donation.id, userToLink.id, r -> this.onResponse(r.updatedDonation, null), e -> this.onResponse(donation, e));
       } else {
         this.donationEndpointProxy.unlinkUserAsync(donation.id, r -> this.onResponse(r.updatedDonation, null), e -> this.onResponse(donation, e));
       }
 
-      // show the loading spinner for this row
+      // show loading spinner
       this.table.updateItem(donation, this.getRow(donation, true));
+    }
+
+    private void onCancelLinkOrUnlink(PublicDonation donation) {
+      // hide the editing UI
+      this.editingDonations.remove(donation);
+      this.table.updateItem(donation, this.getRow(donation, false));
     }
 
     private void onResponse(PublicDonation donation, @Nullable Throwable e) {

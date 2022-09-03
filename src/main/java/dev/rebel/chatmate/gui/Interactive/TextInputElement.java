@@ -23,6 +23,7 @@ import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.MathHelper;
 import org.lwjgl.input.Keyboard;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +35,7 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 /** Border: actually draws a border. Padding: space between text and border. */
 public class TextInputElement extends InputElement {
   private String placeholderText = "";
-  private String text = "";
+  private String text;
   private int maxStringLength = 64;
   private final Dim textHeight;
 
@@ -49,6 +50,10 @@ public class TextInputElement extends InputElement {
   private @Nullable String placeholder = null;
 
   public TextInputElement(InteractiveContext context, IElement parent) {
+    this(context, parent, "");
+  }
+
+  public TextInputElement(InteractiveContext context, IElement parent, @Nonnull String initialText) {
     super(context, parent);
 
     super.setCursor(CursorType.TEXT);
@@ -56,6 +61,7 @@ public class TextInputElement extends InputElement {
     super.setBorder(new Layout.RectExtension(gui(1)));
     super.setPadding(new Layout.RectExtension(gui(4), gui(2)));
 
+    this.text = initialText;
     this.textHeight = gui(this.fontEngine.FONT_HEIGHT);
   }
 
@@ -126,7 +132,7 @@ public class TextInputElement extends InputElement {
   }
 
   /** Validates the text, then calls the `onTextChange` callback. */
-  public void setText(String newText) {
+  public TextInputElement setText(String newText) {
     if (this.validator.test(newText)) {
       if (newText.length() > this.maxStringLength) {
         this.text = newText.substring(0, this.maxStringLength);
@@ -140,6 +146,8 @@ public class TextInputElement extends InputElement {
         this.onTextChange.accept(this.text);
       }
     }
+
+    return this;
   }
 
   public TextInputElement setValidator(Predicate<String> validator) {

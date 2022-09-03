@@ -19,6 +19,7 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.proxy.DonationEndpointProxy;
+import dev.rebel.chatmate.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.util.EnumHelpers;
@@ -52,7 +53,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final WrapperElement contentWrapper;
   private final ElementReference content;
 
-  public ChatMateDashboardElement(InteractiveContext context, IElement parent, @Nullable DashboardRoute route, ChatMateEndpointProxy chatMateEndpointProxy, DonationEndpointProxy donationEndpointProxy, StatusService statusService, ApiRequestService apiRequestService) {
+  public ChatMateDashboardElement(InteractiveContext context, IElement parent, @Nullable DashboardRoute route, ChatMateEndpointProxy chatMateEndpointProxy, DonationEndpointProxy donationEndpointProxy, StatusService statusService, ApiRequestService apiRequestService, UserEndpointProxy userEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
@@ -67,7 +68,7 @@ public class ChatMateDashboardElement extends ContainerElement {
 
     this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route));
-    this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), donationEndpointProxy, statusService, apiRequestService);
+    this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), donationEndpointProxy, statusService, apiRequestService, userEndpointProxy);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))

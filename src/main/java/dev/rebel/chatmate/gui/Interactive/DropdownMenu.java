@@ -90,6 +90,12 @@ public class DropdownMenu extends ContainerElement {
     return this;
   }
 
+  public DropdownMenu clear() {
+    this.options.clear();
+    super.clear();
+    return this;
+  }
+
   @Override
   public void onCaptureMouseDown(IEvent<In> e) {
     DimPoint point = e.getData().mousePositionData.point;

@@ -12,6 +12,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.proxy.DonationEndpointProxy;
+import dev.rebel.chatmate.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
@@ -57,6 +58,7 @@ public class GuiService {
   private final ChatComponentRenderer chatComponentRenderer;
   private final StatusService statusService;
   private final ApiRequestService apiRequestService;
+  private final UserEndpointProxy userEndpointProxy;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -85,7 +87,8 @@ public class GuiService {
                     ChatMateHudScreen chatMateHudScreen,
                     ChatComponentRenderer chatComponentRenderer,
                     StatusService statusService,
-                    ApiRequestService apiRequestService) {
+                    ApiRequestService apiRequestService,
+                    UserEndpointProxy userEndpointProxy) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -114,6 +117,7 @@ public class GuiService {
     this.chatComponentRenderer = chatComponentRenderer;
     this.statusService = statusService;
     this.apiRequestService = apiRequestService;
+    this.userEndpointProxy = userEndpointProxy;
 
     this.addEventHandlers();
   }
@@ -125,7 +129,7 @@ public class GuiService {
   public void displayDashboard(@Nullable DashboardRoute route) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.DASHBOARD);
-    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.donationEndpointProxy, this.statusService, this.apiRequestService));
+    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.donationEndpointProxy, this.statusService, this.apiRequestService, this.userEndpointProxy));
     this.minecraft.displayGuiScreen(screen);
   }
 

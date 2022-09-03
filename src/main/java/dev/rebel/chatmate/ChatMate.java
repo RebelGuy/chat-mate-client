@@ -201,7 +201,8 @@ public class ChatMate {
         chatMateHudScreen,
         chatComponentRenderer,
         statusService,
-        apiRequestService);
+        apiRequestService,
+        userEndpointProxy);
     DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(

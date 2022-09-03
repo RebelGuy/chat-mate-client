@@ -317,10 +317,18 @@ public abstract class ElementBase implements IElement {
       GlStateManager.pushMatrix();
       GlStateManager.enableBlend();
       GlStateManager.disableLighting();
-      wrapper.accept(this::renderElement);
+      wrapper.accept(this::renderElementSafe);
       GlStateManager.disableBlend();
       GlStateManager.popMatrix();
     });
+  }
+
+  private void renderElementSafe() {
+    try {
+      this.renderElement();
+    } catch (Exception e) {
+      context.logService.logError(this, this.name, "encountered an error during rendering:", e);
+    }
   }
 
   /** You should never call super.render() from this element, as it will cause an infinite loop.
