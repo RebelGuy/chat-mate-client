@@ -43,7 +43,7 @@ public class ApiRequestService {
 
   private void updateListeners(int delta) {
     // only notify listeners when the active state has changed
-    if (this.activeRequests > 1 || this.activeRequests == 1 && delta < 1) {
+    if (this.activeRequests > 1 || this.activeRequests == 1 && delta == -1) {
       return;
     }
 

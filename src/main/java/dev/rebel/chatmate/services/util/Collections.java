@@ -187,4 +187,21 @@ public class Collections {
     }
     return list.stream().filter(item -> item != itemToExclude).collect(Collectors.toList());
   }
+
+  public static <T> List<T> replaceOne(@Nullable List<T> list, T replacement, Predicate<T> replacementPredicate) {
+    if (list == null) {
+      return new ArrayList<>();
+    }
+
+    @Nullable T oldItem = first(list, replacementPredicate);
+    if (oldItem == null) {
+      return list;
+    }
+
+    list = list(list); // lol
+    int index = list.indexOf(oldItem);
+    list.remove(index);
+    list.add(index, replacement);
+    return list;
+  }
 }

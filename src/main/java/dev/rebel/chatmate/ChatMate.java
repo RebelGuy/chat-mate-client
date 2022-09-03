@@ -202,7 +202,7 @@ public class ChatMate {
         chatComponentRenderer,
         statusService,
         apiRequestService);
-    DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService);
+    DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

@@ -11,7 +11,8 @@ import java.util.List;
 
 public class LoadingSpinnerElement extends SingleElement {
   private Dim lineWidth;
-  private float gapRadians;
+  private float minGapRadians;
+  private float maxGapRadians;
   private float rotationsPerSecond;
   private Colour colour;
 
@@ -20,8 +21,9 @@ public class LoadingSpinnerElement extends SingleElement {
     super.setMaxContentWidth(gui(8));
 
     this.lineWidth = gui(2);
-    this.gapRadians = (float)Math.PI / 2;
-    this.rotationsPerSecond = 1;
+    this.minGapRadians = 2 * (float)Math.PI / 4;
+    this.maxGapRadians = 6 * (float)Math.PI / 4;
+    this.rotationsPerSecond = 1.5f;
     this.colour = new Colour(50, 200, 255);
   }
 
@@ -46,9 +48,17 @@ public class LoadingSpinnerElement extends SingleElement {
     DimRect box = super.getContentBox();
 
     double t = new Date().getTime() / 1000d;
+
+    // the gap oscillates with a period derived by the rotational period
+    float gapFrequency = (float)Math.PI / 3.1f * 2.5f; // make sure it's not in phase with the rotation
+    float gapRadians = ((float)Math.cos(2 * Math.PI * (t * rotationsPerSecond / gapFrequency % 1)) + 1) / 2 * (this.maxGapRadians - this.minGapRadians) + this.minGapRadians;
+
+    // this determines the rotation of the construct
     float offsetRadians = (float)(2 * Math.PI * (t * rotationsPerSecond % 1));
-    float gapStart = 0 + offsetRadians;
-    float gapEnd = ((float)Math.PI * 2 -this.gapRadians) + offsetRadians;
+
+    // expand the gap on both sides for a more symmetric feel
+    float gapStart = (float)Math.PI * 2 - gapRadians / 2 + offsetRadians;
+    float gapEnd = ((float)Math.PI * 2 + gapRadians / 2) + offsetRadians;
 
     Dim outerRadius = box.getWidth().over(2);
     Dim innerRadius = outerRadius.minus(this.lineWidth);

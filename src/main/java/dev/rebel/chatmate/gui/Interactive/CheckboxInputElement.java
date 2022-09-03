@@ -32,6 +32,7 @@ public class CheckboxInputElement extends InputElement {
 
   private float scale;
   private @Nullable Consumer<Boolean> onChange;
+  private Colour borderColour;
 
   public CheckboxInputElement(InteractiveContext context, IElement parent) {
     super(context, parent);
@@ -45,6 +46,7 @@ public class CheckboxInputElement extends InputElement {
 
     this.scale = 1;
     this.onChange = null;
+    this.borderColour = Colour.BLACK;
     this.isHovering = new AnimatedBool(200L, false);
     this.isFocused = new AnimatedBool(100L, false);
     this.isChecked = new AnimatedBool(100L, false);
@@ -73,6 +75,11 @@ public class CheckboxInputElement extends InputElement {
   public CheckboxInputElement setScale(float scale) {
     this.labelElement.setFontScale(scale);
     this.scale = scale;
+    return this;
+  }
+
+  public CheckboxInputElement setCheckboxBorderColour(Colour colour) {
+    this.borderColour = colour;
     return this;
   }
 
@@ -142,11 +149,10 @@ public class CheckboxInputElement extends InputElement {
     DimRect checkbox = new DimRect(this.getContentBox().getPosition(), new DimPoint(this.boxSize, this.boxSize));
     Colour background = Colour.BLACK.withAlpha(this.isHovering.getFrac() * 0.4f);
     Dim borderWidth = gui(1);
-    Colour borderColour = Colour.BLACK;
     Dim cornerRadius = gui(0);
     Dim shadowDistance = gui(1 + this.isFocused.getFrac());
     Colour shadowColour = Colour.lerp(Colour.BLACK, Colour.CYAN.withBrightness(0.5f), this.isFocused.getFrac());
-    RendererHelpers.drawRect(0, checkbox, background, borderWidth, borderColour, cornerRadius, shadowDistance, shadowColour);
+    RendererHelpers.drawRect(0, checkbox, background, borderWidth, this.borderColour, cornerRadius, shadowDistance, shadowColour);
 
     RendererHelpers.withMapping(checkbox.getCentre(), this.isChecked.getFrac(), () -> {
       FontEngine font = super.context.fontEngine;

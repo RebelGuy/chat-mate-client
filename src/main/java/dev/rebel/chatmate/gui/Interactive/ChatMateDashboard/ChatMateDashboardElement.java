@@ -12,6 +12,7 @@ import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
+import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -41,6 +42,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final ChatMateEndpointProxy chatMateEndpointProxy;
 
   private final Dim sidebarMaxWidth;
+  private final AnimatedBool backgroundFadeIn;
 
   private final GeneralSectionElement generalSection;
   private final HudSectionElement hudSection;
@@ -60,6 +62,8 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.chatMateEndpointProxy = chatMateEndpointProxy;
 
     this.sidebarMaxWidth = gui(80);
+    this.backgroundFadeIn = new AnimatedBool(500L, false);
+    this.backgroundFadeIn.set(true);
 
     this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route));
@@ -130,12 +134,16 @@ public class ChatMateDashboardElement extends ContainerElement {
 
   @Override
   protected void renderElement() {
+    // currently the dashboard is only accessible from within the minecraft menu, so fade between the background colours for a smooth experience
+    Colour mcMenuBackgroundColour = new Colour(16, 16, 16, 200);
+    Colour dashboardBackgroundColour = new Colour(0, 0, 20, 200);
+    Colour colour = Colour.lerp(mcMenuBackgroundColour, dashboardBackgroundColour, this.backgroundFadeIn.getFrac());
+    Colour borderColour = Colour.lerp(mcMenuBackgroundColour, new Colour(206, 212, 218), this.backgroundFadeIn.getFrac());
+
     // draw a background with a thick, curvy border ;)
     DimRect minecraftRect = this.context.dimFactory.getMinecraftRect();
     RectExtension margin = new RectExtension(screen(4));
-    Colour colour = new Colour(0, 0, 20);
     Dim borderWidth = screen(16);
-    Colour borderColour = new Colour(206, 212, 218);
     Dim cornerRadius = screen(16);
     RendererHelpers.drawRect(0, margin.applySubtractive(minecraftRect), colour, borderWidth, borderColour, cornerRadius);
 

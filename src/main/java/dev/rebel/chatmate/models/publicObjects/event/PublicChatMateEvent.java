@@ -13,7 +13,7 @@ public class PublicChatMateEvent extends PublicObject {
   public Long timestamp;
   public @Nullable PublicLevelUpData levelUpData;
   public @Nullable PublicNewTwitchFollowerData newTwitchFollowerData;
-  public @Nullable PublicDonationData donation;
+  public @Nullable PublicDonationData donationData;
 
   public enum ChatMateEventType {
     @SerializedName("levelUp") LEVEL_UP,

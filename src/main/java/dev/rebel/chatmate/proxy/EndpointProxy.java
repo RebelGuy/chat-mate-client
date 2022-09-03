@@ -51,15 +51,15 @@ public class EndpointProxy {
   }
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
-  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
-    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler, notifyEndpointStore);
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
+    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler, isActiveRequest);
   }
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
-  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
     // we got there eventually.....
     CompletableFuture.supplyAsync(() -> {
-      Runnable onComplete = notifyEndpointStore ? this.apiRequestService.onNewRequest() : () -> {};
+      Runnable onComplete = isActiveRequest ? this.apiRequestService.onNewRequest() : () -> {};
       try {
         Data result = this.makeRequest(method, path, returnClass, data);
         onComplete.run();

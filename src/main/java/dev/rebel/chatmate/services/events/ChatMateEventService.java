@@ -78,7 +78,7 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
       } else if (event.type == ChatMateEventType.DONATION) {
         ChatMateEventType eventType = ChatMateEventType.DONATION;
         for (EventHandler<DonationEventData.In, DonationEventData.Out, DonationEventData.Options> handler : this.getListeners(eventType, DonationEventData.class)) {
-          PublicDonationData data = event.donation;
+          PublicDonationData data = event.donationData;
           DonationEventData.In eventIn = new DonationEventData.In(new Date(event.timestamp), data);
           DonationEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
         }

@@ -20,6 +20,7 @@ public class Colour {
   public static final Colour DARK_PURPLE = new Colour(170, 0, 170); // same as Minecraft's DARK_PURPLE style
   public static final Colour YELLOW = new Colour(Color.YELLOW);
   public static final Colour TRANSPARENT = new Colour(Color.WHITE).withAlpha(0);
+  public static final Colour BEIGE = new Colour(245, 245, 220);
 
   public final int red;
   public final int green;

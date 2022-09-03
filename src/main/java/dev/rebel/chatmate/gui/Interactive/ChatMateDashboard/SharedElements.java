@@ -1,9 +1,11 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
+import dev.rebel.chatmate.gui.Interactive.CheckboxInputElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ElementFactory;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
+import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.hud.Colour;
 
@@ -16,5 +18,12 @@ public class SharedElements {
       .setFontScale(0.75f)
       .setSizingMode(SizingMode.FILL)
       .setVisible(false)
+      .cast();
+
+  /** Light-themed checkbox. */
+  public static ElementFactory<CheckboxInputElement> CHECKBOX_LIGHT = (context, parent) -> new CheckboxInputElement(context, parent)
+      .setCheckboxBorderColour(Colour.WHITE)
+      .setSizingMode(SizingMode.FILL)
+      .setMargin(new Layout.RectExtension(context.dimFactory.fromGui(0), context.dimFactory.fromGui(2)))
       .cast();
 }

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import com.google.common.base.Objects;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -19,6 +20,7 @@ import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.util.Collections;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +33,7 @@ public class TableElement<T> extends ContainerElement {
   private final List<LabelElement> headerLabels;
   private final RowElement headerRow;
   private final Function<T, List<IElement>> rowGetter;
-  private List<RowElement> rows;
+  private @Nonnull List<RowElement> rows;
   /** Normalised sizings. */
   private final List<Column> columns;
   /** Evaluated while calculating size. */
@@ -43,6 +45,7 @@ public class TableElement<T> extends ContainerElement {
   public TableElement(InteractiveContext context, IElement parent, List<T> items, List<Column> columns, Function<T, List<IElement>> rowGetter) {
     super(context, parent, LayoutMode.BLOCK);
     this.cellPadding = new RectExtension(context.dimFactory.fromGui(2));
+    this.rows = new ArrayList<>();
 
     this.headerLabels = Collections.map(columns, c -> new LabelElement(context, this)
         .setText(c.header)
@@ -51,6 +54,8 @@ public class TableElement<T> extends ContainerElement {
         .setAlignment(TextAlignment.CENTRE));
 
     this.headerRow = new RowElement(context, this, this.headerLabels);
+    super.addElement(this.headerRow);
+
     this.rowGetter = rowGetter;
     this.setItems(items);
 
@@ -58,14 +63,6 @@ public class TableElement<T> extends ContainerElement {
     this.columns = Collections.map(columns, c -> new Column(c.header, c.fontScale, c.width / sum, c.fitWidth));
 
     this.minHeight = ZERO;
-  }
-
-  @Override
-  public void onInitialise() {
-    super.onInitialise();
-
-    super.addElement(this.headerRow);
-    this.rows.forEach(super::addElement);
   }
 
   public TableElement<T> setMinHeight(Dim minHeight) {
@@ -83,8 +80,10 @@ public class TableElement<T> extends ContainerElement {
       items = new ArrayList<>();
     }
 
+    this.rows.forEach(super::removeElement);
     this.items = items;
     this.rows = Collections.map(items, item -> new RowElement(context, this, item, this.rowGetter.apply(item)));
+    this.rows.forEach(super::addElement);
     super.onInvalidateSize();
     return this;
   }
@@ -100,8 +99,11 @@ public class TableElement<T> extends ContainerElement {
       newRow = this.rowGetter.apply(item);
     }
 
+    // have to replace all rows in the container element so that the order of the new row element is correct.
+    this.rows.forEach(super::removeElement);
     this.rows.remove(index);
     this.rows.add(index, new RowElement(context, this, item, newRow));
+    this.rows.forEach(super::addElement);
     super.onInvalidateSize();
   }
 
@@ -112,7 +114,7 @@ public class TableElement<T> extends ContainerElement {
         // if all elements need less space, contract the column
         List<Dim> requestedWidths = Collections.map(this.getColumn(i), el -> el.calculateSize(maybeWidth).getX());
         Dim desiredHeaderWidth = this.calculateDesiredHeaderWidth(i);
-        Dim largestRequestedWidth = Dim.max(Dim.max(requestedWidths), desiredHeaderWidth);
+        Dim largestRequestedWidth = Dim.max(Objects.firstNonNull(Dim.max(requestedWidths), ZERO), desiredHeaderWidth);
         if (largestRequestedWidth.lt(maybeWidth)) {
           return largestRequestedWidth;
         } else {
@@ -191,6 +193,7 @@ public class TableElement<T> extends ContainerElement {
     /** Create a new content row. */
     public RowElement(InteractiveContext context, IElement parent, T item, List<IElement> rawContents) {
       super(context, parent, LayoutMode.INLINE);
+      super.setCursor(CursorType.CLICK);
 
       this.isHeader = false;
       this.item = item;
@@ -207,6 +210,7 @@ public class TableElement<T> extends ContainerElement {
     /** Create a new header row. */
     public RowElement(InteractiveContext context, IElement parent, List<LabelElement> headers) {
       super(context, parent, LayoutMode.INLINE);
+      super.setCursor(CursorType.CLICK);
 
       this.isHeader = true;
       this.item = null;
@@ -277,16 +281,16 @@ public class TableElement<T> extends ContainerElement {
       if (!this.isHeader) {
         this.state.accessState(s -> s.hovering.set(true));
       }
-
-      if (this.item != null) {
-        this.context.cursorService.toggleCursor(CursorType.CLICK, this);
-      }
     }
 
     @Override
     public void onMouseExit(IEvent<In> e) {
       this.state.accessState(s -> s.hovering.set(false));
-      this.context.cursorService.untoggleCursor(this);
+    }
+
+    @Override
+    protected boolean shouldUseCursor() {
+      return super.shouldUseCursor() && this.item != null && TableElement.this.onClickItem != null;
     }
 
     @Override
