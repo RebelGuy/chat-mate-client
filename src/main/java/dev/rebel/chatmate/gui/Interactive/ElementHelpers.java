@@ -65,18 +65,17 @@ public class ElementHelpers {
     return Collections.filter(elements, el -> el.getEffectiveZIndex() == zIndex);
   }
 
-
-  /** Returns all elements at the given point, ordered from the largest zIndex to the lowest, then in reverse by their position within the list of children of their parent. */
+  /** Returns all visible elements at the given point, ordered from the largest zIndex to the lowest, then in reverse by their position within the list of children of their parent. */
   public static List<IElement> getElementsAtPoint(IElement parent, DimPoint point) {
     List<IElement> children = getAllChildren(parent);
-    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getBox() != null && getCollisionBox(el).checkCollision(point));
+    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getVisible() && el.getBox() != null && getCollisionBox(el).checkCollision(point));
     return orderDescendingByZIndex(Collections.reverse(childrenAtPoint));
   }
 
-  /** Returns all elements at the given point, ordered from the largest zIndex to the lowest, then in the original position within the list of children of their parent. */
+  /** Returns all visible elements at the given point, ordered from the largest zIndex to the lowest, then in the original position within the list of children of their parent. */
   public static List<IElement> getElementsAtPointInverted(IElement parent, DimPoint point) {
     List<IElement> children = getAllChildren(parent);
-    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getBox() != null && getCollisionBox(el).checkCollision(point));
+    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getVisible() && el.getBox() != null && getCollisionBox(el).checkCollision(point));
     return orderDescendingByZIndex(childrenAtPoint);
   }
 
@@ -203,6 +202,7 @@ public class ElementHelpers {
     lines.add("Hor Algn: " + element.getHorizontalAlignment());
     lines.add("Vert Algn: " + element.getVerticalAlignment());
     lines.add("Sizing: " + element.getSizingMode());
+    lines.add("Layout group: " + element.getLayoutGroup());
     lines.add(String.format("Z-index: %d (%d)", element.getZIndex(), element.getEffectiveZIndex()));
     lines.add("");
 

@@ -3,10 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
-import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -48,6 +45,7 @@ public abstract class ElementBase implements IElement {
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
   private SizingMode sizingMode;
+  private LayoutGroup layoutGroup;
   private boolean initialised;
   private boolean isHovering;
   protected boolean visible;
@@ -73,6 +71,7 @@ public abstract class ElementBase implements IElement {
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
     this.sizingMode = SizingMode.ANY;
+    this.layoutGroup = LayoutGroup.ALL;
     this.initialised = false;
     this.isHovering = false;
     this.visible = true;
@@ -454,6 +453,20 @@ public abstract class ElementBase implements IElement {
   @Override
   public SizingMode getSizingMode() {
     return this.sizingMode;
+  }
+
+  @Override
+  public IElement setLayoutGroup(LayoutGroup layoutGroup) {
+    if (this.layoutGroup != layoutGroup) {
+      this.layoutGroup = layoutGroup;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
+
+  @Override
+  public LayoutGroup getLayoutGroup() {
+    return this.layoutGroup;
   }
 
   @Override

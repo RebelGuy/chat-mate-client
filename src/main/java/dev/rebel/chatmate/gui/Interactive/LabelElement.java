@@ -23,6 +23,7 @@ public class LabelElement extends SingleElement {
   private TextOverflow overflow;
   private Dim linePadding;
   private Font font;
+  private @Nullable Font hoverFont;
   private float fontScale;
   private @Nullable Integer maxLines;
   private @Nullable Runnable onClick;
@@ -37,6 +38,7 @@ public class LabelElement extends SingleElement {
     super.setSizingMode(SizingMode.MINIMISE);
     this.linePadding = context.dimFactory.fromGui(1);
     this.font = new Font();
+    this.hoverFont = null;
     this.fontScale = 1.0f;
     this.maxLines = null;
     this.onClick = null;
@@ -79,6 +81,11 @@ public class LabelElement extends SingleElement {
 
   public LabelElement setFont(Font font) {
     this.font = font;
+    return this;
+  }
+
+  public LabelElement setHoverFont(Font hoverFont) {
+    this.hoverFont = hoverFont;
     return this;
   }
 
@@ -188,14 +195,14 @@ public class LabelElement extends SingleElement {
   @Override
   protected void renderElement() {
     FontEngine fontEngine = this.context.fontEngine;
-    DimFactory factory = this.context.dimFactory;
 
-    Dim fontHeight = factory.fromGui(fontEngine.FONT_HEIGHT).times(this.fontScale);
+    Font font = super.isHovering() && this.hoverFont != null ? this.hoverFont : this.font;
+    Dim fontHeight = fontEngine.FONT_HEIGHT_DIM.times(this.fontScale);
     DimRect box = this.getContentBox();
     Dim y = this.getContentBox().getY();
 
     for (String line : this.lines) {
-      Dim width = fontEngine.getStringWidthDim(line, this.font).times(this.fontScale); // todo: simplify scaling by creating a FontRender wrapper with extra options
+      Dim width = fontEngine.getStringWidthDim(line, font).times(this.fontScale); // todo: simplify scaling by creating a FontRender wrapper with extra options
       Dim x;
       if (this.alignment == TextAlignment.LEFT) {
         x = box.getX();
@@ -208,7 +215,7 @@ public class LabelElement extends SingleElement {
       }
 
       RendererHelpers.withMapping(new DimPoint(x, y), this.fontScale, () -> {
-        super.context.fontEngine.drawString(line, 0, 0, this.font);
+        super.context.fontEngine.drawString(line, 0, 0, font);
       });
 
       y = y.plus(fontHeight).plus(this.linePadding);

@@ -2,7 +2,8 @@ package dev.rebel.chatmate.gui.Interactive.rank;
 
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
-import dev.rebel.chatmate.gui.Interactive.DropdownMenu.Anchor;
+import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.Anchor;
+import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.AnchorBoxSizing;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -13,6 +14,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.rank.Adapters.*;
 import dev.rebel.chatmate.gui.Interactive.rank.Adapters.EndpointAdapter.RankResult;
 import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicChannelRankChange;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicChannelRankChange.Platform;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
@@ -91,7 +93,7 @@ public class ManageRanksModal extends ModalElement {
 
     private final LabelElement titleLabel;
     private final TextButtonElement createNewRankButton;
-    private final DropdownMenu createNewRankDropdown;
+    private final DropdownMenuV2 createNewRankDropdown;
     private final WrapperElement listWrapper;
     private final ElementReference listReference;
 
@@ -118,12 +120,12 @@ public class ManageRanksModal extends ModalElement {
           .cast();
 
       // todo: move into CreateRank element
-      this.createNewRankDropdown = new DropdownMenu(context, this.createNewRankButton)
+      this.createNewRankDropdown = new DropdownMenuV2(context, this.createNewRankButton, AnchorBoxSizing.CONTENT)
           .setAnchor(Anchor.LEFT)
           .setBorder(new RectExtension(gui(1)))
           .setSizingMode(SizingMode.FILL)
           .cast();
-      this.createNewRankButton.setOnClick(this.createNewRankDropdown::toggleExpanded);
+      this.createNewRankButton.setOnClick(this.createNewRankDropdown::toggleVisible);
 
       // populate the "create new" button with the accessible ranks
       this.endpointAdapter.getAccessibleRanksAsync(this::onAccessibleRanksLoaded, this::onRanksLoadError);
@@ -174,7 +176,15 @@ public class ManageRanksModal extends ModalElement {
         this.createNewRankButton.setEnabled(this, true);
         for (PublicRank accessibleRank : accessibleRanks) {
           if (this.createAdapter.shouldIncludeRank(accessibleRank)) {
-            this.createNewRankDropdown.addOption(toSentenceCase(accessibleRank.displayNameNoun), () -> this.onCreateNewRank(accessibleRank));
+            LabelElement option = new LabelElement(super.context, this)
+                .setText(toSentenceCase(accessibleRank.displayNameNoun))
+                .setOverflow(TextOverflow.SPLIT)
+                .setOnClick(() -> this.onCreateNewRank(accessibleRank))
+                .setHoverFont(new Font().withColour(Colour.ACTION_HOVER).withUnderlined(true))
+                .setPadding(new RectExtension(gui(2), ZERO))
+                .setMargin(new RectExtension(ZERO, gui(2)))
+                .cast();
+            this.createNewRankDropdown.addOption(option);
           }
         }
       });

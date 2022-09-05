@@ -8,14 +8,22 @@ public class Events {
   public static class InteractiveEvent<TData> implements IEvent<TData> {
     private final EventPhase phase;
     private final TData data;
-    private final IElement target;
+    private IElement target;
+    private final boolean supportsTargetOverriding;
     public boolean stoppedPropagation;
+    public boolean overriddenTarget;
 
     public InteractiveEvent(EventPhase phase, TData data, IElement target) {
+      this(phase, data, target, false);
+    }
+
+    public InteractiveEvent(EventPhase phase, TData data, IElement target, boolean supportsTargetOverriding) {
       this.phase = phase;
       this.data = data;
       this.target = target;
+      this.supportsTargetOverriding = supportsTargetOverriding;
       this.stoppedPropagation = false;
+      this.overriddenTarget = false;
     }
 
     @Override
@@ -37,6 +45,15 @@ public class Events {
     public IElement getTarget() {
       return this.target;
     }
+
+    @Override
+    public void overrideTarget() {
+      if (!this.supportsTargetOverriding) {
+        throw new RuntimeException("The event does not support overriding the target");
+      }
+
+      this.overriddenTarget = true;
+    }
   }
 
   public interface IEvent<TData> {
@@ -46,11 +63,14 @@ public class Events {
     EventPhase getPhase();
     /** The element to which the event is propagating to/from. If the EventPhase is TARGET, it is equal to the element receiving the event. */
     IElement getTarget();
+    /** For events in the CAPTURE phase, it is possible to modify the target element to the current element.
+     * This will set the bottom of the event propagation chain, and the BUBBLE phase will commence instantly with the new target. */
+    void overrideTarget();
   }
 
   public enum EventPhase {
-    CAPTURE, // the event is currently on its way propagating downwards
-    BUBBLE, // the event is currently on its way propagating upwards
+    CAPTURE, // the event is currently on its way propagating downwards towards the current target
+    BUBBLE, // the event is currently on its way propagating upwards away from the target
     TARGET // the event is at its target and does not propagate (i.e. it fires only for this element - calling stopPropagate() has no effect)
   }
 

@@ -160,6 +160,14 @@ public class Collections {
     }
   }
 
+  public static <T> boolean all(@Nullable List<T> list, Predicate<T> predicate) {
+    if (list == null || list.size() == 0) {
+      return false;
+    } else {
+      return filter(list, predicate).size() == list.size();
+    }
+  }
+
   public static <T> int size(@Nullable List<T> list) { return list == null ? 0 : list.size(); }
 
   public static <T> T elementAt(List<T> list, int index) {

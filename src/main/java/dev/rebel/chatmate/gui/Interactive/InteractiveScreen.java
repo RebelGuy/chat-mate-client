@@ -4,10 +4,7 @@ import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
-import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
-import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.Screen;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -264,12 +261,12 @@ public class InteractiveScreen extends Screen implements IElement {
       boolean isBlocked = Collections.any(blocked, el -> el == newElement);
       if (!isBlocked) {
         newOrExistingEntered.add(newElement);
-        InteractiveEvent<MouseEventData.In> event = new InteractiveEvent<>(EventPhase.CAPTURE, in, newElement);
+        InteractiveEvent<MouseEventData.In> event = new InteractiveEvent<>(EventPhase.CAPTURE, in, newElement, true);
         newElement.onEvent(EventType.MOUSE_ENTER, event);
 
         // go as far as we can or until propagation has stopped
         // all remaining elements are now blocked
-        if (event.stoppedPropagation) {
+        if (event.stoppedPropagation || event.overriddenTarget) {
           newBlocked = Collections.filter(newElements, el -> !newOrExistingEntered.contains(el));
           newBlocking = newElement;
           break;
@@ -404,7 +401,7 @@ public class InteractiveScreen extends Screen implements IElement {
 
     List<IElement> elements = ElementHelpers.getElementsAtPoint(this, data.mousePositionData.point);
     IElement target = Collections.last(elements);
-    InteractiveEvent<MouseEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target);
+    InteractiveEvent<MouseEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target, true);
     InputElement newFocus = null;
     for (IElement element : elements) {
       if (element instanceof InputElement) {
@@ -413,6 +410,11 @@ public class InteractiveScreen extends Screen implements IElement {
       }
 
       element.onEvent(type, captureEvent);
+      if (captureEvent.overriddenTarget) {
+        target = element;
+        elements = elements.subList(0, elements.indexOf(target) + 1);
+        break;
+      }
       if (captureEvent.stoppedPropagation) {
         break;
       }
@@ -439,6 +441,8 @@ public class InteractiveScreen extends Screen implements IElement {
 
   /** Sets the new focussed element and fires appropriate events. */
   protected void setFocussedElement(@Nullable InputElement newFocus, FocusReason reason) {
+    // if unfocussing, fire the blur event for all ancestors
+    // if changing focus, find the element that is the common ancenstor and fire blur events only up to there, then fire focus events all the way down to the new element (in that order?)
     InputElement oldFocus = this.context.focusedElement;
     if (oldFocus != newFocus) {
       this.context.focusedElement = newFocus;
@@ -467,9 +471,14 @@ public class InteractiveScreen extends Screen implements IElement {
       return false;
     }
 
-    InteractiveEvent<KeyboardEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target);
+    InteractiveEvent<KeyboardEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target, true);
     for (IElement element : Collections.reverse(elements)) {
       element.onEvent(type, captureEvent);
+      if (captureEvent.overriddenTarget) {
+        target = element;
+        elements = elements.subList(0, elements.indexOf(target) + 1);
+        break;
+      }
       if (captureEvent.stoppedPropagation) {
         break;
       }
@@ -611,6 +620,12 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public SizingMode getSizingMode() { return null; }
+
+  @Override
+  public IElement setLayoutGroup(LayoutGroup layoutGroup) { return null; }
+
+  @Override
+  public LayoutGroup getLayoutGroup() { return null; }
 
   @Override
   public <T extends IElement> T cast() { return null; }

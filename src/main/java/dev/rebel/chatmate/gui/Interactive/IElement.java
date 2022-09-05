@@ -3,10 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.Interactive.Events.EventType;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
-import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
-import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -65,6 +62,9 @@ public interface IElement {
 
   SizingMode getSizingMode();
   IElement setSizingMode(SizingMode sizingMode);
+
+  LayoutGroup getLayoutGroup();
+  IElement setLayoutGroup(LayoutGroup layoutGroup);
 
   @Nullable String getTooltip();
   IElement setTooltip(@Nullable String text);

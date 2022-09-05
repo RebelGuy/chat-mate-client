@@ -21,6 +21,7 @@ public class Colour {
   public static final Colour YELLOW = new Colour(Color.YELLOW);
   public static final Colour TRANSPARENT = new Colour(Color.WHITE).withAlpha(0);
   public static final Colour BEIGE = new Colour(245, 245, 220);
+  public static final Colour ACTION_HOVER = new Colour(16777120); // the default text colour when hovering
 
   public final int red;
   public final int green;
