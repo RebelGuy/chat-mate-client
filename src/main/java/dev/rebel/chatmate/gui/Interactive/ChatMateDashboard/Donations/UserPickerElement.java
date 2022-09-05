@@ -61,6 +61,11 @@ public class UserPickerElement extends ContainerElement {
     this.searchUsersDebouncer.doDebounce();
   }
 
+  public UserPickerElement setFontScale(float textScale) {
+    this.textInputElement.setTextScale(textScale);
+    return this;
+  }
+
   @Override
   public void onFocus(Events.IEvent<Events.FocusEventData> e) {
     // todo: make a new request with the current text and show dropdown

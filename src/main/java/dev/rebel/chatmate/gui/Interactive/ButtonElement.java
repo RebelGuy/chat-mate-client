@@ -177,6 +177,8 @@ public class ButtonElement extends InputElement {
 
     public final ImageElement image;
 
+    private @Nullable Colour enabledColour = null;
+
     public IconButtonElement(InteractiveContext context, IElement parent) {
       super(context, parent);
 
@@ -199,14 +201,33 @@ public class ButtonElement extends InputElement {
     }
 
     /** This determines the width to which the image will be scaled. Defaults to the image's width at 1x scale. */
+    @Override
     public IconButtonElement setMaxWidth(@Nullable Dim maxWidth) {
       this.image.setMaxWidth(maxWidth);
       return this;
     }
 
     /** This determines the width to which the image will be scaled. Defaults to the image's width at 1x scale. */
+    @Override
     public IconButtonElement setMaxContentWidth(@Nullable Dim maxContentWidth) {
       this.image.setMaxContentWidth(maxContentWidth);
+      return this;
+    }
+
+    @Override
+    public IElement setTargetHeight(@Nullable Dim targetHeight) {
+      this.image.setTargetHeight(targetHeight);
+      return this;
+    }
+
+    @Override
+    public IElement setTargetContentHeight(@Nullable Dim targetContentHeight) {
+      this.image.setTargetContentHeight(targetContentHeight);
+      return this;
+    }
+
+    public IconButtonElement setEnabledColour(@Nullable Colour colour) {
+      this.enabledColour = colour;
       return this;
     }
 
@@ -222,13 +243,18 @@ public class ButtonElement extends InputElement {
 
     @Override
     protected void renderElement() {
-      int j = 14737632;
+      Colour colour;
       if (!super.getEnabled()) {
-        j = 10526880;
+        colour = new Colour(10526880);
       } else if (super.isHovering()) {
-        j = 16777120;
+        colour = new Colour(16777120);
+      } else if (this.enabledColour != null) {
+        colour = this.enabledColour;
+      } else {
+        // default enabled colour
+        colour = new Colour(14737632);
       }
-      this.image.setColour(new Colour(j));
+      this.image.setColour(colour);
 
       super.renderElement();
     }

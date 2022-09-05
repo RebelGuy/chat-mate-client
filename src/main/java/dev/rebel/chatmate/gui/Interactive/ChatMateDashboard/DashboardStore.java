@@ -10,7 +10,7 @@ public class DashboardStore {
   private List<Consumer<SettingsPage>> onSettingsPageChange;
 
   public DashboardStore(){
-    this.settingsPage = SettingsPage.GENERAL;
+    this.settingsPage = null;
     this.onSettingsPageChange = new ArrayList<>();
   }
 

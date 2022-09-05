@@ -16,6 +16,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.api.donation.GetDonationsResponse.GetDonationsResponseData;
 import dev.rebel.chatmate.models.api.donation.LinkUserResponse.LinkUserResponseData;
@@ -160,7 +161,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         new TableElement.Column("User", 0.75f, 2, false),
         new TableElement.Column("Amount", 0.75f, 1, true),
         new TableElement.Column("Message", 0.75f, 3, false),
-        new TableElement.Column("", 0.75f, 0.5f, true)
+        new TableElement.Column("", 0.75f, 0.75f, true)
       );
       this.table = new TableElement<>(context, this, new ArrayList<>(), columns, don -> this.getRow(don, false));
 
@@ -189,19 +190,28 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       } else if (this.editingDonations.containsKey(donation)) {
         // it is invalid to try to link to a null user
         boolean valid = donation.linkedUser != null || donation.linkedUser == null && this.editingDonations.get(donation) != null;
+        IconButtonElement confirmIconButton = new IconButtonElement(super.context, this)
+            .setImage(Asset.GUI_TICK_ICON)
+            .setEnabledColour(Colour.GREEN)
+            .setOnClick(() -> this.onConfirmLinkOrUnlink(donation))
+            .setEnabled(this, valid)
+            .setTargetHeight(iconHeight)
+            .setBorder(new RectExtension(ZERO))
+            .setPadding(new RectExtension(ZERO))
+            .cast();
+        confirmIconButton.image.setPadding(new RectExtension(ZERO));
+        IconButtonElement cancelIconButton = new IconButtonElement(super.context, this)
+            .setImage(Asset.GUI_CLEAR_ICON)
+            .setEnabledColour(Colour.RED)
+            .setOnClick(() -> this.onCancelLinkOrUnlink(donation))
+            .setTargetHeight(iconHeight)
+            .setBorder(new RectExtension(ZERO))
+            .setPadding(new RectExtension(ZERO))
+            .cast();
+        cancelIconButton.image.setPadding(new RectExtension(ZERO));
         actionElement = new InlineElement(context, this) // todo: make it actually inline
-            .addElement(new IconButtonElement(super.context, this)
-                .setImage(Asset.GUI_TICK_ICON)
-                .setOnClick(() -> this.onConfirmLinkOrUnlink(donation))
-                .setEnabled(this, valid)
-                .setTargetHeight(iconHeight)
-                .setBorder(new RectExtension(ZERO))
-            ).addElement(new IconButtonElement(super.context, this)
-                .setImage(Asset.GUI_CLEAR_ICON)
-                .setOnClick(() -> this.onCancelLinkOrUnlink(donation))
-                .setTargetHeight(iconHeight)
-                .setBorder(new RectExtension(ZERO))
-            );
+            .addElement(confirmIconButton)
+            .addElement(cancelIconButton);
       } else {
         Texture icon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_BIN_ICON;
         Runnable onClick = () -> this.onLinkOrUnlink(donation);
@@ -210,7 +220,9 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             .setOnClick(onClick)
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
+            .setPadding(new RectExtension(ZERO))
             .setTooltip(donation.linkedUser == null ? "Link donation to a user" : "Unlink current user from donation");
+        casted(IconButtonElement.class, actionElement, el -> el.image.setPadding(new RectExtension(ZERO)));
       }
 
       IElement userNameElement;
@@ -222,7 +234,8 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             this.editingDonations.put(donation, newUser);
             this.table.updateItem(donation, this.getRow(donation, false));
           };
-          userNameElement = new UserPickerElement(super.context, this, donation.linkedUser, onUserSelected, this.userEndpointProxy);
+          userNameElement = new UserPickerElement(super.context, this, donation.linkedUser, onUserSelected, this.userEndpointProxy)
+              .setFontScale(0.75f);
           this.editingElements.put(donation, userNameElement);
         }
       } else {

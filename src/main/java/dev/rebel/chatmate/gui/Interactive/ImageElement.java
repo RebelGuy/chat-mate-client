@@ -49,24 +49,6 @@ public class ImageElement extends SingleElement {
     return this;
   }
 
-  private float getEffectiveScale(Dim maxWidth) {
-    assert this.image != null;
-
-    Dim actualWidth = gui(this.image.width);
-    if (this.getSizingMode() == SizingMode.MINIMISE || this.getSizingMode() == SizingMode.ANY) {
-      Dim scaledWidth = actualWidth.times(this.scale);
-      if (scaledWidth.lte(maxWidth)) {
-        return this.scale;
-      } else {
-        return this.scale * maxWidth.over(scaledWidth);
-      }
-    } else if (this.getSizingMode() == SizingMode.FILL) {
-      return maxWidth.over(actualWidth);
-    } else {
-      throw EnumHelpers.<SizingMode>assertUnreachable(this.getSizingMode());
-    }
-  }
-
   @Nullable @Override
   public List<IElement> getChildren() {
     return null;
@@ -80,14 +62,44 @@ public class ImageElement extends SingleElement {
   }
 
   @Override
-  protected DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxWidth) {
     if (this.image == null) {
       return new DimPoint(ZERO, ZERO);
     }
 
-    float effectiveScale = this.getEffectiveScale(maxContentSize);
-    Dim width = gui(this.image.width).times(effectiveScale);
-    Dim height = gui(this.image.height).times(effectiveScale);
+    // dimensions before culling
+    Dim width = gui(this.image.width).times(this.scale);
+    Dim height = gui(this.image.height).times(this.scale);
+
+    if (width.gt(maxWidth)) {
+      float scalingFactor = width.over(maxWidth);
+      width = width.over(scalingFactor);
+      height = height.over(scalingFactor);
+    }
+
+    @Nullable Dim maxHeight = super.getTargetContentHeight();
+    if (maxHeight != null && height.gt(maxHeight)) {
+      float scalingFactor = height.over(maxHeight);
+      height = height.over(scalingFactor);
+      width = width.over(scalingFactor);
+    }
+
+    if (this.getSizingMode() == SizingMode.FILL) {
+      float scalingFactor = width.over(maxWidth);
+
+      if (maxHeight != null) {
+        float heightScalingFactor = height.over(maxHeight);
+
+        // use the larger scaling factor (i.e. we are dividing by a larger number), otherwise we would get bigger than allowed
+        if (heightScalingFactor > scalingFactor) {
+          scalingFactor = heightScalingFactor;
+        }
+      }
+
+      width = width.over(scalingFactor);
+      height = height.over(scalingFactor);
+    }
+
     return new DimPoint(width, height);
   }
 

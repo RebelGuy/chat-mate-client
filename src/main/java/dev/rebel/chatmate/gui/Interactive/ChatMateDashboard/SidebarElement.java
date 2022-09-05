@@ -14,6 +14,7 @@ import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
@@ -42,6 +43,7 @@ public class SidebarElement extends ContainerElement {
                 new LabelElement(context, this)
                   .setText("Open Studio")
                   .setColour(Colour.BLUE)
+                  .setHoverFont(new Font().withColour(new Colour(64, 64, 180)).withUnderlined(true))
                   .setOnClick(this::onOpenStudio)
                 )
             .addElement(
