@@ -27,6 +27,11 @@ public class LoadingSpinnerElement extends SingleElement {
     this.colour = new Colour(50, 200, 255);
   }
 
+  public LoadingSpinnerElement setLineWidth(Dim lineWidth) {
+    this.lineWidth = lineWidth;
+    return this;
+  }
+
   @Override
   public @Nullable List<IElement> getChildren() {
     return null;

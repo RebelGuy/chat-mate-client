@@ -18,35 +18,45 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.proxy.EndpointProxy;
 import dev.rebel.chatmate.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.services.util.Collections;
+import net.minecraft.util.IChatComponent;
+import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
+import static dev.rebel.chatmate.models.Styles.getLevelStyle;
+import static dev.rebel.chatmate.models.Styles.styledText;
+import static dev.rebel.chatmate.services.util.ChatHelpers.joinComponents;
 import static dev.rebel.chatmate.services.util.TextHelpers.toSentenceCase;
 
 public class UserPickerElement extends ContainerElement {
   private final UserEndpointProxy userEndpointProxy;
   private final Consumer<PublicUser> onUserSelected;
   private final Debouncer searchUsersDebouncer;
+  private final MessageService messageService;
 
   private final TextInputElement textInputElement;
   private final LoadingSpinnerElement loadingSpinnerElement;
   private final LabelElement errorLabel;
   private final DropdownMenuV2 dropdownMenu;
 
-  public UserPickerElement(InteractiveScreen.InteractiveContext context, IElement parent, @Nullable PublicUser defaultUser, Consumer<PublicUser> onUserSelected, UserEndpointProxy userEndpointProxy) {
+  public UserPickerElement(InteractiveScreen.InteractiveContext context, IElement parent, @Nullable PublicUser defaultUser, Consumer<PublicUser> onUserSelected, UserEndpointProxy userEndpointProxy, MessageService messageService) {
     super(context, parent, LayoutMode.INLINE);
     this.onUserSelected = onUserSelected;
     this.userEndpointProxy = userEndpointProxy;
-    this.searchUsersDebouncer = new Debouncer(1000, () -> context.renderer.runSideEffect(this::onSearchUser));
+    this.searchUsersDebouncer = new Debouncer(500, () -> context.renderer.runSideEffect(this::onSearchUser));
+    this.messageService = messageService;
 
-    this.textInputElement = new TextInputElement(context, this, userToString(defaultUser))
+    this.textInputElement = new TextInputElement(context, this, this.userToString(defaultUser))
         .setPlaceholder("Start typing a name")
         .onTextChange(this::onTextChange);
     this.loadingSpinnerElement = new LoadingSpinnerElement(context, this)
+        .setLineWidth(gui(1))
         .setMaxContentWidth(gui(8))
         .setLayoutGroup(LayoutGroup.CHILDREN) // don't let it influence the user picker box
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
@@ -85,8 +95,15 @@ public class UserPickerElement extends ContainerElement {
 
   @Override
   public void onKeyDown(Events.IEvent<KeyboardEventData.In> e) {
-    // todo: if escape, close dropdown
-    // if enter, search immediately and cancel debouncer
+    if (e.getData().isPressed(Keyboard.KEY_ESCAPE) && this.dropdownMenu.getVisible()) {
+      this.searchUsersDebouncer.cancel();
+      this.dropdownMenu.setVisible(false);
+      e.stopPropagation();
+    } else if (e.getData().isPressed(Keyboard.KEY_RETURN)) {
+      this.searchUsersDebouncer.cancel();
+      this.onSearchUser();
+      e.stopPropagation();
+    }
   }
 
   @Override
@@ -104,7 +121,7 @@ public class UserPickerElement extends ContainerElement {
   }
 
   private void onSelection(PublicUser user) {
-    this.textInputElement.setTextUnsafe(userToString(user));
+    this.textInputElement.setTextUnsafe(user.userInfo.channelName);
     this.dropdownMenu.setVisible(false);
     this.onUserSelected.accept(user);
   }
@@ -138,16 +155,29 @@ public class UserPickerElement extends ContainerElement {
     } else {
       this.dropdownMenu.setVisible(true);
       for (PublicUserNames userNames : response.results) {
-        LabelElement option = new LabelElement(super.context, this)
-            .setText(userToString(userNames.user))
+        boolean hasRanks = userNames.user.activeRanks.length > 0;
+        BlockElement container = new BlockElement(super.context, this);
+        LabelElement nameElement = new LabelElement(super.context, this)
+            .setText(this.userToString(userNames.user))
             .setOverflow(TextOverflow.SPLIT)
             .setFontScale(0.75f)
             .setOnClick(() -> this.onSelection(userNames.user))
             .setHoverFont(new Font().withColour(Colour.ACTION_HOVER))
-            .setPadding(new RectExtension(gui(1), gui(1)))
+            .setColour(Colour.LIGHT_YELLOW)
+            .setPadding(new RectExtension(gui(1), gui(1), gui(1), hasRanks ? ZERO : gui(1)))
             .setSizingMode(SizingMode.FILL)
             .cast();
-        this.dropdownMenu.addOption(new BackgroundElement(super.context, this, option)
+        LabelElement ranksElement = !hasRanks ? null : new LabelElement(super.context, this)
+            .setText(String.join(", ", Collections.map(Collections.list(userNames.user.activeRanks), r -> toSentenceCase(r.rank.displayNameNoun))))
+            .setOverflow(TextOverflow.SPLIT)
+            .setFontScale(0.5f)
+            .setOnClick(() -> this.onSelection(userNames.user))
+            .setColour(Colour.GREY)
+            .setPadding(new RectExtension(gui(1), gui(1), ZERO, gui(1)))
+            .setSizingMode(SizingMode.FILL)
+            .cast();
+        container.addElement(nameElement).addElement(ranksElement);
+        this.dropdownMenu.addOption(new BackgroundElement(super.context, this, container)
             .setCornerRadius(gui(2))
             .setHoverColour(Colour.LTGREY.withAlpha(0.2f))
             .setMargin(new RectExtension(gui(1), gui(1)))
@@ -156,12 +186,14 @@ public class UserPickerElement extends ContainerElement {
     }
   }
 
-  private static String userToString(PublicUser user) {
+  private String userToString(PublicUser user) {
     if (user == null) {
       return "";
     }
 
-    // todo: include rank and level?
-    return user.userInfo.channelName;
+    Integer level = user.levelInfo.level;
+    IChatComponent levelComponent = styledText(level.toString(), getLevelStyle(level));
+    IChatComponent nameComponent = this.messageService.getUserComponent(user);
+    return joinComponents(" ", Collections.list(levelComponent, nameComponent)).getFormattedText();
   }
 }

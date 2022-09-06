@@ -30,6 +30,7 @@ import dev.rebel.chatmate.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.proxy.EndpointProxy;
 import dev.rebel.chatmate.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.ApiRequestService;
+import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.util.Collections;
 
@@ -46,6 +47,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
   private final DonationEndpointProxy donationEndpointProxy;
   private final @Nullable Integer highlightDonation;
   private final ApiRequestService apiRequestService;
+  private final MessageService messageService;
   private final Consumer<Boolean> _onApiServiceActive = this::onApiServiceActive;
 
   private final CheckboxInputElement unlinkedDonationsCheckbox;
@@ -54,12 +56,20 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
   private final LabelElement errorLabel;
   private final DonationsTable donationsTable;
 
-  public DonationsSectionElement(InteractiveContext context, IElement parent, @Nullable DonationRoute route, DonationEndpointProxy donationEndpointProxy, StatusService statusService, ApiRequestService apiRequestService, UserEndpointProxy userEndpointProxy) {
+  public DonationsSectionElement(InteractiveContext context,
+                                 IElement parent,
+                                 @Nullable DonationRoute route,
+                                 DonationEndpointProxy donationEndpointProxy,
+                                 StatusService statusService,
+                                 ApiRequestService apiRequestService,
+                                 UserEndpointProxy userEndpointProxy,
+                                 MessageService messageService) {
     super(context, parent, LayoutMode.BLOCK);
     super.setSizingMode(SizingMode.FILL);
 
     this.donationEndpointProxy = donationEndpointProxy;
     this.apiRequestService = apiRequestService;
+    this.messageService = messageService;
     this.apiRequestService.onActive(this._onApiServiceActive);
 
     this.unlinkedDonationsCheckbox = SharedElements.CHECKBOX_LIGHT.create(context, this)
@@ -83,14 +93,13 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         .setSizingMode(SizingMode.FILL)
         .cast();
 
-    this.donationsTable = new DonationsTable(context, this, this::onError, statusService.getLivestreamStatus(), donationEndpointProxy, userEndpointProxy)
+    this.donationsTable = new DonationsTable(context, this, this::onError, statusService.getLivestreamStatus(), donationEndpointProxy, userEndpointProxy, messageService)
         .setVisible(false)
         .setMargin(new RectExtension(ZERO, gui(4)))
         .cast();
 
     this.errorLabel = SharedElements.ERROR_LABEL.create(context, this);
 
-    // todo: highlight the donation in the list that we want to link (e.g. outline, or lighter background)
     this.highlightDonation = casted(LinkDonationRoute.class, route, d -> d.donation.id);
 
     // todo: save checkbox values in config
@@ -143,6 +152,8 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     private final @Nullable PublicLivestreamStatus livestreamStatus;
     private final DonationEndpointProxy donationEndpointProxy;
     private final UserEndpointProxy userEndpointProxy;
+    private final MessageService messageService;
+
     private @Nullable List<PublicDonation> donations = null;
     private Map<PublicDonation, PublicUser> editingDonations = new HashMap<>();
     private Map<PublicDonation, IElement> editingElements = new HashMap<>();
@@ -152,19 +163,26 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     private final TableElement<PublicDonation> table;
     private final LabelElement nothingToShowLabel;
 
-    public DonationsTable(InteractiveContext context, IElement parent, Consumer<Throwable> onError, @Nullable PublicLivestreamStatus livestreamStatus, DonationEndpointProxy donationEndpointProxy, UserEndpointProxy userEndpointProxy) {
+    public DonationsTable(InteractiveContext context,
+                          IElement parent,
+                          Consumer<Throwable> onError,
+                          @Nullable PublicLivestreamStatus livestreamStatus,
+                          DonationEndpointProxy donationEndpointProxy,
+                          UserEndpointProxy userEndpointProxy,
+                          MessageService messageService) {
       super(context, parent, LayoutMode.BLOCK);
       this.onError = onError;
       this.livestreamStatus = livestreamStatus;
       this.donationEndpointProxy = donationEndpointProxy;
       this.userEndpointProxy = userEndpointProxy;
+      this.messageService = messageService;
 
       List<TableElement.Column> columns = Collections.list(
-        new TableElement.Column("Date", 0.75f, 1, true),
-        new TableElement.Column("User", 0.75f, 2, false),
-        new TableElement.Column("Amount", 0.75f, 1, true),
-        new TableElement.Column("Message", 0.75f, 3, false),
-        new TableElement.Column("", 0.75f, 0.75f, true)
+          new TableElement.Column("Date", 0.75f, 1, true),
+          new TableElement.Column("User", 0.75f, 2, false),
+          new TableElement.Column("Amount", 0.75f, 1, true),
+          new TableElement.Column("Message", 0.75f, 3, false),
+          new TableElement.Column("", 0.75f, 0.75f, true)
       );
       this.table = new TableElement<>(context, this, new ArrayList<>(), columns, don -> this.getRow(don, false));
 
@@ -201,6 +219,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
+            .setMargin(new RectExtension(ZERO, gui(2), ZERO, ZERO))
             .cast();
         confirmIconButton.image.setPadding(new RectExtension(ZERO));
         IconButtonElement cancelIconButton = new IconButtonElement(super.context, this)
@@ -212,7 +231,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             .setPadding(new RectExtension(ZERO))
             .cast();
         cancelIconButton.image.setPadding(new RectExtension(ZERO));
-        actionElement = new InlineElement(context, this) // todo: make it actually inline
+        actionElement = new InlineElement(context, this)
             .addElement(confirmIconButton)
             .addElement(cancelIconButton);
       } else {
@@ -238,7 +257,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             this.editingDonations.put(donation, newUser);
             this.table.updateItem(donation, this.getRow(donation, false));
           };
-          userNameElement = new UserPickerElement(super.context, this, donation.linkedUser, onUserSelected, this.userEndpointProxy)
+          userNameElement = new UserPickerElement(super.context, this, donation.linkedUser, onUserSelected, this.userEndpointProxy, this.messageService)
               .setFontScale(0.75f);
           this.editingElements.put(donation, userNameElement);
         }

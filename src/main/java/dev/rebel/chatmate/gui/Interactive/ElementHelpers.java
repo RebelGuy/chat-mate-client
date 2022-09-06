@@ -40,7 +40,7 @@ public class ElementHelpers {
       // was most likely added last is picked. in the future, we could use z indexes for a more robust solution.
       boolean foundMatch = false;
       for (IElement child : orderDescendingByZIndex(Collections.reverse(children))) {
-        if (child.getVisible() && getCollisionBox(child).checkCollision(point)) {
+        if (isCompletelyVisible(child) && getCollisionBox(child).checkCollision(point)) {
           result.add(child);
           foundMatch = true;
           parent = child;
@@ -65,18 +65,29 @@ public class ElementHelpers {
     return Collections.filter(elements, el -> el.getEffectiveZIndex() == zIndex);
   }
 
-  /** Returns all visible elements at the given point, ordered from the largest zIndex to the lowest, then in reverse by their position within the list of children of their parent. */
+  /** Returns all completely visible elements at the given point, ordered from the largest zIndex to the lowest, then in reverse by their position within the list of children of their parent. */
   public static List<IElement> getElementsAtPoint(IElement parent, DimPoint point) {
     List<IElement> children = getAllChildren(parent);
-    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getVisible() && el.getBox() != null && getCollisionBox(el).checkCollision(point));
+    List<IElement> childrenAtPoint = Collections.filter(children, el -> isCompletelyVisible(el) && el.getBox() != null && getCollisionBox(el).checkCollision(point));
     return orderDescendingByZIndex(Collections.reverse(childrenAtPoint));
   }
 
-  /** Returns all visible elements at the given point, ordered from the largest zIndex to the lowest, then in the original position within the list of children of their parent. */
+  /** Returns all completely visible elements at the given point, ordered from the largest zIndex to the lowest, then in the original position within the list of children of their parent. */
   public static List<IElement> getElementsAtPointInverted(IElement parent, DimPoint point) {
     List<IElement> children = getAllChildren(parent);
-    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getVisible() && el.getBox() != null && getCollisionBox(el).checkCollision(point));
+    List<IElement> childrenAtPoint = Collections.filter(children, el -> isCompletelyVisible(el) && el.getBox() != null && getCollisionBox(el).checkCollision(point));
     return orderDescendingByZIndex(childrenAtPoint);
+  }
+
+  /** Returns true if an element and all its ancestors are visible. It is entirely feasible for an element to be visible, but for its parent to not be visible, so this methods distinguishes between "soft" and "total" visibility. */
+  public static boolean isCompletelyVisible(IElement element) {
+    while (!(element instanceof InteractiveScreen)) {
+      if (!element.getVisible()) {
+        return false;
+      }
+      element = element.getParent();
+    }
+    return true;
   }
 
   public static List<IElement> getAllChildren(IElement parent) {

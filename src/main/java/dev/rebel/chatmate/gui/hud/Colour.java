@@ -19,6 +19,7 @@ public class Colour {
   public static final Colour PURPLE = new Colour(Color.PURPLE);
   public static final Colour DARK_PURPLE = new Colour(170, 0, 170); // same as Minecraft's DARK_PURPLE style
   public static final Colour YELLOW = new Colour(Color.YELLOW);
+  public static final Colour LIGHT_YELLOW = new Colour(255, 255, 85); // same as Minecraft's YELLOW style
   public static final Colour TRANSPARENT = new Colour(Color.WHITE).withAlpha(0);
   public static final Colour BEIGE = new Colour(245, 245, 220);
   public static final Colour ACTION_HOVER = new Colour(16777120); // the default text colour when hovering

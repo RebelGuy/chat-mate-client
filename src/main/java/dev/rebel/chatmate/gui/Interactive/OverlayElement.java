@@ -41,7 +41,7 @@ public class OverlayElement extends ContainerElement implements IInteractionEven
     }
   }
 
-  // interaction events bubbling up to here haven't been handled by our overlay children. stop them from propagating to the main layer
+  // interaction events bubbling up to here are those occurring on the overlay layer (excluding holes or children boxes).
   @Override
   public void onMouseDown(Events.IEvent<MouseEventData.In> e) {
     e.stopPropagation();

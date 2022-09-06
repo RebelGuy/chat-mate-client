@@ -72,18 +72,10 @@ public class DropdownMenuV2 extends OverlayElement {
     return this;
   }
 
+  // clickaway listener
   @Override
   public void onMouseDown(IEvent<In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
-      e.stopPropagation();
-      super.setVisible(false);
-    }
-  }
-
-  // todo: this doesn't fire. something with how we are getting the chidlren in the interactive screen when propagating keyboard events
-  @Override
-  public void onKeyDown(IEvent<KeyboardEventData.In> e) {
-    if (e.getData().isPressed(Keyboard.KEY_ESCAPE)) {
       e.stopPropagation();
       super.setVisible(false);
     }
@@ -106,12 +98,12 @@ public class DropdownMenuV2 extends OverlayElement {
   @Override
   protected DimPoint calculateThisSize(Dim maxContentSize) {
     // anchor must be initialised first
-    if (this.anchorElement.getBox() == null) {
+    if (this.anchorElement.getLastCalculatedSize() == null) {
       super.onInvalidateSize();
       return new DimPoint(ZERO, ZERO);
     }
 
-    Dim maxWidth = this.getAnchorBox().getWidth();
+    Dim maxWidth = this.anchorElement.getLastCalculatedSize().getX();
     DimPoint size = super.calculateThisSize(maxWidth);
     if (this.getSizingMode() == SizingMode.FILL && maxWidth.gt(size.getX())) {
       size = new DimPoint(maxWidth, size.getY());
