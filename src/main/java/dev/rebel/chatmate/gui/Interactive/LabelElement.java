@@ -84,6 +84,10 @@ public class LabelElement extends SingleElement {
     return this;
   }
 
+  public Font getFont() {
+    return this.font;
+  }
+
   public LabelElement setHoverFont(Font hoverFont) {
     this.hoverFont = hoverFont;
     return this;

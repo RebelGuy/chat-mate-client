@@ -238,7 +238,8 @@ public abstract class ContainerElement extends ElementBase {
       boolean participatesInLayout = elementSize._1.getLayoutGroup() == LayoutGroup.ALL;
       DimPoint size = elementSize._2;
 
-      if (currentLine.size() > 0 && lineX.plus(size.getX()).gt(maxWidth)) {
+      // non-participating elements may clip the right side - that's what they signed up for
+      if (currentLine.size() > 0 && participatesInLayout && lineX.plus(size.getX()).gt(maxWidth)) {
         // doesn't fit on line
         lines.add(currentLine);
         currentLine = Collections.list(elementSize);
@@ -255,9 +256,14 @@ public abstract class ContainerElement extends ElementBase {
     Dim currentY = ZERO;
     Dim right = ZERO;
     for (List<Tuple2<IElement, DimPoint>> line : lines) {
-      List<Tuple2<IElement, DimPoint>> participatingLines = Collections.filter(line, l -> l._1.getLayoutGroup() == LayoutGroup.ALL);
-      Dim lineHeight = Dim.max(Collections.map(participatingLines, l -> l._2.getY()));
-      Dim lineContentWidth = Dim.sum(Collections.map(participatingLines, l -> l._2.getX()));
+      List<Tuple2<IElement, DimPoint>> participatingItems = Collections.filter(line, l -> l._1.getLayoutGroup() == LayoutGroup.ALL);
+
+      Dim lineHeight = ZERO;
+      Dim lineContentWidth = ZERO;
+      if (participatingItems.size() > 0) {
+        lineHeight = Dim.max(Collections.map(participatingItems, l -> l._2.getY()));
+        lineContentWidth = Dim.sum(Collections.map(participatingItems, l -> l._2.getX()));
+      }
       Dim freeWidth = maxWidth.minus(lineContentWidth); // horizontal wiggle room
 
       // the line elements' horizontal alignment is prioritised from left to right.
@@ -295,8 +301,7 @@ public abstract class ContainerElement extends ElementBase {
         Dim thisRelX = currentX.plus(xOffset);
         Dim thisRelY = currentY.plus(yOffset);
         boolean isParticipating = element.getLayoutGroup() == LayoutGroup.ALL;
-        DimPoint effectiveSize = isParticipating ? size : new DimPoint(ZERO, ZERO);
-        this.childrenRelBoxes.put(element, new DimRect(thisRelX, thisRelY, effectiveSize.getX(), effectiveSize.getY()));
+        this.childrenRelBoxes.put(element, new DimRect(thisRelX, thisRelY, size.getX(), size.getY()));
 
         if (isParticipating) {
           currentX = thisRelX.plus(size.getX());

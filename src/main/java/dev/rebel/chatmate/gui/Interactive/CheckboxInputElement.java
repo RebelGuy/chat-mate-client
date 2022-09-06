@@ -32,6 +32,7 @@ public class CheckboxInputElement extends InputElement {
 
   private float scale;
   private @Nullable Consumer<Boolean> onChange;
+  private Colour labelColour;
   private Colour borderColour;
 
   public CheckboxInputElement(InteractiveContext context, IElement parent) {
@@ -47,6 +48,7 @@ public class CheckboxInputElement extends InputElement {
     this.scale = 1;
     this.onChange = null;
     this.borderColour = Colour.BLACK;
+    this.labelColour = Colour.WHITE;
     this.isHovering = new AnimatedBool(200L, false);
     this.isFocused = new AnimatedBool(100L, false);
     this.isChecked = new AnimatedBool(100L, false);
@@ -122,7 +124,22 @@ public class CheckboxInputElement extends InputElement {
     }
   }
 
+  @Override
+  public InputElement setEnabled(Object key, boolean enabled) {
+    super.setEnabled(key, enabled);
+    if (super.getEnabled()) {
+      this.labelElement.setColour(this.labelColour);
+    } else {
+      this.labelElement.setColour(this.labelColour.withBrightness(0.5f));
+    }
+    return this;
+  }
+
   private void onFlipChecked() {
+    if (!super.getEnabled()) {
+      return;
+    }
+
     boolean isChecked = this.isChecked.flip();
     if (this.onChange != null) {
       this.onChange.accept(isChecked);
@@ -152,13 +169,21 @@ public class CheckboxInputElement extends InputElement {
     Dim cornerRadius = gui(0);
     Dim shadowDistance = gui(1 + this.isFocused.getFrac());
     Colour shadowColour = Colour.lerp(Colour.BLACK, Colour.CYAN.withBrightness(0.5f), this.isFocused.getFrac());
-    RendererHelpers.drawRect(0, checkbox, background, borderWidth, this.borderColour, cornerRadius, shadowDistance, shadowColour);
+    Colour borderColour = this.borderColour;
+
+    if (!super.getEnabled()) {
+      background = Colour.TRANSPARENT;
+      shadowDistance = ZERO;
+      borderColour = borderColour.withBrightness(0.5f);
+    }
+
+    RendererHelpers.drawRect(0, checkbox, background, borderWidth, borderColour, cornerRadius, shadowDistance, shadowColour);
 
     RendererHelpers.withMapping(checkbox.getCentre(), this.isChecked.getFrac(), () -> {
       FontEngine font = super.context.fontEngine;
-      Dim height = gui(font.FONT_HEIGHT);
+      Dim height = font.FONT_HEIGHT_DIM;
       Dim width = gui(font.getCharWidth('x'));
-      font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), new Font().withColour(Colour.WHITE));
+      font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), this.labelElement.getFont());
     });
 
     this.labelElement.render(null);

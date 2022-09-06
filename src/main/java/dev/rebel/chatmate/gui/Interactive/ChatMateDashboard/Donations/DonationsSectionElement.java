@@ -24,6 +24,7 @@ import dev.rebel.chatmate.models.api.donation.UnlinkUserResponse.UnlinkUserRespo
 import dev.rebel.chatmate.models.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus;
+import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus.LivestreamStatus;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.proxy.EndpointProxy;
@@ -65,10 +66,12 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         .setChecked(true)
         .onCheckedChanged(this::onFilterChanged)
         .setLabel("Show only unlinked donations");
+    boolean isActiveLivestream = statusService.getLivestreamStatus() != null && statusService.getLivestreamStatus().status == LivestreamStatus.Live;
     this.currentLivestreamCheckbox = SharedElements.CHECKBOX_LIGHT.create(context, this)
-        .setChecked(true)
+        .setChecked(isActiveLivestream)
         .onCheckedChanged(this::onFilterChanged)
         .setLabel("Show only donations from the current livestream")
+        .setEnabled(this, isActiveLivestream)
         .setMargin(new RectExtension(ZERO, ZERO, gui(2), gui(8)))
         .cast();
 
@@ -228,6 +231,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       IElement userNameElement;
       if (this.editingDonations.containsKey(donation) && donation.linkedUser == null) {
         if (this.editingElements.containsKey(donation)) {
+          // this saves the state of the element over multiple calls to `getRow`
           userNameElement = this.editingElements.get(donation);
         } else {
           Consumer<PublicUser> onUserSelected = newUser -> {
@@ -322,8 +326,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
 
     private void updateTable() {
       List<PublicDonation> donationsToShow = Collections.filter(this.donations, d -> {
-        // filter doesn't apply if livestream hasn't started, or there is no active livestream\
-        if (this.showCurrentLivestreamOnly && this.livestreamStatus != null && this.livestreamStatus.startTime != null && d.time < this.livestreamStatus.startTime) {
+        // filter doesn't apply if livestream hasn't started, or there is no active livestream
+        if (this.showCurrentLivestreamOnly &&
+            this.livestreamStatus != null &&
+            this.livestreamStatus.status == LivestreamStatus.Live &&
+            d.time < this.livestreamStatus.startTime) {
           return false;
         }
 

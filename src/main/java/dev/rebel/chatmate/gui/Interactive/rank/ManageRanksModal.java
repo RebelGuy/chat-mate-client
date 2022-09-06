@@ -2,7 +2,7 @@ package dev.rebel.chatmate.gui.Interactive.rank;
 
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
-import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.Anchor;
+import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.HorizontalPosition;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.AnchorBoxSizing;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
@@ -121,7 +121,7 @@ public class ManageRanksModal extends ModalElement {
 
       // todo: move into CreateRank element
       this.createNewRankDropdown = new DropdownMenuV2(context, this.createNewRankButton, AnchorBoxSizing.CONTENT)
-          .setAnchor(Anchor.LEFT)
+          .setHorizontalPosition(HorizontalPosition.LEFT)
           .setBorder(new RectExtension(gui(1)))
           .setSizingMode(SizingMode.FILL)
           .cast();

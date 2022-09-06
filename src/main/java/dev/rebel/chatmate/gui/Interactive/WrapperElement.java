@@ -44,8 +44,8 @@ public class WrapperElement extends SingleElement {
   public void setBox(DimRect box) {
     super.setBox(box);
 
-    DimRect labelBox = this.alignChild(this.contents);
-    this.contents.setBox(labelBox);
+    DimRect contentsBox = this.alignChild(this.contents);
+    this.contents.setBox(contentsBox);
   }
 
   @Override
