@@ -7,6 +7,9 @@ import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
+import dev.rebel.chatmate.gui.chat.UserNameChatComponent;
+import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
@@ -36,10 +39,12 @@ public class MessageService {
   private final Random random = new Random();
   private final LogService logService;
   private final FontEngine fontEngine;
+  private final DimFactory dimFactory;
 
-  public MessageService(LogService logService, FontEngine fontEngine) {
+  public MessageService(LogService logService, FontEngine fontEngine, DimFactory dimFactory) {
     this.logService = logService;
     this.fontEngine = fontEngine;
+    this.dimFactory = dimFactory;
   }
 
   public IChatComponent getErrorMessage(String msg) {
@@ -121,7 +126,7 @@ public class MessageService {
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
-    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, entry.user.userInfo.channelName, true)));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, this.dimFactory), entry.user.userInfo.channelName, true, !deEmphasise)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
@@ -141,7 +146,8 @@ public class MessageService {
     // has multiple channels so then we must print a list
     PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(4 + levelNumberWidth + 4), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
     ChatStyle style = userNames.youtubeChannelNames.length > 0 ? YOUTUBE_CHANNEL_STYLE : TWITCH_CHANNEL_STYLE;
-    IChatComponent component = this.getUserComponent(userNames.user, style, userNames.user.userInfo.channelName, true);
+    Font font = Font.fromChatStyle(style, this.dimFactory);
+    IChatComponent component = this.getUserComponent(userNames.user, font, userNames.user.userInfo.channelName, true, false);
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(levelLayout, styledText(level, getLevelStyle(userNames.user.levelInfo.level))));
@@ -258,10 +264,10 @@ public class MessageService {
   }
 
   public IChatComponent getUserComponent(PublicUser user) {
-    return this.getUserComponent(user, VIEWER_NAME_STYLE, user.userInfo.channelName, true);
+    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), user.userInfo.channelName, true, true);
   }
 
-  public IChatComponent getUserComponent(PublicUser user, ChatStyle style, String channelName, boolean showPunishmentPrefix) {
+  public IChatComponent getUserComponent(PublicUser user, Font font, String channelName, boolean showPunishmentPrefix, boolean useEffects) {
     ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(channelName);
     String unstyledName = extractedFormatting.unformattedText.trim();
 
@@ -287,7 +293,7 @@ public class MessageService {
       }
     }
 
-    return new ContainerChatComponent(styledText(unstyledName, style), user);
+    return new ContainerChatComponent(new UserNameChatComponent(this.fontEngine, this.dimFactory, user, font, unstyledName, useEffects), user);
   }
 
   public IChatComponent getRankComponent(List<PublicRank> activeRanks) {

@@ -6,7 +6,6 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -113,7 +112,7 @@ public class DonationElement extends ContainerElement {
     // the empty bar looks weird, so fade it out
     float alpha = Math.min(1, w.times(frac).over(cornerRadius.times(2)));
 
-    Colour backgroundColour = Colour.DKGREY.withAlpha(alpha);
+    Colour backgroundColour = Colour.GREY25.withAlpha(alpha);
     Colour barColour = Colour.CYAN.withBrightness(0.5f).withAlpha(alpha);
     RendererHelpers.drawRect(0, box, backgroundColour, null, null, cornerRadius);
     RendererHelpers.drawRect(0, box.withWidth(barWidth), barColour, null, null, cornerRadius);

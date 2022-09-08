@@ -470,6 +470,13 @@ public class CustomGuiNewChat extends GuiNewChat {
         }
         lineX += width + imageComponent.paddingGuiRight;
 
+      } else if (component instanceof UserNameChatComponent) {
+        UserNameChatComponent userNameChatComponent = (UserNameChatComponent)component;
+        lineX += userNameChatComponent.getWidth();
+        if (lineX > x) {
+          return originalComponent;
+        }
+
       } else if (component instanceof ContainerChatComponent) {
         throw new RuntimeException("Cannot get chat component because a container has not been unwrapped.");
       }

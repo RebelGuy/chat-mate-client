@@ -8,7 +8,6 @@ import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.util.Memoiser;
 import net.minecraft.client.renderer.GlStateManager;
-import org.lwjgl.util.Color;
 import scala.Tuple2;
 
 import java.util.ArrayList;
@@ -99,7 +98,7 @@ public class ContextMenu {
   private void drawOptions(List<OptionBox> boxes, int x, int y, Dim mouseX, Dim mouseY, FontEngine fontEngine) {
     for (OptionBox box : boxes) {
       boolean hoveringOverBox = box.testPosition(mouseX, mouseY);
-      Font font = new Font().withColour(hoveringOverBox ? Colour.WHITE : Colour.LTGREY).withShadow(new Shadow(this.dimFactory));
+      Font font = new Font().withColour(hoveringOverBox ? Colour.WHITE : Colour.GREY75).withShadow(new Shadow(this.dimFactory));
 
       for (String line : box.textLines) {
         fontEngine.drawString(line, (float)x, (float)y, font);

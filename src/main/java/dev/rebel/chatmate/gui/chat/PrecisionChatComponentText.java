@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.chat;
 
 import com.google.common.collect.Iterators;
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.services.util.Objects;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
@@ -93,8 +94,14 @@ public class PrecisionChatComponentText implements IChatComponent {
       throw new RuntimeException("Did not expect layout alignment " + layout.alignment);
     }
 
-    // make sure we don't lose any style information from the parent (e.g. mouse actions)
-    IChatComponent effectiveComponent = new ChatComponentText(text);
+    IChatComponent effectiveComponent;
+    if (Objects.ifClass(ContainerChatComponent.class, component, c -> Objects.ifClass(UserNameChatComponent.class, c.getComponent(), null))) {
+      UserNameChatComponent userNameChatComponent = Objects.casted(ContainerChatComponent.class, component, c -> Objects.casted(UserNameChatComponent.class, c.getComponent()));
+      userNameChatComponent.setDisplayName(text);
+      effectiveComponent = userNameChatComponent;
+    } else {
+      effectiveComponent = new ChatComponentText(text);
+    }
     PrecisionLayout effectiveLayout = new PrecisionLayout(new PrecisionValue(effectivePosition), new PrecisionValue(textWidth), PrecisionAlignment.LEFT);
     return new Tuple2<>(effectiveLayout, effectiveComponent);
   }

@@ -60,7 +60,7 @@ public class SidebarElement extends ContainerElement {
 
     super.addElement(new LabelElement(context, this)
         .setText(context.environment.buildName)
-        .setColour(Colour.LTGREY)
+        .setColour(Colour.GREY75)
         .setFontScale(0.5f)
         .setPadding(new RectExtension(gui(0), gui(0), gui(4), gui(0)))
         .setMargin(new RectExtension(gui(0), gui(0), gui(0), gui(-8))) // this actually works... wow!

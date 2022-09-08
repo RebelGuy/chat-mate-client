@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.style;
 
 import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.models.DimFactory;
+import net.minecraft.util.ChatStyle;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -112,5 +114,16 @@ public class Font {
     Font newFont = new Font(this);
     updater.accept(newFont);
     return newFont;
+  }
+
+  public static Font fromChatStyle(ChatStyle chatStyle, DimFactory dimFactory) {
+    return new Font()
+        .withColour(Colour.fromChatColour(chatStyle.getColor()))
+        .withBold(chatStyle.getBold())
+        .withItalic(chatStyle.getItalic())
+        .withObfuscated(chatStyle.getObfuscated())
+        .withStrikethrough(chatStyle.getStrikethrough())
+        .withUnderlined(chatStyle.getUnderlined())
+        .withShadow(new Shadow(dimFactory)); // all chat components are rendered to chat with a shadow
   }
 }

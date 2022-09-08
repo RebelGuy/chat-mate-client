@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
+import dev.rebel.chatmate.gui.chat.UserNameChatComponent;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -33,7 +34,7 @@ public class ChatComponentRenderer extends Gui {
       return drawChatComponent(container.getComponent(), x, y, opacity);
 
     } else if (component instanceof ChatComponentText) {
-      String formattedText = getFormattedText((ChatComponentText)component);
+      String formattedText = getFormattedText((ChatComponentText) component);
       Font font = new Font().withColour(Colour.WHITE.withAlpha(opacity)).withShadow(new Shadow(this.dimFactory));
       this.fontEngine.drawString(formattedText, x, y, font);
       return this.fontEngine.getStringWidth(formattedText);
@@ -79,6 +80,10 @@ public class ChatComponentRenderer extends Gui {
       GlStateManager.popMatrix();
 
       return requiredWidthInt;
+
+    } else if (component instanceof UserNameChatComponent) {
+      UserNameChatComponent userNameChatComponent = (UserNameChatComponent)component;
+      return userNameChatComponent.renderComponent(this.dimFactory.fromGui(x), this.dimFactory.fromGui(y), opacity);
 
     } else {
       throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());

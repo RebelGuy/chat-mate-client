@@ -8,11 +8,9 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.models.api.user.SearchUserRequest;
-import dev.rebel.chatmate.models.api.user.SearchUserResponse;
 import dev.rebel.chatmate.models.api.user.SearchUserResponse.SearchUserResponseData;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
@@ -179,7 +177,7 @@ public class UserPickerElement extends ContainerElement {
         container.addElement(nameElement).addElement(ranksElement);
         this.dropdownMenu.addOption(new BackgroundElement(super.context, this, container)
             .setCornerRadius(gui(2))
-            .setHoverColour(Colour.LTGREY.withAlpha(0.2f))
+            .setHoverColour(Colour.GREY75.withAlpha(0.2f))
             .setMargin(new RectExtension(gui(1), gui(1)))
         );
       }

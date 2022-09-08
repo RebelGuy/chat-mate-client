@@ -13,11 +13,8 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -127,7 +124,7 @@ public class ButtonElement extends InputElement {
     if (super.isHovering() && this.getEnabled()) {
       Dim borderDistance = super.getPadding().left;
       Dim innerCornerRadius = Dim.max(screen(6), this.borderCornerRadius.minus(borderDistance));
-      RendererHelpers.drawRect(0, this.getContentBox(), Colour.TRANSPARENT, borderWidth, Colour.LTGREY, innerCornerRadius);
+      RendererHelpers.drawRect(0, this.getContentBox(), Colour.TRANSPARENT, borderWidth, Colour.GREY75, innerCornerRadius);
     }
 
     if (this.childElement != null) {

@@ -558,7 +558,7 @@ public class ManageRanksModal extends ModalElement {
                     ).addElement(
                         new LabelElement(context, this)
                             .setText(this.createAdapter.getExpirationSubtitle(this.rank))
-                            .setColour(Colour.LTGREY)
+                            .setColour(Colour.GREY75)
                             .setFontScale(0.5f)
                             .setOverflow(TextOverflow.TRUNCATE)
                             .setVerticalAlignment(VerticalAlignment.MIDDLE)

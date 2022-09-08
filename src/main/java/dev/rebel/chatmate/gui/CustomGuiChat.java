@@ -85,8 +85,8 @@ public class CustomGuiChat extends GuiChat {
 
       if (component instanceof ContainerChatComponent) {
         ContainerChatComponent container = (ContainerChatComponent)component;
-        if (container.data instanceof PublicUser) {
-          this.contextMenuService.showUserContext(x, y, (PublicUser)container.data);
+        if (container.getData() instanceof PublicUser) {
+          this.contextMenuService.showUserContext(x, y, (PublicUser)container.getData());
           return new MouseEventData.Out(MouseEventData.Out.MouseHandlerAction.HANDLED);
         }
       }
@@ -143,10 +143,10 @@ public class CustomGuiChat extends GuiChat {
 
     if (component instanceof ContainerChatComponent) {
       ContainerChatComponent container = (ContainerChatComponent)component;
-      if (container.data instanceof PublicUser) {
+      if (container.getData() instanceof PublicUser) {
         return ComponentActionType.CONTEXT;
       } else {
-        return getComponentActionType(container.component);
+        return getComponentActionType(container.getComponent());
       }
     } else {
       ClickEvent clickEvent = component.getChatStyle().getChatClickEvent();

@@ -85,9 +85,9 @@ public class ComponentHelperTests {
     Assert.assertEquals(0, result.get(0).getSiblings().size());
     Assert.assertEquals(0, result.get(1).getSiblings().size());
     Assert.assertEquals("Test1", result.get(0).getUnformattedTextForChat());
-    Assert.assertEquals(data, ((ContainerChatComponent)result.get(0)).data);
+    Assert.assertEquals(data, ((ContainerChatComponent)result.get(0)).getData());
     Assert.assertEquals("234", result.get(1).getUnformattedTextForChat());
-    Assert.assertEquals(data, ((ContainerChatComponent)result.get(1)).data);
+    Assert.assertEquals(data, ((ContainerChatComponent)result.get(1)).getData());
   }
 
   @Test

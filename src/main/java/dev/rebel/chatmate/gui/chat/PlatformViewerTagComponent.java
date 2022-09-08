@@ -25,9 +25,9 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
 
   private void setComponent(boolean identifyPlatforms) {
     if (identifyPlatforms) {
-      super.component = this.platform == ChatPlatform.Youtube ? YOUTUBE_COMPONENT : TWITCH_COMPONENT;
+      super.setComponent(this.platform == ChatPlatform.Youtube ? YOUTUBE_COMPONENT : TWITCH_COMPONENT);
     } else {
-      super.component = new ChatComponentText("");
+      super.setComponent(new ChatComponentText(""));
     }
   }
 }

@@ -92,7 +92,7 @@ public class ChatMate {
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory);
-    MessageService messageService = new MessageService(logService, fontEngine);
+    MessageService messageService = new MessageService(logService, fontEngine, dimFactory);
     ImageService imageService = new ImageService(minecraft);
     McChatService mcChatService = new McChatService(minecraftProxyService,
         logService,

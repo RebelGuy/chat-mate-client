@@ -82,11 +82,13 @@ public class ComponentHelpers {
     if (component instanceof ContainerChatComponent) {
       return trimComponent((ContainerChatComponent)component, maxWidth, isLineStart, font);
     } else if (component instanceof ChatComponentText) {
-      return trimComponent((ChatComponentText) component, maxWidth, isLineStart, font);
+      return trimComponent((ChatComponentText)component, maxWidth, isLineStart, font);
     } else if (component instanceof ImageChatComponent) {
       return trimComponent((ImageChatComponent)component, maxWidth, isLineStart, font);
     } else if (component instanceof PrecisionChatComponentText && isLineStart) {
       return new TrimmedComponent(component, maxWidth, null);
+    } else if (component instanceof UserNameChatComponent) {
+      return trimmedComponent((UserNameChatComponent)component, maxWidth, isLineStart, font);
     } else {
       throw new RuntimeException(String.format("Unable to trim component (isLineStart=%s) because it is of type %s", String.valueOf(isLineStart), component.getClass().getSimpleName()));
     }
@@ -169,14 +171,14 @@ public class ComponentHelpers {
 
   private static TrimmedComponent trimComponent(ContainerChatComponent component, int maxWidth, boolean isLineStart, FontEngine font) {
     // only take the direct child, so we re-wrap the container correctly later
-    IChatComponent unpackedComponent = component.component;
+    IChatComponent unpackedComponent = component.getComponent();
 
     // even though we are possibly destroying the unpacked component reference, it's ok because modifying the properties in ContainerChatComponent
     // requires a chat refresh already, meaning this method will be called anyway
     TrimmedComponent trimmed = trimComponent(unpackedComponent, maxWidth, isLineStart, font);
     IChatComponent innerComponent = trimmed.component == null ? new ChatComponentText("") : trimmed.component;
-    ContainerChatComponent trimmedContainer = new ContainerChatComponent(innerComponent, component.data);
-    ContainerChatComponent leftoverContainer = trimmed.leftover == null ? null : new ContainerChatComponent(trimmed.leftover, component.data);
+    ContainerChatComponent trimmedContainer = new ContainerChatComponent(innerComponent, component.getData());
+    ContainerChatComponent leftoverContainer = trimmed.leftover == null ? null : new ContainerChatComponent(trimmed.leftover, component.getData());
 
     return new TrimmedComponent(trimmedContainer, trimmed.trimmedWidth, leftoverContainer);
   }
@@ -188,6 +190,15 @@ public class ComponentHelpers {
     } else {
       // add to next line
       return new TrimmedComponent(new ChatComponentText(""), requiredWidth, component);
+    }
+  }
+
+  private static TrimmedComponent trimmedComponent(UserNameChatComponent component, int maxWidth, boolean isLineStart, FontEngine fontEngine) {
+    int componentWidth = fontEngine.getStringWidth(component.user.userInfo.channelName);
+    if (isLineStart || componentWidth <= maxWidth) {
+      return new TrimmedComponent(component, componentWidth, null);
+    } else {
+      return new TrimmedComponent(new ChatComponentText(""), componentWidth, component);
     }
   }
 

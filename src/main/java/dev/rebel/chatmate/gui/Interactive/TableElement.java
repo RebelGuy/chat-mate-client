@@ -297,7 +297,7 @@ public class TableElement<T> extends ContainerElement {
     protected void renderElement() {
       float hoveringIntensity = this.state.getState().hovering.getFrac();
       if (hoveringIntensity > 0) {
-        RendererHelpers.drawRect(0, this.getBox(), Colour.LTGREY.withAlpha(0.1f * hoveringIntensity), null, null, gui(2));
+        RendererHelpers.drawRect(0, this.getBox(), Colour.GREY75.withAlpha(0.1f * hoveringIntensity), null, null, gui(2));
       }
 
       super.renderElement();

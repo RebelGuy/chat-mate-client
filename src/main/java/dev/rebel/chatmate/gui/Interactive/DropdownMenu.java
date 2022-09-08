@@ -214,7 +214,7 @@ public class DropdownMenu extends ContainerElement {
     for (Tuple2<LabelElement, Runnable> option : this.options) {
       LabelElement label = option._1;
       if (label.getContentBox().checkCollision(position)) {
-        label.setColour(Colour.LTGREY);
+        label.setColour(Colour.GREY75);
       } else {
         label.setColour(Colour.WHITE);
       }

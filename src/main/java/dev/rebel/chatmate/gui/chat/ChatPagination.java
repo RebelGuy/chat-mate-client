@@ -76,10 +76,10 @@ public class ChatPagination<T> {
     T[] visibleItems = this.getVisibleItems();
     for (int i = 0; i < renderedComponents.length; i++) {
       if (i < visibleItems.length) {
-        this.renderedComponents[i].component = this.renderer.renderItem(visibleItems[i], visibleItems, this.fontEngine, chatWidth, effectiveChatWidth);
+        this.renderedComponents[i].setComponent(this.renderer.renderItem(visibleItems[i], visibleItems, this.fontEngine, chatWidth, effectiveChatWidth));
       } else {
         // empty padding on the last page
-        this.renderedComponents[i].component = emptyLine;
+        this.renderedComponents[i].setComponent(emptyLine);
       }
     }
 
@@ -140,7 +140,7 @@ public class ChatPagination<T> {
 
   private void renderHeader() {
     if (this.headerText == null) {
-      this.renderedHeader1.component = new ChatComponentText("");
+      this.renderedHeader1.setComponent(new ChatComponentText(""));
     } else {
       PrecisionLayout layout = new PrecisionLayout(new PrecisionValue(0.0f), new PrecisionValue(1.0f), PrecisionAlignment.CENTRE);
       ChatComponentText component = new ChatComponentText(this.headerText);
@@ -149,19 +149,19 @@ public class ChatPagination<T> {
       ClickEventWithCallback onClose = new ClickEventWithCallback(this.logService, this::delete, true);
       ChatComponentText closeComponent = styledText("[x]", onClose.bind(INTERACTIVE_STYLE_DE_EMPHASISE.get()));
 
-      this.renderedHeader1.component = new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(closeLayout, closeComponent)));
-      this.renderedHeader2.component = new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(layout, component)));
+      this.renderedHeader1.setComponent(new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(closeLayout, closeComponent))));
+      this.renderedHeader2.setComponent(new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(layout, component))));
     }
   }
 
   private void renderFooter() {
-    this.renderedFooter.component = this.messageService.getPaginationFooterMessage(
+    this.renderedFooter.setComponent(this.messageService.getPaginationFooterMessage(
         this.minecraftProxyService.getChatWidthForText(),
         this.currentPage + 1,
         this.maxPage + 1,
         this.enablePreviousPage() ? this::onPreviousPage : null,
         this.enableNextPage() ? this::onNextPage : null
-    );
+    ));
   }
 
   private boolean enablePreviousPage() {

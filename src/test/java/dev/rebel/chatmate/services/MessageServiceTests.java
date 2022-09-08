@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
@@ -21,12 +22,13 @@ import static org.mockito.Mockito.when;
 public class MessageServiceTests {
   @Mock LogService logService;
   @Mock FontEngine fontEngine;
+  @Mock DimFactory dimFactory;
 
   MessageService messageService;
 
   @Before
   public void setup() {
-    this.messageService = new MessageService(this.logService, this.fontEngine);
+    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory);
 
     when(this.fontEngine.getStringWidth(anyString())).thenAnswer(i -> ((String)i.getArgument(0)).length());
   }
