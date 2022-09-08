@@ -1,13 +1,13 @@
 package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
+import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedSelection;
+import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.hud.Colour;
-import dev.rebel.chatmate.gui.models.AbstractChatLine;
+import dev.rebel.chatmate.gui.models.*;
 import dev.rebel.chatmate.gui.models.ChatLine;
-import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -147,29 +147,46 @@ public class CustomGuiNewChat extends GuiNewChat {
     GlStateManager.translate(LEFT, 20.0F, 0.0F);
     GlStateManager.scale(scale, scale, 1.0F);
 
-    // for every line that is between the scroll position and
-    int renderedLines = 0; // how many lines we have actually rendered
-    for (int i = 0; i + this.scrollPos < this.chatLines.size() && i < maxLines; ++i) {
-      ChatLine line = this.chatLines.get(i + this.scrollPos);
-      if (line == null) {
-        continue;
-      }
+    LineIterator lineIterator = lineAction -> {
+      for (int i = 0; i + this.scrollPos < this.chatLines.size() && i < maxLines; ++i) {
+        ChatLine line = this.chatLines.get(i + this.scrollPos);
+        if (line == null) {
+          continue;
+        }
 
-      int lineOpacity = this.getLineOpacity(updateCounter, line, opacity);
-      if (lineOpacity < 4) {
-        // todo: standardise magic transparency number, we've seen this before when drawing the view count reels
-        continue;
-      }
+        int lineOpacity = this.getLineOpacity(updateCounter, line, opacity);
+        if (lineOpacity < 4) {
+          // todo: standardise magic transparency number, we've seen this before when drawing the view count reels
+          continue;
+        }
 
-      this.drawLine(line, i, lineOpacity, width);
-      renderedLines++;
-    }
+        lineAction.act(line, i, lineOpacity);
+      }
+    };
+
+    // render visible lines. draw the background first so that any chat line contents with negative y offsets are
+    // not clipped by the background of the line above it
+    lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLineBackground(line, i, lineOpacity, width));
+    lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLine(line, i, lineOpacity, width));
+    State<Integer> renderedLines = new State<>(0); // how many lines we have actually rendered
+    lineIterator.forEachLine((line, i, lineOpacity) -> renderedLines.setState(current -> current + 1));
 
     if (this.getChatOpen()) {
-      this.drawScrollBar(lineCount, renderedLines);
+      this.drawScrollBar(lineCount, renderedLines.getState());
     }
 
     GlStateManager.popMatrix();
+  }
+
+  private void drawLineBackground(ChatLine line, int index, int opacity, int width) {
+    int lineBottom = -index * this.fontEngine.FONT_HEIGHT; // negative because we iterate from the bottom line to the top line
+    int lineTop = lineBottom - this.fontEngine.FONT_HEIGHT;
+
+    Dim x = this.dimFactory.fromGui(0);
+    Dim y = this.dimFactory.fromGui(lineTop);
+    Dim w = this.dimFactory.fromGui(width + 4);
+    Dim h = this.fontEngine.FONT_HEIGHT_DIM;
+    RendererHelpers.drawRect(-100, new DimRect(x, y, w, h), this.getBackgroundColour(line, opacity));
   }
 
   private void drawLine(ChatLine line, int index, int opacity, int width) {
@@ -177,8 +194,6 @@ public class CustomGuiNewChat extends GuiNewChat {
     int lineBottom = -index * this.fontEngine.FONT_HEIGHT; // negative because we iterate from the bottom line to the top line
     int lineTop = lineBottom - this.fontEngine.FONT_HEIGHT;
 
-    Colour backgroundColour = this.getBackgroundColour(line, opacity);
-    drawRect(0, lineTop, lineLeft + width + 4, lineBottom, backgroundColour.toSafeInt());
     GlStateManager.enableBlend();
 
     // unpack the container
@@ -631,5 +646,15 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Returns the width in GUI space. */
   private int getLineWidth() {
     return MathHelper.floor_float((float)this.getChatWidth() / this.getChatScale());
+  }
+
+  @FunctionalInterface
+  private interface LineIterator {
+    void forEachLine(LineAction step);
+  }
+
+  @FunctionalInterface
+  private interface LineAction {
+    void act(ChatLine line, int index, int opacity);
   }
 }

@@ -463,7 +463,7 @@ public class RendererHelpers {
     GlStateManager.popMatrix();
   }
 
-  private static void addVertex(WorldRenderer worldRenderer, int zLevel, DimPoint point, Colour colour) {
+  public static void addVertex(WorldRenderer worldRenderer, int zLevel, DimPoint point, Colour colour) {
     worldRenderer.pos(point.getX().round().getGui(), point.getY().round().getGui(), zLevel).color(colour.red / 255.0f, colour.green / 255.0f, colour.blue / 255.0f, colour.alpha / 255.0f).endVertex();
   }
 

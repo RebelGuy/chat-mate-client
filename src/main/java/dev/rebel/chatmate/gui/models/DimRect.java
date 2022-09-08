@@ -122,6 +122,10 @@ public class DimRect {
     );
   }
 
+  public DimPoint getRelativePoint(float relX, float relY) {
+    return new DimPoint(this.getX().plus(this.getWidth().times(relX)), this.getY().plus(this.getHeight().times(relY)));
+  }
+
   @Override
   public String toString() {
     return String.format("{%s, %s}", this.getPosition().toString(), this.getSize().toString());
