@@ -64,6 +64,7 @@ public class MessageServiceTests {
   @Test
   public void getUserComponent_UsesTrimmedName() {
     PublicUser user = new PublicUser() {{
+      id = 1;
       userInfo = new PublicChannelInfo() {{
         channelName = " Test channel ! ";
         activeRanks = new PublicUserRank[0];

@@ -174,6 +174,17 @@ public class UserNameChatComponent extends ChatComponentBase {
     this.particles.forEach(p -> p.render(t, deltaT, alpha));
   }
 
+  private static Colour getRandomFlameColour() {
+    float targetR = 226 / 255f;
+    float targetG = 88 / 255f;
+    float targetB = 34 / 255f;
+    float brightness = Math.min(1, (float)Math.random() * 2);
+    float r = Math.min(1, (1 + (float)(Math.random() * 0.4 - 0.15)) * targetR); // tending towards more red
+    float g = (1 + (float)(Math.random() * 1 - 0.3)) * targetG; // higher values make it more yellow
+    float b = (1 + (float)(Math.random() * 0.4 - 0.2)) * targetB;
+    return new Colour(r, g, b).withBrightness(brightness);
+  }
+
   private static class Particle {
     private final DimFactory dimFactory;
     private final DimRect rect;
@@ -193,7 +204,8 @@ public class UserNameChatComponent extends ChatComponentBase {
 
       this.mass = (float)Math.random() / 2 + 0.5f;
       this.lifetime = Math.random() * 7 + 3;
-      this.colour = new Colour((float)Math.random(), (float)Math.random(), (float)Math.random());
+
+      this.colour = getRandomFlameColour();
       this.corners = (int)(Math.random() * 7 + 3);
 
       float velocityScale = 3;
@@ -220,7 +232,7 @@ public class UserNameChatComponent extends ChatComponentBase {
     }
 
     private void updatePosition(double deltaT) {
-      float perturbationMultiplier = 10 * (1 - this.mass);
+      float perturbationMultiplier = 20 * (1 - this.mass);
       this.position = this.position
           .plus(this.velocity.scale((float)deltaT))
           .plus(new DimPoint(
@@ -234,7 +246,7 @@ public class UserNameChatComponent extends ChatComponentBase {
       float momentumMultiplier = 30 * (1 - this.mass);
       this.velocity = this.velocity.plus(new DimPoint(
           this.dimFactory.fromGui((float)(Math.random() * 2 - 1) * (float)deltaT * momentumMultiplier),
-          this.dimFactory.fromGui((float)(Math.random() * 2 - 1) * (float)deltaT * momentumMultiplier)
+          this.dimFactory.fromGui((float)(Math.random() * 1.8 - 1) * (float)deltaT * momentumMultiplier) // tending upwards
       ));
     }
 
@@ -252,6 +264,13 @@ public class UserNameChatComponent extends ChatComponentBase {
       GlStateManager.pushMatrix();
       GlStateManager.translate(this.position.getX().getGui(), this.position.getY().getGui(), 0);
 
+      GlStateManager.enableBlend();
+      GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+      GlStateManager.disableAlpha();
+      GlStateManager.disableTexture2D();
+      GlStateManager.depthMask(false); // this ensures we can draw multiple transparent things on top of each other
+      GlStateManager.shadeModel(GL11.GL_SMOOTH); // for being able to draw colour gradients
+
       Tessellator tessellator = Tessellator.getInstance();
       WorldRenderer worldRenderer = tessellator.getWorldRenderer();
       worldRenderer.begin(GL_POLYGON, DefaultVertexFormats.POSITION_COLOR); // the final shape is always a convex polygon, so we can draw it in one go
@@ -265,6 +284,12 @@ public class UserNameChatComponent extends ChatComponentBase {
         addVertex(worldRenderer, -10, new DimPoint(x, y), colour);
       }
       tessellator.draw();
+
+      GlStateManager.disableBlend();
+      GlStateManager.enableAlpha();
+      GlStateManager.enableTexture2D();
+      GlStateManager.depthMask(true);
+      GlStateManager.shadeModel(GL11.GL_FLAT);
 
       GlStateManager.popMatrix();
     }
