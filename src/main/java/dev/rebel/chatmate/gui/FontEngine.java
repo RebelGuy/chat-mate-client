@@ -173,9 +173,14 @@ public class FontEngine {
 
   /** Render the given char at the position. */
   private Dim renderChar(char ch, Font font, Dim x, Dim y) {
-    if (ch == CHAR_SPACE) {
-      return this.dimFactory.fromGui(4);
-    }
+    CharRenderer renderer = (c, isItalic, posX, posY, posZ) -> {
+      if (ch == CHAR_SPACE) {
+        // we don't actually render spaces, as the texture is only one unit across
+        return this.dimFactory.fromGui(4);
+      } else {
+        return this.renderCharTexture(c, isItalic, posX, posY, posZ);
+      }
+    };
 
     // this method can probably be refactored into a much more elegant approach, but it'll do for now.
     final State<Dim> width = new State<>(this.dimFactory.zeroGui()); // hack so we can modify this inside the lambdas... thanks java
@@ -217,10 +222,10 @@ public class FontEngine {
         Dim shadowX = x.plus(shadow.getOffset().getX().times(offsetMultiplier));
         Dim shadowY = y.plus(shadow.getOffset().getX().times(offsetMultiplier));
         Dim shadowWidth = this.dimFactory.zeroGui();
-        shadowWidth = shadowWidth.plus(this.renderCharTexture(ch, font.getItalic(), shadowX, shadowY, -1));
+        shadowWidth = shadowWidth.plus(renderer.render(ch, font.getItalic(), shadowX, shadowY, -1));
 
         if (font.getBold()) {
-          this.renderCharTexture(ch, font.getItalic(), shadowX.plus(boldOffsetX), shadowY, -2);
+          renderer.render(ch, font.getItalic(), shadowX.plus(boldOffsetX), shadowY, -2);
           shadowWidth = shadowWidth.plus(boldOffsetX);
         }
 
@@ -229,10 +234,10 @@ public class FontEngine {
 
       GL11.glColor4f(fontColour.redf, fontColour.greenf, fontColour.bluef, fontColour.alphaf);
 
-      width.setState(w -> w.plus(this.renderCharTexture(ch, font.getItalic(), x, y, 2)));
+      width.setState(w -> w.plus(renderer.render(ch, font.getItalic(), x, y, 2)));
 
       if (font.getBold()) {
-        this.renderCharTexture(ch, font.getItalic(), x.plus(boldOffsetX), y, 1);
+        renderer.render(ch, font.getItalic(), x.plus(boldOffsetX), y, 1);
         width.setState(w -> w.plus(boldOffsetX));
       }
 
@@ -736,5 +741,10 @@ public class FontEngine {
 
   public int getColorCode(char character) {
     return this.colorCode["0123456789abcdef".indexOf(character)];
+  }
+
+  @FunctionalInterface
+  private interface CharRenderer {
+    Dim render(char ch, boolean isItalic, Dim x, Dim y, float z);
   }
 }
