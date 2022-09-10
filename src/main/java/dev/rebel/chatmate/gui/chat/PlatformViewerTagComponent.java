@@ -17,6 +17,11 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
   private final ChatPlatform platform;
   private final Consumer<Boolean> _onChangeIdentifyPlatforms = this::setComponent;
 
+  public PlatformViewerTagComponent(ChatPlatform platform) {
+    this.platform = platform;
+    this.setComponent(true);
+  }
+
   public PlatformViewerTagComponent(Config config, ChatPlatform platform) {
     this.platform = platform;
     this.setComponent(config.getIdentifyPlatforms().get());

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.rank;
 
+import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.HorizontalPosition;
@@ -15,6 +16,7 @@ import dev.rebel.chatmate.gui.Interactive.rank.Adapters.*;
 import dev.rebel.chatmate.gui.Interactive.rank.Adapters.EndpointAdapter.RankResult;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.models.Styles;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicChannelRankChange;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicChannelRankChange.Platform;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
@@ -31,6 +33,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static dev.rebel.chatmate.models.Styles.VIEWER_NAME_FONT;
 import static dev.rebel.chatmate.services.util.TextHelpers.*;
 
 public class ManageRanksModal extends ModalElement {
@@ -415,12 +418,20 @@ public class ManageRanksModal extends ModalElement {
             .cast();
 
         for (PublicChannelRankChange rankChange : channelRankChanges) {
+          IElement nameElement = new InlineElement(super.context, this)
+              .addElement(new ImageElement(context, this)
+                  .setImage(rankChange.platform == Platform.YOUTUBE ? Asset.LOGO_YOUTUBE : Asset.LOGO_TWITCH)
+                  .setTargetContentHeight(context.fontEngine.FONT_HEIGHT_DIM)
+                  .setMargin(new RectExtension(ZERO, gui(4), ZERO, ZERO))
+              ).addElement(new LabelElement(context, this)
+                  .setText(rankChange.channelName)
+                  .setFont(VIEWER_NAME_FONT.create(context.dimFactory))
+              );
+
           this.channelActionsList.addElement(new SideBySideElement(context, this)
               .setElementPadding(gui(4))
-              .addElement(1, new LabelElement(context, this)
-                  .setText(rankChange.channelName)
-                  .setColour(rankChange.platform == Platform.YOUTUBE ? Colour.LIGHT_RED : Colour.DARK_PURPLE)
-              ).addElement(1, new WrapperElement(context, this, // wrapper so text element size is flush to the text for a better tooltip experience
+              .addElement(1, nameElement)
+              .addElement(1, new WrapperElement(context, this, // wrapper so text element size is flush to the text for a better tooltip experience
                   new LabelElement(context, this)
                       .setText(rankChange.error == null ? "SUCCESS" : "FAILURE")
                       .setColour(rankChange.error == null ? Colour.GREEN : Colour.RED)

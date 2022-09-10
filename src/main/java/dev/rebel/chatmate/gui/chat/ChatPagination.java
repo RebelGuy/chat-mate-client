@@ -1,9 +1,9 @@
 package dev.rebel.chatmate.gui.chat;
 
 import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionAlignment;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionLayout;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionValue;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.MinecraftProxyService;
@@ -149,8 +149,8 @@ public class ChatPagination<T> {
       ClickEventWithCallback onClose = new ClickEventWithCallback(this.logService, this::delete, true);
       ChatComponentText closeComponent = styledText("[x]", onClose.bind(INTERACTIVE_STYLE_DE_EMPHASISE.get()));
 
-      this.renderedHeader1.setComponent(new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(closeLayout, closeComponent))));
-      this.renderedHeader2.setComponent(new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(layout, component))));
+      this.renderedHeader1.setComponent(new PrecisionChatComponent(Arrays.asList(new Tuple2<>(closeLayout, closeComponent))));
+      this.renderedHeader2.setComponent(new PrecisionChatComponent(Arrays.asList(new Tuple2<>(layout, component))));
     }
   }
 

@@ -203,9 +203,9 @@ public class CustomGuiNewChat extends GuiNewChat {
       chatComponent = container.getComponent();
     }
 
-    if (chatComponent instanceof PrecisionChatComponentText) {
-      PrecisionChatComponentText component = (PrecisionChatComponentText)chatComponent;
-      for (Tuple2<PrecisionChatComponentText.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.fontEngine, width)) {
+    if (chatComponent instanceof PrecisionChatComponent) {
+      PrecisionChatComponent component = (PrecisionChatComponent)chatComponent;
+      for (Tuple2<PrecisionChatComponent.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.fontEngine, width)) {
         int left = lineLeft + pair._1.position.getGuiValue(width);
         this.chatComponentRenderer.drawChatComponent(pair._2, left, lineTop, opacity);
       }
@@ -331,11 +331,11 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Adds the component to `drawnChatLines` after processing its contents. */
   private void pushDrawnComponent(AbstractChatLine parent, IChatComponent chatComponent, int chatLineId, int updateCounter) {
     boolean processContents = true;
-    if (chatComponent instanceof PrecisionChatComponentText) {
+    if (chatComponent instanceof PrecisionChatComponent) {
       processContents = false;
     } else if (chatComponent instanceof ContainerChatComponent) {
       ContainerChatComponent container = (ContainerChatComponent)chatComponent;
-      processContents = !(container.getComponent() instanceof PrecisionChatComponentText);
+      processContents = !(container.getComponent() instanceof PrecisionChatComponent);
     }
 
     if (!processContents) {
@@ -469,8 +469,8 @@ public class CustomGuiNewChat extends GuiNewChat {
         if (lineX > x) {
           return originalComponent;
         }
-      } else if (component instanceof PrecisionChatComponentText) {
-        PrecisionChatComponentText precisionComponent = (PrecisionChatComponentText)component;
+      } else if (component instanceof PrecisionChatComponent) {
+        PrecisionChatComponent precisionComponent = (PrecisionChatComponent)component;
 
         // there will be no siblings - only one Precision component is supported per line
         return precisionComponent.getComponentAtGuiPosition(x, maxX, false, this.fontEngine);

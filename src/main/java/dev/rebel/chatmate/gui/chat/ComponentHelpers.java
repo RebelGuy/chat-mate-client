@@ -85,7 +85,7 @@ public class ComponentHelpers {
       return trimComponent((ChatComponentText)component, maxWidth, isLineStart, font);
     } else if (component instanceof ImageChatComponent) {
       return trimComponent((ImageChatComponent)component, maxWidth, isLineStart, font);
-    } else if (component instanceof PrecisionChatComponentText && isLineStart) {
+    } else if (component instanceof PrecisionChatComponent && isLineStart) {
       return new TrimmedComponent(component, maxWidth, null);
     } else if (component instanceof UserNameChatComponent) {
       return trimmedComponent((UserNameChatComponent)component, maxWidth, isLineStart, font);

@@ -16,14 +16,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static dev.rebel.chatmate.services.util.Objects.casted;
+import static dev.rebel.chatmate.services.util.Objects.ifClass;
 import static net.minecraft.util.ChatComponentStyle.createDeepCopyIterator;
 
 /** A single-line chat component that is used to draw children components at precise x-values. When printing to chat,
  * please make sure you print this by itself, and not as part of a sibling of another component. Otherwise, don't come crying when you get an exception. */
-public class PrecisionChatComponentText implements IChatComponent {
+public class PrecisionChatComponent implements IChatComponent {
   private final List<Tuple2<PrecisionLayout, IChatComponent>> components;
 
-  public PrecisionChatComponentText(List<Tuple2<PrecisionLayout, IChatComponent>> components) {
+  public PrecisionChatComponent(List<Tuple2<PrecisionLayout, IChatComponent>> components) {
     this.components = components;
   }
 
@@ -95,10 +97,12 @@ public class PrecisionChatComponentText implements IChatComponent {
     }
 
     IChatComponent effectiveComponent;
-    if (Objects.ifClass(ContainerChatComponent.class, component, c -> Objects.ifClass(UserNameChatComponent.class, c.getComponent(), null))) {
-      UserNameChatComponent userNameChatComponent = Objects.casted(ContainerChatComponent.class, component, c -> Objects.casted(UserNameChatComponent.class, c.getComponent()));
+    if (ifClass(ContainerChatComponent.class, component, c -> ifClass(UserNameChatComponent.class, c.getComponent(), null))) {
+      UserNameChatComponent userNameChatComponent = casted(ContainerChatComponent.class, component, c -> casted(UserNameChatComponent.class, c.getComponent()));
       userNameChatComponent.setDisplayName(text);
       effectiveComponent = userNameChatComponent;
+    } else if (ifClass(ContainerChatComponent.class, component, c -> ifClass(ImageChatComponent.class, c.getComponent(), null))) {
+      effectiveComponent = casted(ContainerChatComponent.class, component, c -> casted(ImageChatComponent.class, c.getComponent()));
     } else {
       effectiveComponent = new ChatComponentText(text);
     }

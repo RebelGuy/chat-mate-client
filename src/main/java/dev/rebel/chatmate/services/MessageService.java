@@ -1,15 +1,13 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
-import dev.rebel.chatmate.gui.chat.ImageChatComponent;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
-import dev.rebel.chatmate.gui.chat.UserNameChatComponent;
+import dev.rebel.chatmate.gui.chat.*;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionAlignment;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionLayout;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionValue;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem.ChatPlatform;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
@@ -133,7 +131,7 @@ public class MessageService {
     list.add(new Tuple2<>(emptyBarLayout, styledText(emptyBar, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(barEndLayout, styledText(barEnd, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(levelEndLayout, styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level + 1))));
-    return new PrecisionChatComponentText(list);
+    return new PrecisionChatComponent(list);
   }
 
   public IChatComponent getChannelNamesMessage(PublicUserNames userNames, int messageWidth) {
@@ -142,24 +140,29 @@ public class MessageService {
     int levelNumberWidth = this.fontEngine.getStringWidth("444");
     PrecisionLayout levelLayout = new PrecisionLayout(new PrecisionValue(4), new PrecisionValue(levelNumberWidth), PrecisionAlignment.RIGHT);
 
+    PlatformViewerTagComponent platform = new PlatformViewerTagComponent(userNames.youtubeChannelNames.length > 0 ? ChatPlatform.Youtube : ChatPlatform.Twitch);
+    ImageChatComponent imageChatComponent = (ImageChatComponent)platform.getComponent();
+    int platformWidth = (int)imageChatComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT);
+    PrecisionLayout platformLayout = new PrecisionLayout(new PrecisionValue(4 + levelNumberWidth), new PrecisionValue(platformWidth), PrecisionAlignment.LEFT);
+
     // todo CHAT-270: at the moment we are only showing the default channel name, but in the future it is possible that a single user
     // has multiple channels so then we must print a list
-    PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(4 + levelNumberWidth + 4), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
-    ChatStyle style = userNames.youtubeChannelNames.length > 0 ? YOUTUBE_CHANNEL_STYLE : TWITCH_CHANNEL_STYLE;
-    Font font = Font.fromChatStyle(style, this.dimFactory);
-    IChatComponent component = this.getUserComponent(userNames.user, font, userNames.user.userInfo.channelName, true, false);
+    PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(4 + levelNumberWidth + platformWidth + 4), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
+    Font font = Font.fromChatStyle(VIEWER_NAME_STYLE, this.dimFactory);
+    IChatComponent component = this.getUserComponent(userNames.user, font, userNames.user.userInfo.channelName, true, true);
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(levelLayout, styledText(level, getLevelStyle(userNames.user.levelInfo.level))));
+    list.add(new Tuple2<>(platformLayout, platform));
     list.add(new Tuple2<>(nameLayout, component));
-    return new PrecisionChatComponentText(list);
+    return new PrecisionChatComponent(list);
   }
 
   public IChatComponent getPaginationFooterMessage(int messageWidth, int currentPage, int maxPage, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
     if (onPrevPage == null && onNextPage == null) {
       IChatComponent footer = styledText(stringWithWidth(this.fontEngine, "", "", '-', messageWidth), INFO_MSG_STYLE);
       PrecisionLayout footerLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(messageWidth), PrecisionAlignment.CENTRE);
-      return new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(footerLayout, footer)));
+      return new PrecisionChatComponent(Arrays.asList(new Tuple2<>(footerLayout, footer)));
     }
 
     String padding = "  ";
@@ -209,7 +212,7 @@ public class MessageService {
     ChatComponentText prevComponent = styledText(prevPageMsg, onPrevClick.bind(onPrevPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get()));
     ChatComponentText interiorComponent = styledText(interior, INFO_MSG_STYLE);
     ChatComponentText nextComponent = styledText(nextPageMsg, onNextClick.bind(onNextPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get()));
-    return new PrecisionChatComponentText(Arrays.asList(
+    return new PrecisionChatComponent(Arrays.asList(
         new Tuple2<>(prevPageLayout, prevComponent),
         new Tuple2<>(interiorLayout, interiorComponent),
         new Tuple2<>(nextPageLayout, nextComponent)
