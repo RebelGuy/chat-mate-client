@@ -320,7 +320,7 @@ public class ManageRanksModal extends ModalElement {
           expirationText = String.format("%s (in %s)", dateToSecondAccuracy(rank.expirationTime), remaining);
         }
 
-        this.expiresAtElement = new SideBySideElement(context, this)
+        this.expiresAtElement = rank.expirationTime == null ? null : new SideBySideElement(context, this)
             .setElementPadding(gui(4))
             .addElement(1, new LabelElement(context, this)
                 .setText(rank.isActive ? "Expires at:" : "Expired at:"))
