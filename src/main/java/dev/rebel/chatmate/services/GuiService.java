@@ -21,6 +21,9 @@ import dev.rebel.chatmate.services.events.models.OpenGui;
 import dev.rebel.chatmate.services.events.models.Tick;
 import dev.rebel.chatmate.services.events.models.Tick.In;
 import dev.rebel.chatmate.services.events.models.Tick.Out;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.LivestreamApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
@@ -60,6 +63,9 @@ public class GuiService {
   private final ApiRequestService apiRequestService;
   private final UserEndpointProxy userEndpointProxy;
   private final MessageService messageService;
+  private final LivestreamApiStore livestreamApiStore;
+  private final DonationApiStore donationApiStore;
+  private final RankApiStore rankApiStore;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -90,7 +96,10 @@ public class GuiService {
                     StatusService statusService,
                     ApiRequestService apiRequestService,
                     UserEndpointProxy userEndpointProxy,
-                    MessageService messageService) {
+                    MessageService messageService,
+                    LivestreamApiStore livestreamApiStore,
+                    DonationApiStore donationApiStore,
+                    RankApiStore rankApiStore) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -121,6 +130,9 @@ public class GuiService {
     this.apiRequestService = apiRequestService;
     this.userEndpointProxy = userEndpointProxy;
     this.messageService = messageService;
+    this.livestreamApiStore = livestreamApiStore;
+    this.donationApiStore = donationApiStore;
+    this.rankApiStore = rankApiStore;
 
     this.addEventHandlers();
   }
@@ -132,7 +144,7 @@ public class GuiService {
   public void displayDashboard(@Nullable DashboardRoute route) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.DASHBOARD);
-    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.donationEndpointProxy, this.statusService, this.apiRequestService, this.userEndpointProxy, this.messageService));
+    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.statusService, this.apiRequestService, this.userEndpointProxy, this.messageService));
     this.minecraft.displayGuiScreen(screen);
   }
 
@@ -228,6 +240,9 @@ public class GuiService {
         this.logService,
         this.minecraftChatService,
         this.forgeEventService,
-        this.chatComponentRenderer);
+        this.chatComponentRenderer,
+        this.rankApiStore,
+        this.livestreamApiStore,
+        this.donationApiStore);
   }
 }

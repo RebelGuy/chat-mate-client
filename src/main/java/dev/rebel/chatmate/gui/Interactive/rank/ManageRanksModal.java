@@ -16,7 +16,6 @@ import dev.rebel.chatmate.gui.Interactive.rank.Adapters.*;
 import dev.rebel.chatmate.gui.Interactive.rank.Adapters.EndpointAdapter.RankResult;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.style.Font;
-import dev.rebel.chatmate.models.Styles;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicChannelRankChange;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicChannelRankChange.Platform;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
@@ -24,11 +23,11 @@ import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.EndpointProxy;
-import dev.rebel.chatmate.services.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Date;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -144,7 +143,7 @@ public class ManageRanksModal extends ModalElement {
           .setMargin(new RectExtension(ZERO, gui(6)))
           .cast();
 
-      this.endpointAdapter.getRanksAsync(this.user.id, this::onRanksLoaded, this::onRanksLoadError);
+      this.endpointAdapter.getRanks(this.user.id, this::onRanksLoaded, this::onRanksLoadError);
     }
 
     @Override
@@ -193,10 +192,10 @@ public class ManageRanksModal extends ModalElement {
       });
     }
 
-    private void onRanksLoaded(PublicUserRank[] ranks) {
+    private void onRanksLoaded(List<PublicUserRank> ranks) {
       this.context.renderer.runSideEffect(() -> {
         IElement element;
-        if (ranks.length == 0) {
+        if (ranks.size() == 0) {
           element = new LabelElement(this.context, this)
               .setText(tableAdapter.noRanksMessage)
               .setFontScale(0.75f)
@@ -206,7 +205,7 @@ public class ManageRanksModal extends ModalElement {
           element = new TableElement<PublicUserRank>(
               this.context,
               this,
-              Collections.list(ranks),
+              ranks,
               this.tableAdapter.getColumns(),
               rank -> this.tableAdapter.getRow(super.context, this, rank)
           ).setMinHeight(gui(50))

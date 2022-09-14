@@ -22,6 +22,9 @@ import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.services.events.*;
 import dev.rebel.chatmate.services.util.FileHelpers;
 import dev.rebel.chatmate.services.ApiRequestService;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.LivestreamApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
@@ -82,6 +85,11 @@ public class ChatMate {
     LogEndpointProxy logEndpointProxy = new LogEndpointProxy(logService, apiRequestService, apiPath);
     RankEndpointProxy rankEndpointProxy = new RankEndpointProxy(logService, apiRequestService, apiPath);
     DonationEndpointProxy donationEndpointProxy = new DonationEndpointProxy(logService, apiRequestService, apiPath);
+    LivestreamEndpointProxy livestreamEndpointProxy = new LivestreamEndpointProxy(logService, apiRequestService, apiPath);
+
+    LivestreamApiStore livestreamApiStore = new LivestreamApiStore(livestreamEndpointProxy);
+    DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy);
+    RankApiStore rankApiStore = new RankApiStore(rankEndpointProxy);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -92,7 +100,9 @@ public class ChatMate {
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory);
-    MessageService messageService = new MessageService(logService, fontEngine, dimFactory);
+    DateTimeService dateTimeService = new DateTimeService();
+    DonationService donationService = new DonationService(dateTimeService, donationApiStore, livestreamApiStore, rankApiStore);
+    MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore);
     ImageService imageService = new ImageService(minecraft);
     McChatService mcChatService = new McChatService(minecraftProxyService,
         logService,
@@ -104,7 +114,7 @@ public class ChatMate {
         config,
         chatMateChatService,
         fontEngine);
-    StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory);
+    StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory, livestreamApiStore);
 
     RenderService renderService = new RenderService(minecraft, forgeEventService, fontEngine, dimFactory);
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
@@ -132,7 +142,10 @@ public class ChatMate {
         logService,
         minecraftChatService,
         forgeEventService,
-        chatComponentRenderer);
+        chatComponentRenderer,
+        rankApiStore,
+        livestreamApiStore,
+        donationApiStore);
 
     ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, guiChatMateHud);
@@ -160,7 +173,10 @@ public class ChatMate {
         fontEngine,
         forgeEventService,
         chatComponentRenderer,
-        donationHudStore);
+        donationHudStore,
+        rankApiStore,
+        livestreamApiStore,
+        donationApiStore);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config, guiChatMateHud);
 
     CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
@@ -203,7 +219,10 @@ public class ChatMate {
         statusService,
         apiRequestService,
         userEndpointProxy,
-        messageService);
+        messageService,
+        livestreamApiStore,
+        donationApiStore,
+        rankApiStore);
     DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(

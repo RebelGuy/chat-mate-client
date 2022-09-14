@@ -138,7 +138,9 @@ public class Collections {
     return list;
   }
 
-  public static @Nullable <T> T first(@Nullable List<T> list) { return (list == null || list.size() == 0) ? null : list.get(0); }
+  public static @Nullable <T> T first(@Nullable List<T> list) {
+    return (list == null || list.size() == 0) ? null : list.get(0);
+  }
 
   public static @Nullable <T> T first(@Nullable List<T> list, Predicate<T> predicate) {
     if (list == null || list.size() == 0) {
@@ -148,7 +150,17 @@ public class Collections {
     }
   }
 
-  public static @Nullable <T> T last(@Nullable List<T> list) { return (list == null || list.size() == 0) ? null : list.get(list.size() - 1); }
+  public static @Nullable <T> T last(@Nullable List<T> list) {
+    return (list == null || list.size() == 0) ? null : list.get(list.size() - 1);
+  }
+
+  public static @Nullable <T> T last(@Nullable List<T> list, Predicate<T> predicate) {
+    if (list == null || list.size() == 0) {
+      return null;
+    } else {
+      return Collections.first(Collections.filter(Collections.reverse(list), predicate));
+    }
+  }
 
   public static <T> boolean any(@Nullable List<T> list) { return list != null && list.size() != 0; }
 
@@ -211,5 +223,16 @@ public class Collections {
     list.remove(index);
     list.add(index, replacement);
     return list;
+  }
+
+  public static <T> List<T> after(@Nullable List<T> list, @Nullable T item) {
+    if (list == null) {
+      return new ArrayList<>();
+    } else if (item == null || !list.contains(item)) {
+      return list;
+    }
+
+    int index = list.indexOf(item);
+    return list.subList(index + 1, list.size());
   }
 }

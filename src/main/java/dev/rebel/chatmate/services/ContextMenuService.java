@@ -25,6 +25,9 @@ import dev.rebel.chatmate.proxy.RankEndpointProxy;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.LivestreamApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 import net.minecraft.client.Minecraft;
 
 import java.util.Date;
@@ -53,6 +56,9 @@ public class ContextMenuService {
   private final ForgeEventService forgeEventService;
   private final ChatComponentRenderer chatComponentRenderer;
   private final DonationHudStore donationHudStore;
+  private final RankApiStore rankApiStore;
+  private final LivestreamApiStore livestreamApiStore;
+  private final DonationApiStore donationApiStore;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -76,7 +82,10 @@ public class ContextMenuService {
                             FontEngine fontEngine,
                             ForgeEventService forgeEventService,
                             ChatComponentRenderer chatComponentRenderer,
-                            DonationHudStore donationHudStore) {
+                            DonationHudStore donationHudStore,
+                            RankApiStore rankApiStore,
+                            LivestreamApiStore livestreamApiStore,
+                            DonationApiStore donationApiStore) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -100,6 +109,9 @@ public class ContextMenuService {
     this.forgeEventService = forgeEventService;
     this.chatComponentRenderer = chatComponentRenderer;
     this.donationHudStore = donationHudStore;
+    this.rankApiStore = rankApiStore;
+    this.livestreamApiStore = livestreamApiStore;
+    this.donationApiStore = donationApiStore;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -140,7 +152,7 @@ public class ContextMenuService {
   private void onManageRanks(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
-    RankAdapters rankAdapters = new RankAdapters(this.rankEndpointProxy);
+    RankAdapters rankAdapters = new RankAdapters(this.rankEndpointProxy, this.rankApiStore);
     IElement modal = new ManageRanksModal(context, screen, user, rankAdapters);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -149,7 +161,7 @@ public class ContextMenuService {
   private void onManagePunishments(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
-    PunishmentAdapters punishmentAdapters = new PunishmentAdapters(this.rankEndpointProxy, this.punishmentEndpointProxy);
+    PunishmentAdapters punishmentAdapters = new PunishmentAdapters(this.rankEndpointProxy, this.punishmentEndpointProxy, this.rankApiStore);
     IElement modal = new ManageRanksModal(context, screen, user, punishmentAdapters);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -203,6 +215,9 @@ public class ContextMenuService {
         this.logService,
         this.minecraftChatService,
         this.forgeEventService,
-        this.chatComponentRenderer);
+        this.chatComponentRenderer,
+        this.rankApiStore,
+        this.livestreamApiStore,
+        this.donationApiStore);
   }
 }

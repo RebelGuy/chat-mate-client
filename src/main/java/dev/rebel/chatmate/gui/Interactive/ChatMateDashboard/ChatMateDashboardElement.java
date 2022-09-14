@@ -24,6 +24,8 @@ import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.util.EnumHelpers;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -58,7 +60,6 @@ public class ChatMateDashboardElement extends ContainerElement {
                                   IElement parent,
                                   @Nullable DashboardRoute route,
                                   ChatMateEndpointProxy chatMateEndpointProxy,
-                                  DonationEndpointProxy donationEndpointProxy,
                                   StatusService statusService,
                                   ApiRequestService apiRequestService,
                                   UserEndpointProxy userEndpointProxy,
@@ -77,7 +78,7 @@ public class ChatMateDashboardElement extends ContainerElement {
 
     this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route));
-    this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), donationEndpointProxy, statusService, apiRequestService, userEndpointProxy, messageService);
+    this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))

@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.store.RankApiStore;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import org.junit.Assert;
@@ -23,12 +24,14 @@ public class MessageServiceTests {
   @Mock LogService logService;
   @Mock FontEngine fontEngine;
   @Mock DimFactory dimFactory;
+  @Mock DonationService donationService;
+  @Mock RankApiStore rankApiStore;
 
   MessageService messageService;
 
   @Before
   public void setup() {
-    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory);
+    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore);
 
     when(this.fontEngine.getStringWidth(anyString())).thenAnswer(i -> ((String)i.getArgument(0)).length());
   }

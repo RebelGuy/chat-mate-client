@@ -18,6 +18,7 @@ import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
+import dev.rebel.chatmate.store.RankApiStore;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
@@ -38,11 +39,15 @@ public class MessageService {
   private final LogService logService;
   private final FontEngine fontEngine;
   private final DimFactory dimFactory;
+  private final DonationService donationService;
+  private final RankApiStore rankApiStore;
 
-  public MessageService(LogService logService, FontEngine fontEngine, DimFactory dimFactory) {
+  public MessageService(LogService logService, FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore) {
     this.logService = logService;
     this.fontEngine = fontEngine;
     this.dimFactory = dimFactory;
+    this.donationService = donationService;
+    this.rankApiStore = rankApiStore;
   }
 
   public IChatComponent getErrorMessage(String msg) {
@@ -296,7 +301,7 @@ public class MessageService {
       }
     }
 
-    return new ContainerChatComponent(new UserNameChatComponent(this.fontEngine, this.dimFactory, user, font, unstyledName, useEffects), user);
+    return new ContainerChatComponent(new UserNameChatComponent(this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, user.id, font, unstyledName, useEffects), user);
   }
 
   public IChatComponent getRankComponent(List<PublicRank> activeRanks) {

@@ -18,6 +18,7 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
 import dev.rebel.chatmate.proxy.RankEndpointProxy;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.store.RankApiStore;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -28,9 +29,9 @@ import static dev.rebel.chatmate.services.util.TextHelpers.dateToDayAccuracy;
 import static dev.rebel.chatmate.services.util.TextHelpers.toSentenceCase;
 
 public class PunishmentAdapters extends Adapters {
-  public PunishmentAdapters(RankEndpointProxy rankEndpointProxy, PunishmentEndpointProxy punishmentEndpointProxy) {
+  public PunishmentAdapters(RankEndpointProxy rankEndpointProxy, PunishmentEndpointProxy punishmentEndpointProxy, RankApiStore rankApiStore) {
     super(
-      new PunishmentEndpointAdapter(rankEndpointProxy, punishmentEndpointProxy),
+      new PunishmentEndpointAdapter(rankEndpointProxy, punishmentEndpointProxy, rankApiStore),
       new PunishmentTableAdapter(),
       new PunishmentCreateAdapter(),
       new PunishmentDetailsAdapter(),
@@ -46,18 +47,18 @@ public class PunishmentAdapters extends Adapters {
   public static class PunishmentEndpointAdapter extends EndpointAdapter {
     private final PunishmentEndpointProxy punishmentEndpointProxy;
 
-    public PunishmentEndpointAdapter(RankEndpointProxy rankEndpointProxy, PunishmentEndpointProxy punishmentEndpointProxy) {
-      super(rankEndpointProxy);
+    public PunishmentEndpointAdapter(RankEndpointProxy rankEndpointProxy, PunishmentEndpointProxy punishmentEndpointProxy, RankApiStore rankApiStore) {
+      super(rankEndpointProxy, rankApiStore);
       this.punishmentEndpointProxy = punishmentEndpointProxy;
     }
 
     @Override
-    public void getRanksAsync(int userId, Consumer<PublicUserRank[]> onLoad, @Nullable Consumer<Throwable> onError) {
-      this.punishmentEndpointProxy.getPunishmentsAsync(userId, true, res -> onLoad.accept(res.punishments), onError);
+    protected void _getRanks(int userId, Consumer<List<PublicUserRank>> onLoad, @Nullable Consumer<Throwable> onError) {
+      this.punishmentEndpointProxy.getPunishmentsAsync(userId, true, res -> onLoad.accept(Collections.list(res.punishments)), onError);
     }
 
     @Override
-    public void createRank(int userId, RankName rank, @Nullable String createMessage, @Nullable Integer durationSeconds, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
+    protected void _createRank(int userId, RankName rank, @Nullable String createMessage, @Nullable Integer durationSeconds, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
       if (rank == RankName.BAN) {
         BanUserRequest request = new BanUserRequest(userId, createMessage);
         this.punishmentEndpointProxy.banUserAsync(request, r -> onResult.accept(new RankResult(r.newPunishment, r.newPunishmentError, r.channelPunishments)), onError);
@@ -73,7 +74,7 @@ public class PunishmentAdapters extends Adapters {
     }
 
     @Override
-    public void revokeRank(int userId, RankName rank, @Nullable String revokeMessage, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
+    protected void _revokeRank(int userId, RankName rank, @Nullable String revokeMessage, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
       if (rank == RankName.BAN) {
         UnbanUserRequest request = new UnbanUserRequest(userId, revokeMessage);
         this.punishmentEndpointProxy.unbanUserAsync(request, r -> onResult.accept(new RankResult(r.removedPunishment, r.removedPunishmentError, r.channelPunishments)), onError);

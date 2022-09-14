@@ -4,7 +4,6 @@ import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.IconButtonElement;
-import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.DonationRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.LinkDonationRoute;
@@ -19,22 +18,19 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.api.donation.GetDonationsResponse.GetDonationsResponseData;
-import dev.rebel.chatmate.models.api.donation.LinkUserResponse.LinkUserResponseData;
-import dev.rebel.chatmate.models.api.donation.UnlinkUserResponse.UnlinkUserResponseData;
 import dev.rebel.chatmate.models.publicObjects.donation.PublicDonation;
-import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
+import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream.LivestreamStatus;
 import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus;
-import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus.LivestreamStatus;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.proxy.EndpointProxy;
 import dev.rebel.chatmate.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import java.util.*;
@@ -44,10 +40,8 @@ import static dev.rebel.chatmate.services.util.Objects.casted;
 import static dev.rebel.chatmate.services.util.TextHelpers.dateToDayAccuracy;
 
 public class DonationsSectionElement extends ContainerElement implements ISectionElement {
-  private final DonationEndpointProxy donationEndpointProxy;
   private final @Nullable Integer highlightDonation;
   private final ApiRequestService apiRequestService;
-  private final MessageService messageService;
   private final Consumer<Boolean> _onApiServiceActive = this::onApiServiceActive;
 
   private final CheckboxInputElement unlinkedDonationsCheckbox;
@@ -59,7 +53,6 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
   public DonationsSectionElement(InteractiveContext context,
                                  IElement parent,
                                  @Nullable DonationRoute route,
-                                 DonationEndpointProxy donationEndpointProxy,
                                  StatusService statusService,
                                  ApiRequestService apiRequestService,
                                  UserEndpointProxy userEndpointProxy,
@@ -67,16 +60,14 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     super(context, parent, LayoutMode.BLOCK);
     super.setSizingMode(SizingMode.FILL);
 
-    this.donationEndpointProxy = donationEndpointProxy;
     this.apiRequestService = apiRequestService;
-    this.messageService = messageService;
     this.apiRequestService.onActive(this._onApiServiceActive);
 
     this.unlinkedDonationsCheckbox = SharedElements.CHECKBOX_LIGHT.create(context, this)
         .setChecked(true)
         .onCheckedChanged(this::onFilterChanged)
         .setLabel("Show only unlinked donations");
-    boolean isActiveLivestream = statusService.getLivestreamStatus() != null && statusService.getLivestreamStatus().status == LivestreamStatus.Live;
+    boolean isActiveLivestream = statusService.getLivestreamStatus() != null && statusService.getLivestreamStatus().livestream.status == LivestreamStatus.Live;
     this.currentLivestreamCheckbox = SharedElements.CHECKBOX_LIGHT.create(context, this)
         .setChecked(isActiveLivestream)
         .onCheckedChanged(this::onFilterChanged)
@@ -93,7 +84,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         .setSizingMode(SizingMode.FILL)
         .cast();
 
-    this.donationsTable = new DonationsTable(context, this, this::onError, statusService.getLivestreamStatus(), donationEndpointProxy, userEndpointProxy, messageService)
+    this.donationsTable = new DonationsTable(context, this, this::onError, statusService.getLivestreamStatus(), userEndpointProxy, messageService)
         .setVisible(false)
         .setMargin(new RectExtension(ZERO, gui(4)))
         .cast();
@@ -110,11 +101,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     super.addElement(this.errorLabel);
   }
 
-  private void onDonationsResponse(GetDonationsResponseData getDonationsResponseData) {
+  private void onGetDonations(List<PublicDonation> donations) {
     super.context.renderer.runSideEffect(() -> {
       this.loadingSpinner.setVisible(false);
       this.donationsTable.setVisible(true);
-      this.donationsTable.setDonations(Arrays.asList(getDonationsResponseData.donations));
+      this.donationsTable.setDonations(donations);
     });
   }
 
@@ -137,7 +128,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
   }
 
   public void onShow() {
-    this.donationEndpointProxy.getDonationsAsync(this::onDonationsResponse, this::onError);
+    super.context.donationApiStore.loadDonations(this::onGetDonations, this::onError, false);
     this.loadingSpinner.setVisible(true);
   }
 
@@ -150,7 +141,6 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
   private static class DonationsTable extends ContainerElement {
     private final Consumer<Throwable> onError;
     private final @Nullable PublicLivestreamStatus livestreamStatus;
-    private final DonationEndpointProxy donationEndpointProxy;
     private final UserEndpointProxy userEndpointProxy;
     private final MessageService messageService;
 
@@ -167,13 +157,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
                           IElement parent,
                           Consumer<Throwable> onError,
                           @Nullable PublicLivestreamStatus livestreamStatus,
-                          DonationEndpointProxy donationEndpointProxy,
                           UserEndpointProxy userEndpointProxy,
                           MessageService messageService) {
       super(context, parent, LayoutMode.BLOCK);
       this.onError = onError;
       this.livestreamStatus = livestreamStatus;
-      this.donationEndpointProxy = donationEndpointProxy;
       this.userEndpointProxy = userEndpointProxy;
       this.messageService = messageService;
 
@@ -317,9 +305,9 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
           this.onError.accept(new Exception("No user selected"));
           return;
         }
-        this.donationEndpointProxy.linkUserAsync(donation.id, userToLink.id, r -> this.onResponse(r.updatedDonation, null), e -> this.onResponse(donation, e));
+        super.context.donationApiStore.linkUser(donation.id, userToLink.id, r -> this.onResponse(userToLink.id, r.updatedDonation, null), e -> this.onResponse(userToLink.id, donation, e));
       } else {
-        this.donationEndpointProxy.unlinkUserAsync(donation.id, r -> this.onResponse(r.updatedDonation, null), e -> this.onResponse(donation, e));
+        super.context.donationApiStore.unlinkUser(donation.id, r -> this.onResponse(donation.linkedUser.id, r.updatedDonation, null), e -> this.onResponse(donation.linkedUser.id, donation, e));
       }
 
       // show loading spinner
@@ -332,7 +320,8 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       this.table.updateItem(donation, this.getRow(donation, false));
     }
 
-    private void onResponse(PublicDonation donation, @Nullable Throwable e) {
+    private void onResponse(int affectedUserId, PublicDonation donation, @Nullable Throwable e) {
+      super.context.rankApiStore.invalidateUserRanks(affectedUserId);
       super.context.renderer.runSideEffect(() -> {
         if (e != null) {
           this.onError.accept(e);
@@ -348,8 +337,8 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         // filter doesn't apply if livestream hasn't started, or there is no active livestream
         if (this.showCurrentLivestreamOnly &&
             this.livestreamStatus != null &&
-            this.livestreamStatus.status == LivestreamStatus.Live &&
-            d.time < this.livestreamStatus.startTime) {
+            this.livestreamStatus.livestream.status == LivestreamStatus.Live &&
+            d.time < this.livestreamStatus.livestream.startTime) {
           return false;
         }
 

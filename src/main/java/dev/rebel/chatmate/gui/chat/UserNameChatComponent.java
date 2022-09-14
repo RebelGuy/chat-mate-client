@@ -9,8 +9,10 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.services.DonationService;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.EnumHelpers;
+import dev.rebel.chatmate.store.RankApiStore;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
@@ -30,29 +32,30 @@ public class UserNameChatComponent extends ChatComponentBase {
 
   private final FontEngine fontEngine;
   private final DimFactory dimFactory;
-  public final PublicUser user;
+  private final DonationService donationService;
+  private final RankApiStore rankApiStore;
+  public final int userId;
   private final Font baseFont;
   private final boolean useEffects;
-  private final boolean isDonator;
   private final double tOffset;
 
   private String displayName;
   private double lastT;
   private List<Particle> particles;
 
-  public UserNameChatComponent(FontEngine fontEngine, DimFactory dimFactory, PublicUser user, Font baseFont, String displayName, boolean useEffects) {
+  public UserNameChatComponent(FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore, int userId, Font baseFont, String displayName, boolean useEffects) {
     super();
     this.fontEngine = fontEngine;
     this.dimFactory = dimFactory;
-    this.user = user;
+    this.donationService = donationService;
+    this.rankApiStore = rankApiStore;
+    this.userId = userId;
     this.baseFont = baseFont;
     this.displayName = displayName;
     this.useEffects = useEffects;
-    this.tOffset = user.id.hashCode();
+    this.tOffset = userId * 22 / 7.0;
     this.lastT = 0;
     this.particles = new ArrayList<>();
-
-    this.isDonator = EnumHelpers.getFirst(Collections.map(Collections.list(this.user.activeRanks), r -> r.rank.name), RankName.DONATOR, RankName.SUPPORTER, RankName.MEMBER) != null;
   }
 
   public void setDisplayName(String formattedName) {
@@ -83,14 +86,14 @@ public class UserNameChatComponent extends ChatComponentBase {
   }
 
   public int getWidth() {
-    return (int)this.fontEngine.getStringWidthDim(this.user.userInfo.channelName, this.baseFont).getGui();
+    return (int)this.fontEngine.getStringWidthDim(this.displayName, this.baseFont).getGui();
   }
 
   /** Returns the width. */
   public int renderComponent(Dim x, Dim y, int alphaInt) {
     float alpha = alphaInt / 255f;
     Dim newX;
-    if (this.useEffects && this.isDonator) {
+    if (this.useEffects && this.donationService.shouldShowDonationEffect(this.userId)) {
       newX = this.renderEffect(x, y, alpha);
     } else {
       newX = this.renderDefault(x, y, alpha);
@@ -119,7 +122,7 @@ public class UserNameChatComponent extends ChatComponentBase {
     this.lastT = t;
 
     // particle effect (member)
-    if (Collections.map(Collections.list(this.user.activeRanks), r -> r.rank.name).contains(RankName.MEMBER)) {
+    if (Collections.map(this.rankApiStore.getCurrentUserRanks(this.userId), r -> r.rank.name).contains(RankName.MEMBER)) {
       // draw this below the text because it looks nicer that way
       DimRect rect = new DimRect(x, y, this.dimFactory.fromGui(this.getWidth()), this.fontEngine.FONT_HEIGHT_DIM);
       this.renderParticles(t, deltaT, alpha, rect);
@@ -154,7 +157,7 @@ public class UserNameChatComponent extends ChatComponentBase {
   }
 
   private Dim getVerticalOffset(double t) {
-    if (Collections.map(Collections.list(this.user.activeRanks), r -> r.rank.name).contains(RankName.SUPPORTER)) {
+    if (Collections.map(this.rankApiStore.getCurrentUserRanks(this.userId), r -> r.rank.name).contains(RankName.SUPPORTER)) {
       // multiplying the sine waves has the effect of only surpassing the threshold only rarely, as opposed to once per period
       return this.dimFactory.fromGui((float)Math.max(0, (Math.sin(t * 1.5f) * Math.sin(t / 6) - 0.95))).times(-25);
     } else {

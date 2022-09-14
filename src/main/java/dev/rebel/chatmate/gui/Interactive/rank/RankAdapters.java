@@ -19,6 +19,7 @@ import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.proxy.RankEndpointProxy;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.store.RankApiStore;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -28,9 +29,9 @@ import static dev.rebel.chatmate.services.util.TextHelpers.dateToDayAccuracy;
 import static dev.rebel.chatmate.services.util.TextHelpers.toSentenceCase;
 
 public class RankAdapters extends Adapters {
-  public RankAdapters(RankEndpointProxy rankEndpointProxy) {
+  public RankAdapters(RankEndpointProxy rankEndpointProxy, RankApiStore rankApiStore) {
     super(
-      new RankEndpointAdapter(rankEndpointProxy),
+      new RankEndpointAdapter(rankEndpointProxy, rankApiStore),
       new RankTableAdapter(),
       new RankCreateAdapter(),
       new DetailsAdapter(),
@@ -40,19 +41,21 @@ public class RankAdapters extends Adapters {
 
   public static class RankEndpointAdapter extends EndpointAdapter {
     private final RankEndpointProxy rankEndpointProxy;
+    private final RankApiStore rankApiStore;
 
-    public RankEndpointAdapter(RankEndpointProxy rankEndpointProxy) {
-      super(rankEndpointProxy);
+    public RankEndpointAdapter(RankEndpointProxy rankEndpointProxy, RankApiStore rankApiStore) {
+      super(rankEndpointProxy, rankApiStore);
       this.rankEndpointProxy = rankEndpointProxy;
+      this.rankApiStore = rankApiStore;
     }
 
     @Override
-    public void getRanksAsync(int userId, Consumer<PublicUserRank[]> onLoad, @Nullable Consumer<Throwable> onError) {
-      this.rankEndpointProxy.getRanksAsync(userId, false, r -> onLoad.accept(r.ranks), onError);
+    protected void _getRanks(int userId, Consumer<List<PublicUserRank>> onLoad, @Nullable Consumer<Throwable> onError) {
+      this.rankApiStore.loadUserRanks(userId, ranks -> onLoad.accept(Collections.filter(ranks, r -> r.isActive)), onError, false);
     }
 
     @Override
-    public void createRank(int userId, RankName rank, @Nullable String createMessage, @Nullable Integer durationSeconds, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
+    protected void _createRank(int userId, RankName rank, @Nullable String createMessage, @Nullable Integer durationSeconds, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
       if (rank == RankName.MOD) {
         AddModRankRequest request = new AddModRankRequest(userId, createMessage);
         this.rankEndpointProxy.addModRank(request, r -> onResult.accept(new RankResult(r.newRank, r.newRankError, r.channelModChanges)), onError);
@@ -76,7 +79,7 @@ public class RankAdapters extends Adapters {
     }
 
     @Override
-    public void revokeRank(int userId, RankName rank, @Nullable String revokeMessage, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
+    protected void _revokeRank(int userId, RankName rank, @Nullable String revokeMessage, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
       if (rank == RankName.MOD) {
         RemoveModRankRequest request = new RemoveModRankRequest(userId, revokeMessage);
         this.rankEndpointProxy.removeModRank(request, r -> onResult.accept(new RankResult(r.removedRank, r.removedRankError, r.channelModChanges)), onError);

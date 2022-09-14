@@ -19,6 +19,9 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData.Out.KeyboardH
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.LivestreamApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
@@ -676,6 +679,9 @@ public class InteractiveScreen extends Screen implements IElement {
     public final MinecraftChatService minecraftChatService;
     public final ForgeEventService forgeEventService;
     public final ChatComponentRenderer chatComponentRenderer;
+    public final RankApiStore rankApiStore;
+    public final LivestreamApiStore livestreamApiStore;
+    public final DonationApiStore donationApiStore;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -697,7 +703,10 @@ public class InteractiveScreen extends Screen implements IElement {
                               LogService logService,
                               MinecraftChatService minecraftChatService,
                               ForgeEventService forgeEventService,
-                              ChatComponentRenderer chatComponentRenderer) {
+                              ChatComponentRenderer chatComponentRenderer,
+                              RankApiStore rankApiStore,
+                              LivestreamApiStore livestreamApiStore,
+                              DonationApiStore donationApiStore) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -714,6 +723,9 @@ public class InteractiveScreen extends Screen implements IElement {
       this.minecraftChatService = minecraftChatService;
       this.forgeEventService = forgeEventService;
       this.chatComponentRenderer = chatComponentRenderer;
+      this.rankApiStore = rankApiStore;
+      this.livestreamApiStore = livestreamApiStore;
+      this.donationApiStore = donationApiStore;
     }
   }
 

@@ -194,7 +194,7 @@ public class ComponentHelpers {
   }
 
   private static TrimmedComponent trimmedComponent(UserNameChatComponent component, int maxWidth, boolean isLineStart, FontEngine fontEngine) {
-    int componentWidth = fontEngine.getStringWidth(component.user.userInfo.channelName);
+    int componentWidth = fontEngine.getStringWidth(component.getDisplayName());
     if (isLineStart || componentWidth <= maxWidth) {
       return new TrimmedComponent(component, componentWidth, null);
     } else {

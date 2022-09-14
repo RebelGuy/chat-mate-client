@@ -175,7 +175,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
     // we need to run these all as side effects because we don't want to modify the element tree during the render process
     super.context.renderer.runSideEffect(() -> {
       PublicLivestreamStatus status = getStatusResponseData.livestreamStatus;
-      this.livestream = status == null ? "" : status.livestreamLink;
+      this.livestream = status == null ? "" : status.livestream.livestreamLink;
       this.livestreamInputField.setTextUnsafe(this.livestream);
       this.disableLoadingState();
     });
