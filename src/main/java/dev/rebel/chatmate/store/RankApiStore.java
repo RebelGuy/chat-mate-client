@@ -26,12 +26,6 @@ public class RankApiStore {
     this.memoiser = new Memoiser();
   }
 
-  // todo: also provide the option to add/remove/update a user rank in response to a server confirmation to a user action, similar to the donation store.
-  // that way, we won't have to make a completely new request when we already know what data the server would return
-  // todo: add a way to invalidate the cache. either a hotkey combination (ctrl+shift+f5?) or a button in the mod menu
-  // todo: add a loading spinner HUD element in top right corner, that also displays an exclamation mark when errors are encountered.
-  // clicking that icon will show the list of errors, and individual requests can be retried, or everything can be retried
-  // todo: can probably extract some common logic into a Store base class/interface
   /** This should be called whenever an action of ours ends up (or may end up) affecting a user's ranks. */
   public void invalidateUserRanks(int userId) {
     List<String> usersKeys = Collections.filter(this.cache.getKeys(), k -> Objects.equals(k, String.format("%d", userId)));
