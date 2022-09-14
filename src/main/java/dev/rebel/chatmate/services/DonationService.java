@@ -4,6 +4,8 @@ import dev.rebel.chatmate.models.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream;
 import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream.LivestreamStatus;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
+import dev.rebel.chatmate.services.events.ChatMateEventService;
+import dev.rebel.chatmate.services.events.models.DonationEventData;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.store.DonationApiStore;
@@ -23,12 +25,14 @@ public class DonationService {
   private final RankApiStore rankApiStore;
   private final Memoiser memoiser;
 
-  public DonationService(DateTimeService dateTimeService, DonationApiStore donationApiStore, LivestreamApiStore livestreamApiStore, RankApiStore rankApiStore) {
+  public DonationService(DateTimeService dateTimeService, DonationApiStore donationApiStore, LivestreamApiStore livestreamApiStore, RankApiStore rankApiStore, ChatMateEventService chatMateEventService) {
     this.dateTimeService = dateTimeService;
     this.donationApiStore = donationApiStore;
     this.livestreamApiStore = livestreamApiStore;
     this.rankApiStore = rankApiStore;
     this.memoiser = new Memoiser();
+
+    chatMateEventService.onDonation(this::onNewDonation, null);
   }
 
   // donating adds a visual effect to the user's name in chat, whose duration depends on the donation amount and user's rank.
@@ -123,5 +127,10 @@ public class DonationService {
     }, allDonations, allLivestreams, this.rankApiStore.getStateToken(userId));
 
     return this.dateTimeService.now() < showEffectUntil;
+  }
+
+  private DonationEventData.Out onNewDonation(DonationEventData.In in) {
+    this.donationApiStore.invalidateStore();
+    return new DonationEventData.Out();
   }
 }

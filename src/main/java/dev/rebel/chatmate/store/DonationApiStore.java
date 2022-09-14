@@ -34,6 +34,10 @@ public class DonationApiStore {
     this.loading = false;
   }
 
+  public void invalidateStore() {
+    this.donations = null;
+  }
+
   /** Fetches donations from the server. */
   public void loadDonations(Consumer<List<PublicDonation>> callback, @Nullable Consumer<Throwable> errorHandler, boolean forceLoad) {
     if (this.donations != null && !forceLoad) {

@@ -6,6 +6,7 @@ import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.store.DonationApiStore;
 import dev.rebel.chatmate.store.LivestreamApiStore;
@@ -35,11 +36,12 @@ public class DonationServiceTests {
   @Mock DonationApiStore mockDonationApiStore;
   @Mock LivestreamApiStore mockLivestreamApiStore;
   @Mock RankApiStore mockRankApiStore;
+  @Mock ChatMateEventService mockChatMateEventService;
   DonationService donationService;
 
   @Before
   public void Setup() {
-    this.donationService = new DonationService(this.mockDateTimeService, this.mockDonationApiStore, this.mockLivestreamApiStore, this.mockRankApiStore);
+    this.donationService = new DonationService(this.mockDateTimeService, this.mockDonationApiStore, this.mockLivestreamApiStore, this.mockRankApiStore, this.mockChatMateEventService);
 
     long hour = 3600 * 1000L;
     this.livestream1 = new PublicLivestream() {{

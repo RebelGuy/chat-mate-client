@@ -29,6 +29,10 @@ public class LivestreamApiStore {
     this.loading = false;
   }
 
+  public void invalidateStore() {
+    this.livestreams = null;
+  }
+
   /** Fetches livestreams from the server. */
   public void loadLivestreams(Consumer<List<PublicLivestream>> callback, Consumer<Throwable> errorHandler, boolean forceLoad) {
     if (this.livestreams != null && !forceLoad) {
