@@ -70,6 +70,25 @@ List of unicode emojis that can be printed directly in chat: https://archive.ph/
 
 # Change Log
 
+## v1.17 - The Donation Update [14/9/2022]
+- Added a fancy Donations section to the ChatMate Dashboard with intuitive and fluent UI
+  - Lists the donations with some filtering options
+  - Users can be linked or unlinked
+  - When requesting to link a user, a test box with a dropdown list appears that can be used to search for users
+- Started reworking the HUD system so it re-uses the InteractiveScreen ecosytem
+  - Donations are received as a ChatMate event and shown by a dropdown card
+  - A timer bar indicates how much longer the donation card will be visible
+  - The donation card can be closed or linked to a user via the top-right icon buttons
+- Donators receive chat effects whose duration depends on the donation amount and highest donator rank
+  - For every dollar donated, the effect will stay for another 5, 10, or 15 minutes for Donators, Supporters, or Members, respectively
+  - The effect duration is counted only while livestreams are live, and is additive among multiple donations
+  - Donators+ receive a rainbow effect
+  - Supporters+ receive a wave effect
+  - Members receive a particle effect
+- Many improvements and additions to the InteractiveScreen
+- Added ApiStores for smart caching
+- Added a FontEngine in place of the Forge FontRenderer for customising the rendering of text and allow for more options
+
 ## v1.16 - The Rank Update [15/8/2022]
 - Added a modal for managing standard ranks, which shares its implementation with the punishment modal
 - Chat messages now show the user's current highest rank, instead of the default "VIEWER"
