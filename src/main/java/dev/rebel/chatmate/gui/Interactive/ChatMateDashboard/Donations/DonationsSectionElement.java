@@ -190,7 +190,6 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     // the complexity of this function escalated very quickly and I apologise
     private List<IElement> getRow(PublicDonation donation, boolean isUpdating) {
       String dateStr = dateToDayAccuracy(donation.time);
-      String formattedAmount = String.format("$%.2f", donation.amount);
 
       IElement actionElement;
       Dim iconHeight = super.context.fontEngine.FONT_HEIGHT_DIM;
@@ -261,7 +260,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       return Collections.list(
           new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f),
           userNameElement,
-          new LabelElement(super.context, this).setText(formattedAmount).setFontScale(0.75f).setAlignment(TextAlignment.CENTRE),
+          new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setAlignment(TextAlignment.CENTRE),
           new LabelElement(super.context, this).setText(donation.message).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT),
           actionElement
       );

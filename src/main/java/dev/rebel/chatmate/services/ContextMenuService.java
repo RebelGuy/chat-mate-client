@@ -188,9 +188,11 @@ public class ContextMenuService {
   }
 
   private void onGenerateFakeDonation() {
+    float amount = (float)(Math.random() * 100);
     PublicDonationData donation = new PublicDonationData() {{
       time = new Date().getTime();
-      amount = (float)(Math.random() * 100);
+      amount = amount;
+      formattedAmount = String.format("$%.2f", amount);
       currency = "USD";
       name = "A Donator's Name";
       String msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a";

@@ -48,8 +48,7 @@ public class DonationElement extends ContainerElement {
         .setMargin(new RectExtension(ZERO, gui(-4), gui(-8), ZERO)) // move above and to the right of the main content
     );
 
-    String formattedAmount = String.format("$%.2f", this.donation.amount);
-    String title = String.format("%s has donated %s!", this.donation.name, formattedAmount);
+    String title = String.format("%s has donated %s!", this.donation.name, this.donation.formattedAmount);
     Font titleFont = new Font().withBold(true).withColour(Colour.YELLOW).withShadow(new Shadow(context.dimFactory));
     super.addElement(new LabelElement(context, this)
         .setText(title)

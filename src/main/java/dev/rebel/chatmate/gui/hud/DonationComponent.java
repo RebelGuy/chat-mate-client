@@ -83,8 +83,7 @@ public class DonationComponent extends Box implements IHudComponent {
 
     // get text dimensions
     Dim maxWidth = this.dimFactory.fromGui(MAX_WIDTH_GUI - 2 * PADDING_GUI);
-    String formattedAmount = String.format("$%.2f", this.donation.amount);
-    String title = String.format("%s has donated %s!", this.donation.name, formattedAmount);
+    String title = String.format("%s has donated %s!", this.donation.name, this.donation.formattedAmount);
     List<String> splitTitle = this.fontEngine.listFormattedStringToWidth(title, maxWidth);
     Dim titleWidth = Dim.max(Collections.map(splitTitle, str -> this.fontEngine.getStringWidthDim(str)));
 

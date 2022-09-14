@@ -11,6 +11,7 @@ public class PublicDonationData extends PublicObject {
   public Integer id;
   public Long time;
   public Float amount;
+  public String formattedAmount;
   public String currency;
   public String name;
   public @Nullable String message;
