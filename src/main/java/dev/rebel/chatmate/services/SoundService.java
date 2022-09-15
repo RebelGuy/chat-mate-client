@@ -32,8 +32,8 @@ public class SoundService {
     this.playSound("random.levelup", pitch);
   }
 
-  public void playDragonKill() {
-    this.playSound("mob.enderdragon.end");
+  public void playDragonKill(float pitch) {
+    this.playSound("mob.enderdragon.end", pitch);
   }
 
   private void playSound(String resourceLocation) {

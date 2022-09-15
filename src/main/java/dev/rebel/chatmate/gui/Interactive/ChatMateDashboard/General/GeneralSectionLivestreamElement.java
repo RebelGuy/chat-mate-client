@@ -1,18 +1,16 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
+package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.IconButtonElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
 import dev.rebel.chatmate.gui.Interactive.ContainerElement;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
-import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
-import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.TextInputElement;
-import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.models.api.chatMate.SetActiveLivestreamRequest;
@@ -63,7 +61,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .cast();
 
-    Dim iconWidth = gui(context.fontRenderer.FONT_HEIGHT).plus(gui(4));
+    Dim iconWidth = gui(context.fontEngine.FONT_HEIGHT).plus(gui(4));
     RectExtension buttonMargin = new RectExtension(gui(2), ZERO);
     this.clearButton = new IconButtonElement(context, this)
         .setImage(Asset.GUI_CLEAR_ICON)
@@ -101,15 +99,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
         .setMargin(buttonMargin)
         .cast();
 
-    this.errorLabel = new LabelElement(context, this)
-        .setOverflow(TextOverflow.SPLIT)
-        .setMaxLines(4)
-        .setColour(Colour.RED)
-        .setAlignment(TextAlignment.LEFT)
-        .setFontScale(0.75f)
-        .setSizingMode(SizingMode.FILL)
-        .setVisible(false)
-        .cast();
+    this.errorLabel = SharedElements.ERROR_LABEL.create(context, this);
 
     this.livestream = "";
 
@@ -157,11 +147,16 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
   }
 
   private void onOpenInBrowser() {
+    boolean result;
     try {
       URI url = new URI(this.livestream);
-      super.context.browserService.openWebLink(url);
-    } catch (Exception e) {
-      this.setTemporaryTooltip("Unable to open browser: " + e.getMessage(), 4000L);
+      result = super.context.urlService.openUrl(url);
+    } catch (Exception ignore) {
+      result = false;
+    }
+
+    if (!result) {
+      this.setTemporaryTooltip("Unable to open the browser", 4000L);
     }
   }
 
@@ -180,7 +175,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
     // we need to run these all as side effects because we don't want to modify the element tree during the render process
     super.context.renderer.runSideEffect(() -> {
       PublicLivestreamStatus status = getStatusResponseData.livestreamStatus;
-      this.livestream = status == null ? "" : status.livestreamLink;
+      this.livestream = status == null ? "" : status.livestream.livestreamLink;
       this.livestreamInputField.setTextUnsafe(this.livestream);
       this.disableLoadingState();
     });

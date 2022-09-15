@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.LayoutGroup;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -83,7 +84,7 @@ public abstract class ContainerElement extends ElementBase {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxWidth) {
+  protected DimPoint calculateThisSize(Dim maxWidth) {
     // note: the parent is responsible for the vertical/horizontal position of this container within itself.
     // we only need to set the relative positions of elements within the box that will be provided to us.
     List<Tuple2<IElement, DimPoint>> elementSizes = Collections.map(this.getVisibleChildren(), el -> new Tuple2<>(el, el.calculateSize(maxWidth)));
@@ -104,14 +105,15 @@ public abstract class ContainerElement extends ElementBase {
     // calculate the size of each element, place them on separate lines.
     // at the end, position elements horizontally within our container width.
     Dim containerWidth;
+    List<Tuple2<IElement, DimPoint>> defaultLayoutGroupSizes = Collections.filter(elementSizes, x -> x._1.getLayoutGroup() == LayoutGroup.ALL);
     if (this.getSizingMode() == SizingMode.FILL) {
       containerWidth = maxWidth;
     } else {
-      containerWidth = Collections.max(elementSizes, size -> size._2.getX().getGui())._2.getX();
+      containerWidth = Collections.max(defaultLayoutGroupSizes, size -> size._2.getX().getGui())._2.getX();
     }
 
     Dim targetHeight = super.getTargetContentHeight();
-    Dim contentHeight = Dim.sum(Collections.map(elementSizes, el -> el._2.getY()));
+    Dim contentHeight = Dim.sum(Collections.map(defaultLayoutGroupSizes, el -> el._2.getY()));
     Dim containerHeight;
     if (targetHeight == null) {
       containerHeight = contentHeight;
@@ -153,9 +155,10 @@ public abstract class ContainerElement extends ElementBase {
     List<Tuple2<IElement, DimPoint>> currentGroup = new ArrayList<>();
     for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
       VerticalAlignment thisAlignment = elementSize._1.getVerticalAlignment();
+      boolean includedInLayout = elementSize._1.getLayoutGroup() == LayoutGroup.ALL;
 
       // new group
-      if (currentAlignment != null && currentAlignment != thisAlignment) {
+      if (currentAlignment != null && currentAlignment != thisAlignment && includedInLayout) {
         groups.add(new Tuple2<>(currentGroup, currentAlignment));
         currentGroup = new ArrayList<>();
       }
@@ -177,13 +180,25 @@ public abstract class ContainerElement extends ElementBase {
    * This works best with three (or less) groups, ordered as TOP -> MIDDLE -> BOTTOM. Adding more groups may result in undesired layouts. */
   private List<Dim> getVerticalOffsetsOfElements(List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> groups, Dim height) {
     List<Dim> verticalOffsets = new ArrayList<>();
-    Dim remainingContentHeight = Dim.sum(Collections.map(groups, g -> Dim.sum(Collections.map(g._1, el -> el._2.getY()))));
+
+    // oof
+    Dim remainingContentHeight = Dim.sum(
+        Collections.map(
+            groups,
+            g -> Dim.sum(
+                Collections.map(
+                    Collections.filter(g._1, el -> el._1.getLayoutGroup() == LayoutGroup.ALL),
+                    el -> el._2.getY()
+                )
+            )
+        )
+    );
 
     Dim currentY = ZERO;
     for (Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment> group : groups) {
       // all elements in the group will be placed directly after one another, and the group itself will be placed according to its alignment
       VerticalAlignment groupAlignment = group._2;
-      Dim groupHeight = Dim.sum(Collections.map(group._1, el -> el._2.getY()));
+      Dim groupHeight = Dim.sum(Collections.map(Collections.filter(group._1, el -> el._1.getLayoutGroup() == LayoutGroup.ALL), el -> el._2.getY()));
 
       if (groupAlignment == VerticalAlignment.TOP) {
         currentY = currentY;
@@ -199,7 +214,9 @@ public abstract class ContainerElement extends ElementBase {
 
       for (Tuple2<IElement, DimPoint> elementSize : group._1) {
         verticalOffsets.add(currentY);
-        currentY = currentY.plus(elementSize._2.getY());
+        if (elementSize._1.getLayoutGroup() == LayoutGroup.ALL) {
+          currentY = currentY.plus(elementSize._2.getY());
+        }
       }
 
       remainingContentHeight = remainingContentHeight.minus(groupHeight);
@@ -218,17 +235,19 @@ public abstract class ContainerElement extends ElementBase {
     List<Tuple2<IElement, DimPoint>> currentLine = new ArrayList<>();
     Dim lineX = ZERO;
     for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
+      boolean participatesInLayout = elementSize._1.getLayoutGroup() == LayoutGroup.ALL;
       DimPoint size = elementSize._2;
 
-      if (currentLine.size() > 0 && lineX.plus(size.getX()).gt(maxWidth)) {
+      // non-participating elements may clip the right side - that's what they signed up for
+      if (currentLine.size() > 0 && participatesInLayout && lineX.plus(size.getX()).gt(maxWidth)) {
         // doesn't fit on line
         lines.add(currentLine);
         currentLine = Collections.list(elementSize);
-        lineX = size.getX();
+        lineX = participatesInLayout ? size.getX() : ZERO;
       } else {
         // add to line
         currentLine.add(elementSize);
-        lineX = lineX.plus(size.getX());
+        lineX = participatesInLayout ? lineX.plus(size.getX()) : lineX;
       }
     }
     lines.add(currentLine);
@@ -237,8 +256,14 @@ public abstract class ContainerElement extends ElementBase {
     Dim currentY = ZERO;
     Dim right = ZERO;
     for (List<Tuple2<IElement, DimPoint>> line : lines) {
-      Dim lineHeight = Collections.max(line, size -> size._2.getY().getGui())._2.getY();
-      Dim lineContentWidth = Collections.eliminate(Collections.map(line, l -> l._2.getX()), Dim::plus);
+      List<Tuple2<IElement, DimPoint>> participatingItems = Collections.filter(line, l -> l._1.getLayoutGroup() == LayoutGroup.ALL);
+
+      Dim lineHeight = ZERO;
+      Dim lineContentWidth = ZERO;
+      if (participatingItems.size() > 0) {
+        lineHeight = Dim.max(Collections.map(participatingItems, l -> l._2.getY()));
+        lineContentWidth = Dim.sum(Collections.map(participatingItems, l -> l._2.getX()));
+      }
       Dim freeWidth = maxWidth.minus(lineContentWidth); // horizontal wiggle room
 
       // the line elements' horizontal alignment is prioritised from left to right.
@@ -275,10 +300,13 @@ public abstract class ContainerElement extends ElementBase {
 
         Dim thisRelX = currentX.plus(xOffset);
         Dim thisRelY = currentY.plus(yOffset);
+        boolean isParticipating = element.getLayoutGroup() == LayoutGroup.ALL;
         this.childrenRelBoxes.put(element, new DimRect(thisRelX, thisRelY, size.getX(), size.getY()));
 
-        currentX = thisRelX.plus(size.getX());
-        right = Dim.max(right, currentX);
+        if (isParticipating) {
+          currentX = thisRelX.plus(size.getX());
+          right = Dim.max(right, currentX);
+        }
       }
 
       currentY = currentY.plus(lineHeight);
@@ -295,10 +323,10 @@ public abstract class ContainerElement extends ElementBase {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     for (IElement element : this.children) {
       if (element.getVisible()) {
-        element.render();
+        element.render(null);
       }
     }
   }

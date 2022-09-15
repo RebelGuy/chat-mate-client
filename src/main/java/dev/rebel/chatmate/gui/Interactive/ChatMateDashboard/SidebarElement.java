@@ -14,6 +14,7 @@ import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
@@ -21,7 +22,6 @@ import scala.Tuple2;
 
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 public class SidebarElement extends ContainerElement {
   private final DashboardStore store;
@@ -43,11 +43,12 @@ public class SidebarElement extends ContainerElement {
                 new LabelElement(context, this)
                   .setText("Open Studio")
                   .setColour(Colour.BLUE)
+                  .setHoverFont(new Font().withColour(new Colour(64, 64, 180)).withUnderlined(true))
                   .setOnClick(this::onOpenStudio)
                 )
             .addElement(
                 new ImageElement(context, this)
-                    .setImage(Asset.EXTERNAL_ICON)
+                    .setImage(Asset.GUI_EXTERNAL_ICON)
                     .setScale(1.0f / 12)
                     .setPadding(new RectExtension(gui(2), ZERO, ZERO, ZERO))
                     .setSizingMode(SizingMode.MINIMISE)
@@ -59,7 +60,7 @@ public class SidebarElement extends ContainerElement {
 
     super.addElement(new LabelElement(context, this)
         .setText(context.environment.buildName)
-        .setColour(Colour.LTGREY)
+        .setColour(Colour.GREY75)
         .setFontScale(0.5f)
         .setPadding(new RectExtension(gui(0), gui(0), gui(4), gui(0)))
         .setMargin(new RectExtension(gui(0), gui(0), gui(0), gui(-8))) // this actually works... wow!
@@ -68,7 +69,7 @@ public class SidebarElement extends ContainerElement {
 
   private void onOpenStudio() {
     try {
-      super.context.browserService.openWebLink(new URI(super.context.environment.studioUrl));
+      super.context.urlService.openUrl(new URI(super.context.environment.studioUrl));
     } catch (Exception e) {
       super.context.logService.logError(this, "Unable to open Studio in the web browser", e);
     }
@@ -142,7 +143,7 @@ public class SidebarElement extends ContainerElement {
     }
 
     @Override
-    public void renderElement() {
+    protected void renderElement() {
       float hoveringFrac = this.isHovering.getFrac();
       if (hoveringFrac > 0) {
         DimRect rect = super.getCollisionBox();

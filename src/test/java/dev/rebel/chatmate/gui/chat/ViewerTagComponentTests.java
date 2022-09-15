@@ -33,19 +33,19 @@ public class ViewerTagComponentTests {
     when(this.identifyPlatforms.get()).thenReturn(false);
 
     PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockConfig, ChatPlatform.Youtube);
-    Assert.assertFalse(component.component instanceof ImageChatComponent);
+    Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
 
     // change to true
     ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
     verify(this.identifyPlatforms).onChange(captor.capture(), any(Object.class));
     captor.getValue().accept(true);
 
-    Assert.assertTrue(component.component instanceof ImageChatComponent);
+    Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
 
     // change to false
     captor.getValue().accept(false);
 
-    Assert.assertFalse(component.component instanceof ImageChatComponent);
+    Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
   }
 
   @Test
@@ -54,19 +54,19 @@ public class ViewerTagComponentTests {
     when(this.identifyPlatforms.get()).thenReturn(true);
 
     PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockConfig, ChatPlatform.Twitch);
-    Assert.assertTrue(component.component instanceof ImageChatComponent);
+    Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
 
     // change to false
     ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
     verify(this.identifyPlatforms).onChange(captor.capture(), any(Object.class));
     captor.getValue().accept(false);
 
-    Assert.assertFalse(component.component instanceof ImageChatComponent);
+    Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
 
     // change to true
     captor.getValue().accept(true);
 
-    Assert.assertTrue(component.component instanceof ImageChatComponent);
+    Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
   }
 
   private static void verifyText(PlatformViewerTagComponent component, boolean expectImage) {

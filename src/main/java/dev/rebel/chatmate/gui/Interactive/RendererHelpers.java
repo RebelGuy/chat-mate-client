@@ -1,13 +1,14 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.*;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.TextHelpers;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldRenderer;
@@ -39,6 +40,22 @@ public class RendererHelpers {
     GlStateManager.scale(scale, scale, 1);
     onRender.run();
     GlStateManager.popMatrix();
+  }
+
+  /** Make attrib contexts more readable by wrapping them into this function. */
+  public static void withAttrib(int glAttribMask, Runnable onRender) {
+    withConditionalAttrib(true, glAttribMask, onRender);
+  }
+
+  /** Make conditional attrib contexts more readable by wrapping them into this function. */
+  public static void withConditionalAttrib(boolean condition, int glAttribMask, Runnable onRender) {
+    if (!condition) {
+      return;
+    }
+
+    GL11.glPushAttrib(glAttribMask);
+    onRender.run();
+    GL11.glPopAttrib();
   }
 
   /** Draws a coloured rect. */
@@ -223,7 +240,7 @@ public class RendererHelpers {
     tessellator.draw();
   }
 
-  public static void drawTooltip(DimFactory df, FontRenderer font, DimPoint mousePos, String tooltip) {
+  public static void drawTooltip(DimFactory df, FontEngine font, DimPoint mousePos, String tooltip) {
     Dim screenWidth = df.getMinecraftSize().getX();
     RectExtension padding = new RectExtension(df.fromGui(3));
     List<String> lines = TextHelpers.splitText(tooltip, (int)screenWidth.over(2).minus(padding.getExtendedWidth()).getGui(), font);
@@ -253,7 +270,7 @@ public class RendererHelpers {
     // render text
     int y = 0;
     for (String line : lines) {
-      font.drawString(line, contentRect.getX().getGui(), contentRect.getY().getGui() + y, Colour.WHITE.toInt(), false);
+      font.drawString(line, contentRect.getX().getGui(), contentRect.getY().getGui() + y, new Font().withColour(Colour.WHITE));
       y += font.FONT_HEIGHT;
     }
   }
@@ -398,7 +415,7 @@ public class RendererHelpers {
     GlStateManager.disableAlpha();
     GlStateManager.disableTexture2D();
     GlStateManager.depthMask(false); // this ensures we can draw multiple transparent things on top of each other
-    GlStateManager.shadeModel(7425); // for being able to draw colour gradients
+    GlStateManager.shadeModel(GL11.GL_SMOOTH); // for being able to draw colour gradients
 
     Tessellator tessellator = Tessellator.getInstance();
     WorldRenderer worldRenderer = tessellator.getWorldRenderer();
@@ -442,11 +459,11 @@ public class RendererHelpers {
     GlStateManager.enableAlpha();
     GlStateManager.enableTexture2D();
     GlStateManager.depthMask(true);
-    GlStateManager.shadeModel(7424);
+    GlStateManager.shadeModel(GL11.GL_FLAT);
     GlStateManager.popMatrix();
   }
 
-  private static void addVertex(WorldRenderer worldRenderer, int zLevel, DimPoint point, Colour colour) {
+  public static void addVertex(WorldRenderer worldRenderer, int zLevel, DimPoint point, Colour colour) {
     worldRenderer.pos(point.getX().round().getGui(), point.getY().round().getGui(), zLevel).color(colour.red / 255.0f, colour.green / 255.0f, colour.blue / 255.0f, colour.alpha / 255.0f).endVertex();
   }
 

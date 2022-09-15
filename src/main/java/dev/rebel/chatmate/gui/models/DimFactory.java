@@ -44,7 +44,7 @@ public class DimFactory {
     );
   }
 
-  private int getScaleFactor() {
+  public int getScaleFactor() {
     return this.memoiser.memoise("getScaleFactor", () -> new ScaledResolution(this.minecraft).getScaleFactor(),
         this.minecraft.displayHeight, this.minecraft.displayWidth, this.minecraft.gameSettings.guiScale);
   }

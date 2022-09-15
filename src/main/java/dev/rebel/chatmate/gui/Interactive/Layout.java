@@ -102,4 +102,12 @@ public class Layout {
   public enum SizingMode {
     FILL, MINIMISE, ANY
   }
+
+  // often times we need to set an elements true size without it affecting the layout of its parents so that it can receive interaction events.
+  public enum LayoutGroup {
+    /** The element participates fully in the layout calculations. */
+    ALL,
+    /** The element is placed statically as part of its ancestors/siblings, but its size has no effect on the ancestors/siblings. */
+    CHILDREN
+  }
 }

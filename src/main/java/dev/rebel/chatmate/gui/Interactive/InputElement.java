@@ -1,5 +1,10 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.CursorService.CursorType;
+import dev.rebel.chatmate.services.events.models.MouseEventData;
+
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -18,6 +23,9 @@ public abstract class InputElement extends SingleElement {
     this.valid = true;
     this.autoFocus = false;
     this.tabIndex = null;
+
+    // initialise this element first before setting cursor
+    super.setCursor(CursorType.CLICK);
   }
 
   @Override
@@ -25,15 +33,24 @@ public abstract class InputElement extends SingleElement {
     return null;
   }
 
+  @Override
+  protected boolean shouldUseCursor() {
+    return this.getEnabled() && super.shouldUseCursor();
+  }
+
   /** This way of doing things allows multiple-source data validation (e.g. the input is valid in an isolated scope, but the form it is part of is disabled). */
   public InputElement setEnabled(Object key, boolean enabled) {
-    if (enabled) {
+    if (enabled && this.disabledSet.contains(key)) {
       this.disabledSet.remove(key);
-    } else {
+    } else if (!enabled && !this.disabledSet.contains(key)) {
       this.disabledSet.add(key);
+    } else {
+      // no changes made
+      return this;
     }
 
     this.setFocusable(this.getEnabled());
+    super.updateCursor();
 
     return this;
   }
@@ -86,8 +103,7 @@ public abstract class InputElement extends SingleElement {
     return this.getVisible() && this.getEnabled() && this.getFocusable();
   }
 
-  @Nullable
-  public Integer getTabIndex() {
+  public @Nullable Integer getTabIndex() {
     return this.tabIndex;
   }
 }

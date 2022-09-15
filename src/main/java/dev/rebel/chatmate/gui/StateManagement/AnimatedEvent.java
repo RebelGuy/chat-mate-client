@@ -10,24 +10,29 @@ import java.util.List;
 public class AnimatedEvent<TEvent> {
   private final long duration;
 
+  private final Object lock = new Object();
   private List<Animated<TEvent>> items;
 
   public AnimatedEvent(long duration) {
     this.duration = duration;
-    this.items = new ArrayList<>();
+    this.items = java.util.Collections.synchronizedList(new ArrayList<>());
   }
 
   public void onEvent(TEvent event) {
-    this.purgeOldEntries();
+    synchronized (this.lock) {
+      this.purgeOldEntries();
 
-    Animated<TEvent> newAnimated = new Animated<>(this.duration, null);
-    newAnimated.set(event);
-    this.items.add(newAnimated);
+      Animated<TEvent> newAnimated = new Animated<>(this.duration, null);
+      newAnimated.set(event);
+      this.items.add(newAnimated);
+    }
   }
 
   public List<Tuple<TEvent, Float>> getAllFracs() {
-    this.purgeOldEntries();
-    return Collections.map(this.items, item -> new Tuple<>(item.value, item.getFrac()));
+    synchronized (this.lock) {
+      this.purgeOldEntries();
+      return Collections.map(this.items, item -> new Tuple<>(item.value, item.getFrac()));
+    }
   }
 
   private void purgeOldEntries() {

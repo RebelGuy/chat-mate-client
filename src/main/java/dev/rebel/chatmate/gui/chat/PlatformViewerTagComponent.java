@@ -17,6 +17,11 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
   private final ChatPlatform platform;
   private final Consumer<Boolean> _onChangeIdentifyPlatforms = this::setComponent;
 
+  public PlatformViewerTagComponent(ChatPlatform platform) {
+    this.platform = platform;
+    this.setComponent(true);
+  }
+
   public PlatformViewerTagComponent(Config config, ChatPlatform platform) {
     this.platform = platform;
     this.setComponent(config.getIdentifyPlatforms().get());
@@ -25,9 +30,9 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
 
   private void setComponent(boolean identifyPlatforms) {
     if (identifyPlatforms) {
-      super.component = this.platform == ChatPlatform.Youtube ? YOUTUBE_COMPONENT : TWITCH_COMPONENT;
+      super.setComponent(this.platform == ChatPlatform.Youtube ? YOUTUBE_COMPONENT : TWITCH_COMPONENT);
     } else {
-      super.component = new ChatComponentText("");
+      super.setComponent(new ChatComponentText(""));
     }
   }
 }

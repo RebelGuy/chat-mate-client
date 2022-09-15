@@ -29,7 +29,7 @@ public class WrapperElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     DimPoint fullChildSize = this.contents.calculateSize(maxContentSize);
     if (fullChildSize.getX().gt(maxContentSize) || this.getSizingMode() == SizingMode.FILL) {
       // use max size
@@ -44,12 +44,12 @@ public class WrapperElement extends SingleElement {
   public void setBox(DimRect box) {
     super.setBox(box);
 
-    DimRect labelBox = this.alignChild(this.contents);
-    this.contents.setBox(labelBox);
+    DimRect contentsBox = this.alignChild(this.contents);
+    this.contents.setBox(contentsBox);
   }
 
   @Override
-  public void renderElement() {
-    this.contents.render();
+  protected void renderElement() {
+    this.contents.render(null);
   }
 }

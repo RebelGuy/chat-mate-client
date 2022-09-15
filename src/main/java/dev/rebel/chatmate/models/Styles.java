@@ -1,5 +1,9 @@
 package dev.rebel.chatmate.models;
 
+import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
@@ -10,6 +14,7 @@ import java.util.function.Supplier;
 public class Styles {
   public static final ChatStyle VIEWER_RANK_STYLE = new ChatStyle().setColor(EnumChatFormatting.DARK_PURPLE).setBold(true);
   public static final ChatStyle VIEWER_NAME_STYLE = new ChatStyle().setColor(EnumChatFormatting.YELLOW).setBold(false);
+  public static final FontFactory VIEWER_NAME_FONT = df -> Font.fromChatStyle(VIEWER_NAME_STYLE, df);
   public static final ChatStyle YOUTUBE_CHANNEL_STYLE = new ChatStyle().setColor(EnumChatFormatting.RED).setBold(false);
   public static final ChatStyle TWITCH_CHANNEL_STYLE = new ChatStyle().setColor(EnumChatFormatting.DARK_PURPLE).setBold(false);
   public static final ChatStyle YT_CHAT_MESSAGE_TEXT_STYLE = new ChatStyle().setColor(EnumChatFormatting.WHITE);
@@ -56,5 +61,10 @@ public class Styles {
     ChatComponentText component = new ChatComponentText(text);
     component.setChatStyle(styles);
     return component;
+  }
+
+  @FunctionalInterface
+  public interface FontFactory {
+    Font create(DimFactory df);
   }
 }

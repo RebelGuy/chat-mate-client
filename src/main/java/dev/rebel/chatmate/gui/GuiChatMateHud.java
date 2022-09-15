@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui;
 import dev.rebel.chatmate.gui.hud.*;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.ServerLogEventService;
@@ -17,6 +18,7 @@ public class GuiChatMateHud {
   private final DimFactory dimFactory;
   private final ForgeEventService forgeEventService;
   private final StatusService statusService;
+  private final FontEngine fontEngine;
 
   private final StatusIndicatorComponent statusIndicatorComponent;
   private final LiveViewersComponent liveViewersComponent;
@@ -24,15 +26,16 @@ public class GuiChatMateHud {
 
   public final List<IHudComponent> hudComponents;
 
-  public GuiChatMateHud(Minecraft minecraft, DimFactory dimFactory, ForgeEventService forgeEventService, StatusService statusService, Config config, ServerLogEventService serverLogEventService) {
+  public GuiChatMateHud(Minecraft minecraft, FontEngine fontEngine, DimFactory dimFactory, ForgeEventService forgeEventService, StatusService statusService, Config config, ServerLogEventService serverLogEventService) {
     super();
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.forgeEventService = forgeEventService;
     this.statusService = statusService;
+    this.fontEngine = fontEngine;
 
     this.statusIndicatorComponent = new StatusIndicatorComponent(dimFactory, 0.5f, statusService, config, serverLogEventService);
-    this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft);
+    this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft, fontEngine);
     this.serverLogsTimeSeriesComponent = new ServerLogsTimeSeriesComponent(dimFactory, serverLogEventService, config);
 
     this.hudComponents = new ArrayList<>();
@@ -44,7 +47,7 @@ public class GuiChatMateHud {
   // render indicators here, etc.
   // will need to check config to see if an indicator should be rendered or not, as well as its transform and content
   public void renderGameOverlay() {
-    RenderContext context = new RenderContext(this.minecraft.renderEngine);
+    RenderContext context = new RenderContext(this.minecraft.renderEngine, this.fontEngine);
 
     for (IHudComponent component : this.hudComponents) {
       component.render(context);

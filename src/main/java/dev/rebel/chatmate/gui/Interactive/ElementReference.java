@@ -1,5 +1,9 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.LayoutGroup;
+import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -8,6 +12,7 @@ import dev.rebel.chatmate.services.util.Collections;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /** An element that acts as a reference for a dynamic child. This means the reference has to be only instantiated once
  * (for example for the purposes of initialising layout lists), but its contents can be freely swapped out.
@@ -127,9 +132,9 @@ public class ElementReference implements IElement {
   }
 
   @Override
-  public void render() {
+  public void render(@Nullable Consumer<Runnable> renderContextWrapper) {
     if (this.underlyingElement != null) {
-      this.underlyingElement.render();
+      this.underlyingElement.render(renderContextWrapper);
     }
 
     if (this.context.debugElement == this && this.underlyingElement != null) {
@@ -193,33 +198,43 @@ public class ElementReference implements IElement {
   }
 
   @Override
-  public Layout.HorizontalAlignment getHorizontalAlignment() {
-    return this.underlyingElement == null ? Layout.HorizontalAlignment.LEFT : this.underlyingElement.getHorizontalAlignment();
+  public HorizontalAlignment getHorizontalAlignment() {
+    return this.underlyingElement == null ? HorizontalAlignment.LEFT : this.underlyingElement.getHorizontalAlignment();
   }
 
   @Override
-  public IElement setHorizontalAlignment(Layout.HorizontalAlignment horizontalAlignment) {
+  public IElement setHorizontalAlignment(HorizontalAlignment horizontalAlignment) {
     return this.underlyingElement == null ? this : this.underlyingElement.setHorizontalAlignment(horizontalAlignment);
   }
 
   @Override
-  public Layout.VerticalAlignment getVerticalAlignment() {
-    return this.underlyingElement == null ? Layout.VerticalAlignment.TOP : this.underlyingElement.getVerticalAlignment();
+  public VerticalAlignment getVerticalAlignment() {
+    return this.underlyingElement == null ? VerticalAlignment.TOP : this.underlyingElement.getVerticalAlignment();
   }
 
   @Override
-  public IElement setVerticalAlignment(Layout.VerticalAlignment verticalAlignment) {
+  public IElement setVerticalAlignment(VerticalAlignment verticalAlignment) {
     return this.underlyingElement == null ? this : this.underlyingElement.setVerticalAlignment(verticalAlignment);
   }
 
   @Override
-  public Layout.SizingMode getSizingMode() {
-    return this.underlyingElement == null ? Layout.SizingMode.ANY : this.underlyingElement.getSizingMode();
+  public SizingMode getSizingMode() {
+    return this.underlyingElement == null ? SizingMode.ANY : this.underlyingElement.getSizingMode();
   }
 
   @Override
-  public IElement setSizingMode(Layout.SizingMode sizingMode) {
+  public IElement setSizingMode(SizingMode sizingMode) {
     return this.underlyingElement == null ? this : this.underlyingElement.setSizingMode(sizingMode);
+  }
+
+  @Override
+  public LayoutGroup getLayoutGroup() {
+    return this.underlyingElement == null ? LayoutGroup.ALL : this.underlyingElement.getLayoutGroup();
+  }
+
+  @Override
+  public IElement setLayoutGroup(LayoutGroup layoutGroup) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setLayoutGroup(layoutGroup);
   }
 
   @Override

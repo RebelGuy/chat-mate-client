@@ -1,17 +1,18 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.services.util.TextHelpers;
-import net.minecraft.client.gui.FontRenderer;
-import org.lwjgl.util.Color;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -21,7 +22,8 @@ public class LabelElement extends SingleElement {
   private TextAlignment alignment;
   private TextOverflow overflow;
   private Dim linePadding;
-  private Colour colour;
+  private Font font;
+  private @Nullable Font hoverFont;
   private float fontScale;
   private @Nullable Integer maxLines;
   private @Nullable Runnable onClick;
@@ -35,7 +37,8 @@ public class LabelElement extends SingleElement {
     this.overflow = TextOverflow.TRUNCATE;
     super.setSizingMode(SizingMode.MINIMISE);
     this.linePadding = context.dimFactory.fromGui(1);
-    this.colour = new Colour(Color.WHITE);
+    this.font = new Font();
+    this.hoverFont = null;
     this.fontScale = 1.0f;
     this.maxLines = null;
     this.onClick = null;
@@ -73,7 +76,20 @@ public class LabelElement extends SingleElement {
   }
 
   public LabelElement setColour(Colour colour) {
-    this.colour = colour;
+    return this.setFont(new Font().withColour(colour).withShadow(new Shadow(super.context.dimFactory)));
+  }
+
+  public LabelElement setFont(Font font) {
+    this.font = font;
+    return this;
+  }
+
+  public Font getFont() {
+    return this.font;
+  }
+
+  public LabelElement setHoverFont(Font hoverFont) {
+    this.hoverFont = hoverFont;
     return this;
   }
 
@@ -103,8 +119,8 @@ public class LabelElement extends SingleElement {
 
   /** Returns the full box width that would be required to contain the longest word of this label on a single line. */
   public Dim calculateWidthToFitLongestWord() {
-    List<Integer> widths = Collections.map(Collections.list(this.text.split(" ")), this.context.fontRenderer::getStringWidth);
-    Dim maxWidth = this.context.dimFactory.fromGui(this.fontScale * Collections.max(widths));
+    List<Dim> widths = Collections.map(Collections.list(this.text.split(" ")), str -> this.context.fontEngine.getStringWidthDim(str, this.font));
+    Dim maxWidth = Dim.max(widths).times(this.fontScale);
     return super.getFullBoxWidth(maxWidth);
   }
 
@@ -130,35 +146,35 @@ public class LabelElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
-    FontRenderer font = this.context.fontRenderer;
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
+    FontEngine fontEngine = this.context.fontEngine;
     DimFactory factory = this.context.dimFactory;
-    Dim fontHeight = factory.fromGui(font.FONT_HEIGHT);
+    Dim fontHeight = factory.fromGui(fontEngine.FONT_HEIGHT);
     maxContentSize = maxContentSize.over(this.fontScale);
 
     Dim contentWidth;
     Dim contentHeight;
     if (this.overflow == TextOverflow.OVERFLOW) {
       this.addTextForRendering(this.text);
-      int width = font.getStringWidth(this.text);
-      contentWidth = Dim.min(factory.fromGui(width), maxContentSize);
+      Dim width = fontEngine.getStringWidthDim(this.text, this.font);
+      contentWidth = Dim.min(width, maxContentSize);
       contentHeight = fontHeight;
 
     } else if (this.overflow == TextOverflow.TRUNCATE) {
       String text = this.text;
-      int width = font.getStringWidth(text);
-      if (width > maxContentSize.getGui()) {
-        text = font.trimStringToWidth(text, (int) maxContentSize.getGui());
+      Dim width = fontEngine.getStringWidthDim(text, this.font);
+      if (width.gt(maxContentSize)) {
+        text = fontEngine.trimStringToWidth(text, maxContentSize, this.font, false);
       }
       addTextForRendering(text);
-      contentWidth = Dim.min(factory.fromGui(width), maxContentSize);
+      contentWidth = Dim.min(width, maxContentSize);
       contentHeight = fontHeight;
 
     } else if (this.overflow == TextOverflow.SPLIT) {
-      List<String> lines = TextHelpers.splitText(this.text, (int) maxContentSize.getGui(), font);
+      List<String> lines = TextHelpers.splitText(this.text, (int) maxContentSize.getGui(), fontEngine); // todo: we should be passing the font in here. perhaps in that loop, re-apply the font's styling to every element?
       addTextLinesForRendering(lines);
-      int actualMaxWidth = Collections.max(this.lines.stream().map(font::getStringWidth));
-      contentWidth = factory.fromGui(actualMaxWidth);
+      Dim actualMaxWidth = Dim.max(Collections.map(this.lines, str -> fontEngine.getStringWidthDim(str, this.font)));
+      contentWidth = actualMaxWidth;
       contentHeight = fontHeight.times(this.lines.size()).plus(this.linePadding.times(this.lines.size() - 1));
 
     } else {
@@ -181,16 +197,16 @@ public class LabelElement extends SingleElement {
   }
 
   @Override
-  public void renderElement() {
-    FontRenderer font = this.context.fontRenderer;
-    DimFactory factory = this.context.dimFactory;
+  protected void renderElement() {
+    FontEngine fontEngine = this.context.fontEngine;
 
-    Dim fontHeight = factory.fromGui(font.FONT_HEIGHT).times(this.fontScale);
+    Font font = super.isHovering() && this.hoverFont != null ? this.hoverFont : this.font;
+    Dim fontHeight = fontEngine.FONT_HEIGHT_DIM.times(this.fontScale);
     DimRect box = this.getContentBox();
     Dim y = this.getContentBox().getY();
 
     for (String line : this.lines) {
-      Dim width = factory.fromGui(font.getStringWidth(line) * this.fontScale); // todo: simplify scaling by creating a FontRender wrapper with extra options
+      Dim width = fontEngine.getStringWidthDim(line, font).times(this.fontScale); // todo: simplify scaling by creating a FontRender wrapper with extra options
       Dim x;
       if (this.alignment == TextAlignment.LEFT) {
         x = box.getX();
@@ -203,7 +219,7 @@ public class LabelElement extends SingleElement {
       }
 
       RendererHelpers.withMapping(new DimPoint(x, y), this.fontScale, () -> {
-        font.drawStringWithShadow(line, 0, 0, this.colour.toInt());
+        super.context.fontEngine.drawString(line, 0, 0, font);
       });
 
       y = y.plus(fontHeight).plus(this.linePadding);

@@ -19,18 +19,20 @@ public class CustomGuiModList extends GuiModList {
   private final Minecraft minecraft;
   private final Config config;
   private final GuiService guiService;
+  private final FontEngineProxy fontEngineProxy;
   private final int modIndex;
   private GuiButton configButton;
 
   // Initially we implemented the GuiFactory and registered it with Forge to automatically show the config screen for
   // ChatMate, but that prevented us from doing any sort of dependency injection. Turns out Forge makes it rather
   // unpleasant to override the default behaviour, but this class does it anyway.
-  public CustomGuiModList(GuiScreen parent, Minecraft minecraft, Config config, GuiService guiService)
+  public CustomGuiModList(GuiScreen parent, Minecraft minecraft, Config config, GuiService guiService, FontEngineProxy fontEngineProxy)
   {
     super(parent);
     this.minecraft = minecraft;
     this.config = config;
     this.guiService = guiService;
+    this.fontEngineProxy = fontEngineProxy;
 
     // we can only check which mod index is currently selected, so get the index for ChatMate
     Optional<ModContainer> mod = Loader.instance().getModList().stream().filter(m -> m.getName().equals("ChatMate")).findFirst();
@@ -64,7 +66,7 @@ public class CustomGuiModList extends GuiModList {
     // manually show the ChatMate config screen so we can inject dependencies :)
     // todo: deprecate the CustomGuiConfig screen and instead show the dashboard
     if (button == this.configButton && this.modIndexSelected(modIndex)) {
-      this.minecraft.displayGuiScreen(new CustomGuiConfig(this, this.config));
+      this.minecraft.displayGuiScreen(new CustomGuiConfig(this, this.config, this.fontEngineProxy));
 //      this.guiService.onDisplayDashboard();
       return;
     }

@@ -4,6 +4,7 @@ import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
+import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
@@ -12,37 +13,29 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 public class ButtonElement extends InputElement {
-  private static final ResourceLocation BUTTON_TEXTURES = new ResourceLocation("textures/gui/widgets.png");
-
-  /** A button cannot physically be wider than this value, as it is limited by the texture width itself.
-   * If there is ever a requirement for wider buttons, the rendering mechanism will need to be modified. */
-  private static final int MAX_WIDTH_GUI = 200;
-
-  /** Based on the texture. I don't know what happens if this is larger, though. */
-  private static final int MIN_WIDTH_GUI = 20;
-
   private Dim minSize;
   private @Nullable IElement childElement;
-  private boolean hovered;
   private @Nullable Runnable onClick;
+  private Dim borderCornerRadius;
 
   public ButtonElement(InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
 
     this.minSize = ZERO;
     this.childElement = null;
-    this.hovered = false;
     this.onClick = null;
+    this.borderCornerRadius = gui(3.5f);
+
+    super.setCursor(CursorType.CLICK);
+    super.setBorder(new RectExtension(gui(0.5f)));
+    super.setPadding(new RectExtension(gui(3)));
   }
 
   public ButtonElement setChildElement(@Nullable IElement childElement) {
@@ -65,6 +58,11 @@ public class ButtonElement extends InputElement {
     return this;
   }
 
+  public ButtonElement setBorderCornerRadius(Dim cornerRadius) {
+    this.borderCornerRadius = cornerRadius;
+    return this;
+  }
+
   @Override
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     MouseEventData.In data = e.getData();
@@ -76,34 +74,12 @@ public class ButtonElement extends InputElement {
   }
 
   @Override
-  public void onMouseEnter(IEvent<In> e) {
-    this.hovered = true;
-    super.context.cursorService.toggleCursor(super.getEnabled() ? CursorType.CLICK : CursorType.DEFAULT, this);
-  }
-
-  @Override
-  public void onMouseExit(IEvent<In> e) {
-    this.hovered = false;
-    super.context.cursorService.untoggleCursor(this);
-  }
-
-  @Override
-  public InputElement setEnabled(Object key, boolean enabled) {
-    if (this.hovered) {
-      super.context.cursorService.toggleCursor(enabled ? CursorType.CLICK : CursorType.DEFAULT, this);
-    }
-    return super.setEnabled(key, enabled);
-  }
-
-  @Override
   public List<IElement> getChildren() {
     return this.childElement == null ? null : Collections.list(this.childElement);
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
-    maxContentSize = Dim.min(maxContentSize, this.context.dimFactory.fromGui(MAX_WIDTH_GUI));
-
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     DimPoint childSize;
     if (this.childElement == null) {
       childSize = new DimPoint(ZERO, ZERO);
@@ -122,8 +98,7 @@ public class ButtonElement extends InputElement {
       }
     }
 
-    Dim height = Dim.max(this.context.dimFactory.fromGui(MIN_WIDTH_GUI), childSize.getY());
-    return new DimPoint(width, height);
+    return new DimPoint(width, childSize.getY());
   }
 
   @Override
@@ -139,35 +114,21 @@ public class ButtonElement extends InputElement {
   }
 
   @Override
-  public void renderElement() {
-    int hoverState = !this.getEnabled() ? 0 : this.hovered ? 2 : 1; // 0 if disabled, 1 if normal, 2 if hovering
+  protected void renderElement() {
+    // the button border is drawn as the normal border part (around the padding box)
+    // the inner border is drawn *around the content box*
 
-    this.context.minecraft.getTextureManager().bindTexture(BUTTON_TEXTURES);
-    GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+    Dim borderWidth = super.getBorder().left;
+    RendererHelpers.drawRect(0, this.getPaddingBox(), Colour.TRANSPARENT, borderWidth, Colour.BLACK, this.borderCornerRadius);
 
-    GlStateManager.enableBlend();
-    GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-    GlStateManager.blendFunc(770, 771);
-
-    DimPoint pos = this.getContentBox().getPosition();
-    DimPoint size = this.getContentBox().getSize();
-
-    // draw left half of button
-    Dim leftWidth = size.getX().over(2).ceil(); // has to be an int
-    DimRect rect1 = new DimRect(pos, new DimPoint(leftWidth, size.getY()));
-    int u1 = 0;
-    int v1 = 46 + hoverState * 20;
-    RendererHelpers.drawTexturedModalRect(rect1, 0, u1, v1);
-
-    // draw right half of button (assumes the button is not larger than 200)
-    Dim rightWidth = size.getX().minus(leftWidth);
-    DimRect rect2 = new DimRect(pos.getX().plus(rightWidth), pos.getY(), rightWidth, size.getY());
-    int u2 = MAX_WIDTH_GUI - (int)rightWidth.getGui();
-    int v2 = 46 + hoverState * 20;
-    RendererHelpers.drawTexturedModalRect(rect2, 0, u2, v2);
+    if (super.isHovering() && this.getEnabled()) {
+      Dim borderDistance = super.getPadding().left;
+      Dim innerCornerRadius = Dim.max(screen(6), this.borderCornerRadius.minus(borderDistance));
+      RendererHelpers.drawRect(0, this.getContentBox(), Colour.TRANSPARENT, borderWidth, Colour.GREY75, innerCornerRadius);
+    }
 
     if (this.childElement != null) {
-      this.childElement.render();
+      this.childElement.render(null);
     }
   }
 
@@ -184,7 +145,7 @@ public class ButtonElement extends InputElement {
           .setSizingMode(SizingMode.MINIMISE)
           .setHorizontalAlignment(HorizontalAlignment.CENTRE)
           .setVerticalAlignment(VerticalAlignment.MIDDLE)
-          .setPadding(new Layout.RectExtension(gui(4))) // make sure the text doesn't touch the border
+          .setPadding(new RectExtension(gui(2))) // make sure the text doesn't touch the border
           .cast();
       super.setChildElement(this.label);
     }
@@ -195,11 +156,11 @@ public class ButtonElement extends InputElement {
     }
 
     @Override
-    public void renderElement() {
+    protected void renderElement() {
       int j = 14737632;
       if (!super.getEnabled()) {
         j = 10526880;
-      } else if (super.hovered) {
+      } else if (super.isHovering()) {
         j = 16777120;
       }
       this.label.setColour(new Colour(j));
@@ -211,7 +172,9 @@ public class ButtonElement extends InputElement {
   public static class IconButtonElement extends ButtonElement {
     private final static Colour DISABLED_COLOUR = new Colour(0.5f, 0.5f, 0.5f, 1);
 
-    private final ImageElement image;
+    public final ImageElement image;
+
+    private @Nullable Colour enabledColour = null;
 
     public IconButtonElement(InteractiveContext context, IElement parent) {
       super(context, parent);
@@ -220,7 +183,7 @@ public class ButtonElement extends InputElement {
           .setSizingMode(SizingMode.FILL)
           .setHorizontalAlignment(HorizontalAlignment.CENTRE)
           .setVerticalAlignment(VerticalAlignment.MIDDLE)
-          .setPadding(new Layout.RectExtension(gui(4), gui(2))) // make sure the image doesn't touch the border
+          .setPadding(new RectExtension(gui(2), gui(2))) // make sure the image doesn't touch the border
           .cast();
       super.setChildElement(this.image);
     }
@@ -235,14 +198,33 @@ public class ButtonElement extends InputElement {
     }
 
     /** This determines the width to which the image will be scaled. Defaults to the image's width at 1x scale. */
+    @Override
     public IconButtonElement setMaxWidth(@Nullable Dim maxWidth) {
       this.image.setMaxWidth(maxWidth);
       return this;
     }
 
     /** This determines the width to which the image will be scaled. Defaults to the image's width at 1x scale. */
+    @Override
     public IconButtonElement setMaxContentWidth(@Nullable Dim maxContentWidth) {
       this.image.setMaxContentWidth(maxContentWidth);
+      return this;
+    }
+
+    @Override
+    public IElement setTargetHeight(@Nullable Dim targetHeight) {
+      this.image.setTargetHeight(targetHeight);
+      return this;
+    }
+
+    @Override
+    public IElement setTargetContentHeight(@Nullable Dim targetContentHeight) {
+      this.image.setTargetContentHeight(targetContentHeight);
+      return this;
+    }
+
+    public IconButtonElement setEnabledColour(@Nullable Colour colour) {
+      this.enabledColour = colour;
       return this;
     }
 
@@ -254,6 +236,24 @@ public class ButtonElement extends InputElement {
 
       super.setEnabled(key, enabled);
       return this;
+    }
+
+    @Override
+    protected void renderElement() {
+      Colour colour;
+      if (!super.getEnabled()) {
+        colour = new Colour(10526880);
+      } else if (super.isHovering()) {
+        colour = new Colour(16777120);
+      } else if (this.enabledColour != null) {
+        colour = this.enabledColour;
+      } else {
+        // default enabled colour
+        colour = new Colour(14737632);
+      }
+      this.image.setColour(colour);
+
+      super.renderElement();
     }
   }
 }

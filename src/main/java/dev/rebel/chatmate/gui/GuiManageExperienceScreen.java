@@ -2,7 +2,6 @@ package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.builder.Constants.Color;
 import dev.rebel.chatmate.gui.hud.Colour;
-import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.models.api.experience.ModifyExperienceRequest;
@@ -12,7 +11,6 @@ import dev.rebel.chatmate.services.McChatService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraftforge.fml.client.config.GuiUtils;
-import scala.Tuple2;
 
 
 import javax.annotation.Nullable;
@@ -27,19 +25,21 @@ public class GuiManageExperienceScreen extends GuiScreen implements GuiPageButto
   private final PublicUser user;
   private final ExperienceEndpointProxy experienceEndpointProxy;
   private final McChatService mcChatService;
+  private final FontEngineProxy fontEngineProxy;
 
   private GuiButton submitButton;
   private GuiButton cancelButton;
   private GuiTextField deltaField;
   private GuiTextField messageField;
 
-  public GuiManageExperienceScreen(Minecraft minecraft, DimFactory dimFactory, PublicUser user, ExperienceEndpointProxy experienceEndpointProxy, McChatService mcChatService) {
+  public GuiManageExperienceScreen(Minecraft minecraft, DimFactory dimFactory, PublicUser user, ExperienceEndpointProxy experienceEndpointProxy, McChatService mcChatService, FontEngineProxy fontEngineProxy) {
     super();
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.user = user;
     this.experienceEndpointProxy = experienceEndpointProxy;
     this.mcChatService = mcChatService;
+    this.fontEngineProxy = fontEngineProxy;
   }
 
   @Override
@@ -65,7 +65,7 @@ public class GuiManageExperienceScreen extends GuiScreen implements GuiPageButto
     int effectiveLeft = x + MODAL_PADDING;
 
     // header
-    FontRenderer font = this.minecraft.fontRendererObj;
+    FontEngineProxy font = this.fontEngineProxy;
     int headerId = 150;
     y = y + 10;
     GuiLabel header = new GuiLabel(font, headerId, effectiveLeft, y, usableWidth, font.FONT_HEIGHT, Color.WHITE);

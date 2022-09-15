@@ -5,9 +5,7 @@ import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.entity.player.EntityPlayer.EnumChatVisibility;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.Tuple;
 
@@ -56,15 +54,6 @@ public class MinecraftProxyService {
   /** Will regenerate the chat lines as soon as possible. */
   public void refreshChat() {
     this.refreshChat = true;
-  }
-
-  /** Never null if `canPrintChatMessage()` returns true. */
-  public @Nullable FontRenderer getChatFontRenderer() {
-    if (this.minecraft.ingameGUI == null) {
-      return null;
-    } else {
-      return this.minecraft.ingameGUI.getFontRenderer();
-    }
   }
 
   public @Nullable Integer getChatWidth() {

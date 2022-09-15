@@ -19,16 +19,18 @@ public class ContextMenuStore {
   private final ForgeEventService forgeEventService;
   private final MouseEventService mouseEventService;
   private final DimFactory dimFactory;
+  private final FontEngine fontEngine;
 
   private ContextMenu currentMenu;
   private MouseEventData.In.MousePositionData latestPositionData;
   private boolean setClear = false;
 
-  public ContextMenuStore(Minecraft minecraft, ForgeEventService forgeEventService, MouseEventService mouseEventService, DimFactory dimFactory) {
+  public ContextMenuStore(Minecraft minecraft, ForgeEventService forgeEventService, MouseEventService mouseEventService, DimFactory dimFactory, FontEngine fontEngine) {
     this.minecraft = minecraft;
     this.forgeEventService = forgeEventService;
     this.mouseEventService = mouseEventService;
     this.dimFactory = dimFactory;
+    this.fontEngine = fontEngine;
 
     this.forgeEventService.onRenderTick(this::onRender, null);
     this.forgeEventService.onGuiScreenChanged(this::onGuiScreenChanged, null);
@@ -67,7 +69,7 @@ public class ContextMenuStore {
   }
 
   public void showContextMenu(Dim x, Dim y, ContextMenuOption... options) {
-    this.currentMenu = new ContextMenu(x, y, options);
+    this.currentMenu = new ContextMenu(this.dimFactory, x, y, options);
     this.setClear = false;
   }
 
@@ -92,7 +94,7 @@ public class ContextMenuStore {
     int height = (int)minecraftDim.getY().getGui();
     int maxWidth = width / 2;
     if (this.currentMenu != null && this.latestPositionData != null) {
-      this.currentMenu.drawMenu(this.latestPositionData.x, this.latestPositionData.y, width, height, maxWidth, this.minecraft.fontRendererObj);
+      this.currentMenu.drawMenu(this.latestPositionData.x, this.latestPositionData.y, width, height, maxWidth, this.fontEngine);
     }
 
     return new Tick.Out();

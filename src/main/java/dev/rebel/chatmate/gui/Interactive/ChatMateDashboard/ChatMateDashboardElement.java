@@ -1,44 +1,71 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.DonationRoute;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.GeneralRoute;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.DonationsSectionElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General.GeneralSectionElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud.HudSectionElement;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
-import dev.rebel.chatmate.gui.Interactive.Events.SizeData;
+import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
+import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.proxy.DonationEndpointProxy;
+import dev.rebel.chatmate.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.services.ApiRequestService;
+import dev.rebel.chatmate.services.MessageService;
+import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.util.EnumHelpers;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 import scala.Tuple2;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+
+import static dev.rebel.chatmate.services.util.Objects.castOrNull;
 
 /** The main element that should be rendered into the interactive screen. */
 public class ChatMateDashboardElement extends ContainerElement {
   private final static List<Tuple2<SettingsPage, String>> pageNames = new ArrayList<Tuple2<SettingsPage, String>>() {{
     add(new Tuple2<>(SettingsPage.GENERAL, "General"));
     add(new Tuple2<>(SettingsPage.HUD, "HUD"));
+    add(new Tuple2<>(SettingsPage.DONATION, "Donations"));
   }};
 
   private final DashboardStore store;
   private final ChatMateEndpointProxy chatMateEndpointProxy;
 
   private final Dim sidebarMaxWidth;
+  private final AnimatedBool backgroundFadeIn;
 
   private final GeneralSectionElement generalSection;
   private final HudSectionElement hudSection;
+  private final DonationsSectionElement donationSection;
 
   private final SidebarElement sidebar;
   private final WrapperElement contentWrapper;
   private final ElementReference content;
 
-  public ChatMateDashboardElement(InteractiveContext context, IElement parent, ChatMateEndpointProxy chatMateEndpointProxy) {
+  public ChatMateDashboardElement(InteractiveContext context,
+                                  IElement parent,
+                                  @Nullable DashboardRoute route,
+                                  ChatMateEndpointProxy chatMateEndpointProxy,
+                                  StatusService statusService,
+                                  ApiRequestService apiRequestService,
+                                  UserEndpointProxy userEndpointProxy,
+                                  MessageService messageService) {
     super(context, parent, LayoutMode.INLINE);
-    super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // clear the HUD indicator
+    super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
     super.setPadding(new RectExtension(gui(8)));
 
@@ -46,9 +73,12 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.chatMateEndpointProxy = chatMateEndpointProxy;
 
     this.sidebarMaxWidth = gui(80);
+    this.backgroundFadeIn = new AnimatedBool(500L, false);
+    this.backgroundFadeIn.set(true);
 
-    this.generalSection = new GeneralSectionElement(context, this, this.chatMateEndpointProxy);
-    this.hudSection = new HudSectionElement(context, this);
+    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy);
+    this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route));
+    this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))
@@ -63,7 +93,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     super.addElement(this.contentWrapper);
 
     this.store.onSettingsPageChange(this::onSettingsPageChange);
-    this.onSettingsPageChange(SettingsPage.GENERAL);
+    this.store.setSettingsPage(route ==  null ? SettingsPage.GENERAL : route.page);
   }
 
   private void onSettingsPageChange(SettingsPage settingsPage) {
@@ -74,6 +104,9 @@ public class ChatMateDashboardElement extends ContainerElement {
         break;
       case HUD:
         newElement = this.hudSection;
+        break;
+      case DONATION:
+        newElement = this.donationSection;
         break;
       default:
         throw EnumHelpers.<SettingsPage>assertUnreachable(settingsPage);
@@ -98,12 +131,12 @@ public class ChatMateDashboardElement extends ContainerElement {
   }
 
   @Override
-  public void onWindowResize(IEvent<SizeData> e) {
-    this.setContentSizes(e.getData().size);
+  public void onWindowResize(IEvent<ScreenSizeData> e) {
+    this.setContentSizes(e.getData().newSize);
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxWidth) {
+  protected DimPoint calculateThisSize(Dim maxWidth) {
     super.calculateThisSize(maxWidth);
 
     // this should take up the whole screen
@@ -111,13 +144,17 @@ public class ChatMateDashboardElement extends ContainerElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
+    // currently the dashboard is only accessible from within the minecraft menu, so fade between the background colours for a smooth experience
+    Colour mcMenuBackgroundColour = new Colour(16, 16, 16, 200);
+    Colour dashboardBackgroundColour = new Colour(0, 0, 20, 200);
+    Colour colour = Colour.lerp(mcMenuBackgroundColour, dashboardBackgroundColour, this.backgroundFadeIn.getFrac());
+    Colour borderColour = Colour.lerp(mcMenuBackgroundColour, new Colour(206, 212, 218), this.backgroundFadeIn.getFrac());
+
     // draw a background with a thick, curvy border ;)
     DimRect minecraftRect = this.context.dimFactory.getMinecraftRect();
     RectExtension margin = new RectExtension(screen(4));
-    Colour colour = new Colour(0, 0, 20);
     Dim borderWidth = screen(16);
-    Colour borderColour = new Colour(206, 212, 218);
     Dim cornerRadius = screen(16);
     RendererHelpers.drawRect(0, margin.applySubtractive(minecraftRect), colour, borderWidth, borderColour, cornerRadius);
 
