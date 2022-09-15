@@ -117,7 +117,7 @@ public class DonationElement extends ContainerElement {
     RendererHelpers.drawRect(0, box.withWidth(barWidth), barColour, null, null, cornerRadius);
   }
 
-  private class DonationButtonsElement extends ContainerElement {
+  private static class DonationButtonsElement extends ContainerElement {
     public DonationButtonsElement(InteractiveContext context, IElement parent, Runnable onClickClose, Runnable onClickLink) {
       super(context, parent, LayoutMode.INLINE);
 

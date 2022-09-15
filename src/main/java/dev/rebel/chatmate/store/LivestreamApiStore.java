@@ -12,12 +12,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class LivestreamApiStore {
   private final LivestreamEndpointProxy livestreamEndpointProxy;
 
-  private @Nullable List<PublicLivestream> livestreams;
+  private @Nullable CopyOnWriteArrayList<PublicLivestream> livestreams;
   private @Nullable String error;
   private boolean loading;
 
@@ -45,7 +46,7 @@ public class LivestreamApiStore {
 
     this.loading = true;
     this.livestreamEndpointProxy.getLivestreams(res -> {
-      this.livestreams = Collections.list(res.livestreams);
+      this.livestreams = new CopyOnWriteArrayList<>(Collections.list(res.livestreams));
       this.error = null;
       this.loading = false;
       callback.accept(this.livestreams);

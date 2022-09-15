@@ -17,12 +17,13 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class DonationApiStore {
   private final DonationEndpointProxy donationEndpointProxy;
 
-  private @Nullable List<PublicDonation> donations;
+  private @Nullable CopyOnWriteArrayList<PublicDonation> donations;
   private @Nullable String getDonationsError;
   private boolean loading;
 
@@ -50,7 +51,7 @@ public class DonationApiStore {
 
     this.loading = true;
     this.donationEndpointProxy.getDonationsAsync(res -> {
-      this.donations = Collections.orderBy(Collections.list(res.donations), d -> d.time);
+      this.donations = new CopyOnWriteArrayList<>(Collections.orderBy(Collections.list(res.donations), d -> d.time));
       this.getDonationsError = null;
       this.loading = false;
       callback.accept(this.donations);
@@ -100,10 +101,12 @@ public class DonationApiStore {
 
   private void updateDonation(PublicDonation updatedDonation) {
     if (this.donations == null) {
-      this.donations = Collections.list(updatedDonation);
+      this.donations = new CopyOnWriteArrayList<>(Collections.list(updatedDonation));
     } else {
       // copy the collection so the reference changes
-      this.donations = Collections.replaceOne(Collections.list(this.donations), updatedDonation, d -> Objects.equals(d.id, updatedDonation.id));
+      this.donations = new CopyOnWriteArrayList<>(
+          Collections.replaceOne(Collections.list(this.donations), updatedDonation, d -> Objects.equals(d.id, updatedDonation.id))
+      );
     }
   }
 }

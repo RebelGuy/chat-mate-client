@@ -74,8 +74,8 @@ List of unicode emojis that can be printed directly in chat: https://archive.ph/
 - Added a fancy Donations section to the ChatMate Dashboard with intuitive and fluent UI
   - Lists the donations with some filtering options
   - Users can be linked or unlinked
-  - When requesting to link a user, a test box with a dropdown list appears that can be used to search for users
-- Started reworking the HUD system so it re-uses the InteractiveScreen ecosytem
+  - When requesting to link a user, a text box with a dropdown list appears that can be used to search for users
+- Started reworking the HUD system so it re-uses the InteractiveScreen ecosystem
   - Donations are received as a ChatMate event and shown by a dropdown card
   - A timer bar indicates how much longer the donation card will be visible
   - The donation card can be closed or linked to a user via the top-right icon buttons

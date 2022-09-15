@@ -444,8 +444,6 @@ public class InteractiveScreen extends Screen implements IElement {
 
   /** Sets the new focussed element and fires appropriate events. */
   protected void setFocussedElement(@Nullable InputElement newFocus, FocusReason reason) {
-    // if unfocussing, fire the blur event for all ancestors
-    // if changing focus, find the element that is the common ancenstor and fire blur events only up to there, then fire focus events all the way down to the new element (in that order?)
     InputElement oldFocus = this.context.focusedElement;
     if (oldFocus != newFocus) {
       this.context.focusedElement = newFocus;
