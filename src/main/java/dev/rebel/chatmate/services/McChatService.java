@@ -1,7 +1,9 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.*;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicMessagePart;
@@ -38,6 +40,8 @@ public class McChatService {
   private final ImageService imageService;
   private final Config config;
   private final FontEngine fontEngine;
+  private final DimFactory dimFactory;
+  private final CustomGuiNewChat customGuiNewChat;
 
   public McChatService(MinecraftProxyService minecraftProxyService,
                        LogService logService,
@@ -48,7 +52,9 @@ public class McChatService {
                        ImageService imageService,
                        Config config,
                        ChatMateChatService chatMateChatService,
-                       FontEngine fontEngine) {
+                       FontEngine fontEngine,
+                       DimFactory dimFactory,
+                       CustomGuiNewChat customGuiNewChat) {
     this.minecraftProxyService = minecraftProxyService;
     this.logService = logService;
     this.filterService = filterService;
@@ -58,6 +64,8 @@ public class McChatService {
     this.imageService = imageService;
     this.config = config;
     this.fontEngine = fontEngine;
+    this.dimFactory = dimFactory;
+    this.customGuiNewChat = customGuiNewChat;
 
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower, null);
@@ -82,7 +90,7 @@ public class McChatService {
     try {
       Integer lvl = item.author.levelInfo.level;
       IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
-      IChatComponent platform = new PlatformViewerTagComponent(this.config, item.platform);
+      IChatComponent platform = new PlatformViewerTagComponent(this.dimFactory, this.config, item.platform);
       IChatComponent rank = this.messageService.getRankComponent(Collections.map(Collections.list(item.author.activeRanks), r -> r.rank));
       IChatComponent player = this.messageService.getUserComponent(item.author);
       McChatResult mcChatResult = this.ytChatToMcChat(item, this.fontEngine);
@@ -151,8 +159,8 @@ public class McChatService {
     }
 
     PublicRankedUser highlightUser = highlightIndex == null ? null : users[highlightIndex];
-    LeaderboardRenderer renderer = new LeaderboardRenderer(this.messageService, highlightUser);
-    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.messageService, this.fontEngine, renderer, users, 10, "Experience Leaderboard");
+    LeaderboardRenderer renderer = new LeaderboardRenderer(this.dimFactory, this.messageService, highlightUser);
+    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.fontEngine, renderer, users, 10, "Experience Leaderboard");
     pagination.render();
   }
 
@@ -163,7 +171,7 @@ public class McChatService {
     }
 
     UserNameRenderer renderer = new UserNameRenderer(this.messageService);
-    ChatPagination<PublicUserNames> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.messageService, this.fontEngine, renderer, users, 10, "Search Results");
+    ChatPagination<PublicUserNames> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.fontEngine, renderer, users, 10, "Search Results");
     pagination.render();
   }
 
@@ -199,7 +207,7 @@ public class McChatService {
 
         // the name could be the literal emoji unicode character
         // check if the resource pack supports it - if so, use it!
-        if (nameChars.length == 1 && fontEngine.getCharWidth(nameChars[0]) > 0) {
+        if (nameChars.length == 1 && fontEngine.getCharWidth(nameChars[0]).getGui() > 0) {
           text = name;
           style = YT_CHAT_MESSAGE_TEXT_STYLE;
         } else {
@@ -212,7 +220,7 @@ public class McChatService {
         prevText = null;
 
         assert msg.customEmojiData != null;
-        components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData), 1, 1));
+        components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData), this.dimFactory.fromGui(1), this.dimFactory.fromGui(1)));
         continue;
 
       } else if (msg.type == MessagePartType.cheer) {

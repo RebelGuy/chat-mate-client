@@ -6,6 +6,7 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
@@ -59,6 +60,7 @@ public class ContextMenuService {
   private final RankApiStore rankApiStore;
   private final LivestreamApiStore livestreamApiStore;
   private final DonationApiStore donationApiStore;
+  private final CustomGuiNewChat customGuiNewChat;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -85,7 +87,8 @@ public class ContextMenuService {
                             DonationHudStore donationHudStore,
                             RankApiStore rankApiStore,
                             LivestreamApiStore livestreamApiStore,
-                            DonationApiStore donationApiStore) {
+                            DonationApiStore donationApiStore,
+                            CustomGuiNewChat customGuiNewChat) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -112,6 +115,7 @@ public class ContextMenuService {
     this.rankApiStore = rankApiStore;
     this.livestreamApiStore = livestreamApiStore;
     this.donationApiStore = donationApiStore;
+    this.customGuiNewChat = customGuiNewChat;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -184,7 +188,7 @@ public class ContextMenuService {
   }
 
   private void onHideMessage(AbstractChatLine chatLine) {
-    this.minecraftProxyService.getChatGUI().deleteLine(chatLine);
+    this.customGuiNewChat.deleteLine(chatLine);
   }
 
   private void onGenerateFakeDonation() {

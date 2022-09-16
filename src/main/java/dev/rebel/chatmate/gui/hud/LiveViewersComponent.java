@@ -113,7 +113,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     if (viewCount == null || viewCount > MAX_REEL_VALUE) {
       this.fontEngine.drawString(text, 0, 0, this.indicatorFont);
     } else {
-      Dim digitWidth = this.dimFactory.fromGui(this.fontEngine.getCharWidth('0'));
+      Dim digitWidth = this.fontEngine.getCharWidth('0');
       Dim digitPadding = this.dimFactory.fromGui(1);
       Dim digitHeight = this.getTextHeight();
       reel.drawReel(text, digitWidth, digitPadding, digitHeight);

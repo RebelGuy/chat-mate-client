@@ -1,7 +1,11 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
@@ -33,6 +37,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(MockitoJUnitRunner.class) // this lets us use @Mock for auto-initialising mock objects
 public class McChatServiceTests {
+  @Mock DimFactory mockDimFactory;
+  @Mock CustomGuiNewChat mockCustomGuiNewChat;
   @Mock MinecraftProxyService mockMinecraftProxyService;
   @Mock LogService mockLogService;
   @Mock FilterService mockFilterService;
@@ -99,7 +105,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_unicodeEmoji_PrintedDirectly() {
     PublicChatItem item = createItem(author1, emoji1);
-    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
+    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(new Dim(() -> 1, DimAnchor.GUI).setGui(1));
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
@@ -133,7 +139,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_textEmoji_spacingBetween() {
     PublicChatItem item = createItem(author1, text1, emoji2, emoji1, text2);
-    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
+    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(new Dim(() -> 1, DimAnchor.GUI).setGui(1));
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
@@ -193,7 +199,9 @@ public class McChatServiceTests {
         this.mockImageService,
         this.mockConfig,
         this.mockChatMateService,
-        this.mockFontEngine);
+        this.mockFontEngine,
+        this.mockDimFactory,
+        this.mockCustomGuiNewChat);
   }
 
   // The below methods should be used for mock data creation. It sets all

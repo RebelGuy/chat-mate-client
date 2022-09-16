@@ -397,14 +397,14 @@ public class FontEngine {
 
         // get a random character with the same width
         if (currentFont.getObfuscated() && asciiIndex != -1) {
-          int k = this.getCharWidth(c);
+          Dim k = this.getCharWidth(c);
           char c1;
 
           while (true) {
             asciiIndex = this.fontRandom.nextInt(ASCII_CHARACTERS.length());
             c1 = ASCII_CHARACTERS.charAt(asciiIndex);
 
-            if (k == this.getCharWidth(c1)) {
+            if (k.equals(this.getCharWidth(c1))) {
               break;
             }
           }
@@ -468,12 +468,12 @@ public class FontEngine {
     if (text == null) {
       return this.dimFactory.zeroGui();
     } else {
-      int i = 0;
+      Dim width = this.dimFactory.zeroGui();
       boolean isBold = false;
 
       for (int j = 0; j < text.length(); ++j) {
         char thisChar = text.charAt(j);
-        int charWidth = this.getCharWidth(thisChar);
+        Dim charWidth = this.getCharWidth(thisChar);
 
         // if we have inferred a section char (why not just check if it's the section char??)
         if (thisChar == CHAR_SECTION_SIGN && j < text.length() - 1) {
@@ -488,40 +488,40 @@ public class FontEngine {
             isBold = true;
           }
 
-          charWidth = 0;
+          charWidth = this.dimFactory.zeroGui();
         }
 
-        i += charWidth;
+        width = width.plus(charWidth);
 
-        if ((font.getBold() || isBold) && charWidth > 0) {
-          ++i;
+        if ((font.getBold() || isBold) && charWidth.gt(this.dimFactory.zeroGui())) {
+          width = width.plus(this.dimFactory.fromGui(1));
         }
       }
 
-      return this.dimFactory.fromGui(i);
+      return width;
     }
   }
 
   /** Returns the width of this character as rendered. */
-  public int getCharWidth(char character) {
+  public Dim getCharWidth(char character) {
     if (character == CHAR_SECTION_SIGN) {
-      return -1;
+      return this.dimFactory.fromGui(-1);
     } else if (character == CHAR_SPACE) {
-      return 4;
+      return this.dimFactory.fromGui(4);
     } else {
       int i = ASCII_CHARACTERS.indexOf(character);
 
       if (character > 0 && i != -1 && !this.unicodeFlag) {
-        return this.charWidth[i];
+        return this.dimFactory.fromGui(this.charWidth[i]);
       } else if (this.glyphWidth[character] != 0) {
         int j = this.glyphWidth[character] >>> 4;
         int k = this.glyphWidth[character] & 15;
 
 
         ++k;
-        return (int)((k - j) * UNICODE_SCALING_FACTOR) + 1;
+        return this.dimFactory.fromGui((k - j) * UNICODE_SCALING_FACTOR + 1);
       } else {
-        return 0;
+        return this.dimFactory.zeroGui();
       }
     }
   }
@@ -539,15 +539,15 @@ public class FontEngine {
   /** Trims a string to a specified width, and will reverse it if par4 is set. */
   public String trimStringToWidth(String text, Dim width, Font font, boolean reverse) {
     StringBuilder stringbuilder = new StringBuilder();
-    int i = 0;
+    Dim currentWidth = this.dimFactory.zeroGui();
     int j = reverse ? text.length() - 1 : 0;
     int k = reverse ? -1 : 1;
     boolean isSectionSign = false;
     boolean isBold = false;
 
-    for (int l = j; l >= 0 && l < text.length() && i < width.getGui(); l += k) {
+    for (int l = j; l >= 0 && l < text.length() && currentWidth.lt(width); l += k) {
       char thisChar = text.charAt(l);
-      int thisCharWidth = this.getCharWidth(thisChar);
+      Dim thisCharWidth = this.getCharWidth(thisChar);
 
       // todo: clean up this mess... it's even worse than in `getStringWidthDim`
       if (isSectionSign) {
@@ -560,17 +560,17 @@ public class FontEngine {
         } else {
           isBold = true;
         }
-      } else if (thisCharWidth < 0) {
+      } else if (thisCharWidth.lt(this.dimFactory.zeroGui())) {
         isSectionSign = true;
       } else {
-        i += thisCharWidth;
+        currentWidth = currentWidth.plus(thisCharWidth);
 
         if (isBold || font.getBold()) {
-          ++i;
+          currentWidth = currentWidth.plus(this.dimFactory.fromGui(1));
         }
       }
 
-      if (i > width.getGui()) {
+      if (currentWidth.gt(width)) {
         break;
       }
 
@@ -663,7 +663,7 @@ public class FontEngine {
         case ' ':
           l = k;
         default:
-          j += this.getCharWidth(c0);
+          j += (int)this.getCharWidth(c0).getGui();
 
           if (flag) {
             ++j;

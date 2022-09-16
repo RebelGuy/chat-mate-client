@@ -85,12 +85,12 @@ public class UserNameChatComponent extends ChatComponentBase {
     return this.displayName;
   }
 
-  public int getWidth() {
-    return (int)this.fontEngine.getStringWidthDim(this.displayName, this.baseFont).getGui();
+  public Dim getWidth() {
+    return this.fontEngine.getStringWidthDim(this.displayName, this.baseFont);
   }
 
   /** Returns the width. */
-  public int renderComponent(Dim x, Dim y, int alphaInt) {
+  public Dim renderComponent(Dim x, Dim y, int alphaInt) {
     float alpha = alphaInt / 255f;
     Dim newX;
     if (this.useEffects && this.donationService.shouldShowDonationEffect(this.userId)) {
@@ -99,7 +99,7 @@ public class UserNameChatComponent extends ChatComponentBase {
       newX = this.renderDefault(x, y, alpha);
     }
 
-    return (int)newX.minus(x).getGui();
+    return newX.minus(x);
   }
 
   @Override
@@ -124,7 +124,7 @@ public class UserNameChatComponent extends ChatComponentBase {
     // particle effect (member)
     if (Collections.map(this.rankApiStore.getCurrentUserRanks(this.userId), r -> r.rank.name).contains(RankName.MEMBER)) {
       // draw this below the text because it looks nicer that way
-      DimRect rect = new DimRect(x, y, this.dimFactory.fromGui(this.getWidth()), this.fontEngine.FONT_HEIGHT_DIM);
+      DimRect rect = new DimRect(x, y, this.getWidth(), this.fontEngine.FONT_HEIGHT_DIM);
       this.renderParticles(t, deltaT, alpha, rect);
     }
 

@@ -23,15 +23,17 @@ public class MinecraftProxyService {
   private final Minecraft minecraft;
   private final LogService logService;
   private final ForgeEventService forgeEventService;
+  private final CustomGuiNewChat customGuiNewChat;
 
   private final List<Tuple<String, IChatComponent>> pendingChat;
   private final List<IChatComponent> pendingDeletionChat;
   private boolean refreshChat;
 
-  public MinecraftProxyService(Minecraft minecraft, LogService logService, ForgeEventService forgeEventService) {
+  public MinecraftProxyService(Minecraft minecraft, LogService logService, ForgeEventService forgeEventService, CustomGuiNewChat customGuiNewChat) {
     this.minecraft = minecraft;
     this.logService = logService;
     this.forgeEventService = forgeEventService;
+    this.customGuiNewChat = customGuiNewChat;
 
     this.pendingChat = Collections.synchronizedList(new ArrayList<>());
     this.pendingDeletionChat = Collections.synchronizedList(new ArrayList<>());
@@ -54,23 +56,6 @@ public class MinecraftProxyService {
   /** Will regenerate the chat lines as soon as possible. */
   public void refreshChat() {
     this.refreshChat = true;
-  }
-
-  public @Nullable Integer getChatWidth() {
-    if (this.minecraft.ingameGUI == null) {
-      return null;
-    }
-
-    return this.getChatGUI().getChatWidth();
-  }
-
-  /** Returns the effective chat width that takes into account scaling. If the font renderer measures text to be at most this width, it will fit onto the chat GUI. */
-  public @Nullable Integer getChatWidthForText() {
-    if (this.minecraft.ingameGUI == null) {
-      return null;
-    }
-
-    return this.getChatGUI().getChatWidthForText();
   }
 
   public void deleteComponentFromChat(IChatComponent component) {
@@ -104,7 +89,7 @@ public class MinecraftProxyService {
         IChatComponent component = chatItem.getSecond();
         String error = null;
         try {
-          this.getChatGUI().printChatMessage(component);
+          this.customGuiNewChat.printChatMessage(component);
         } catch (Exception e) {
           error = e.getMessage();
         }
@@ -120,9 +105,8 @@ public class MinecraftProxyService {
     }
 
     synchronized (this.pendingDeletionChat) {
-      CustomGuiNewChat gui = this.getChatGUI();
       for (IChatComponent chatItem : this.pendingDeletionChat) {
-        gui.deleteComponent(chatItem);
+        this.customGuiNewChat.deleteComponent(chatItem);
         this.refreshChat = true;
       }
 
@@ -131,13 +115,7 @@ public class MinecraftProxyService {
 
     if (this.refreshChat) {
       this.refreshChat = false;
-      this.getChatGUI().refreshChat(true);
+      this.customGuiNewChat.refreshChat(true);
     }
-  }
-
-  public CustomGuiNewChat getChatGUI() {
-    CustomGuiNewChat gui = (CustomGuiNewChat)this.minecraft.ingameGUI.getChatGUI();
-    assert gui != null;
-    return gui;
   }
 }

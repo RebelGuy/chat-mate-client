@@ -66,6 +66,7 @@ public class GuiService {
   private final LivestreamApiStore livestreamApiStore;
   private final DonationApiStore donationApiStore;
   private final RankApiStore rankApiStore;
+  private final CustomGuiNewChat customGuiNewChat;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -99,7 +100,8 @@ public class GuiService {
                     MessageService messageService,
                     LivestreamApiStore livestreamApiStore,
                     DonationApiStore donationApiStore,
-                    RankApiStore rankApiStore) {
+                    RankApiStore rankApiStore,
+                    CustomGuiNewChat customGuiNewChat) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -133,6 +135,7 @@ public class GuiService {
     this.livestreamApiStore = livestreamApiStore;
     this.donationApiStore = donationApiStore;
     this.rankApiStore = rankApiStore;
+    this.customGuiNewChat = customGuiNewChat;
 
     this.addEventHandlers();
   }
@@ -211,7 +214,8 @@ public class GuiService {
         this.contextMenuService,
         this.cursorService,
         this.urlService,
-        this.forgeEventService);
+        this.forgeEventService,
+        this.customGuiNewChat);
     return new OpenGui.Out(replaceWithGui);
   }
 

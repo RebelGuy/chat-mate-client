@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.chat;
 
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem.ChatPlatform;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ViewerTagComponentTests {
+  @Mock DimFactory mockDimFactory;
   @Mock Config mockConfig;
   @Mock StatefulEmitter<Boolean> identifyPlatforms;
 
@@ -32,7 +34,7 @@ public class ViewerTagComponentTests {
     // initial test
     when(this.identifyPlatforms.get()).thenReturn(false);
 
-    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockConfig, ChatPlatform.Youtube);
+    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Youtube);
     Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
 
     // change to true
@@ -53,7 +55,7 @@ public class ViewerTagComponentTests {
     // initial test
     when(this.identifyPlatforms.get()).thenReturn(true);
 
-    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockConfig, ChatPlatform.Twitch);
+    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Twitch);
     Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
 
     // change to false

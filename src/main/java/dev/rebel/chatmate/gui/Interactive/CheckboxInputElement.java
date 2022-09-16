@@ -182,7 +182,7 @@ public class CheckboxInputElement extends InputElement {
     RendererHelpers.withMapping(checkbox.getCentre(), this.isChecked.getFrac(), () -> {
       FontEngine font = super.context.fontEngine;
       Dim height = font.FONT_HEIGHT_DIM;
-      Dim width = gui(font.getCharWidth('x'));
+      Dim width = font.getCharWidth('x');
       font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), this.labelElement.getFont());
     });
 

@@ -1,6 +1,9 @@
 package dev.rebel.chatmate.services.util;
 
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
 import net.minecraft.event.ClickEvent;
@@ -71,17 +74,32 @@ public class ChatHelpers {
     return result;
   }
 
-  public static String stringWithWidth(FontEngine fontEngine, String msg, String truncationSuffix, char paddingChar, int maxWidth) {
-    int currentWidth = fontEngine.getStringWidth(msg);
-    if (currentWidth <= maxWidth) {
-      int padWidth = fontEngine.getCharWidth(paddingChar);
-      int paddingRequired = (maxWidth - currentWidth) / padWidth;
+  public static String stringWithWidth(FontEngine fontEngine, String msg, String truncationSuffix, char paddingChar, Dim maxWidth) {
+    Dim currentWidth = fontEngine.getStringWidthDim(msg);
+    if (currentWidth.lte(maxWidth)) {
+      Dim padWidth = fontEngine.getCharWidth(paddingChar);
+      int paddingRequired = (int)maxWidth.minus(currentWidth).over(padWidth);
       String padding = String.join("", Collections.nCopies(paddingRequired, String.valueOf(paddingChar)));
       return msg + padding;
 
     } else {
-      int truncationWidth = fontEngine.getStringWidth(truncationSuffix);
-      return fontEngine.trimStringToWidth(msg, maxWidth - truncationWidth) + truncationSuffix;
+      Dim truncationWidth = fontEngine.getStringWidthDim(truncationSuffix);
+      return fontEngine.trimStringToWidth(msg, maxWidth.minus(truncationWidth), new Font(), false) + truncationSuffix;
+    }
+  }
+
+  /** Preferred over `stringWithWidth` because it leads to more accurate results that are exactly consistent with the render engine. */
+  public static String stringWithWidthDim(FontEngine fontEngine, String msg, String truncationSuffix, char paddingChar, Dim maxWidth) {
+    Dim currentWidth = fontEngine.getStringWidthDim(msg);
+    if (currentWidth.lte(maxWidth)) {
+      Dim padWidth = fontEngine.getStringWidthDim("" + paddingChar);
+      int paddingRequired = (int)Math.floor(maxWidth.minus(currentWidth).over(padWidth));
+      String padding = String.join("", Collections.nCopies(paddingRequired, String.valueOf(paddingChar)));
+      return msg + padding;
+
+    } else {
+      Dim truncationWidth = fontEngine.getStringWidthDim(truncationSuffix);
+      return fontEngine.trimStringToWidth(msg, maxWidth.minus(truncationWidth), new Font(), false) + truncationSuffix;
     }
   }
 

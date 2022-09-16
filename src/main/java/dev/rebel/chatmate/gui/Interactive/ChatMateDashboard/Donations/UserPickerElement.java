@@ -161,7 +161,6 @@ public class UserPickerElement extends ContainerElement {
             .setOverflow(TextOverflow.SPLIT)
             .setFontScale(0.75f)
             .setOnClick(() -> this.onSelection(userNames.user))
-            .setHoverFont(new Font().withColour(Colour.ACTION_HOVER))
             .setFont(Styles.VIEWER_NAME_FONT.create(super.context.dimFactory))
             .setPadding(new RectExtension(gui(1), gui(1), gui(1), hasRanks ? ZERO : gui(1)))
             .setSizingMode(SizingMode.FILL)

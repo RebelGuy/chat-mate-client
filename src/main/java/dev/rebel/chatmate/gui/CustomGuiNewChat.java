@@ -142,7 +142,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     float opacity = this.minecraft.gameSettings.chatOpacity * 0.9F + 0.1F;
 
     float scale = this.getChatScale();
-    int width = MathHelper.ceiling_float_int((float)this.getChatWidth() / scale);
+    Dim width = this.getChatWidthDim().over(scale);
     GlStateManager.pushMatrix();
     GlStateManager.translate(LEFT, 20.0F, 0.0F);
     GlStateManager.scale(scale, scale, 1.0F);
@@ -178,21 +178,21 @@ public class CustomGuiNewChat extends GuiNewChat {
     GlStateManager.popMatrix();
   }
 
-  private void drawLineBackground(ChatLine line, int index, int opacity, int width) {
+  private void drawLineBackground(ChatLine line, int index, int opacity, Dim width) {
     int lineBottom = -index * this.fontEngine.FONT_HEIGHT; // negative because we iterate from the bottom line to the top line
     int lineTop = lineBottom - this.fontEngine.FONT_HEIGHT;
 
     Dim x = this.dimFactory.fromGui(0);
     Dim y = this.dimFactory.fromGui(lineTop);
-    Dim w = this.dimFactory.fromGui(width + 4);
+    Dim w = width.plus(this.dimFactory.fromGui(4));
     Dim h = this.fontEngine.FONT_HEIGHT_DIM;
     RendererHelpers.drawRect(-100, new DimRect(x, y, w, h), this.getBackgroundColour(line, opacity));
   }
 
-  private void drawLine(ChatLine line, int index, int opacity, int width) {
-    int lineLeft = LEFT_PADDING;
-    int lineBottom = -index * this.fontEngine.FONT_HEIGHT; // negative because we iterate from the bottom line to the top line
-    int lineTop = lineBottom - this.fontEngine.FONT_HEIGHT;
+  private void drawLine(ChatLine line, int index, int opacity, Dim width) {
+    Dim lineLeft = this.dimFactory.fromGui(LEFT_PADDING);
+    Dim lineBottom = this.fontEngine.FONT_HEIGHT_DIM.times(-index); // negative because we iterate from the bottom line to the top line
+    Dim lineTop = lineBottom.minus(this.fontEngine.FONT_HEIGHT_DIM);
 
     GlStateManager.enableBlend();
 
@@ -206,13 +206,13 @@ public class CustomGuiNewChat extends GuiNewChat {
     if (chatComponent instanceof PrecisionChatComponent) {
       PrecisionChatComponent component = (PrecisionChatComponent)chatComponent;
       for (Tuple2<PrecisionChatComponent.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.fontEngine, width)) {
-        int left = lineLeft + pair._1.position.getGuiValue(width);
+        Dim left = lineLeft.plus(pair._1.position);
         this.chatComponentRenderer.drawChatComponent(pair._2, left, lineTop, opacity);
       }
     } else {
-      int x = 0;
+      Dim x = this.dimFactory.zeroGui();
       for (IChatComponent component : chatComponent) {
-        x += this.chatComponentRenderer.drawChatComponent(component, lineLeft + x, lineTop, opacity);
+        x = x.plus(this.chatComponentRenderer.drawChatComponent(component, lineLeft.plus(x), lineTop, opacity));
       }
     }
 
@@ -445,17 +445,17 @@ public class CustomGuiNewChat extends GuiNewChat {
   @Override
   public IChatComponent getChatComponent(int mouseX, int mouseY) {
     Tuple2<Integer, Integer> coords = this.mapInvertedScreenPositionIntoChat(mouseX, mouseY);
-    int x = coords._1;
-    int y = coords._2;
-    int maxX = this.getLineWidth();
+    Dim x = this.dimFactory.fromGui(coords._1); // mouseX and mouseY are in gui coords...
+    Dim y = this.dimFactory.fromGui(coords._2);
+    Dim maxX = this.getLineWidthDim();
 
-    ChatLine chatLine = this.getRenderedChatLine(x, y);
+    ChatLine chatLine = this.getRenderedChatLine((int)x.getGui(), (int)y.getGui());
     if (chatLine == null) {
       return null;
     }
 
     // walk from component to component until we first pass our desired x-position
-    int lineX = 0;
+    Dim lineX = this.dimFactory.zeroGui();
     for (IChatComponent component : chatLine.getChatComponent()) {
       IChatComponent originalComponent = component;
 
@@ -465,8 +465,8 @@ public class CustomGuiNewChat extends GuiNewChat {
       }
 
       if (component instanceof ChatComponentText) {
-        lineX += this.fontEngine.getStringWidth(getFormattedText((ChatComponentText)component));
-        if (lineX > x) {
+        lineX = lineX.plus(this.fontEngine.getStringWidthDim(getFormattedText((ChatComponentText)component)));
+        if (lineX.gt(x)) {
           return originalComponent;
         }
       } else if (component instanceof PrecisionChatComponent) {
@@ -477,18 +477,18 @@ public class CustomGuiNewChat extends GuiNewChat {
 
       } else if (component instanceof ImageChatComponent) {
         ImageChatComponent imageComponent = (ImageChatComponent)component;
-        lineX += imageComponent.paddingGuiLeft;
+        lineX = lineX.plus(imageComponent.paddingGuiLeft);
 
-        int width = (int)Math.ceil(imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT));
-        if (lineX <= x && lineX + width >= x) {
+        Dim width = imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT_DIM);
+        if (lineX.lte(x) && lineX.plus(width).gte(x)) {
           return originalComponent;
         }
-        lineX += width + imageComponent.paddingGuiRight;
+        lineX = lineX.plus(width).plus(imageComponent.paddingGuiRight);
 
       } else if (component instanceof UserNameChatComponent) {
         UserNameChatComponent userNameChatComponent = (UserNameChatComponent)component;
-        lineX += userNameChatComponent.getWidth();
-        if (lineX > x) {
+        lineX = lineX.plus(userNameChatComponent.getWidth());
+        if (lineX.gt(x)) {
           return originalComponent;
         }
 
@@ -604,15 +604,27 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.scroll(-removed);
   }
 
+  /** Returns the actual chat width. */
   @Override
   public int getChatWidth() {
     return calculateChatboxWidth(this.minecraft.gameSettings.chatWidth);
+  }
+
+  /** Returns the actual chat width. */
+  public Dim getChatWidthDim() {
+    return this.dimFactory.fromGui(this.getChatWidth());
   }
 
   /** Returns the effective chat width that takes into account scaling. If the font renderer measures text to be at most this width, it will fit onto the chat GUI. */
   public int getChatWidthForText() {
     float scale = this.getChatScale();
     return MathHelper.floor_float((float)this.getChatWidth() / scale);
+  }
+
+  /** Returns the effective chat width that takes into account scaling. If the font renderer measures text to be at most this width, it will fit onto the chat GUI. */
+  public Dim getChatWidthForTextDim() {
+    float scale = this.getChatScale();
+    return this.getChatWidthDim().over(scale);
   }
 
   @Override
@@ -646,6 +658,10 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Returns the width in GUI space. */
   private int getLineWidth() {
     return MathHelper.floor_float((float)this.getChatWidth() / this.getChatScale());
+  }
+
+  private Dim getLineWidthDim() {
+    return this.getChatWidthDim().over(this.getChatScale());
   }
 
   @FunctionalInterface

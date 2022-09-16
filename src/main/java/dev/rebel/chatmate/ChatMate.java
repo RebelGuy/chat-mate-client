@@ -52,7 +52,6 @@ public class ChatMate {
     ForgeEventService forgeEventService = new ForgeEventService(logService, minecraft);
     // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
     MinecraftForge.EVENT_BUS.register(forgeEventService);
-    MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
     FontEngine fontEngine = new FontEngine(dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
     FontEngineProxy fontEngineProxy = new FontEngineProxy(fontEngine, dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
@@ -98,6 +97,20 @@ public class ChatMate {
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
     ChatMateChatService chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
 
+    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
+    ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
+    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
+        minecraft,
+        logService,
+        config,
+        forgeEventService,
+        dimFactory,
+        mouseEventService,
+        contextMenuStore,
+        fontEngine,
+        chatComponentRenderer);
+    MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService, customGuiNewChat);
+
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory);
     DateTimeService dateTimeService = new DateTimeService();
@@ -113,18 +126,18 @@ public class ChatMate {
         imageService,
         config,
         chatMateChatService,
-        fontEngine);
+        fontEngine,
+        dimFactory,
+        customGuiNewChat);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory, livestreamApiStore);
 
     RenderService renderService = new RenderService(minecraft, forgeEventService, fontEngine, dimFactory);
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
     ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, fontEngine, dimFactory, forgeEventService, statusService, config, serverLogEventService);
-    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ClipboardService clipboardService = new ClipboardService();
     UrlService urlService = new UrlService(logService);
-    MinecraftChatService minecraftChatService = new MinecraftChatService(minecraftProxyService);
-    ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
+    MinecraftChatService minecraftChatService = new MinecraftChatService(customGuiNewChat);
 
     InteractiveContext hudContext = new InteractiveContext(
         new InteractiveScreen.ScreenRenderer(),
@@ -176,19 +189,10 @@ public class ChatMate {
         donationHudStore,
         rankApiStore,
         livestreamApiStore,
-        donationApiStore);
+        donationApiStore,
+        customGuiNewChat);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config, guiChatMateHud);
 
-    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
-        minecraft,
-        logService,
-        config,
-        forgeEventService,
-        dimFactory,
-        mouseEventService,
-        contextMenuStore,
-        fontEngine,
-        chatComponentRenderer);
     CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
     GuiService guiService = new GuiService(this.isDev,
         logService,
@@ -222,7 +226,8 @@ public class ChatMate {
         messageService,
         livestreamApiStore,
         donationApiStore,
-        rankApiStore);
+        rankApiStore,
+        customGuiNewChat);
     DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
