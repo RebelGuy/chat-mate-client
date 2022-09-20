@@ -5,8 +5,6 @@ import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.gui.RenderContext;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedEvent;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
@@ -19,20 +17,14 @@ import dev.rebel.chatmate.services.StatusService.SimpleStatus;
 import dev.rebel.chatmate.services.events.ServerLogEventService;
 import dev.rebel.chatmate.services.events.models.EventData.EventIn;
 import dev.rebel.chatmate.services.events.models.EventData.EventOut;
-import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.Tuple;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_ORANGE;
 import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_RED;
-import static dev.rebel.chatmate.gui.Interactive.ChatMateHud.StatusIndicatorHudElement.*;
 
 public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElement> {
   private final Config config;
@@ -52,13 +44,13 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
     super.setCanDrag(true);
     super.setCanScale(true);
     super.setDefaultPosition(new DimPoint(gui(INITIAL_X_GUI), gui(INITIAL_Y_GUI)), Anchor.TOP_LEFT);
-    super.setResizeAnchor(Anchor.MIDDLE);
+    super.setScrollResizeAnchor(Anchor.MIDDLE);
     super.setHudElementFilter(); // shown everywhere
 
     this.mainIndicator = new IndicatorElement(context, this, true, statusService, config, serverLogEventService)
         .cast();
     this.secondaryIndicator = new IndicatorElement(context, this, false, statusService, config, serverLogEventService)
-        .setMargin(new RectExtension(ZERO, ZERO, gui(10), ZERO))
+        .setMargin(new RectExtension(ZERO, ZERO, gui(5), ZERO))
         .cast();
     this.indicatorContainer = new BlockElement(context, this)
         .addElement(this.mainIndicator)
@@ -72,7 +64,7 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
   @Override
   protected void onRescaleContent(DimRect oldBox, float oldScale, float newScale) {
     this.mainIndicator.setScale(newScale);
-    this.secondaryIndicator.setScale(newScale);
+    this.secondaryIndicator.setScale(newScale).setMargin(new RectExtension(ZERO, ZERO, gui(5 * newScale), ZERO));
   }
 
   protected static class IndicatorElement extends ImageElement {
@@ -155,10 +147,10 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
       if (this.config.getShowServerLogsHeartbeat().get()) {
         for (Tuple<Texture, Float> logEvent : this.serverLogEvents.getAllFracs()) {
           Texture logTexture = logEvent.getFirst();
-          DimPoint centre = new DimPoint(super.context.dimFactory.fromGui(logTexture.width).over(2), super.context.dimFactory.fromGui(logTexture.height).over(2));
-          float scale = logEvent.getSecond() * SERVER_LOG_ANIMATION_MAX_SCALE;
+          float scale = logEvent.getSecond() * SERVER_LOG_ANIMATION_MAX_SCALE * super.scale;
           float alpha = 1 - logEvent.getSecond();
-          RendererHelpers.drawTextureCentred(super.context.minecraft.getTextureManager(), super.context.dimFactory, logTexture, centre, scale, Colour.WHITE.withAlpha(alpha));
+          DimPoint pos =  this.getContentBox().getCentre();
+          RendererHelpers.drawTextureCentred(super.context.minecraft.getTextureManager(), super.context.dimFactory, logTexture, pos, scale, Colour.WHITE.withAlpha(alpha));
         }
       }
 

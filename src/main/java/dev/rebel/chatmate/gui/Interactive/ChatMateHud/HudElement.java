@@ -27,12 +27,14 @@ public abstract class HudElement extends ElementBase implements IDropElementList
 
   protected @Nonnull DimPoint defaultPosition;
   protected @Nonnull Anchor defaultPositionAnchor;
-  protected @Nullable Anchor resizeAnchor;
+  protected @Nullable Anchor scrollResizeAnchor;
+  protected @Nullable Anchor contentResizeAnchor;
   protected float currentScale = 1;
-  protected Anchor anchor = Anchor.TOP_LEFT;
+  protected Anchor autoAnchor = Anchor.TOP_LEFT;
 
   private boolean canDrag = false;
   private boolean canScale = false;
+  private boolean isScrolling = false;
 
   // using the drop element leads to a smoother dragging experience where large deltas don't interrupt the drag flow
   private @Nullable DropElement dropElement = null;
@@ -43,6 +45,8 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     
     this.defaultPosition = new DimPoint(ZERO, ZERO);
     this.defaultPositionAnchor = Anchor.TOP_LEFT;
+    this.scrollResizeAnchor = null;
+    this.contentResizeAnchor = null;
   }
   
   public HudElement setCanDrag(boolean canDrag) {
@@ -62,9 +66,15 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     return this;
   }
 
-  /** Sets the anchor within the box about which the box should be resized. If null, automatically chooses the resize anchor. */
-  public HudElement setResizeAnchor(@Nullable Anchor anchor) {
-    this.resizeAnchor = anchor;
+  /** Sets the anchor of the box about which the box should be resized when scrolling. If null, automatically chooses the resize anchor. */
+  public HudElement setScrollResizeAnchor(@Nullable Anchor anchor) {
+    this.scrollResizeAnchor = anchor;
+    return this;
+  }
+
+  /** Sets the anchor of the box about which the box should be resized when the content changes. If null, automatically chooses the resize anchor. */
+  public HudElement setContentResizeAnchor(@Nullable Anchor anchor) {
+    this.contentResizeAnchor = anchor;
     return this;
   }
 
@@ -133,10 +143,12 @@ public abstract class HudElement extends ElementBase implements IDropElementList
       this.setBoxUnsafe(box);
     } else {
       // if there's no resize, the box will stay the same
-      box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), Objects.firstOrNull(this.resizeAnchor, this.anchor));
+      Anchor resizeAnchor = this.isScrolling ? this.scrollResizeAnchor : this.contentResizeAnchor; // infer why we are resizing the box
+      box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), Objects.firstOrNull(resizeAnchor, this.autoAnchor));
     }
 
-    this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
+    this.isScrolling = false;
+    this.autoAnchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     super.setBox(box);
     this.onHudBoxSet(box);
     if (this.dropElement != null) {
@@ -159,6 +171,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
       if (this.currentScale != newScale) {
         float oldScale = this.currentScale;
         this.currentScale = newScale;
+        this.isScrolling = true;
         this.onRescaleContent(super.getBox(), oldScale, newScale);
       }
       super.onInvalidateSize();
@@ -191,7 +204,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
 
     Dim x;
     Dim y;
-    switch (this.anchor) {
+    switch (this.autoAnchor) {
       case TOP_LEFT:
         x = alignLower(horizontal, position, size, screenSizeData);
         y = alignLower(vertical, position, size, screenSizeData);
@@ -229,7 +242,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
         y = alignUpper(vertical, position, size, screenSizeData);
         break;
       default:
-        throw new RuntimeException("Invalid anchor " + this.anchor);
+        throw new RuntimeException("Invalid anchor " + this.autoAnchor);
     }
 
     super.setBox(box.withPosition(new DimPoint(x, y)));

@@ -172,6 +172,7 @@ public class RendererHelpers {
     tessellator.draw();
   }
 
+  /** Scales the texture about the given position. */
   public static void drawTextureCentred(TextureManager textureManager, DimFactory dimFactory, Texture texture, DimPoint centre, float scale, @Nullable Colour colour) {
     DimPoint topLeft = new DimPoint(
         centre.getX().minus(dimFactory.fromGui(texture.width / 2.0f * scale)),

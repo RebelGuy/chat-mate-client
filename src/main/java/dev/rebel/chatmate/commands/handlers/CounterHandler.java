@@ -83,6 +83,7 @@ public class CounterHandler {
           .setCanDrag(true)
           .setCanScale(true)
           .setDefaultPosition(dimFactory.getMinecraftRect().getCentre(), Anchor.MIDDLE)
+          .setScrollResizeAnchor(Anchor.MIDDLE)
           .setHudElementFilter(
               new HudFilters.HudFilterWhitelistNoScreen(),
               new HudFilters.HudFilterScreenWhitelist(CustomGuiChat.class),
