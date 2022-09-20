@@ -39,7 +39,6 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
   private final IndicatorElement secondaryIndicator;
 
   public StatusIndicatorHudElement(InteractiveContext context, IElement parent, StatusService statusService, Config config, ServerLogEventService serverLogEventService) {
-    // giving values in Gui coords. so at 2x gui scale, with an initial scale of 0.5f, will be at screen coords (20, 20) with a screen size of 16x16
     super(context, parent);
     super.setCanDrag(true);
     super.setCanScale(true);

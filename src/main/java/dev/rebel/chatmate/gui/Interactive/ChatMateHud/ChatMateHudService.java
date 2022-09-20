@@ -11,5 +11,6 @@ public class ChatMateHudService {
     this.chatMateHudStore = chatMateHudStore;
 
     this.chatMateHudStore.addElement((context, parent) -> new StatusIndicatorHudElement(context, parent, statusService, config, serverLogEventService));
+    this.chatMateHudStore.addElement((context, parent) -> new LiveViewersHudElement(context, parent, statusService, config));
   }
 }

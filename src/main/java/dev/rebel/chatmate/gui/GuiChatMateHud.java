@@ -21,7 +21,7 @@ public class GuiChatMateHud {
   private final FontEngine fontEngine;
 
 //  private final StatusIndicatorComponent statusIndicatorComponent;
-  private final LiveViewersComponent liveViewersComponent;
+//  private final LiveViewersComponent liveViewersComponent;
   private final ServerLogsTimeSeriesComponent serverLogsTimeSeriesComponent;
 
   public final List<IHudComponent> hudComponents;
@@ -35,12 +35,12 @@ public class GuiChatMateHud {
     this.fontEngine = fontEngine;
 
 //    this.statusIndicatorComponent = new StatusIndicatorComponent(dimFactory, 0.5f, statusService, config, serverLogEventService);
-    this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft, fontEngine);
+//    this.liveViewersComponent = new LiveViewersComponent(dimFactory, 1, statusService, config, minecraft, fontEngine);
     this.serverLogsTimeSeriesComponent = new ServerLogsTimeSeriesComponent(dimFactory, serverLogEventService, config);
 
     this.hudComponents = new ArrayList<>();
 //    this.hudComponents.add(this.statusIndicatorComponent);
-    this.hudComponents.add(this.liveViewersComponent);
+//    this.hudComponents.add(this.liveViewersComponent);
     this.hudComponents.add(this.serverLogsTimeSeriesComponent);
   }
 
