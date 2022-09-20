@@ -14,6 +14,7 @@ import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,6 +27,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
 
   protected @Nonnull DimPoint defaultPosition;
   protected @Nonnull Anchor defaultPositionAnchor;
+  protected @Nullable Anchor resizeAnchor;
   protected float currentScale = 1;
   protected Anchor anchor = Anchor.TOP_LEFT;
 
@@ -53,10 +55,16 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     return this;
   }
 
-  /** Sets the initial position of the HUD element, where the anchored point of the box will be placed at the provided position. */
+  /** Sets the initial position of the HUD element, where the anchored point of the box will be placed at the provided position. Only effective before the element has first been rendered. */
   public HudElement setDefaultPosition(@Nonnull DimPoint point, @Nonnull Anchor boxAnchor) {
     this.defaultPosition = point;
     this.defaultPositionAnchor = boxAnchor;
+    return this;
+  }
+
+  /** Sets the anchor within the box about which the box should be resized. If null, automatically chooses the resize anchor. */
+  public HudElement setResizeAnchor(@Nullable Anchor anchor) {
+    this.resizeAnchor = anchor;
     return this;
   }
 
@@ -123,13 +131,12 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     if (super.getBox() == null) {
       box = setBoxPositionAtAnchor(new DimRect(this.defaultPosition, this.lastCalculatedSize), this.defaultPosition, this.defaultPositionAnchor);
       this.setBoxUnsafe(box);
-      // the initial anchor is determined by the initial box
-      this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     } else {
       // if there's no resize, the box will stay the same
-      box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), this.anchor);
+      box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), Objects.firstOrNull(this.resizeAnchor, this.anchor));
     }
 
+    this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     super.setBox(box);
     this.onHudBoxSet(box);
     if (this.dropElement != null) {
@@ -390,7 +397,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   }
 
   protected static DimRect setBoxPositionAtAnchor(DimRect box, DimPoint point, Anchor anchor) {
-    // calculate the anchor's position relative to the box's permission
+    // calculate the anchor's position relative to the box's position
     Dim x = box.getX();
     Dim y = box.getY();
     Dim w = box.getWidth();

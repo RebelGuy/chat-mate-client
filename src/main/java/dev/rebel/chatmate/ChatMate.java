@@ -6,10 +6,7 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
 import dev.rebel.chatmate.gui.*;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudService;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -192,6 +189,7 @@ public class ChatMate {
         donationApiStore,
         customGuiNewChat);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config, guiChatMateHud);
+    ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, config, statusService, serverLogEventService);
 
     CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
     GuiService guiService = new GuiService(this.isDev,

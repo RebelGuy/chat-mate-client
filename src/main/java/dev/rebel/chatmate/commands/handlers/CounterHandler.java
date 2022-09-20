@@ -1,11 +1,9 @@
 package dev.rebel.chatmate.commands.handlers;
 
 import dev.rebel.chatmate.gui.CustomGuiChat;
-import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElementWrapper;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.TransformedHudElementWrapper;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
@@ -15,7 +13,6 @@ import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.KeyBindingService;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
-import net.minecraft.client.gui.GuiChat;
 
 import javax.annotation.Nullable;
 
@@ -68,8 +65,9 @@ public class CounterHandler {
 
   private static class Counter {
     private final ChatMateHudStore chatMateHudStore;
-    private final HudElementWrapper<LabelElement> hudElement;
+    private final TransformedHudElementWrapper<LabelElement> hudElement;
     private final int incrementValue;
+
     private final String title;
     private final Observable<String> observableString;
     private int value;
@@ -81,7 +79,7 @@ public class CounterHandler {
       this.title = title == null ? "" : title + " ";
       this.observableString = new Observable<>(this.getStringToRender());
 
-      this.hudElement = this.chatMateHudStore.addElement(HudElementWrapper::new)
+      this.hudElement = this.chatMateHudStore.addElement(TransformedHudElementWrapper::new)
           .setCanDrag(true)
           .setCanScale(true)
           .setDefaultPosition(dimFactory.getMinecraftRect().getCentre(), Anchor.MIDDLE)
