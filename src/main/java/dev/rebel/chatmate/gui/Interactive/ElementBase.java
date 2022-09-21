@@ -493,6 +493,10 @@ public abstract class ElementBase implements IElement {
     return this;
   }
 
+  public @Nullable Dim getMaxContentWidth() {
+    return this.maxContentWidth;
+  }
+
   @Override
   public IElement setTargetHeight(@Nullable Dim targetHeight) {
     if (!Objects.equals(this.targetFullHeight, targetHeight)) {

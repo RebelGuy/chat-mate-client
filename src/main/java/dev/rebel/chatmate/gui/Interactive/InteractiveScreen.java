@@ -18,6 +18,7 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.Out.KeyboardHandlerAction;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
+import dev.rebel.chatmate.services.events.models.ScreenResizeData;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.store.DonationApiStore;
 import dev.rebel.chatmate.store.LivestreamApiStore;
@@ -44,6 +45,7 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseUp = this::onMouseUp;
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseScroll = this::onMouseScroll;
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> _onKeyDown = this::onKeyDown;
+  private final Function<ScreenResizeData.In, ScreenResizeData.Out> _onScreenResize = this::onScreenResize;
 
   protected boolean requiresRecalculation = true;
   protected boolean shouldCloseScreen = false;
@@ -73,6 +75,9 @@ public class InteractiveScreen extends Screen implements IElement {
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_UP, this._onMouseUp, new MouseEventData.Options(true), this);
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_SCROLL, this._onMouseScroll, new MouseEventData.Options(true), this);
     this.context.keyboardEventService.on(KeyboardEventService.Events.KEY_DOWN, this._onKeyDown, new KeyboardEventData.Options(true, null, null, null), this);
+
+    // we don't want to override the default `onScreenSizeUpdated()` because it fires only when this interactive screen is active in `Minecraft`, which may not necessarily be the case (e.g. for the HUD)
+    this.context.forgeEventService.onScreenResize(this._onScreenResize, new ScreenResizeData.Options(), this);
   }
 
   public void setMainElement(IElement mainElement) {
@@ -106,8 +111,7 @@ public class InteractiveScreen extends Screen implements IElement {
     }
   }
 
-  @Override
-  protected void onScreenSizeUpdated() {
+  protected ScreenResizeData.Out onScreenResize(ScreenResizeData.In eventIn) {
     this.onInvalidateSize();
 
     int newScaleFactor = this.context.dimFactory.getScaleFactor();
@@ -119,6 +123,8 @@ public class InteractiveScreen extends Screen implements IElement {
 
     this.screenSize = newSize;
     this.minecraftScaleFactor = newScaleFactor;
+
+    return new ScreenResizeData.Out();
   }
 
   @Override
