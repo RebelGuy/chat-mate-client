@@ -98,7 +98,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.hoveredLine = new AnimatedSelection<>(150L);
     this.selectedLine = new AnimatedSelection<>(100L);
     this.currentDimensions = new ChatDimensions(minecraft.gameSettings);
-    this.scrollPos = new AnimatedFloat(300L, 0f);
+    this.scrollPos = new AnimatedFloat(400L, 0f);
     this.scrollPos.setEasing(frac -> 1 - (float)Math.pow(1 - frac, 5));
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
