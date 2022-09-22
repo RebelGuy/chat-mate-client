@@ -2,7 +2,6 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.*;
@@ -21,6 +20,7 @@ import org.lwjgl.util.Color;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.lwjgl.opengl.GL11.GL_POLYGON;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
@@ -33,12 +33,27 @@ public class RendererHelpers {
     GlStateManager.popMatrix();
   }
 
+  public static void withTranslation(DimPoint translation, Consumer<Transform> onRender) {
+    GlStateManager.pushMatrix();
+    GlStateManager.translate(translation.getX().getGui(), translation.getY().getGui(), 0);
+    onRender.accept(new Transform(translation, 1));
+    GlStateManager.popMatrix();
+  }
+
   /** Maps the render space such that (0, 0) will correspond to the given translation. onRender should only use relative coordinates to the translated space. */
   public static void withMapping(DimPoint translation, float scale, Runnable onRender) {
     GlStateManager.pushMatrix();
     GlStateManager.translate(translation.getX().getGui(), translation.getY().getGui(), 0);
     GlStateManager.scale(scale, scale, 1);
     onRender.run();
+    GlStateManager.popMatrix();
+  }
+
+  public static void withMapping(DimPoint translation, float scale, Consumer<Transform> onRender) {
+    GlStateManager.pushMatrix();
+    GlStateManager.translate(translation.getX().getGui(), translation.getY().getGui(), 0);
+    GlStateManager.scale(scale, scale, 1);
+    onRender.accept(new Transform(translation, scale));
     GlStateManager.popMatrix();
   }
 
@@ -494,6 +509,24 @@ public class RendererHelpers {
 
   public static void addVertex(WorldRenderer worldRenderer, int zLevel, DimPoint point, Colour colour) {
     worldRenderer.pos(point.getX().round().getGui(), point.getY().round().getGui(), zLevel).color(colour.red / 255.0f, colour.green / 255.0f, colour.blue / 255.0f, colour.alpha / 255.0f).endVertex();
+  }
+
+  public static class Transform {
+    public final DimPoint translation;
+    public final float scale;
+
+    public Transform(DimPoint translation, float scale) {
+      this.translation = translation;
+      this.scale = scale;
+    }
+
+    public DimPoint unTransform(DimPoint point) {
+      return point.scale(1 / this.scale).minus(this.translation);
+    }
+
+    public DimRect unTransform(DimRect rect) {
+      return rect.withSize(rect.getSize().scale(1 / this.scale)).withTranslation(this.translation);
+    }
   }
 
   private enum GradientDirection {

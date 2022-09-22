@@ -2,14 +2,13 @@ package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
-import dev.rebel.chatmate.gui.StateManagement.Animated;
-import dev.rebel.chatmate.gui.StateManagement.AnimatedFloat;
-import dev.rebel.chatmate.gui.StateManagement.AnimatedSelection;
-import dev.rebel.chatmate.gui.StateManagement.State;
+import dev.rebel.chatmate.gui.Interactive.RendererHelpers.Transform;
+import dev.rebel.chatmate.gui.StateManagement.*;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.*;
 import dev.rebel.chatmate.gui.models.ChatLine;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
@@ -18,6 +17,7 @@ import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.GuiScreenChanged;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
@@ -72,6 +72,10 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final AnimatedFloat scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
   private boolean isScrolled = false;
   private ChatDimensions currentDimensions;
+  private @Nullable DimRect scrollBarRect = null;
+  private @Nullable DimPoint scrollBarDragPosition = null;
+  private @Nullable Float scrollBarPositionAtDrag = null;
+  private final AnimatedBool hoveringOverScrollbar = new AnimatedBool(300L, false);
 
   public CustomGuiNewChat(Minecraft minecraft,
                           LogService logService,
@@ -103,15 +107,59 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
     this.forgeEventService.onGuiScreenChanged(this::onChatLoseFocus, new GuiScreenChanged.Options(GuiScreenChanged.ListenType.CLOSE_ONLY, CustomGuiChat.class));
+    this.mouseEventService.on(Events.MOUSE_DOWN, this::onMouseDown, new MouseEventData.Options(), null);
+    this.mouseEventService.on(Events.MOUSE_UP, this::onMouseUp, new MouseEventData.Options(), null);
     this.mouseEventService.on(Events.MOUSE_MOVE, this::onMouseMove, new MouseEventData.Options(), null);
   }
 
   private GuiScreenChanged.Out onChatLoseFocus(GuiScreenChanged.In in) {
     this.hoveredLine.setSelected(null);
+    this.scrollBarDragPosition = null;
+    this.scrollBarPositionAtDrag = null;
+    this.hoveringOverScrollbar.set(false);
     return new GuiScreenChanged.Out();
   }
 
+  private MouseEventData.Out onMouseDown(MouseEventData.In in) {
+    DimPoint position = in.mousePositionData.point.setAnchor(DimAnchor.GUI);
+    if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.scrollBarRect != null && this.scrollBarRect.checkCollision(position)) {
+      this.scrollBarDragPosition = position;
+      this.scrollBarPositionAtDrag = this.scrollPos.get();
+    }
+    return new MouseEventData.Out();
+  }
+
+  private MouseEventData.Out onMouseUp(MouseEventData.In in) {
+    if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
+      this.scrollBarDragPosition = null;
+      this.scrollBarPositionAtDrag = null;
+    }
+
+    return new MouseEventData.Out();
+  }
+
   private MouseEventData.Out onMouseMove(MouseEventData.In in) {
+    DimPoint position = in.mousePositionData.point.setAnchor(DimAnchor.GUI);
+    this.hoveringOverScrollbar.set(this.scrollBarRect != null && this.scrollBarRect.checkCollision(position));
+
+    if (this.scrollBarDragPosition != null) {
+      int storedLines = this.chatLines.size();
+      int visibleLines = Math.min(storedLines, this.getLineCount());
+
+      float lineHeight = this.fontEngine.FONT_HEIGHT * this.getChatScale();
+      float renderedHeight = visibleLines * lineHeight;
+      float barHeight = this.scrollBarRect.getHeight().getGui();
+
+      float linesScrolledPerUnitMoved = (storedLines - visibleLines) / (renderedHeight - barHeight); // non-visible lines over the free sidebar space
+
+      // mouseDelta determines how far the bar has moved
+      float mouseDelta = position.getY().minus(this.scrollBarDragPosition.getY()).getGui();
+
+      float newScrollTarget = this.scrollBarPositionAtDrag - mouseDelta * linesScrolledPerUnitMoved; // scrolling is inverted: a positive-y delta decreases the scrolling position
+      float currentScrollTarget = this.scrollPos.getTarget();
+      this.scroll(newScrollTarget - currentScrollTarget, true);
+    }
+
     this.updateHoveredLine();
     return new MouseEventData.Out();
   }
@@ -142,9 +190,9 @@ public class CustomGuiNewChat extends GuiNewChat {
         height
     );
 
-    RendererHelpers.withTranslation(translation, () -> {
+    RendererHelpers.withTranslation(translation, transform -> {
       RendererHelpers.withScissor(chatRect, this.dimFactory.getMinecraftSize(), () -> {
-        this.drawChat(this.minecraft.ingameGUI.getUpdateCounter(), chatRect.withTranslation(translation.scale(-1)));
+        this.drawChat(this.minecraft.ingameGUI.getUpdateCounter(), chatRect.withTranslation(translation.scale(-1)), transform);
       });
     });
 
@@ -154,10 +202,10 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   @Override
   public void drawChat(int updateCounter) {
-    this.drawChat(updateCounter, null); // I don't think this gets called anywhere
+    this.drawChat(updateCounter, null, null); // I don't think this gets called anywhere
   }
 
-  public void drawChat(int updateCounter, DimRect chatRect) {
+  public void drawChat(int updateCounter, DimRect chatRect, Transform transform) {
     if (this.minecraft.gameSettings.chatVisibility == EntityPlayer.EnumChatVisibility.HIDDEN) {
       return;
     }
@@ -178,7 +226,6 @@ public class CustomGuiNewChat extends GuiNewChat {
     float verticalOffset = (scrollPos - (float)Math.floor(scrollPos)) * this.fontEngine.FONT_HEIGHT * scale;
     DimPoint verticalOffsetDim = new DimPoint(this.dimFactory.zeroGui(), this.dimFactory.fromGui(verticalOffset));
 
-    State<Integer> renderedLines = new State<>(0); // how many lines we have actually rendered
     RendererHelpers.withMapping(verticalOffsetDim, scale, () -> {
       LineIterator lineIterator = lineAction -> {
         int startLine = (int)Math.floor(scrollPos);
@@ -205,11 +252,12 @@ public class CustomGuiNewChat extends GuiNewChat {
       // not clipped by the background of the line above it
       lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLineBackground(line, i, lineOpacity));
       lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLine(line, i, lineOpacity, chatRect.withTranslation(verticalOffsetDim.scale(-1))));
-      lineIterator.forEachLine((line, i, lineOpacity) -> renderedLines.setState(current -> current + 1));
-
     });
+
     if (this.getChatOpen()) {
-      this.drawScrollBar(lineCount, renderedLines.getState());
+      this.drawScrollBar(transform);
+    } else {
+      this.scrollBarRect = null;
     }
   }
 
@@ -273,21 +321,38 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   /** Given the lineCount (total lines) and the renderedLines (how many lines are visible on screen), draws the scrollbar to the left of the chat GUI. */
-  private void drawScrollBar(int lineCount, int renderedLines) {
-    int lineHeight = this.fontEngine.FONT_HEIGHT;
-    GlStateManager.translate(-3.0F, 0.0F, 0.0F);
-    int fullHeight = lineCount * lineHeight + lineCount;
-    int renderedHeight = renderedLines * lineHeight + renderedLines;
-    int j3 = (int)(this.scrollPos.get() * renderedHeight / lineCount);
-    int k1 = renderedHeight * renderedHeight / fullHeight;
-
-    if (fullHeight != renderedHeight)
-    {
-      int k3 = j3 > 0 ? 170 : 96;
-      int l3 = this.isScrolled ? 13382451 : 3355562;
-      drawRect(0, -j3, 2, -j3 - k1, l3 + (k3 << 24));
-      drawRect(2, -j3, 1, -j3 - k1, 13421772 + (k3 << 24));
+  private void drawScrollBar(Transform transform) {
+    int storedLines = this.chatLines.size();
+    int visibleLines = Math.min(storedLines, this.getLineCount());
+    if (visibleLines >= storedLines) {
+      this.scrollBarRect = null;
+      return;
     }
+
+    float lineHeight = this.fontEngine.FONT_HEIGHT * this.getChatScale();
+    float fullHeight = storedLines * lineHeight;
+    float renderedHeight = visibleLines * lineHeight;
+    float barHeight = Math.max(renderedHeight / fullHeight * renderedHeight, lineHeight);
+    float scrollRatio = this.scrollPos.get() / (storedLines - visibleLines); // how far up the scroll bar is
+    float barOffsetBottom = (renderedHeight - barHeight) * scrollRatio;
+
+    // recall that (0, 0) is at the bottom-left corner of the chat window
+    DimRect barRect = new DimRect(
+        this.dimFactory.fromGui(-LEFT),
+        this.dimFactory.fromGui(-barOffsetBottom - barHeight),
+        this.dimFactory.fromGui(LEFT),
+        this.dimFactory.fromGui(barHeight)
+    );
+    Dim cornerRadius = this.dimFactory.fromScreen(4);
+    Colour colour;
+    if (this.scrollBarDragPosition != null) {
+      colour = Colour.WHITE.withAlpha(0.7f);
+    } else {
+      colour = Colour.lerp(Colour.GREY75, Colour.WHITE, this.hoveringOverScrollbar.getFrac()).withAlpha(0.5f);
+    }
+    RendererHelpers.drawRect(100, barRect, colour, null, null, cornerRadius);
+
+    this.scrollBarRect = transform.unTransform(barRect);
   }
 
   private int getLineOpacity(int updateCounter, ChatLine line, float baseOpacity) {
@@ -467,6 +532,11 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   /** Scrolls the chat by the given number of lines. */
   public void scroll(float amount, boolean skipAnimation) {
+    // prevent scrolling while dragging the scroll bar
+    if (this.scrollBarDragPosition != null && !skipAnimation) {
+      return;
+    }
+
     float currentScrollTarget = this.scrollPos.getTarget();
     float newScrollTarget = currentScrollTarget + amount;
 
