@@ -33,6 +33,10 @@ public class DimRect {
     return this.height;
   }
 
+  public Dim getLeft() { return this.x.plus(this.x); }
+
+  public Dim getTop() { return this.y.plus(this.y); }
+
   public Dim getRight() { return this.x.plus(this.width); }
 
   public Dim getBottom() { return this.y.plus(this.height); }
@@ -103,7 +107,11 @@ public class DimRect {
 
   public DimRect withHeight(Dim height) { return new DimRect(this.x, this.y, this.width, height); }
 
-  /** Truncates the sides of this rect such that it fits into the given rect (loose fit). */
+  public float getAreaGui() {
+    return this.getWidth().getGui() * this.getHeight().getGui();
+  }
+
+  /** Truncates the sides of this rect such that it fits into the given rect. */
   public DimRect clamp(DimRect other) {
     Dim x = Dim.max(this.getX(), other.getX());
     Dim y = Dim.max(this.getY(), other.getY());

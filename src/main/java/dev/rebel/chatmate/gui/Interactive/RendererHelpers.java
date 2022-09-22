@@ -58,6 +58,34 @@ public class RendererHelpers {
     GL11.glPopAttrib();
   }
 
+  /** Clips the renderings to the provided rect. */
+  public static void withScissor(DimRect rect, DimPoint screenSize, Runnable onRender) {
+    // 1. real-world use case of `getScreen` - it was all worth it in the end!
+    // 2. amusingly, the scissor test assumes a rect in cartesian coordinates, not screen coordinates: https://www.khronos.org/opengl/wiki/Scissor_Test
+    int cartX = (int)rect.getX().getScreen();
+    int cartY = (int)screenSize.getY().minus(rect.getBottom()).getScreen();
+    int width = (int)rect.getWidth().getScreen();
+    int height = (int)rect.getHeight().getScreen();
+
+    GL11.glEnable(GL11.GL_SCISSOR_TEST);
+    GL11.glScissor(cartX, cartY, width, height);
+    onRender.run();
+    GL11.glDisable(GL11.GL_SCISSOR_TEST);
+  }
+
+  public static void withoutScissor(Runnable onRender) {
+    boolean isScissorEnabled = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST);
+    if (isScissorEnabled) {
+      GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    onRender.run();
+
+    if (isScissorEnabled) {
+      GL11.glEnable(GL11.GL_SCISSOR_TEST);
+    }
+  }
+
   /** Draws a coloured rect. */
   public static void drawRect(int zLevel, DimRect rect, Colour colour) {
     drawRect(zLevel, rect, colour, null, null);

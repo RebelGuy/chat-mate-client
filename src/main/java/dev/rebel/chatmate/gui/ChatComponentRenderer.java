@@ -7,6 +7,7 @@ import dev.rebel.chatmate.gui.chat.UserNameChatComponent;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import net.minecraft.client.Minecraft;
@@ -29,10 +30,10 @@ public class ChatComponentRenderer extends Gui {
   }
 
   /** Returns the width of the drawn component. */
-  public Dim drawChatComponent(IChatComponent component, Dim x, Dim y, int opacity) {
+  public Dim drawChatComponent(IChatComponent component, Dim x, Dim y, int opacity, DimRect chatRect) {
     if (component instanceof ContainerChatComponent) {
       ContainerChatComponent container = (ContainerChatComponent)component;
-      return drawChatComponent(container.getComponent(), x, y, opacity);
+      return drawChatComponent(container.getComponent(), x, y, opacity, chatRect);
 
     } else if (component instanceof ChatComponentText) {
       String formattedText = getFormattedText((ChatComponentText) component);
@@ -79,7 +80,7 @@ public class ChatComponentRenderer extends Gui {
 
     } else if (component instanceof UserNameChatComponent) {
       UserNameChatComponent userNameChatComponent = (UserNameChatComponent)component;
-      return userNameChatComponent.renderComponent(x, y, opacity);
+      return userNameChatComponent.renderComponent(x, y, opacity, chatRect);
 
     } else {
       throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());
