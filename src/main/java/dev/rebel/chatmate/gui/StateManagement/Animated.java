@@ -6,12 +6,14 @@ import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.Timer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Animated<T> {
   /** Number of milliseconds over which the animation occurs. */
   public final Long duration;
   private final @Nullable Consumer<T> onChange;
   private @Nullable Timer timer;
+  private @Nullable Function<Float, Float> easingFunction;
 
   protected Long prevTime;
   protected T prevValue;
@@ -32,6 +34,11 @@ public class Animated<T> {
     this.prevTime = 0L;
   }
 
+  /** Sets a function to use for transforming the frac. The input will always be 0 <= x <= 1. */
+  public void setEasing(Function<Float, Float> easingFunction) {
+    this.easingFunction = easingFunction;
+  }
+
   public void set(T newValue) {
     // by checking if the value has changed, we ensure that setting the same value twice in quick succession
     // doesn't reset the animation
@@ -46,7 +53,7 @@ public class Animated<T> {
     if (this.onChange != null) {
       this.timer.cancel();
       this.timer = new Timer();
-      this.timer.schedule(new TaskWrapper(() -> this.onChange.accept(newValue)), this.duration);
+      this.timer.schedule(new TaskWrapper(() -> this.onChange.accept(this.get())), this.duration);
     }
   }
 
@@ -69,10 +76,16 @@ public class Animated<T> {
     return this.value;
   }
 
+  public T getTarget() {
+    return this.value;
+  }
+
+  /** Returns the current animation fraction, 0 <= frac <= 1. If set, the frac will first pass through the easing function before being returned. */
   public float getFrac() {
     Long now = timestamp();
     float frac = (float)(now - prevTime) / this.duration;
-    return frac < 0 ? 0 : frac > 1 ? 1 : frac;
+    frac = frac < 0 ? 0 : frac > 1 ? 1 : frac;
+    return this.easingFunction == null ? frac : this.easingFunction.apply(frac);
   }
 
   private static Long timestamp() {
