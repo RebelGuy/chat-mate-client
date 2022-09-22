@@ -404,7 +404,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Adds a new chat message. Automatically splits up the component's text based on its text width. */
   private void addComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
     AbstractChatLine newLine = this.pushFullComponent(chatComponent, chatLineId, updateCounter);
-    this.pushDrawnComponent(newLine, chatComponent, chatLineId, updateCounter);
+    this.pushDrawnComponent(newLine, chatComponent, chatLineId, updateCounter, true);
 
     // todo: replace with our own logger
     logger.info("[CHAT] " + chatComponent.getUnformattedText());
@@ -431,7 +431,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   /** Adds the component to `drawnChatLines` after processing its contents. */
-  private void pushDrawnComponent(AbstractChatLine parent, IChatComponent chatComponent, int chatLineId, int updateCounter) {
+  private void pushDrawnComponent(AbstractChatLine parent, IChatComponent chatComponent, int chatLineId, int updateCounter, boolean autoScroll) {
     boolean processContents = true;
     if (chatComponent instanceof PrecisionChatComponent) {
       processContents = false;
@@ -442,13 +442,13 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     if (!processContents) {
       // push as-is
-      this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId, parent));
+      this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId, parent), autoScroll);
 
     } else {
       int lineWidth = this.getLineWidth();
       List<IChatComponent> splitComponents = ComponentHelpers.splitText(chatComponent, lineWidth, this.fontEngine); // useful
       for (IChatComponent component : splitComponents) {
-        this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId, parent));
+        this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId, parent), autoScroll);
       }
     }
 
@@ -456,11 +456,11 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   /** Adds the ChatLine to the `drawnChatLines`. */
-  private void pushDrawnChatLine(ChatLine line) {
+  private void pushDrawnChatLine(ChatLine line, boolean autoScroll) {
     this.chatLines.add(0, line);
 
     // make sure we keep the same lines visible even as we push more lines to the bottom of the chat
-    if (this.getChatOpen() && this.scrollPos.getTarget() > 0) {
+    if (this.getChatOpen() && autoScroll && this.scrollPos.getTarget() > 0) {
       this.isScrolled = true;
       this.scroll(1, true);
     }
@@ -485,9 +485,6 @@ public class CustomGuiNewChat extends GuiNewChat {
       this.minecraftChatEventService.dispatchUpdateChatDimensionsEvent();
     }
 
-    float initialScrollPos = this.scrollPos.getTarget();
-    boolean initialIsScrolled = this.isScrolled;
-
     this.chatLines.clear();
     if (!keepScrollPos) {
       this.resetScroll();
@@ -495,12 +492,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     for (int i = this.abstractChatLines.size() - 1; i >= 0; --i) {
       AbstractChatLine chatline = this.abstractChatLines.get(i);
-      this.pushDrawnComponent(chatline, chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter());
-    }
-
-    if (keepScrollPos) {
-      this.scrollPos.set(initialScrollPos);
-      this.isScrolled = initialIsScrolled;
+      this.pushDrawnComponent(chatline, chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter(), false);
     }
   }
 
@@ -702,8 +694,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   @Override
   public void deleteChatLine(int id) {
-    this.abstractChatLines.removeIf(line -> line.getChatLineID() == id);
-    this.chatLines.removeIf(line -> line.getChatLineID() == id);
+    this.deleteLine(ln -> ln.getChatLineID() == id);
   }
 
   /** Removes the component. Note that you must call `refreshChat` for the changes to come into effect. */
@@ -728,7 +719,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     }
 
     // this ensures that the bottom lines will shift upwards to fill the gap, if we are currently scrolled
-    this.scroll(-removed);
+    this.scroll(-removed, true);
   }
 
   /** Returns the actual chat width. */
