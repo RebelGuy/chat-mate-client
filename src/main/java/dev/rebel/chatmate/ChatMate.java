@@ -96,6 +96,7 @@ public class ChatMate {
 
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
+    MinecraftChatEventService minecraftChatEventService = new MinecraftChatEventService(logService);
     CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
         minecraft,
         logService,
@@ -105,7 +106,8 @@ public class ChatMate {
         mouseEventService,
         contextMenuStore,
         fontEngine,
-        chatComponentRenderer);
+        chatComponentRenderer,
+        minecraftChatEventService);
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService, customGuiNewChat);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
@@ -125,7 +127,8 @@ public class ChatMate {
         chatMateChatService,
         fontEngine,
         dimFactory,
-        customGuiNewChat);
+        customGuiNewChat,
+        minecraftChatEventService);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory, livestreamApiStore);
 
     RenderService renderService = new RenderService(minecraft, forgeEventService, fontEngine, dimFactory);

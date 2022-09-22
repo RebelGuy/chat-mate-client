@@ -19,6 +19,7 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateChatService;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
+import dev.rebel.chatmate.services.events.MinecraftChatEventService;
 import net.minecraft.util.ChatComponentText;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,6 +49,7 @@ public class McChatServiceTests {
   @Mock ImageService mockImageService;
   @Mock ChatMateChatService mockChatMateService;
   @Mock FontEngine mockFontEngine;
+  @Mock MinecraftChatEventService mockMinecraftChatEventService;
 
   @Mock Config mockConfig;
   @Mock StatefulEmitter<Boolean> identifyPlatforms;
@@ -201,7 +203,8 @@ public class McChatServiceTests {
         this.mockChatMateService,
         this.mockFontEngine,
         this.mockDimFactory,
-        this.mockCustomGuiNewChat);
+        this.mockCustomGuiNewChat,
+        this.mockMinecraftChatEventService);
   }
 
   // The below methods should be used for mock data creation. It sets all

@@ -9,6 +9,8 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.MinecraftProxyService;
+import dev.rebel.chatmate.services.events.MinecraftChatEventService;
+import dev.rebel.chatmate.services.events.models.EventData;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
@@ -17,6 +19,7 @@ import scala.Tuple2;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static dev.rebel.chatmate.models.Styles.*;
 
@@ -26,11 +29,13 @@ public class ChatPagination<T> {
   private final CustomGuiNewChat customGuiNewChat;
   private final DimFactory dimFactory;
   private MessageService messageService;
+  private final MinecraftChatEventService minecraftChatEventService;
   private FontEngine fontEngine;
   private final T[] items;
   private final int itemsPerPage;
   private final PaginationRenderer<T> renderer;
   private final int maxPage;
+  private final Function<EventData.EventIn, EventData.EventOut> _onChatDimensionsUpdate = this::onChatDimensionsUpdate;
 
   private @Nullable String headerText;
   private boolean initialised;
@@ -46,6 +51,7 @@ public class ChatPagination<T> {
                         CustomGuiNewChat customGuiNewChat,
                         DimFactory dimFactory,
                         MessageService messageService,
+                        MinecraftChatEventService minecraftChatEventService,
                         FontEngine fontEngine,
                         PaginationRenderer<T> renderer,
                         T[] items,
@@ -56,6 +62,7 @@ public class ChatPagination<T> {
     this.customGuiNewChat = customGuiNewChat;
     this.dimFactory = dimFactory;
     this.messageService = messageService;
+    this.minecraftChatEventService = minecraftChatEventService;
     this.fontEngine = fontEngine;
     this.renderer = renderer;
     this.items = items;
@@ -73,6 +80,13 @@ public class ChatPagination<T> {
     }
     this.renderedFooter = new ContainerChatComponent();
     this.emptyLine = new ChatComponentText("");
+
+    this.minecraftChatEventService.onUpdateChatDimensions(this._onChatDimensionsUpdate, this);
+  }
+
+  private EventData.EventOut onChatDimensionsUpdate(EventData.EventIn eventIn) {
+    this.render();
+    return new EventData.EventOut();
   }
 
   /** Renders the paginated entries to chat. */
@@ -150,10 +164,10 @@ public class ChatPagination<T> {
     if (this.headerText == null) {
       this.renderedHeader1.setComponent(new ChatComponentText(""));
     } else {
-      PrecisionLayout layout = new PrecisionLayout(this.dimFactory.zeroGui(), this.customGuiNewChat.getChatWidthDim(), PrecisionAlignment.CENTRE);
+      PrecisionLayout layout = new PrecisionLayout(this.dimFactory.zeroGui(), this.customGuiNewChat.getChatWidthForTextDim(), PrecisionAlignment.CENTRE);
       ChatComponentText component = new ChatComponentText(this.headerText);
 
-      PrecisionLayout closeLayout = new PrecisionLayout(this.dimFactory.zeroGui(), this.customGuiNewChat.getChatWidthDim(), PrecisionAlignment.RIGHT);
+      PrecisionLayout closeLayout = new PrecisionLayout(this.dimFactory.zeroGui(), this.customGuiNewChat.getChatWidthForTextDim(), PrecisionAlignment.RIGHT);
       ClickEventWithCallback onClose = new ClickEventWithCallback(this.logService, this::delete, true);
       ChatComponentText closeComponent = styledText("[x]", onClose.bind(INTERACTIVE_STYLE_DE_EMPHASISE.get()));
 

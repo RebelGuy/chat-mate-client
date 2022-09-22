@@ -13,6 +13,7 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.events.ChatMateChatService;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
+import dev.rebel.chatmate.services.events.MinecraftChatEventService;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
 import dev.rebel.chatmate.services.events.models.NewTwitchFollowerEventData;
 import dev.rebel.chatmate.services.util.Collections;
@@ -42,6 +43,7 @@ public class McChatService {
   private final FontEngine fontEngine;
   private final DimFactory dimFactory;
   private final CustomGuiNewChat customGuiNewChat;
+  private final MinecraftChatEventService minecraftChatEventService;
 
   public McChatService(MinecraftProxyService minecraftProxyService,
                        LogService logService,
@@ -54,7 +56,8 @@ public class McChatService {
                        ChatMateChatService chatMateChatService,
                        FontEngine fontEngine,
                        DimFactory dimFactory,
-                       CustomGuiNewChat customGuiNewChat) {
+                       CustomGuiNewChat customGuiNewChat,
+                       MinecraftChatEventService minecraftChatEventService) {
     this.minecraftProxyService = minecraftProxyService;
     this.logService = logService;
     this.filterService = filterService;
@@ -66,6 +69,7 @@ public class McChatService {
     this.fontEngine = fontEngine;
     this.dimFactory = dimFactory;
     this.customGuiNewChat = customGuiNewChat;
+    this.minecraftChatEventService = minecraftChatEventService;
 
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower, null);
@@ -160,7 +164,7 @@ public class McChatService {
 
     PublicRankedUser highlightUser = highlightIndex == null ? null : users[highlightIndex];
     LeaderboardRenderer renderer = new LeaderboardRenderer(this.dimFactory, this.messageService, highlightUser);
-    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.fontEngine, renderer, users, 10, "Experience Leaderboard");
+    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, users, 10, "Experience Leaderboard");
     pagination.render();
   }
 
@@ -171,7 +175,7 @@ public class McChatService {
     }
 
     UserNameRenderer renderer = new UserNameRenderer(this.messageService);
-    ChatPagination<PublicUserNames> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.fontEngine, renderer, users, 10, "Search Results");
+    ChatPagination<PublicUserNames> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, users, 10, "Search Results");
     pagination.render();
   }
 

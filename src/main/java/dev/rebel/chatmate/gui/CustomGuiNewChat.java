@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.models.ChatLine;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
+import dev.rebel.chatmate.services.events.MinecraftChatEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.GuiScreenChanged;
@@ -19,6 +20,7 @@ import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
@@ -31,6 +33,7 @@ import scala.Tuple2;
 import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
@@ -55,6 +58,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final ContextMenuStore contextMenuStore;
   private final FontEngine fontEngine;
   private final ChatComponentRenderer chatComponentRenderer;
+  private final MinecraftChatEventService minecraftChatEventService;
 
   private final List<String> sentMessages = Lists.newArrayList();
   private final List<AbstractChatLine> abstractChatLines = Lists.newArrayList();
@@ -64,6 +68,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   private float scrollPos = 0; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
   private boolean isScrolled = false;
+  private ChatDimensions currentDimensions;
 
   public CustomGuiNewChat(Minecraft minecraft,
                           LogService logService,
@@ -73,7 +78,8 @@ public class CustomGuiNewChat extends GuiNewChat {
                           MouseEventService mouseEventService,
                           ContextMenuStore contextMenuStore,
                           FontEngine fontEngine,
-                          ChatComponentRenderer chatComponentRenderer) {
+                          ChatComponentRenderer chatComponentRenderer,
+                          MinecraftChatEventService minecraftChatEventService) {
     super(minecraft);
     this.minecraft = minecraft;
     this.logService = logService;
@@ -84,9 +90,11 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.contextMenuStore = contextMenuStore;
     this.fontEngine = fontEngine;
     this.chatComponentRenderer = chatComponentRenderer;
+    this.minecraftChatEventService = minecraftChatEventService;
 
     this.hoveredLine = new AnimatedSelection<>(150L);
     this.selectedLine = new AnimatedSelection<>(100L);
+    this.currentDimensions = new ChatDimensions(minecraft.gameSettings);
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
     this.forgeEventService.onGuiScreenChanged(this::onChatLoseFocus, new GuiScreenChanged.Options(GuiScreenChanged.ListenType.CLOSE_ONLY, CustomGuiChat.class));
@@ -158,7 +166,6 @@ public class CustomGuiNewChat extends GuiNewChat {
     float opacity = this.minecraft.gameSettings.chatOpacity * 0.9F + 0.1F;
 
     float scale = this.getChatScale();
-    Dim width = this.getChatWidthDim().over(scale);
 
     // the fractional amount of scrollPos represents the proportion of the top line that is visible (or one minus the proportion of the bottom line).
     // we want to effectively scroll the chat down (and it will be clipped by the scissor in the parent method)
@@ -190,8 +197,8 @@ public class CustomGuiNewChat extends GuiNewChat {
 
       // render visible lines. draw the background first so that any chat line contents with negative y offsets are
       // not clipped by the background of the line above it
-      lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLineBackground(line, i, lineOpacity, width));
-      lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLine(line, i, lineOpacity, width, chatRect.withTranslation(verticalOffsetDim.scale(-1))));
+      lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLineBackground(line, i, lineOpacity));
+      lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLine(line, i, lineOpacity, chatRect.withTranslation(verticalOffsetDim.scale(-1))));
       lineIterator.forEachLine((line, i, lineOpacity) -> renderedLines.setState(current -> current + 1));
 
     });
@@ -200,18 +207,19 @@ public class CustomGuiNewChat extends GuiNewChat {
     }
   }
 
-  private void drawLineBackground(ChatLine line, int index, int opacity, Dim width) {
+  private void drawLineBackground(ChatLine line, int index, int opacity) {
     int lineBottom = -index * this.fontEngine.FONT_HEIGHT; // negative because we iterate from the bottom line to the top line
     int lineTop = lineBottom - this.fontEngine.FONT_HEIGHT;
+    Dim lineWidth = this.getChatWidthForTextDim();
 
     Dim x = this.dimFactory.fromGui(0);
     Dim y = this.dimFactory.fromGui(lineTop);
-    Dim w = width.plus(this.dimFactory.fromGui(4));
+    Dim w = lineWidth.plus(this.dimFactory.fromGui(4));
     Dim h = this.fontEngine.FONT_HEIGHT_DIM;
     RendererHelpers.drawRect(-100, new DimRect(x, y, w, h), this.getBackgroundColour(line, opacity));
   }
 
-  private void drawLine(ChatLine line, int index, int opacity, Dim width, DimRect chatRect) {
+  private void drawLine(ChatLine line, int index, int opacity, DimRect chatRect) {
     Dim lineLeft = this.dimFactory.fromGui(LEFT_PADDING);
     Dim lineBottom = this.fontEngine.FONT_HEIGHT_DIM.times(-index); // negative because we iterate from the bottom line to the top line
     Dim lineTop = lineBottom.minus(this.fontEngine.FONT_HEIGHT_DIM);
@@ -227,6 +235,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     if (chatComponent instanceof PrecisionChatComponent) {
       PrecisionChatComponent component = (PrecisionChatComponent)chatComponent;
+      Dim width = this.getChatWidthForTextDim();
       for (Tuple2<PrecisionChatComponent.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.fontEngine, width)) {
         Dim left = lineLeft.plus(pair._1.position);
         this.chatComponentRenderer.drawChatComponent(pair._2, left, lineTop, opacity, chatRect);
@@ -398,6 +407,13 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   public void refreshChat(boolean keepScrollPos) {
+    // `refreshChat` is called by `GameSettings` when the dimensions have been changed
+    ChatDimensions newDimensions = new ChatDimensions(this.minecraft.gameSettings);
+    if (!Objects.equals(this.currentDimensions, newDimensions)) {
+      this.currentDimensions = newDimensions;
+      this.minecraftChatEventService.dispatchUpdateChatDimensionsEvent();
+    }
+
     float initialScrollPos = this.scrollPos;
     boolean initialIsScrolled = this.isScrolled;
 
@@ -693,5 +709,36 @@ public class CustomGuiNewChat extends GuiNewChat {
   @FunctionalInterface
   private interface LineAction {
     void act(ChatLine line, int index, int opacity);
+  }
+
+  private static class ChatDimensions {
+    public final float chatHeightFocused;
+    public final float chatHeightUnfocused;
+    public final float chatWidth;
+    public final float chatScale;
+
+    private ChatDimensions(float chatHeightFocused, float chatHeightUnfocused, float chatWidth, float chatScale) {
+      this.chatHeightFocused = chatHeightFocused;
+      this.chatHeightUnfocused = chatHeightUnfocused;
+      this.chatWidth = chatWidth;
+      this.chatScale = chatScale;
+    }
+
+    public ChatDimensions(GameSettings gameSettings) {
+      this(gameSettings.chatHeightFocused, gameSettings.chatHeightUnfocused, gameSettings.chatWidth, gameSettings.chatScale);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ChatDimensions that = (ChatDimensions) o;
+      return Float.compare(that.chatHeightFocused, chatHeightFocused) == 0 && Float.compare(that.chatHeightUnfocused, chatHeightUnfocused) == 0 && Float.compare(that.chatWidth, chatWidth) == 0 && Float.compare(that.chatScale, chatScale) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(chatHeightFocused, chatHeightUnfocused, chatWidth, chatScale);
+    }
   }
 }
