@@ -67,12 +67,13 @@ public class DimRect {
 
   public DimPoint getRightCentre() { return new DimPoint(this.getRight(), this.getY().plus(this.getHeight().over(2))); }
 
-  /** Returns true if the point is contained within the rect, or touches its boundary. */
+  /** Returns true if the point is contained within the rect that is gte the top-left point, and lt the bottom-right point. */
   public boolean checkCollision(DimPoint point) {
+    // we check lt the bottom-right so that, if a collection of rects were filling a space with no overlaps, there would only ever be a single collision hit at any point within that space with no edge (literally) cases.
     return this.x.lte(point.getX())
-        && this.x.plus(this.width).gte(point.getX())
+        && this.x.plus(this.width).gt(point.getX())
         && this.y.lte(point.getY())
-        && this.y.plus(this.height).gte(point.getY());
+        && this.y.plus(this.height).gt(point.getY());
   }
 
   public boolean checkCollisionX(Dim x) {

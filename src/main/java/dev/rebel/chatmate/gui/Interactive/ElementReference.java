@@ -198,6 +198,16 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public @Nullable DimRect getVisibleBox() {
+    return this.underlyingElement == null ? null : this.underlyingElement.getVisibleBox();
+  }
+
+  @Override
+  public IElement setVisibleBox(@Nullable DimRect visibleBox) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setVisibleBox(visibleBox);
+  }
+
+  @Override
   public HorizontalAlignment getHorizontalAlignment() {
     return this.underlyingElement == null ? HorizontalAlignment.LEFT : this.underlyingElement.getHorizontalAlignment();
   }

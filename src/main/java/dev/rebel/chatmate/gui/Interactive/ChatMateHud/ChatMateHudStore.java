@@ -181,6 +181,16 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public @Nullable DimRect getVisibleBox() {
+      return null;
+    }
+
+    @Override
+    public IElement setVisibleBox(@Nullable DimRect visibleBox) {
+      return null;
+    }
+
+    @Override
     public Layout.HorizontalAlignment getHorizontalAlignment() {
       return null;
     }

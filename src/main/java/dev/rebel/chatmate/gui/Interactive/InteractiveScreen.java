@@ -611,6 +611,12 @@ public class InteractiveScreen extends Screen implements IElement {
   public IElement setZIndex(int zIndex) { return this; }
 
   @Override
+  public @Nullable DimRect getVisibleBox() { return null; }
+
+  @Override
+  public IElement setVisibleBox(@Nullable DimRect visibleBox) { return this; }
+
+  @Override
   public InteractiveScreen setHorizontalAlignment(HorizontalAlignment horizontalAlignment) { return null; }
 
   @Override

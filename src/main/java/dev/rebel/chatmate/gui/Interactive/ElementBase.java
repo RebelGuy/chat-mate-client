@@ -42,6 +42,7 @@ public abstract class ElementBase implements IElement {
   private RectExtension border;
   private RectExtension margin;
   private int zIndex;
+  private @Nullable DimRect visibleBox;
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
   private SizingMode sizingMode;
@@ -68,6 +69,7 @@ public abstract class ElementBase implements IElement {
     this.border = new RectExtension(context.dimFactory.zeroGui());
     this.margin = new RectExtension(context.dimFactory.zeroGui());
     this.zIndex = 0;
+    this.visibleBox = null;
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
     this.sizingMode = SizingMode.ANY;
@@ -310,13 +312,21 @@ public abstract class ElementBase implements IElement {
       return;
     }
 
-    Consumer<Runnable> wrapper = renderContextWrapper == null ? Runnable::run : renderContextWrapper;
+    // what a mess... thanks java
+    Consumer<Runnable> contextWrapper = renderContextWrapper == null ? Runnable::run : renderContextWrapper;
+    @Nullable DimRect visibleBox = this.getVisibleBox();
+    Consumer<Runnable> wrapperWithScissor;
+    if (visibleBox != null) {
+      wrapperWithScissor = (onRender) -> RendererHelpers.withScissor(visibleBox, this.context.dimFactory.getMinecraftSize(), () -> contextWrapper.accept(onRender));
+    } else {
+      wrapperWithScissor = contextWrapper;
+    }
 
     this.context.renderer.render(this, () -> {
       GlStateManager.pushMatrix();
       GlStateManager.enableBlend();
       GlStateManager.disableLighting();
-      wrapper.accept(this::renderElementSafe);
+      wrapperWithScissor.accept(this::renderElementSafe);
       GlStateManager.disableBlend();
       GlStateManager.popMatrix();
     });
@@ -408,6 +418,36 @@ public abstract class ElementBase implements IElement {
   public final IElement setZIndex(int zIndex) {
     if (this.zIndex != zIndex) {
       this.zIndex = zIndex;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
+
+  @Override
+  public @Nullable DimRect getVisibleBox() {
+    @Nullable DimRect parentVisibleBox = this.parent.getVisibleBox();
+    if (parentVisibleBox == null) {
+      return this.visibleBox;
+    } else if (parentVisibleBox != null && this.visibleBox == null) {
+      return parentVisibleBox;
+    } else {
+      DimRect effectiveVisibleRect = parentVisibleBox.clamp(this.visibleBox);
+
+      if (effectiveVisibleRect.getWidth().lte(ZERO) || effectiveVisibleRect.getHeight().lte(ZERO)) {
+        // the rects don't overlap - nothing will render
+        return this.visibleBox.withSize(new DimPoint(ZERO, ZERO));
+      } else {
+        return effectiveVisibleRect;
+      }
+    }
+  }
+
+  @Override
+  public IElement setVisibleBox(@Nullable DimRect visibleBox) {
+    if (!Objects.equals(this.visibleBox, visibleBox)) {
+      this.visibleBox = visibleBox;
+
+      // the visible boxes don't directly relate to the layout of elements, but it is still possible that some layout mechanism depends on this box - just in case, recalculate sizes
       this.onInvalidateSize();
     }
     return this;
@@ -595,7 +635,13 @@ public abstract class ElementBase implements IElement {
   }
 
   protected static DimRect getCollisionBox(IElement element) {
-    return getBorderBox(element);
+    @Nullable DimRect visibleBox = element.getVisibleBox();
+    DimRect collisionBox = getBorderBox(element);
+    if (visibleBox == null) {
+      return collisionBox;
+    } else {
+      return collisionBox.clamp(visibleBox);
+    }
   }
 
   protected static DimRect getFullBox(IElement element) {

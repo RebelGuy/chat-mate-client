@@ -39,6 +39,10 @@ public class KeyboardEventService extends EventServiceBase<Events> {
     return this.removeListener(event, key);
   }
 
+  public boolean isHeldDown(int key) {
+    return this.currentlyHeldDown.containsKey(key);
+  }
+
   private InputEventData.Out onGuiScreenKeyboard(InputEventData.In in) {
     int key = Keyboard.getEventKey();
     char character = Keyboard.getEventCharacter();
