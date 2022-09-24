@@ -45,12 +45,12 @@ public class EmptyElement extends SingleElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     return new DimPoint(Dim.min(this.width, maxContentSize), this.height);
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     // nothing to render
   }
 }

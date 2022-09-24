@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 public class Memoiser {
   Map<String, MemoisedResult> memoised = new HashMap<>();
 
+  /** Memoise the key-value pair (where the value is returned by `fn`) against the given `args`. */
   public <Output> Output memoise(String key, Supplier<Output> fn, Object... args) {
     Input input = new Input(args);
     MemoisedResult result = this.memoised.get(key);

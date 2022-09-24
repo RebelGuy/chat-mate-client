@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui;
 
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.hud.IHudComponent;
@@ -32,7 +33,6 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private final Minecraft minecraft;
   private final DimFactory dimFactory;
   private final GuiChatMateHud guiChatMateHud;
-  private final ContextMenuService contextMenuService;
   private final MouseEventService mouseEventService;
   
   private final Function<In, Out> onMouseDown = this::onMouseDown;
@@ -45,14 +45,13 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private @Nullable Dim draggingComponentOffsetX = null;
   private @Nullable Dim draggingComponentOffsetY = null;
 
-  public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, DimFactory dimFactory, GuiChatMateHud hud, ContextMenuService contextMenuService) {
+  public GuiChatMateHudScreen(Minecraft minecraft, MouseEventService mouseEventService, DimFactory dimFactory, GuiChatMateHud hud) {
     super();
 
     this.minecraft = minecraft;
     this.mouseEventService = mouseEventService;
     this.dimFactory = dimFactory;
     this.guiChatMateHud = hud;
-    this.contextMenuService = contextMenuService;
 
     Options options = new Options(false, MouseButton.LEFT_BUTTON, MouseButton.RIGHT_BUTTON);
     this.mouseEventService.on(Events.MOUSE_DOWN, this.onMouseDown, options, this);
@@ -91,15 +90,17 @@ public class GuiChatMateHudScreen extends GuiScreen {
 
   /** To be called when the HUD screen is active, and just before the HUD components are being rendered. */
   public void renderGameOverlayPreHud() {
-    if (this.mousePositionData == null) {
+    if (this.mousePositionData == null || this.minecraft.currentScreen != this && !(this.minecraft.currentScreen instanceof ChatMateHudScreen)) {
       return;
     }
 
     for (IHudComponent component : this.guiChatMateHud.hudComponents) {
       if (containsPoint(component, this.mousePositionData.point)) {
-        DimRect rect = new DimRect(component.getX(), component.getY(), component.getWidth(), component.getHeight());
-        float alpha = this.draggingComponent == component ? 0.2f : 0.1f;
-        RendererHelpers.drawRect(0, rect, Colour.BLACK.withAlpha(alpha));
+        if (component.canTranslate() || component.canResizeBox()) {
+          DimRect rect = new DimRect(component.getX(), component.getY(), component.getWidth(), component.getHeight());
+          float alpha = this.draggingComponent == component ? 0.2f : 0.1f;
+          RendererHelpers.drawRect(0, rect, Colour.BLACK.withAlpha(alpha));
+        }
       }
     }
   }
@@ -110,7 +111,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
   }
 
   private Out onMouseDown(In in) {
-    if (this.minecraft.currentScreen != this) {
+    if (this.minecraft.currentScreen != this && !(this.minecraft.currentScreen instanceof ChatMateHudScreen)) {
       // this can happen if we are not displaying, but another object references us (e.g. as a parent screen)
       // so we haven't unsubscribed from the mouse events.
       return new Out(null);
@@ -129,11 +130,6 @@ public class GuiChatMateHudScreen extends GuiScreen {
           return new Out(Out.MouseHandlerAction.HANDLED);
         }
       }
-    } else if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
-      if (this.guiChatMateHud.hudComponents.stream().noneMatch(c -> containsPoint(c, position.point))) {
-        // only show context menu if we right click empty space
-        this.contextMenuService.showHudContext(position.x, position.y);
-      }
     }
     return new Out(null);
   }
@@ -141,7 +137,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
   private Out onMouseMove(In in) {
     this.mousePositionData = in.mousePositionData.setAnchor(Dim.DimAnchor.GUI);
 
-    if (this.minecraft.currentScreen != this) {
+    if (this.minecraft.currentScreen != this && !(this.minecraft.currentScreen instanceof ChatMateHudScreen)) {
       return new Out(null);
     }
 
@@ -164,7 +160,7 @@ public class GuiChatMateHudScreen extends GuiScreen {
   }
 
   private Out onMouseScroll(In in) {
-    if (this.minecraft.currentScreen != this) {
+    if (this.minecraft.currentScreen != this && !(this.minecraft.currentScreen instanceof ChatMateHudScreen)) {
       return new Out(null);
     }
 

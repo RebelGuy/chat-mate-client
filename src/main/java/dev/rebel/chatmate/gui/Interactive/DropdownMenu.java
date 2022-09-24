@@ -90,6 +90,12 @@ public class DropdownMenu extends ContainerElement {
     return this;
   }
 
+  public DropdownMenu clear() {
+    this.options.clear();
+    super.clear();
+    return this;
+  }
+
   @Override
   public void onCaptureMouseDown(IEvent<In> e) {
     DimPoint point = e.getData().mousePositionData.point;
@@ -145,7 +151,7 @@ public class DropdownMenu extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     // the element does not take up any space in the layout-space
     // (note that the super method is called in `setBox()`)
     return new DimPoint(ZERO, ZERO);
@@ -208,7 +214,7 @@ public class DropdownMenu extends ContainerElement {
     for (Tuple2<LabelElement, Runnable> option : this.options) {
       LabelElement label = option._1;
       if (label.getContentBox().checkCollision(position)) {
-        label.setColour(Colour.LTGREY);
+        label.setColour(Colour.GREY75);
       } else {
         label.setColour(Colour.WHITE);
       }
@@ -216,7 +222,7 @@ public class DropdownMenu extends ContainerElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     if (!this.expanded) {
       return;
     }

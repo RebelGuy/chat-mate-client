@@ -2,10 +2,13 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.In.KeyModifier;
@@ -20,7 +23,9 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.MathHelper;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
@@ -32,30 +37,36 @@ import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
 /** Border: actually draws a border. Padding: space between text and border. */
 public class TextInputElement extends InputElement {
   private String placeholderText = "";
-  private String text = "";
+  private String text;
   private int maxStringLength = 64;
-  private boolean hovered;
-  private final Dim textHeight;
 
   private int scrollOffsetIndex; // if the text doesn't fit on the window, it scrolls to the right
   private int cursorIndex;
   private int selectionEndIndex; // this may be before or after the cursor
-  private int enabledColor = 14737632;
-  private int disabledColor = 7368816;
+  private Colour enabledColour = new Colour(224, 224, 224);
+  private Colour disabledColour = new Colour(112, 112, 112);
   private @Nullable Consumer<String> onTextChange;
   private Predicate<String> validator = text -> true;
   private @Nullable String suffix = null;
   private @Nullable String placeholder = null;
 
+  private Dim textHeight;
+  private float textScale = 1;
+
   public TextInputElement(InteractiveContext context, IElement parent) {
+    this(context, parent, "");
+  }
+
+  public TextInputElement(InteractiveContext context, IElement parent, @Nonnull String initialText) {
     super(context, parent);
 
-    this.setFocusable(true);
-    this.setBorder(new Layout.RectExtension(gui(1)));
-    this.setPadding(new Layout.RectExtension(gui(4), gui(2)));
+    super.setCursor(CursorType.TEXT);
+    super.setFocusable(true);
+    super.setBorder(new Layout.RectExtension(gui(1)));
+    super.setPadding(new Layout.RectExtension(gui(4), gui(2)));
 
-    this.textHeight = gui(this.font.FONT_HEIGHT);
-    this.hovered = false;
+    this.text = initialText;
+    this.textHeight = super.fontEngine.FONT_HEIGHT_DIM;
   }
 
   @Override
@@ -63,11 +74,21 @@ public class TextInputElement extends InputElement {
     return null;
   }
 
+  public TextInputElement setTextScale(float textScale) {
+    if (this.textScale != textScale) {
+      this.textScale = textScale;
+      this.textHeight = super.fontEngine.FONT_HEIGHT_DIM.times(this.textScale);
+      super.onInvalidateSize();
+    }
+
+    return this;
+  }
+
   @Override
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       Dim relX = e.getData().mousePositionData.x.minus(this.getContentBox().getX());
-      String textBeforeCursor = this.font.trimStringToWidth(this.getVisibleText(), (int)relX.getGui());
+      String textBeforeCursor = this.fontEngine.trimStringToWidth(this.getVisibleText(), (int)(relX.getGui() / this.textScale)); // i.e. do this operation at 100% scale
       this.setCursorIndex(this.scrollOffsetIndex + textBeforeCursor.length());
     }
   }
@@ -95,32 +116,12 @@ public class TextInputElement extends InputElement {
   }
 
   @Override
-  public void onMouseEnter(IEvent<In> e) {
-    this.hovered = true;
-    super.context.cursorService.toggleCursor(super.getEnabled() ? CursorType.TEXT : CursorType.DEFAULT, this);
-  }
-
-  @Override
-  public void onMouseExit(IEvent<In> e) {
-    this.hovered = false;
-    super.context.cursorService.untoggleCursor(this);
-  }
-
-  @Override
-  public InputElement setEnabled(Object key, boolean enabled) {
-    if (this.hovered) {
-      super.context.cursorService.toggleCursor(enabled ? CursorType.TEXT : CursorType.DEFAULT, this);
-    }
-    return super.setEnabled(key, enabled);
-  }
-
-  @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     return new DimPoint(maxContentSize, this.textHeight);
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     this.drawTextBox();
   }
 
@@ -145,7 +146,7 @@ public class TextInputElement extends InputElement {
   }
 
   /** Validates the text, then calls the `onTextChange` callback. */
-  public void setText(String newText) {
+  public TextInputElement setText(String newText) {
     if (this.validator.test(newText)) {
       if (newText.length() > this.maxStringLength) {
         this.text = newText.substring(0, this.maxStringLength);
@@ -159,6 +160,8 @@ public class TextInputElement extends InputElement {
         this.onTextChange.accept(this.text);
       }
     }
+
+    return this;
   }
 
   public TextInputElement setValidator(Predicate<String> validator) {
@@ -415,11 +418,12 @@ public class TextInputElement extends InputElement {
       return;
     }
 
-    Dim suffixWidth = gui(this.font.getStringWidth(this.suffix));
+    Dim suffixWidth = this.fontEngine.getStringWidthDim(this.suffix).times(this.textScale);
     Dim left = this.getContentBox().getRight().minus(suffixWidth);
     Dim top = this.getContentBox().getY();
-    int color = this.disabledColor;
-    this.font.drawString(this.suffix, left.getGui(), top.getGui(), color, false);
+    RendererHelpers.withMapping(new DimPoint(left, top), this.textScale, () -> {
+      this.fontEngine.drawString(this.suffix, ZERO, ZERO, new Font().withColour(this.disabledColour));
+    });
   }
 
   private void drawPlaceholder() {
@@ -427,10 +431,18 @@ public class TextInputElement extends InputElement {
       return;
     }
 
-    Dim left = this.getContentBox().getX();
-    Dim top = this.getContentBox().getY();
-    int color = this.disabledColor;
-    this.font.drawString("§o" + this.placeholder, left.getGui(), top.getGui(), color, false);
+    // make sure the placeholder doesn't clip out of the text box
+    // 1. real-world use case of `getScreen` - it was all worth it in the end!
+    // 2. amusingly, the scissor test assumes a rect in cartesian coordinates, not screen coordinates: https://www.khronos.org/opengl/wiki/Scissor_Test
+    DimRect box = super.getPaddingBox();
+    int cartX = (int)box.getX().getScreen();
+    int cartY = super.context.minecraft.displayHeight - (int)box.getBottom().getScreen();
+    GL11.glEnable(GL11.GL_SCISSOR_TEST);
+    GL11.glScissor( cartX, cartY, (int)box.getWidth().getScreen(), (int)box.getHeight().getScreen());
+    RendererHelpers.withMapping(super.getContentBox().getPosition(), this.textScale, () -> {
+      this.context.fontEngine.drawString(this.placeholder, ZERO, ZERO, new Font().withColour(this.disabledColour).withItalic(true));
+    });
+    GL11.glDisable(GL11.GL_SCISSOR_TEST);
   }
 
   private void drawEditableText() {
@@ -440,10 +452,11 @@ public class TextInputElement extends InputElement {
     Dim bottom = this.getContentBox().getBottom();
     Dim right = left.plus(width);
 
-    int color = super.getEnabled() ? this.enabledColor : this.disabledColor;
+    Colour colour = super.getEnabled() ? this.enabledColour : this.disabledColour;
+    Font font = new Font().withColour(colour).withShadow(new Shadow(super.context.dimFactory));
     int cursorStartIndex = this.cursorIndex - this.scrollOffsetIndex;
     int cursorEndIndex = this.selectionEndIndex - this.scrollOffsetIndex;
-    String string = this.font.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), (int)width.getGui());
+    String string = this.fontEngine.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), (int)(width.getGui() / this.textScale)); // i.e. perform this operation at 100% scale
     boolean cursorIsWithinRange = cursorStartIndex >= 0 && cursorStartIndex <= string.length();
     boolean drawCursor = this.context.focusedElement == this && (new Date().getTime() % 1000 < 500) && cursorIsWithinRange;
     Dim currentX = left;
@@ -454,7 +467,14 @@ public class TextInputElement extends InputElement {
     // draw part before cursor
     if (string.length() > 0) {
       String visibleString = cursorIsWithinRange ? string.substring(0, cursorStartIndex) : string;
-      currentX = gui(this.font.drawStringWithShadow(visibleString, left.getGui(), top.getGui(), color));
+
+      // thanks java
+      State<Dim> newX = new State<>(ZERO);
+      RendererHelpers.withMapping(new DimPoint(left, top), this.textScale, () -> {
+        Dim returnedValue = this.fontEngine.drawString(visibleString, ZERO, ZERO, font);
+        newX.setState(returnedValue.times(this.textScale));
+      });
+      currentX = currentX.plus(newX.getState());
     }
 
     boolean interiorCursor = this.cursorIndex < this.text.length() || this.text.length() >= this.maxStringLength;
@@ -462,13 +482,14 @@ public class TextInputElement extends InputElement {
     if (!cursorIsWithinRange) {
       x1 = cursorStartIndex > 0 ? right : left;
     } else if (interiorCursor) {
-      currentX = currentX.minus(gui(1));
-      x1 = currentX;
+      x1 = currentX.minus(gui(1));
     }
 
     // draw part after cursor
     if (string.length() > 0 && cursorIsWithinRange && cursorStartIndex < string.length()) {
-      this.font.drawStringWithShadow(string.substring(cursorStartIndex), currentX.getGui(), top.getGui(), color);
+      RendererHelpers.withMapping(new DimPoint(currentX, top), this.textScale, () -> {
+        this.fontEngine.drawString(string.substring(cursorStartIndex), ZERO, ZERO, font);
+      });
     }
 
     if (drawCursor) {
@@ -477,7 +498,7 @@ public class TextInputElement extends InputElement {
 
     // if there is a selection, invert the colours
     if (cursorEndIndex != cursorStartIndex) {
-      Dim leftPad = gui(this.font.getStringWidth(string.substring(0, cursorEndIndex)));
+      Dim leftPad = this.fontEngine.getStringWidthDim(string.substring(0, cursorEndIndex)).times(this.textScale);
       Dim x2 = left.plus(leftPad);
       this.invertRegionColours(x1, top.minus(gui(1)), x2.minus(gui(1)), bottom.plus(gui(1)));
     }
@@ -490,8 +511,11 @@ public class TextInputElement extends InputElement {
       Dim one = gui(1);
       RendererHelpers.drawRect(this.getZIndex(), new DimRect(left, top.minus(one), one, this.textHeight.plus(one)), cursorColour);
     } else {
-      int color = super.getEnabled() ? this.enabledColor : this.disabledColor;
-      this.font.drawStringWithShadow("_", left.getGui(), top.getGui(), color);
+      Colour colour = super.getEnabled() ? this.enabledColour : this.disabledColour;
+      Font font = new Font().withColour(colour).withShadow(new Shadow(super.context.dimFactory));
+      RendererHelpers.withMapping(new DimPoint(left, top), this.textScale, () -> {
+        this.fontEngine.drawString("_", ZERO, ZERO, font);
+      });
     }
   }
 
@@ -541,12 +565,12 @@ public class TextInputElement extends InputElement {
     }
   }
 
-  public void setTextColor(int p_setTextColor_1_) {
-    this.enabledColor = p_setTextColor_1_;
+  public void setTextColor(Colour enabledColour) {
+    this.enabledColour = enabledColour;
   }
 
-  public void setDisabledTextColour(int p_setDisabledTextColour_1_) {
-    this.disabledColor = p_setDisabledTextColour_1_;
+  public void setDisabledTextColour(Colour disabledColour) {
+    this.disabledColour = disabledColour;
   }
 
   public void setSelectionIndex(int newIndex) {
@@ -583,14 +607,14 @@ public class TextInputElement extends InputElement {
 
   /** Gets the text that fits into the text box. */
   private String getVisibleText() {
-    int width = (int)this.getEditableWidth().getGui();
-    return this.font.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), width);
+    int width = (int)(this.getEditableWidth().getGui() / this.textScale);
+    return this.fontEngine.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), width);
   }
 
   /** Gets the tail-end of the text that fits into the text box. */
   private String getVisibleTextReverse() {
-    int width = (int)this.getContentBox().getWidth().getGui();
-    return this.font.trimStringToWidth(this.text, width, true);
+    int width = (int)(this.getContentBox().getWidth().getGui() / this.textScale);
+    return this.fontEngine.trimStringToWidth(this.text, width, true);
   }
 
   /** Empty string if nothing is selected. */
@@ -621,6 +645,6 @@ public class TextInputElement extends InputElement {
   }
 
   private Dim getEditableWidth() {
-    return this.getContentBox().getWidth().minus(gui(this.font.getStringWidth(this.suffix)));
+    return this.getContentBox().getWidth().minus(gui(this.fontEngine.getStringWidth(this.suffix) * this.textScale));
   }
 }

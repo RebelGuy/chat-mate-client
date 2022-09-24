@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.services.util.Objects.casted;
+import static dev.rebel.chatmate.services.util.Objects.ifClass;
 
 public class EndpointProxy {
   private final LogService logService;
@@ -51,15 +51,15 @@ public class EndpointProxy {
   }
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
-  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
-    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler, notifyEndpointStore);
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
+    this.makeRequestAsync(method, path, null, returnClass, callback, errorHandler, isActiveRequest);
   }
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
-  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {
+  public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
     // we got there eventually.....
     CompletableFuture.supplyAsync(() -> {
-      Runnable onComplete = notifyEndpointStore ? this.apiRequestService.onNewRequest() : () -> {};
+      Runnable onComplete = isActiveRequest ? this.apiRequestService.onNewRequest() : () -> {};
       try {
         Data result = this.makeRequest(method, path, returnClass, data);
         onComplete.run();
@@ -115,9 +115,11 @@ public class EndpointProxy {
         return parsed.data;
       }
     } catch (ChatMateApiException e) {
+      this.logService.logError(this, "Failed to parse API response:", e);
       throw e;
     } catch (Exception e) {
       // errors reaching here are most likely due to a response with an unexpected format, e.g. 502 errors.
+      this.logService.logError(this, "Failed to parse API response:", e);
       throw new HttpException(e.getMessage(), result.statusCode, result.responseBody);
     }
   }
@@ -200,7 +202,7 @@ public class EndpointProxy {
       if (msg == null) {
         msg = error.apiResponseError.errorType;
       }
-    } else if (casted(HttpException.class, e, ex -> ex.statusCode != 200)) {
+    } else if (ifClass(HttpException.class, e, ex -> ex.statusCode != 200)) {
       msg = String.format("Something went wrong (code %d).", ((HttpException)e).statusCode);
     } else {
       msg = "Something went wrong.";

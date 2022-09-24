@@ -3,11 +3,16 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.proxy.DonationEndpointProxy;
+import dev.rebel.chatmate.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
@@ -16,10 +21,14 @@ import dev.rebel.chatmate.services.events.models.OpenGui;
 import dev.rebel.chatmate.services.events.models.Tick;
 import dev.rebel.chatmate.services.events.models.Tick.In;
 import dev.rebel.chatmate.services.events.models.Tick.Out;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.LivestreamApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
 public class GuiService {
@@ -39,12 +48,24 @@ public class GuiService {
   private final CursorService cursorService;
   private final KeyboardEventService keyboardEventService;
   private final ClipboardService clipboardService;
-  private final BrowserService browserService;
+  private final UrlService urlService;
   private final ChatMateEndpointProxy chatMateEndpointProxy;
   private final Environment environment;
   private final MinecraftChatService minecraftChatService;
+  private final CustomGuiIngame customGuiIngame;
+  private final FontEngine fontEngine;
+  private final FontEngineProxy fontEngineProxy;
+  private final DonationEndpointProxy donationEndpointProxy;
 
-  private CustomGuiIngame customGuiIngame;
+  private final ChatMateHudScreen chatMateHudScreen;
+  private final ChatComponentRenderer chatComponentRenderer;
+  private final StatusService statusService;
+  private final ApiRequestService apiRequestService;
+  private final UserEndpointProxy userEndpointProxy;
+  private final MessageService messageService;
+  private final LivestreamApiStore livestreamApiStore;
+  private final DonationApiStore donationApiStore;
+  private final RankApiStore rankApiStore;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -62,10 +83,23 @@ public class GuiService {
                     CursorService cursorService,
                     KeyboardEventService keyboardEventService,
                     ClipboardService clipboardService,
-                    BrowserService browserService,
+                    UrlService urlService,
                     ChatMateEndpointProxy chatMateEndpointProxy,
                     Environment environment,
-                    MinecraftChatService minecraftChatService) {
+                    MinecraftChatService minecraftChatService,
+                    CustomGuiIngame customGuiIngame,
+                    FontEngine fontEngine,
+                    FontEngineProxy fontEngineProxy,
+                    DonationEndpointProxy donationEndpointProxy,
+                    ChatMateHudScreen chatMateHudScreen,
+                    ChatComponentRenderer chatComponentRenderer,
+                    StatusService statusService,
+                    ApiRequestService apiRequestService,
+                    UserEndpointProxy userEndpointProxy,
+                    MessageService messageService,
+                    LivestreamApiStore livestreamApiStore,
+                    DonationApiStore donationApiStore,
+                    RankApiStore rankApiStore) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -82,33 +116,36 @@ public class GuiService {
     this.cursorService = cursorService;
     this.keyboardEventService = keyboardEventService;
     this.clipboardService = clipboardService;
-    this.browserService = browserService;
+    this.urlService = urlService;
     this.chatMateEndpointProxy = chatMateEndpointProxy;
     this.environment = environment;
     this.minecraftChatService = minecraftChatService;
+    this.customGuiIngame = customGuiIngame;
+    this.fontEngine = fontEngine;
+    this.fontEngineProxy = fontEngineProxy;
+    this.donationEndpointProxy = donationEndpointProxy;
+    this.chatMateHudScreen = chatMateHudScreen;
+    this.chatComponentRenderer = chatComponentRenderer;
+    this.statusService = statusService;
+    this.apiRequestService = apiRequestService;
+    this.userEndpointProxy = userEndpointProxy;
+    this.messageService = messageService;
+    this.livestreamApiStore = livestreamApiStore;
+    this.donationApiStore = donationApiStore;
+    this.rankApiStore = rankApiStore;
 
     this.addEventHandlers();
   }
 
-  public void onDisplayDashboard() {
-    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
-    screen.setMainElement(new ChatMateDashboardElement(context, screen, this.chatMateEndpointProxy));
-    this.minecraft.displayGuiScreen(screen);
+  public void displayDashboard() {
+    this.displayDashboard(null);
   }
 
-  public void initialiseCustomChat() {
-    // we can only instantiate the GuiIngame once Minecraft is fully initialised (NOT in the ChatMate constructor)
-    // because it has a getter that returns null if not fully initialised, which would cause a render crash later on.
-    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
-        this.minecraft,
-        this.logService,
-        this.config,
-        this.forgeEventService,
-        this.dimFactory,
-        this.mouseEventService,
-        this.contextMenuStore);
-    this.customGuiIngame = new CustomGuiIngame(this.minecraft, customGuiNewChat);
+  public void displayDashboard(@Nullable DashboardRoute route) {
+    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.DASHBOARD);
+    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.statusService, this.apiRequestService, this.userEndpointProxy, this.messageService));
+    this.minecraft.displayGuiScreen(screen);
   }
 
   private void addEventHandlers() {
@@ -116,7 +153,6 @@ public class GuiService {
     this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
     this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
     this.forgeEventService.onOpenChat(this::onOpenChat, null);
-    this.forgeEventService.onRenderTick(this::onRender, null);
     this.forgeEventService.onClientTick(this::onClientTick, null);
 
     this.keyBindingService.on(ChatMateKeyEvent.OPEN_CHAT_MATE_HUD, this::onOpenChatMateHud);
@@ -140,7 +176,7 @@ public class GuiService {
 
   private OpenGui.Out onOpenGuiModList(OpenGui.In eventIn) {
     // : - <|
-    GuiScreen replaceWithGui = new CustomGuiModList(null, this.minecraft, this.config, this);
+    GuiScreen replaceWithGui = new CustomGuiModList(null, this.minecraft, this.config, this, this.fontEngineProxy);
     return new OpenGui.Out(replaceWithGui);
   }
 
@@ -174,30 +210,14 @@ public class GuiService {
         this.contextMenuStore,
         this.contextMenuService,
         this.cursorService,
-        this.browserService,
+        this.urlService,
         this.forgeEventService);
     return new OpenGui.Out(replaceWithGui);
   }
 
-  private Out onRender(In in) {
-    if (this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get() && !this.minecraft.gameSettings.showDebugInfo) {
-      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
-        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPreHud();
-      }
-      this.guiChatMateHud.renderGameOverlay();
-      if (this.minecraft.currentScreen instanceof GuiChatMateHudScreen) {
-        ((GuiChatMateHudScreen)this.minecraft.currentScreen).renderGameOverlayPostHud();
-      }
-    }
-
-    return new Out();
-  }
-
   private Boolean onOpenChatMateHud() {
     if (this.config.getHudEnabledEmitter().get()) {
-      // key events don't fire when we are in a menu, so don't need to worry about closing this GUI when the key is pressed again
-      GuiChatMateHudScreen hudScreen = new GuiChatMateHudScreen(this.minecraft, this.mouseEventService, this.dimFactory, this.guiChatMateHud, this.contextMenuService);
-      this.minecraft.displayGuiScreen(hudScreen);
+      this.minecraft.displayGuiScreen(this.chatMateHudScreen);
       return true;
     } else {
       return false;
@@ -210,14 +230,19 @@ public class GuiService {
         this.keyboardEventService,
         this.dimFactory,
         this.minecraft,
-        this.minecraft.fontRendererObj,
+        this.fontEngine,
         this.clipboardService,
         this.soundService,
         this.cursorService,
         this.minecraftProxyService,
-        this.browserService,
+        this.urlService,
         this.environment,
         this.logService,
-        this.minecraftChatService);
+        this.minecraftChatService,
+        this.forgeEventService,
+        this.chatComponentRenderer,
+        this.rankApiStore,
+        this.livestreamApiStore,
+        this.donationApiStore);
   }
 }

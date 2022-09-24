@@ -12,15 +12,17 @@ import java.util.List;
 // and GuiLanguage (for the GuiSlot)
 public class GuiDashboardScreen extends GuiScreen {
   private final Minecraft minecraft;
+  private final FontEngineProxy fontEngineProxy;
   private GuiDashboardScreen.NavigationList navigation;
 
-  public GuiDashboardScreen(Minecraft minecraft) {
+  public GuiDashboardScreen(Minecraft minecraft, FontEngineProxy fontEngineProxy) {
     this.minecraft = minecraft;
+    this.fontEngineProxy = fontEngineProxy;
   }
 
   public void drawScreen(int p_drawScreen_1_, int p_drawScreen_2_, float p_drawScreen_3_) {
     this.drawDefaultBackground();
-    this.drawCenteredString(this.fontRendererObj, "ChatMate Dashboard", this.width / 2, 40, 16777215);
+    this.drawCenteredString(this.fontEngineProxy, "ChatMate Dashboard", this.width / 2, 40, 16777215);
     super.drawScreen(p_drawScreen_1_, p_drawScreen_2_, p_drawScreen_3_);
     this.navigation.drawScreen(p_drawScreen_1_, p_drawScreen_2_, p_drawScreen_3_);
   }
@@ -93,7 +95,7 @@ public class GuiDashboardScreen extends GuiScreen {
     }
 
     protected void drawSlot(int p_drawSlot_1_, int p_drawSlot_2_, int p_drawSlot_3_, int p_drawSlot_4_, int p_drawSlot_5_, int p_drawSlot_6_) {
-      GuiDashboardScreen.this.drawCenteredString(GuiDashboardScreen.this.fontRendererObj, "drawSlot", this.width / 2, p_drawSlot_3_ + 1, 16777215);
+      GuiDashboardScreen.this.drawCenteredString(GuiDashboardScreen.this.fontEngineProxy, "drawSlot", this.width / 2, p_drawSlot_3_ + 1, 16777215);
 
       // THIS is why the button wasn't rendering - we need to call this on super too, then it gets the entry, and renders the entry!!
       super.drawSlot(p_drawSlot_1_, p_drawSlot_2_, p_drawSlot_3_, p_drawSlot_4_, p_drawSlot_5_, p_drawSlot_6_);
@@ -128,7 +130,7 @@ public class GuiDashboardScreen extends GuiScreen {
 
     @Override
     public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected) {
-      GuiDashboardScreen.this.fontRendererObj.drawString("This is a rather long description to see what happens if there is overlow in the horizontal direction!", x + 90, y + slotHeight / 2 - GuiDashboardScreen.this.fontRendererObj.FONT_HEIGHT / 2, 16777215);
+      GuiDashboardScreen.this.fontEngineProxy.drawString("This is a rather long description to see what happens if there is overlow in the horizontal direction!", x + 90, y + slotHeight / 2 - GuiDashboardScreen.this.fontRendererObj.FONT_HEIGHT / 2, 16777215);
       this.button.xPosition = x;
       this.button.yPosition = y;
       this.button.drawButton(GuiDashboardScreen.this.minecraft, mouseX, mouseY);

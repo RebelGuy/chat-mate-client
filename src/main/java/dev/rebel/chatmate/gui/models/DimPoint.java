@@ -36,6 +36,11 @@ public class DimPoint {
     return new DimPoint(this.x.times(scale), this.y.times(scale));
   }
 
+  /** Scales the values independently by the given numbers. */
+  public DimPoint scale(float scaleX, float scaleY) {
+    return new DimPoint(this.x.times(scaleX), this.y.times(scaleY));
+  }
+
   @Override
   public String toString() {
     return String.format("(%s, %s)", this.x.toString(), this.y.toString());

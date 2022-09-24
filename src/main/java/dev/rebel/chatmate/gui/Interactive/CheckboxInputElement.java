@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -10,10 +11,12 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.gui.FontRenderer;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
@@ -29,9 +32,12 @@ public class CheckboxInputElement extends InputElement {
 
   private float scale;
   private @Nullable Consumer<Boolean> onChange;
+  private Colour labelColour;
+  private Colour borderColour;
 
   public CheckboxInputElement(InteractiveContext context, IElement parent) {
     super(context, parent);
+    super.setCursor(CursorType.CLICK);
 
     this.labelElement = new LabelElement(context, this)
         .setOverflow(TextOverflow.SPLIT)
@@ -41,6 +47,8 @@ public class CheckboxInputElement extends InputElement {
 
     this.scale = 1;
     this.onChange = null;
+    this.borderColour = Colour.BLACK;
+    this.labelColour = Colour.WHITE;
     this.isHovering = new AnimatedBool(200L, false);
     this.isFocused = new AnimatedBool(100L, false);
     this.isChecked = new AnimatedBool(100L, false);
@@ -69,6 +77,11 @@ public class CheckboxInputElement extends InputElement {
   public CheckboxInputElement setScale(float scale) {
     this.labelElement.setFontScale(scale);
     this.scale = scale;
+    return this;
+  }
+
+  public CheckboxInputElement setCheckboxBorderColour(Colour colour) {
+    this.borderColour = colour;
     return this;
   }
 
@@ -111,7 +124,22 @@ public class CheckboxInputElement extends InputElement {
     }
   }
 
+  @Override
+  public InputElement setEnabled(Object key, boolean enabled) {
+    super.setEnabled(key, enabled);
+    if (super.getEnabled()) {
+      this.labelElement.setColour(this.labelColour);
+    } else {
+      this.labelElement.setColour(this.labelColour.withBrightness(0.5f));
+    }
+    return this;
+  }
+
   private void onFlipChecked() {
+    if (!super.getEnabled()) {
+      return;
+    }
+
     boolean isChecked = this.isChecked.flip();
     if (this.onChange != null) {
       this.onChange.accept(isChecked);
@@ -119,7 +147,7 @@ public class CheckboxInputElement extends InputElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     DimPoint labelSize = this.labelElement.calculateSize(maxContentSize.minus(this.boxSize));
     return new DimPoint(boxSize.plus(labelSize.getX()), Dim.max(boxSize, labelSize.getY()));
   }
@@ -134,23 +162,30 @@ public class CheckboxInputElement extends InputElement {
   }
 
   @Override
-  public void renderElement() {
+  protected void renderElement() {
     DimRect checkbox = new DimRect(this.getContentBox().getPosition(), new DimPoint(this.boxSize, this.boxSize));
     Colour background = Colour.BLACK.withAlpha(this.isHovering.getFrac() * 0.4f);
     Dim borderWidth = gui(1);
-    Colour borderColour = Colour.BLACK;
     Dim cornerRadius = gui(0);
     Dim shadowDistance = gui(1 + this.isFocused.getFrac());
     Colour shadowColour = Colour.lerp(Colour.BLACK, Colour.CYAN.withBrightness(0.5f), this.isFocused.getFrac());
+    Colour borderColour = this.borderColour;
+
+    if (!super.getEnabled()) {
+      background = Colour.TRANSPARENT;
+      shadowDistance = ZERO;
+      borderColour = borderColour.withBrightness(0.5f);
+    }
+
     RendererHelpers.drawRect(0, checkbox, background, borderWidth, borderColour, cornerRadius, shadowDistance, shadowColour);
 
     RendererHelpers.withMapping(checkbox.getCentre(), this.isChecked.getFrac(), () -> {
-      FontRenderer font = super.context.fontRenderer;
-      Dim height = gui(font.FONT_HEIGHT);
+      FontEngine font = super.context.fontEngine;
+      Dim height = font.FONT_HEIGHT_DIM;
       Dim width = gui(font.getCharWidth('x'));
-      font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), Colour.WHITE.toInt(), false);
+      font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), this.labelElement.getFont());
     });
 
-    this.labelElement.render();
+    this.labelElement.render(null);
   }
 }

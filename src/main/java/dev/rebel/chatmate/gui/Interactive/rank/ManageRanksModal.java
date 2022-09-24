@@ -1,8 +1,10 @@
 package dev.rebel.chatmate.gui.Interactive.rank;
 
+import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
-import dev.rebel.chatmate.gui.Interactive.DropdownMenu.Anchor;
+import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.HorizontalPosition;
+import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.AnchorBoxSizing;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -13,6 +15,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.rank.Adapters.*;
 import dev.rebel.chatmate.gui.Interactive.rank.Adapters.EndpointAdapter.RankResult;
 import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicChannelRankChange;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicChannelRankChange.Platform;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
@@ -20,15 +23,16 @@ import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.EndpointProxy;
-import dev.rebel.chatmate.services.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Date;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static dev.rebel.chatmate.models.Styles.VIEWER_NAME_FONT;
 import static dev.rebel.chatmate.services.util.TextHelpers.*;
 
 public class ManageRanksModal extends ModalElement {
@@ -91,7 +95,7 @@ public class ManageRanksModal extends ModalElement {
 
     private final LabelElement titleLabel;
     private final TextButtonElement createNewRankButton;
-    private final DropdownMenu createNewRankDropdown;
+    private final DropdownMenuV2 createNewRankDropdown;
     private final WrapperElement listWrapper;
     private final ElementReference listReference;
 
@@ -118,12 +122,12 @@ public class ManageRanksModal extends ModalElement {
           .cast();
 
       // todo: move into CreateRank element
-      this.createNewRankDropdown = new DropdownMenu(context, this.createNewRankButton)
-          .setAnchor(Anchor.LEFT)
+      this.createNewRankDropdown = new DropdownMenuV2(context, this.createNewRankButton, AnchorBoxSizing.CONTENT)
+          .setHorizontalPosition(HorizontalPosition.LEFT)
           .setBorder(new RectExtension(gui(1)))
           .setSizingMode(SizingMode.FILL)
           .cast();
-      this.createNewRankButton.setOnClick(this.createNewRankDropdown::toggleExpanded);
+      this.createNewRankButton.setOnClick(this.createNewRankDropdown::toggleVisible);
 
       // populate the "create new" button with the accessible ranks
       this.endpointAdapter.getAccessibleRanksAsync(this::onAccessibleRanksLoaded, this::onRanksLoadError);
@@ -139,7 +143,7 @@ public class ManageRanksModal extends ModalElement {
           .setMargin(new RectExtension(ZERO, gui(6)))
           .cast();
 
-      this.endpointAdapter.getRanksAsync(this.user.id, this::onRanksLoaded, this::onRanksLoadError);
+      this.endpointAdapter.getRanks(this.user.id, this::onRanksLoaded, this::onRanksLoadError);
     }
 
     @Override
@@ -174,16 +178,24 @@ public class ManageRanksModal extends ModalElement {
         this.createNewRankButton.setEnabled(this, true);
         for (PublicRank accessibleRank : accessibleRanks) {
           if (this.createAdapter.shouldIncludeRank(accessibleRank)) {
-            this.createNewRankDropdown.addOption(toSentenceCase(accessibleRank.displayNameNoun), () -> this.onCreateNewRank(accessibleRank));
+            LabelElement option = new LabelElement(super.context, this)
+                .setText(toSentenceCase(accessibleRank.displayNameNoun))
+                .setOverflow(TextOverflow.SPLIT)
+                .setOnClick(() -> this.onCreateNewRank(accessibleRank))
+                .setHoverFont(new Font().withColour(Colour.ACTION_HOVER).withUnderlined(true))
+                .setPadding(new RectExtension(gui(2), ZERO))
+                .setMargin(new RectExtension(ZERO, gui(2)))
+                .cast();
+            this.createNewRankDropdown.addOption(option);
           }
         }
       });
     }
 
-    private void onRanksLoaded(PublicUserRank[] ranks) {
+    private void onRanksLoaded(List<PublicUserRank> ranks) {
       this.context.renderer.runSideEffect(() -> {
         IElement element;
-        if (ranks.length == 0) {
+        if (ranks.size() == 0) {
           element = new LabelElement(this.context, this)
               .setText(tableAdapter.noRanksMessage)
               .setFontScale(0.75f)
@@ -193,7 +205,7 @@ public class ManageRanksModal extends ModalElement {
           element = new TableElement<PublicUserRank>(
               this.context,
               this,
-              Collections.list(ranks),
+              ranks,
               this.tableAdapter.getColumns(),
               rank -> this.tableAdapter.getRow(super.context, this, rank)
           ).setMinHeight(gui(50))
@@ -307,7 +319,7 @@ public class ManageRanksModal extends ModalElement {
           expirationText = String.format("%s (in %s)", dateToSecondAccuracy(rank.expirationTime), remaining);
         }
 
-        this.expiresAtElement = new SideBySideElement(context, this)
+        this.expiresAtElement = rank.expirationTime == null ? null : new SideBySideElement(context, this)
             .setElementPadding(gui(4))
             .addElement(1, new LabelElement(context, this)
                 .setText(rank.isActive ? "Expires at:" : "Expired at:"))
@@ -405,12 +417,20 @@ public class ManageRanksModal extends ModalElement {
             .cast();
 
         for (PublicChannelRankChange rankChange : channelRankChanges) {
+          IElement nameElement = new InlineElement(super.context, this)
+              .addElement(new ImageElement(context, this)
+                  .setImage(rankChange.platform == Platform.YOUTUBE ? Asset.LOGO_YOUTUBE : Asset.LOGO_TWITCH)
+                  .setTargetContentHeight(context.fontEngine.FONT_HEIGHT_DIM)
+                  .setMargin(new RectExtension(ZERO, gui(4), ZERO, ZERO))
+              ).addElement(new LabelElement(context, this)
+                  .setText(rankChange.channelName)
+                  .setFont(VIEWER_NAME_FONT.create(context.dimFactory))
+              );
+
           this.channelActionsList.addElement(new SideBySideElement(context, this)
               .setElementPadding(gui(4))
-              .addElement(1, new LabelElement(context, this)
-                  .setText(rankChange.channelName)
-                  .setColour(rankChange.platform == Platform.YOUTUBE ? Colour.LIGHT_RED : Colour.DARK_PURPLE)
-              ).addElement(1, new WrapperElement(context, this, // wrapper so text element size is flush to the text for a better tooltip experience
+              .addElement(1, nameElement)
+              .addElement(1, new WrapperElement(context, this, // wrapper so text element size is flush to the text for a better tooltip experience
                   new LabelElement(context, this)
                       .setText(rankChange.error == null ? "SUCCESS" : "FAILURE")
                       .setColour(rankChange.error == null ? Colour.GREEN : Colour.RED)
@@ -548,7 +568,7 @@ public class ManageRanksModal extends ModalElement {
                     ).addElement(
                         new LabelElement(context, this)
                             .setText(this.createAdapter.getExpirationSubtitle(this.rank))
-                            .setColour(Colour.LTGREY)
+                            .setColour(Colour.GREY75)
                             .setFontScale(0.5f)
                             .setOverflow(TextOverflow.TRUNCATE)
                             .setVerticalAlignment(VerticalAlignment.MIDDLE)

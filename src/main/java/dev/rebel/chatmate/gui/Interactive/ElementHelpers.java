@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
@@ -9,8 +10,9 @@ import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.models.Line;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.gui.FontRenderer;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -38,7 +40,7 @@ public class ElementHelpers {
       // was most likely added last is picked. in the future, we could use z indexes for a more robust solution.
       boolean foundMatch = false;
       for (IElement child : orderDescendingByZIndex(Collections.reverse(children))) {
-        if (child.getVisible() && getCollisionBox(child).checkCollision(point)) {
+        if (isCompletelyVisible(child) && getCollisionBox(child).checkCollision(point)) {
           result.add(child);
           foundMatch = true;
           parent = child;
@@ -63,19 +65,29 @@ public class ElementHelpers {
     return Collections.filter(elements, el -> el.getEffectiveZIndex() == zIndex);
   }
 
-
-  /** Returns all elements at the given point, ordered from the largest zIndex to the lowest, then in reverse by their position within the list of children of their parent. */
+  /** Returns all completely visible elements at the given point, ordered from the largest zIndex to the lowest, then in reverse by their position within the list of children of their parent. */
   public static List<IElement> getElementsAtPoint(IElement parent, DimPoint point) {
     List<IElement> children = getAllChildren(parent);
-    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getBox() != null && getCollisionBox(el).checkCollision(point));
+    List<IElement> childrenAtPoint = Collections.filter(children, el -> isCompletelyVisible(el) && el.getBox() != null && getCollisionBox(el).checkCollision(point));
     return orderDescendingByZIndex(Collections.reverse(childrenAtPoint));
   }
 
-  /** Returns all elements at the given point, ordered from the largest zIndex to the lowest, then in the original position within the list of children of their parent. */
+  /** Returns all completely visible elements at the given point, ordered from the largest zIndex to the lowest, then in the original position within the list of children of their parent. */
   public static List<IElement> getElementsAtPointInverted(IElement parent, DimPoint point) {
     List<IElement> children = getAllChildren(parent);
-    List<IElement> childrenAtPoint = Collections.filter(children, el -> el.getBox() != null && getCollisionBox(el).checkCollision(point));
+    List<IElement> childrenAtPoint = Collections.filter(children, el -> isCompletelyVisible(el) && el.getBox() != null && getCollisionBox(el).checkCollision(point));
     return orderDescendingByZIndex(childrenAtPoint);
+  }
+
+  /** Returns true if an element and all its ancestors are visible. It is entirely feasible for an element to be visible, but for its parent to not be visible, so this methods distinguishes between "soft" and "total" visibility. */
+  public static boolean isCompletelyVisible(IElement element) {
+    while (!(element instanceof InteractiveScreen)) {
+      if (!element.getVisible()) {
+        return false;
+      }
+      element = element.getParent();
+    }
+    return true;
   }
 
   public static List<IElement> getAllChildren(IElement parent) {
@@ -201,6 +213,7 @@ public class ElementHelpers {
     lines.add("Hor Algn: " + element.getHorizontalAlignment());
     lines.add("Vert Algn: " + element.getVerticalAlignment());
     lines.add("Sizing: " + element.getSizingMode());
+    lines.add("Layout group: " + element.getLayoutGroup());
     lines.add(String.format("Z-index: %d (%d)", element.getZIndex(), element.getEffectiveZIndex()));
     lines.add("");
 
@@ -218,15 +231,16 @@ public class ElementHelpers {
       parent = parent.getParent();
     }
 
-    FontRenderer font = context.fontRenderer;
+    FontEngine fontEngine = context.fontEngine;
+    Font font = new Font().withShadow(new Shadow(context.dimFactory));
     float scale = 0.5f;
     RendererHelpers.withMapping(new DimPoint(ZERO, ZERO), scale, () -> {
       float y = 0;
       float right = context.dimFactory.getMinecraftSize().getX().getGui();
       for (String line : lines) {
-        float x = right / scale - (float)font.getStringWidth(line);
-        font.drawStringWithShadow(line, x, y, Colour.WHITE.toSafeInt());
-        y += font.FONT_HEIGHT;
+        float x = right / scale - (float)fontEngine.getStringWidth(line);
+        fontEngine.drawString(line, x, y, font);
+        y += fontEngine.FONT_HEIGHT;
       }
     });
   }

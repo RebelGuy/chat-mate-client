@@ -2,23 +2,15 @@ package dev.rebel.chatmate.models.publicObjects.status;
 
 import com.google.gson.annotations.SerializedName;
 import dev.rebel.chatmate.models.publicObjects.PublicObject;
+import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream;
 
 import javax.annotation.Nullable;
 
 public class PublicLivestreamStatus extends PublicObject {
   @Override
-  public Integer GetExpectedSchema() { return 2; }
+  public Integer GetExpectedSchema() { return 3; }
 
-  public String livestreamLink;
-  public LivestreamStatus status;
-  public @Nullable Long startTime;
-  public @Nullable Long endTime;
+  public PublicLivestream livestream;
   public @Nullable Integer youtubeLiveViewers;
   public @Nullable Integer twitchLiveViewers;
-
-  public enum LivestreamStatus {
-    @SerializedName("not_started") NotStarted,
-    @SerializedName("live") Live,
-    @SerializedName("finished") Finished,
-  }
 }

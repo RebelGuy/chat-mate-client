@@ -1,13 +1,13 @@
 package dev.rebel.chatmate.gui.chat;
 
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionAlignment;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionLayout;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponentText.PrecisionValue;
+import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionAlignment;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionLayout;
+import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionValue;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import scala.Tuple2;
@@ -22,6 +22,7 @@ public class ChatPagination<T> {
   private final LogService logService;
   private MinecraftProxyService minecraftProxyService;
   private MessageService messageService;
+  private FontEngine fontEngine;
   private final T[] items;
   private final int itemsPerPage;
   private final PaginationRenderer<T> renderer;
@@ -39,6 +40,7 @@ public class ChatPagination<T> {
   public ChatPagination(LogService logService,
                         MinecraftProxyService minecraftProxyService,
                         MessageService messageService,
+                        FontEngine fontEngine,
                         PaginationRenderer<T> renderer,
                         T[] items,
                         int itemsPerPage,
@@ -46,6 +48,7 @@ public class ChatPagination<T> {
     this.logService = logService;
     this.minecraftProxyService = minecraftProxyService;
     this.messageService = messageService;
+    this.fontEngine = fontEngine;
     this.renderer = renderer;
     this.items = items;
     this.itemsPerPage = itemsPerPage;
@@ -68,16 +71,15 @@ public class ChatPagination<T> {
   public void render() {
     this.renderHeader();
 
-    FontRenderer fontRenderer =  this.minecraftProxyService.getChatFontRenderer();
     int chatWidth = this.minecraftProxyService.getChatWidth();
     int effectiveChatWidth = this.minecraftProxyService.getChatWidthForText();
     T[] visibleItems = this.getVisibleItems();
     for (int i = 0; i < renderedComponents.length; i++) {
       if (i < visibleItems.length) {
-        this.renderedComponents[i].component = this.renderer.renderItem(visibleItems[i], visibleItems, fontRenderer, chatWidth, effectiveChatWidth);
+        this.renderedComponents[i].setComponent(this.renderer.renderItem(visibleItems[i], visibleItems, this.fontEngine, chatWidth, effectiveChatWidth));
       } else {
         // empty padding on the last page
-        this.renderedComponents[i].component = emptyLine;
+        this.renderedComponents[i].setComponent(emptyLine);
       }
     }
 
@@ -138,7 +140,7 @@ public class ChatPagination<T> {
 
   private void renderHeader() {
     if (this.headerText == null) {
-      this.renderedHeader1.component = new ChatComponentText("");
+      this.renderedHeader1.setComponent(new ChatComponentText(""));
     } else {
       PrecisionLayout layout = new PrecisionLayout(new PrecisionValue(0.0f), new PrecisionValue(1.0f), PrecisionAlignment.CENTRE);
       ChatComponentText component = new ChatComponentText(this.headerText);
@@ -147,19 +149,19 @@ public class ChatPagination<T> {
       ClickEventWithCallback onClose = new ClickEventWithCallback(this.logService, this::delete, true);
       ChatComponentText closeComponent = styledText("[x]", onClose.bind(INTERACTIVE_STYLE_DE_EMPHASISE.get()));
 
-      this.renderedHeader1.component = new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(closeLayout, closeComponent)));
-      this.renderedHeader2.component = new PrecisionChatComponentText(Arrays.asList(new Tuple2<>(layout, component)));
+      this.renderedHeader1.setComponent(new PrecisionChatComponent(Arrays.asList(new Tuple2<>(closeLayout, closeComponent))));
+      this.renderedHeader2.setComponent(new PrecisionChatComponent(Arrays.asList(new Tuple2<>(layout, component))));
     }
   }
 
   private void renderFooter() {
-    this.renderedFooter.component = this.messageService.getPaginationFooterMessage(
+    this.renderedFooter.setComponent(this.messageService.getPaginationFooterMessage(
         this.minecraftProxyService.getChatWidthForText(),
         this.currentPage + 1,
         this.maxPage + 1,
         this.enablePreviousPage() ? this::onPreviousPage : null,
         this.enableNextPage() ? this::onNextPage : null
-    );
+    ));
   }
 
   private boolean enablePreviousPage() {
@@ -226,6 +228,6 @@ public class ChatPagination<T> {
     /** Should return the chat component for rendering the given item. To help with layout, all items that are visible on the current page are also provided.
      * @param chatWidth is the actual chat width in GUI units.
      * @param effectiveChatWidth is the effective chat width for text rendering considerations. If you limit your text to this width, it will fit onto a single line. */
-    public abstract IChatComponent renderItem(T item, T[] allItemsOnPage, FontRenderer fontRenderer, int chatWidth, int effectiveChatWidth);
+    public abstract IChatComponent renderItem(T item, T[] allItemsOnPage, FontEngine fontEngine, int chatWidth, int effectiveChatWidth);
   }
 }

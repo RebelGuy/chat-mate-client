@@ -1,6 +1,12 @@
 package dev.rebel.chatmate.gui.StateManagement;
 
+import java.util.function.Consumer;
+
 public class AnimatedBool extends Animated<Boolean> {
+  public AnimatedBool(Long duration, boolean initialValue, Consumer<Boolean> onChange) {
+    super(duration, initialValue, onChange);
+  }
+
   public AnimatedBool(Long duration, boolean initialValue) {
     super(duration, initialValue);
   }

@@ -11,8 +11,8 @@ public abstract class SingleElement extends ElementBase {
   }
 
   @Override
-  public abstract DimPoint calculateThisSize(Dim maxContentSize);
+  protected abstract DimPoint calculateThisSize(Dim maxContentSize);
 
   @Override
-  public abstract void renderElement();
+  protected abstract void renderElement();
 }

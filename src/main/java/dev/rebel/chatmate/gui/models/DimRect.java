@@ -45,15 +45,23 @@ public class DimRect {
     return new DimPoint(this.width, this.height);
   }
 
-  public DimPoint getTopLeft() { return new DimPoint(this.x, this.y); }
+  public DimPoint getTopLeft() { return new DimPoint(this.getX(), this.getY()); }
 
-  public DimPoint getTopRight() { return new DimPoint(this.getRight(), this.y); }
+  public DimPoint getTopCentre() { return new DimPoint(this.getX().plus(this.getWidth().over(2)), this.getY()); }
 
-  public DimPoint getBottomLeft() { return new DimPoint(this.x, this.getBottom()); }
+  public DimPoint getTopRight() { return new DimPoint(this.getRight(), this.getY()); }
+
+  public DimPoint getBottomLeft() { return new DimPoint(this.getX(), this.getBottom()); }
+
+  public DimPoint getBottomCentre() { return new DimPoint(this.getX().plus(this.getWidth().over(2)), this.getBottom()); }
 
   public DimPoint getBottomRight() { return new DimPoint(this.getRight(), this.getBottom()); }
 
+  public DimPoint getLeftCentre() { return new DimPoint(this.getX(), this.getY().plus(this.getHeight().over(2))); }
+
   public DimPoint getCentre() { return new DimPoint(this.getX().plus(this.getWidth().over(2)), this.getY().plus(this.getHeight().over(2))); }
+
+  public DimPoint getRightCentre() { return new DimPoint(this.getRight(), this.getY().plus(this.getHeight().over(2))); }
 
   /** Returns true if the point is contained within the rect, or touches its boundary. */
   public boolean checkCollision(DimPoint point) {
@@ -91,7 +99,7 @@ public class DimRect {
 
   public DimRect withBottom(Dim bottom) { return new DimRect(this.x, this.y, this.width, bottom.minus(this.y)); }
 
-  public DimRect withHWidth(Dim width) { return new DimRect(this.x, this.y, width, this.height); }
+  public DimRect withWidth(Dim width) { return new DimRect(this.x, this.y, width, this.height); }
 
   public DimRect withHeight(Dim height) { return new DimRect(this.x, this.y, this.width, height); }
 
@@ -112,6 +120,10 @@ public class DimRect {
         this.width.times(toX - fromX),
         this.height.times(toY - fromY)
     );
+  }
+
+  public DimPoint getRelativePoint(float relX, float relY) {
+    return new DimPoint(this.getX().plus(this.getWidth().times(relX)), this.getY().plus(this.getHeight().times(relY)));
   }
 
   @Override

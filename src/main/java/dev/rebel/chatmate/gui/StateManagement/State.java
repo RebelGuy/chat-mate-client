@@ -1,8 +1,11 @@
 package dev.rebel.chatmate.gui.StateManagement;
 
 
+import org.apache.commons.lang3.ClassUtils;
+
 import java.lang.reflect.Field;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class State<TState> {
   /** When setting the state, `property = NULL` is interpreted as the property being set to null.
@@ -16,6 +19,14 @@ public class State<TState> {
   }
 
   public void setState(TState state) {
+    if (ClassUtils.isPrimitiveOrWrapper(state.getClass())) {
+      this.state = state;
+      return;
+    } else if (!OuterState.class.isAssignableFrom(state.getClass())) {
+      this.state = state;
+      return;
+    }
+
     for (Field field : state.getClass().getFields()) {
       try {
         Object value = field.get(state);
@@ -28,11 +39,20 @@ public class State<TState> {
     }
   }
 
-  public void setState(Consumer<TState> stateModifier) {
-    stateModifier.accept(this.state);
+  /** For overwriting this state. */
+  public void setState(Function<TState, TState> stateModifier) {
+    this.setState(stateModifier.apply(this.state));
+  }
+
+  /** For modifying this state. */
+  public void accessState(Consumer<TState> stateAccessor) {
+    stateAccessor.accept(this.state);
   }
 
   public TState getState() {
     return this.state;
   }
+
+  /** If your state type extends this class, you can set the state of individual fields (equivalent to having multiple State<> objects). */
+  public static class OuterState { }
 }

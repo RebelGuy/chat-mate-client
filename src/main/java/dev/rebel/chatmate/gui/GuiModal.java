@@ -5,7 +5,6 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiLabel;
 import net.minecraft.client.gui.GuiScreen;
@@ -35,6 +34,7 @@ public class GuiModal extends GuiScreen {
   public GuiModal(
       Minecraft minecraft,
       DimFactory dimFactory,
+      FontEngine fontEngine,
       String title,
       ModalSizing sizing,
       @Nullable Runnable onCancel,
@@ -46,9 +46,8 @@ public class GuiModal extends GuiScreen {
     this.minecraft = minecraft;
     this.content = contentCreator.apply(this.buttonList, this.labelList);
 
-    FontRenderer font = this.minecraft.fontRendererObj;
-    this.titleLines = splitText(title, content.width, font);
-    this.rect = getRect(dimFactory, sizing, font, this.titleLines.size(), content.width, content.getTotalHeight());
+    this.titleLines = splitText(title, content.width, fontEngine);
+    this.rect = getRect(dimFactory, sizing, fontEngine, this.titleLines.size(), content.width, content.getTotalHeight());
   }
 
   @Override
@@ -82,7 +81,7 @@ public class GuiModal extends GuiScreen {
   }
 
   /** Returns the x, y, width, and height values for the modal. */
-  private static Tuple4<Dim, Dim, Dim, Dim> getRect(DimFactory dimFactory, ModalSizing sizing, FontRenderer font, int titleLines, int contentWidth, int contentHeight) {
+  private static Tuple4<Dim, Dim, Dim, Dim> getRect(DimFactory dimFactory, ModalSizing sizing, FontEngine font, int titleLines, int contentWidth, int contentHeight) {
     DimPoint minecraftDim = dimFactory.getMinecraftSize();
 
     Dim maxWidth = minecraftDim.getX().minus(dimFactory.fromGui(SCREEN_MIN_PADDING));

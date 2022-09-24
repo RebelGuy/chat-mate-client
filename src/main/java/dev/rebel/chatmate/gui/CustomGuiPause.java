@@ -72,6 +72,6 @@ public class CustomGuiPause extends GuiIngameMenu {
   }
 
   private void onClickDashboardButton(ButtonActionClickData buttonActionClickData) {
-    this.guiService.onDisplayDashboard();
+    this.guiService.displayDashboard();
   }
 }

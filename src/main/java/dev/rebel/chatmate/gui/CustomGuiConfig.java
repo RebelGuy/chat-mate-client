@@ -19,15 +19,16 @@ import java.util.ArrayList;
 
 public class CustomGuiConfig extends GuiConfig {
   private final Config config;
+  private final FontEngineProxy fontEngineProxy;
   private TableLayout tableLayout;
 
   // fantastic tutorial here: http://jabelarminecraft.blogspot.com/p/minecraft-modding-configuration-guis.html
   // (use the above when we have config files one day)
-  public CustomGuiConfig(GuiScreen parent, Config config)
+  public CustomGuiConfig(GuiScreen parent, Config config, FontEngineProxy fontEngineProxy)
   {
     super(parent, new ArrayList<>(), "chatmate", false, false, "Configure ChatMate");
-    titleLine2 = "Mod Settings";
     this.config = config;
+    this.fontEngineProxy = fontEngineProxy;
     this.config.listenAny(this::onConfigUpdate);
   }
 
@@ -48,31 +49,31 @@ public class CustomGuiConfig extends GuiConfig {
     int width = Math.min(300, this.width - 50); // shrink with screen, but only expand so much
     int left = this.width / 2 - width / 2; // centre table horizontally
 
-    LabelLayout chatMateLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable ChatMate", Color.WHITE);
+    LabelLayout chatMateLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Enable ChatMate", Color.WHITE);
     CheckBoxLayout chatMateCheckbox = new CheckBoxLayout(this::onToggleChatMate, config.getChatMateEnabledEmitter()::get);
 
-    LabelLayout soundLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable Sound", Color.WHITE);
+    LabelLayout soundLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Enable Sound", Color.WHITE);
     CheckBoxLayout soundCheckbox = new CheckBoxLayout(this::onToggleSound, config.getSoundEnabledEmitter()::get);
 
-    LabelLayout hudLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Enable ChatMate HUD", Color.WHITE);
+    LabelLayout hudLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Enable ChatMate HUD", Color.WHITE);
     CheckBoxLayout hudCheckbox = new CheckBoxLayout(this::onToggleHud, config.getHudEnabledEmitter()::get);
 
-    LabelLayout indicatorLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Status Indicator", Color.WHITE);
+    LabelLayout indicatorLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Status Indicator", Color.WHITE);
     CheckBoxLayout indicatorCheckbox = new CheckBoxLayout(this::onToggleIndicator, config.getShowStatusIndicatorEmitter()::get);
 
-    LabelLayout viewerCountLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Viewer Count", Color.WHITE);
+    LabelLayout viewerCountLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Viewer Count", Color.WHITE);
     CheckBoxLayout viewerCountCheckbox = new CheckBoxLayout(this::onToggleViewerCount, config.getShowLiveViewersEmitter()::get);
 
-    LabelLayout serverLogsHeartbeatLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Server Logs Heartbeat", Color.WHITE);
+    LabelLayout serverLogsHeartbeatLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Server Logs Heartbeat", Color.WHITE);
     CheckBoxLayout serverLogsHeartbeatCheckbox = new CheckBoxLayout(this::onToggleServerLogsHeartbeat, config.getShowServerLogsHeartbeat()::get);
 
-    LabelLayout serverLogsTimeSeriesLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Show Server Logs Time Series", Color.WHITE);
+    LabelLayout serverLogsTimeSeriesLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Server Logs Time Series", Color.WHITE);
     CheckBoxLayout serverLogsTimeSeriesCheckbox = new CheckBoxLayout(this::onToggleServerLogsTimeSeries, config.getShowServerLogsTimeSeries()::get);
 
-    LabelLayout identifyPlatformsLabel = new LabelLayout(this.fontRendererObj, new String[]{ "0%", "100%" }, () -> "Separate Youtube and Twitch", Color.WHITE);
+    LabelLayout identifyPlatformsLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Separate Youtube and Twitch", Color.WHITE);
     CheckBoxLayout identifyPlatformsCheckbox = new CheckBoxLayout(this::onToggleIdentifyPlatforms, config.getIdentifyPlatforms()::get);
 
-    LabelLayout chatOffsetLabel = new LabelLayout(this.fontRendererObj, new String[] { "0%", "100%" }, () -> "Chat Height Offset", Color.WHITE);
+    LabelLayout chatOffsetLabel = new LabelLayout(this.fontEngineProxy, new String[] { "0%", "100%" }, () -> "Chat Height Offset", Color.WHITE);
     SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacementEmitter()::get);
 
     this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 2, Layout.HEIGHT, Layout.VERTICAL_PADDING, Layout.HORIZONTAL_PADDING)

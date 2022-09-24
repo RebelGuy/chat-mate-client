@@ -1,25 +1,22 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
-import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
-import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
-import dev.rebel.chatmate.gui.StateManagement.State;
+import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.CursorService;
+import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBox;
 
@@ -35,7 +32,7 @@ public abstract class ElementBase implements IElement {
   protected final InteractiveContext context;
   protected IElement parent;
   protected final Dim ZERO;
-  protected final FontRenderer font;
+  protected final FontEngine fontEngine;
   protected String name;
 
   /** Full size. */
@@ -48,12 +45,15 @@ public abstract class ElementBase implements IElement {
   private HorizontalAlignment horizontalAlignment;
   private VerticalAlignment verticalAlignment;
   private SizingMode sizingMode;
+  private LayoutGroup layoutGroup;
   private boolean initialised;
+  private boolean isHovering;
   protected boolean visible;
   private @Nullable String tooltip;
   private @Nullable Dim maxWidth;
   private @Nullable Dim maxContentWidth;
   private @Nullable Dim targetFullHeight;
+  private @Nullable CursorType cursor;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     ID++;
@@ -61,7 +61,7 @@ public abstract class ElementBase implements IElement {
     this.context = context;
     this.parent = parent;
     this.ZERO = context.dimFactory.zeroGui();
-    this.font = context.fontRenderer;
+    this.fontEngine = context.fontEngine;
 
     this.box = null;
     this.padding = new RectExtension(context.dimFactory.zeroGui());
@@ -71,13 +71,16 @@ public abstract class ElementBase implements IElement {
     this.horizontalAlignment = HorizontalAlignment.LEFT;
     this.verticalAlignment = VerticalAlignment.TOP;
     this.sizingMode = SizingMode.ANY;
+    this.layoutGroup = LayoutGroup.ALL;
     this.initialised = false;
+    this.isHovering = false;
     this.visible = true;
 
     this.tooltip = null;
     this.maxWidth = null;
     this.maxContentWidth = null;
     this.targetFullHeight = null;
+    this.cursor = null;
   }
 
   @Override
@@ -108,6 +111,34 @@ public abstract class ElementBase implements IElement {
     return this;
   }
 
+  protected boolean isHovering() {
+    return this.isHovering;
+  }
+
+  /** Called when updating the cursor to decide whether the element should display its custom cursor or not. */
+  protected boolean shouldUseCursor() {
+    return this.isHovering();
+  }
+
+  /** Toggles or untoggles the current cursor, if applicable. */
+  protected void updateCursor() {
+    if (this.cursor == null || !this.shouldUseCursor()) {
+      this.context.cursorService.untoggleCursor(this);
+    } else {
+      this.context.cursorService.toggleCursor(this.cursor, this);
+    }
+  }
+
+  /** Automatically sets the cursor when the mouse pointer is hovering over this element. */
+  protected IElement setCursor(@Nullable CursorType cursor) {
+    if (this.cursor != cursor) {
+      this.cursor = cursor;
+      this.updateCursor();
+    }
+
+    return this;
+  }
+
   @Override
   public final void onEvent(EventType type, IEvent<?> event) {
     if (event.getPhase() == EventPhase.TARGET) {
@@ -119,13 +150,17 @@ public abstract class ElementBase implements IElement {
           this.onBlur((IEvent<FocusEventData>)event);
           break;
         case MOUSE_ENTER:
+          this.isHovering = true;
+          this.updateCursor();
           this.onMouseEnter((IEvent<MouseEventData.In>)event);
           break;
         case MOUSE_EXIT:
+          this.isHovering = false;
+          this.updateCursor();
           this.onMouseExit((IEvent<MouseEventData.In>)event);
           break;
         case WINDOW_RESIZE:
-          this.onWindowResize((IEvent<SizeData>)event);
+          this.onWindowResize((IEvent<ScreenSizeData>)event);
           break;
         default:
           throw new RuntimeException("Invalid event type at TARGET phase: " + type);
@@ -205,7 +240,7 @@ public abstract class ElementBase implements IElement {
   public void onCaptureMouseEnter(IEvent<MouseEventData.In> e) {}
   /** This doesn't bubble, it is target-only. there is no way to cancel this. */
   public void onMouseExit(IEvent<MouseEventData.In> e) {}
-  public void onWindowResize(IEvent<SizeData> e) {}
+  public void onWindowResize(IEvent<ScreenSizeData> e) {}
 
   @Override
   public final void onCloseScreen() { this.parent.onCloseScreen(); }
@@ -269,22 +304,33 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
-  public final void render() {
+  public final void render(@Nullable Consumer<Runnable> renderContextWrapper) {
     initialiseIfRequired();
     if (!this.visible) {
       return;
     }
 
+    Consumer<Runnable> wrapper = renderContextWrapper == null ? Runnable::run : renderContextWrapper;
+
     this.context.renderer.render(this, () -> {
       GlStateManager.pushMatrix();
       GlStateManager.enableBlend();
       GlStateManager.disableLighting();
-      this.renderElement();
+      wrapper.accept(this::renderElementSafe);
+      GlStateManager.disableBlend();
       GlStateManager.popMatrix();
     });
   }
 
-  /** You should never call super.render() from this method, as it will cause an infinite loop.
+  private void renderElementSafe() {
+    try {
+      this.renderElement();
+    } catch (Exception e) {
+      context.logService.logError(this, this.name, "encountered an error during rendering:", e);
+    }
+  }
+
+  /** You should never call super.render() from this element, as it will cause an infinite loop.
    * If you need to render a base element, use super.renderElement() instead. */
   protected abstract void renderElement();
 
@@ -407,6 +453,20 @@ public abstract class ElementBase implements IElement {
   @Override
   public SizingMode getSizingMode() {
     return this.sizingMode;
+  }
+
+  @Override
+  public IElement setLayoutGroup(LayoutGroup layoutGroup) {
+    if (this.layoutGroup != layoutGroup) {
+      this.layoutGroup = layoutGroup;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
+
+  @Override
+  public LayoutGroup getLayoutGroup() {
+    return this.layoutGroup;
   }
 
   @Override

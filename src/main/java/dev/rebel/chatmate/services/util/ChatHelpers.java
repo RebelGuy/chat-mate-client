@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.services.util;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
@@ -71,21 +71,21 @@ public class ChatHelpers {
     return result;
   }
 
-  public static String stringWithWidth(FontRenderer renderer, String msg, String truncationSuffix, char paddingChar, int maxWidth) {
-    int currentWidth = renderer.getStringWidth(msg);
+  public static String stringWithWidth(FontEngine fontEngine, String msg, String truncationSuffix, char paddingChar, int maxWidth) {
+    int currentWidth = fontEngine.getStringWidth(msg);
     if (currentWidth <= maxWidth) {
-      int padWidth = renderer.getCharWidth(paddingChar);
+      int padWidth = fontEngine.getCharWidth(paddingChar);
       int paddingRequired = (maxWidth - currentWidth) / padWidth;
       String padding = String.join("", Collections.nCopies(paddingRequired, String.valueOf(paddingChar)));
       return msg + padding;
 
     } else {
-      int truncationWidth = renderer.getStringWidth(truncationSuffix);
-      return renderer.trimStringToWidth(msg, maxWidth - truncationWidth) + truncationSuffix;
+      int truncationWidth = fontEngine.getStringWidth(truncationSuffix);
+      return fontEngine.trimStringToWidth(msg, maxWidth - truncationWidth) + truncationSuffix;
     }
   }
 
-  public static char getThinnestCharacter(FontRenderer renderer) {
+  public static char getThinnestCharacter(FontEngine fontEngine) {
     char hairSpace = '\u200a'; // ?
     char thinSpace = '\u2009'; // ?
     char punctuationSpace = '\u2008'; // 2?

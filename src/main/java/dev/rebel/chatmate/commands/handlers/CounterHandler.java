@@ -1,31 +1,34 @@
 package dev.rebel.chatmate.commands.handlers;
 
-import dev.rebel.chatmate.gui.GuiChatMateHud;
+import dev.rebel.chatmate.gui.CustomGuiChat;
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElementWrapper;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
+import dev.rebel.chatmate.gui.Interactive.LabelElement;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
 import dev.rebel.chatmate.gui.hud.Observable;
-import dev.rebel.chatmate.gui.hud.TextComponent;
-import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.KeyBindingService;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiChat;
 
 import javax.annotation.Nullable;
 
 public class CounterHandler {
   private final KeyBindingService keyBindingService;
-  private final GuiChatMateHud guiChatMateHud;
+  private final ChatMateHudStore chatMateHudStore;
   private final DimFactory dimFactory;
-  private final Minecraft minecraft;
   private Counter counter;
 
-  public CounterHandler(KeyBindingService keyBindingService, GuiChatMateHud guiChatMateHud, DimFactory dimFactory, Minecraft minecraft) {
+  public CounterHandler(KeyBindingService keyBindingService, ChatMateHudStore chatMateHudStore, DimFactory dimFactory) {
     this.keyBindingService = keyBindingService;
-    this.guiChatMateHud = guiChatMateHud;
+    this.chatMateHudStore = chatMateHudStore;
     this.dimFactory = dimFactory;
-    this.minecraft = minecraft;
 
     this.keyBindingService.on(ChatMateKeyEvent.DECREMENT_COUNTER, this::decrementCounter);
     this.keyBindingService.on(ChatMateKeyEvent.INCREMENT_COUNTER, this::incrementCounter);
@@ -33,7 +36,7 @@ public class CounterHandler {
 
   public void createCounter(int startValue, int incrementValue, float scale, @Nullable String title) {
     this.deleteCounter();
-    this.counter = new Counter(this.guiChatMateHud, this.dimFactory, this.minecraft, startValue, incrementValue, scale, title);
+    this.counter = new Counter(this.chatMateHudStore, this.dimFactory, startValue, incrementValue, title);
   }
 
   public void deleteCounter() {
@@ -63,27 +66,34 @@ public class CounterHandler {
     return false;
   }
 
-  // todo: instead of rendering it here, just add a new component to the hud object, hold on to it, and then remove it when required.
   private static class Counter {
-    private final GuiChatMateHud guiChatMateHud;
+    private final ChatMateHudStore chatMateHudStore;
+    private final HudElementWrapper<LabelElement> hudElement;
     private final int incrementValue;
-    private final TextComponent textComponent;
     private final String title;
     private final Observable<String> observableString;
     private int value;
 
-    public Counter(GuiChatMateHud guiChatMateHud, DimFactory dimFactory, Minecraft minecraft, int startValue, int incrementValue, float scale, @Nullable String title) {
-      this.guiChatMateHud = guiChatMateHud;
+    public Counter(ChatMateHudStore chatMateHudStore, DimFactory dimFactory, int startValue, int incrementValue, @Nullable String title) {
+      this.chatMateHudStore = chatMateHudStore;
       this.value = startValue;
       this.incrementValue = incrementValue;
       this.title = title == null ? "" : title + " ";
       this.observableString = new Observable<>(this.getStringToRender());
 
-      DimPoint centre = dimFactory.getMinecraftRect().getCentre();
-      Dim x = centre.getX();
-      Dim y = centre.getY();
-      this.textComponent = new TextComponent(dimFactory, minecraft, x, y, scale, true, true, Anchor.MIDDLE, true, this.observableString);
-      this.guiChatMateHud.hudComponents.add(this.textComponent);
+      this.hudElement = this.chatMateHudStore.addElement(HudElementWrapper::new)
+          .setCanDrag(true)
+          .setCanScale(true)
+          .setDefaultPosition(dimFactory.getMinecraftRect().getCentre(), Anchor.MIDDLE)
+          .setHudElementFilter(
+              new HudFilters.HudFilterWhitelistNoScreen(),
+              new HudFilters.HudFilterScreenWhitelist(CustomGuiChat.class),
+              new HudFilters.HudFilterInteractiveScreenTypeBlacklist(InteractiveScreenType.DASHBOARD)
+          ).cast();
+      this.hudElement.setElement(LabelElement::new)
+          .setText(this.observableString.getValue())
+          .setFont(new Font().withShadow(new Shadow(dimFactory)));
+      this.observableString.listen(str -> this.hudElement.element.setText(str));
     }
 
     public void increment() {
@@ -97,7 +107,7 @@ public class CounterHandler {
     }
 
     public void delete() {
-      this.guiChatMateHud.hudComponents.remove(this.textComponent);
+      this.chatMateHudStore.removeElement(this.hudElement);
     }
 
     private void addToValueSafe(int amount) {

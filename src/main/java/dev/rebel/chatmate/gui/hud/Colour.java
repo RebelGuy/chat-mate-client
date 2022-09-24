@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.hud;
 
+import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.util.Color;
 import org.lwjgl.util.ReadableColor;
 
@@ -10,20 +11,38 @@ public class Colour {
   public static final Colour DARK_RED = new Colour(170, 0, 0); // same as Minecraft's DARK_RED style
   public static final Colour LIGHT_RED = new Colour(255, 85, 85); // same as Minecraft's RED style
   public static final Colour BLUE = new Colour(Color.BLUE);
+  public static final Colour LIGHT_BLUE = new Colour(85, 85, 255); // same as Minecraft's BLUE style
+  public static final Colour DARK_BLUE = new Colour(0, 0, 170); // same as Minecraft's DARK_BLUE style
   public static final Colour CYAN = new Colour(Color.CYAN);
-  public static final Colour DKGREY = new Colour(Color.DKGREY);
   public static final Colour GREEN = new Colour(Color.GREEN);
+  public static final Colour LIGHT_GREEN = new Colour(85, 255, 85); // same as Minecraft's GREEN style
+  public static final Colour DARK_GREEN = new Colour(0, 170, 0); // same as Minecraft's DARK_GREEN style
+  public static final Colour GREY25 = new Colour(Color.DKGREY);
+  public static final Colour GREY33 = new Colour(85, 85, 85); // same as Minecraft's DARK_GRAY style
   public static final Colour GREY = new Colour(Color.GREY);
-  public static final Colour LTGREY = new Colour(Color.LTGREY);
+  public static final Colour GREY67 = new Colour(170, 170, 170); // same as Minecraft's GRAY style
+  public static final Colour GREY75 = new Colour(Color.LTGREY);
   public static final Colour ORANGE = new Colour(Color.ORANGE);
+  public static final Colour AQUA = new Colour(85, 255, 255); // same as Minecraft's AQUA style
+  public static final Colour DARK_AQUA = new Colour(0, 170, 170); // same as Minecraft's DARK_AQUA style
   public static final Colour PURPLE = new Colour(Color.PURPLE);
+  public static final Colour LIGHT_PURPLE = new Colour(255, 85, 255); // same as Minecraft's LIGHT_PURPLE style
   public static final Colour DARK_PURPLE = new Colour(170, 0, 170); // same as Minecraft's DARK_PURPLE style
   public static final Colour YELLOW = new Colour(Color.YELLOW);
+  public static final Colour LIGHT_YELLOW = new Colour(255, 255, 85); // same as Minecraft's YELLOW style
+  public static final Colour GOLD = new Colour(255, 170, 0); // same as Minecraft's GOLD style
+  public static final Colour TRANSPARENT = new Colour(Color.WHITE).withAlpha(0);
+  public static final Colour BEIGE = new Colour(245, 245, 220);
+  public static final Colour ACTION_HOVER = new Colour(16777120); // the default text colour when hovering
 
   public final int red;
   public final int green;
   public final int blue;
   public final int alpha;
+  public final float redf;
+  public final float greenf;
+  public final float bluef;
+  public final float alphaf;
 
   public Colour(int red, int green, int blue) {
     this(red, green, blue, 255);
@@ -55,6 +74,11 @@ public class Colour {
     this.green = green;
     this.blue = blue;
     this.alpha = alpha;
+
+    this.redf = red / 255.0f;
+    this.greenf = green / 255.0f;
+    this.bluef = blue / 255.0f;
+    this.alphaf = alpha / 255.0f;
   }
 
   public Colour(float red, float green, float blue) {
@@ -65,9 +89,9 @@ public class Colour {
     this((int)(red * 255), (int)(green * 255), (int)(blue * 255), (int)(alpha * 255));
   }
 
-  /** Inverse of Colour.toInt() */
+  /** Inverse of Colour.toInt(). Note that if the alpha component is 0, it will be automatically set to 100% as that is most likely the intention. */
   public Colour(int intValue) {
-    this(intValue >> 16 & 255, intValue >> 8 & 255, intValue & 255, intValue >> 24 & 255);
+    this(intValue >> 16 & 255, intValue >> 8 & 255, intValue & 255, ((intValue >> 24 & 255) == 0) ? 255 : intValue >> 24 & 255);
   }
 
   public int toInt() {
@@ -125,5 +149,50 @@ public class Colour {
 
   private static int lerpInt(int from, int to, float frac) {
     return (int)(from + (to - from) * frac);
+  }
+
+  public static Colour fromChatColour(EnumChatFormatting chatColour) {
+    switch (chatColour) {
+      case BLACK:
+        return Colour.BLACK;
+      case DARK_BLUE:
+        return Colour.DARK_BLUE;
+      case DARK_GREEN:
+        return Colour.DARK_GREEN;
+      case DARK_AQUA:
+        return Colour.DARK_AQUA;
+      case DARK_RED:
+        return Colour.DARK_RED;
+      case DARK_PURPLE:
+        return Colour.DARK_PURPLE;
+      case GOLD:
+        return Colour.GOLD;
+      case GRAY:
+        return Colour.GREY67;
+      case DARK_GRAY:
+        return Colour.GREY33;
+      case BLUE:
+        return Colour.LIGHT_BLUE;
+      case GREEN:
+        return Colour.LIGHT_GREEN;
+      case AQUA:
+        return Colour.AQUA;
+      case RED:
+        return Colour.LIGHT_RED;
+      case LIGHT_PURPLE:
+        return Colour.LIGHT_PURPLE;
+      case YELLOW:
+        return Colour.LIGHT_YELLOW;
+      case WHITE:
+        return Colour.WHITE;
+      case OBFUSCATED:
+      case BOLD:
+      case STRIKETHROUGH:
+      case UNDERLINE:
+      case ITALIC:
+      case RESET:
+      default:
+        throw new RuntimeException(chatColour + " is not a colour.");
+    }
   }
 }

@@ -11,6 +11,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ComponentHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting.Format;
 import net.minecraft.client.gui.FontRenderer;
@@ -115,9 +116,9 @@ public class TextHelpers {
     return new ExtractedFormatting(unformattedString.toString(), formats);
   }
 
-  public static List<String> splitText(String text, int maxWidth, FontRenderer font) {
+  public static List<String> splitText(String text, int maxWidth, FontEngine fontEngine) {
     // simply use the component splitText method, using a ChatComponentText as a wrapper around the string that is to be split
-    List<IChatComponent> components = ComponentHelpers.splitText(new ChatComponentText(text), maxWidth, font);
+    List<IChatComponent> components = ComponentHelpers.splitText(new ChatComponentText(text), maxWidth, fontEngine);
     return components.stream().map(IChatComponent::getFormattedText).collect(Collectors.toList());
   }
 

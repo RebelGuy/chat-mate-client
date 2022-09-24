@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.gui.chat;
 
 import com.google.common.collect.Lists;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.services.util.TextHelpers;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;
@@ -24,7 +24,7 @@ public class ComponentHelpers {
 
   /** Stolen from GuiUtilRenderComponents::splitText, but fixes custom components not being retained after the split. Supports splitting of custom components.
    * Returns one empty ChatComponentText per line, with the actual components added as siblings of each line component. Does not handle PrecisionChatComponentText in any way. */
-  public static List<IChatComponent> splitText(IChatComponent componentToSplit, int maxWidth, FontRenderer font) {
+  public static List<IChatComponent> splitText(IChatComponent componentToSplit, int maxWidth, FontEngine font) {
     List<IChatComponent> result = new ArrayList<>();
 
     // note: this uses the `component.iterator` to create the list of items... very sneaky
@@ -40,7 +40,7 @@ public class ComponentHelpers {
   }
 
   /** Appends the components until reaching the given width. The first item is the resulting component with siblings, and the second is the flattened remaining components. */
-  private static Tuple2<IChatComponent, List<IChatComponent>> splitNextLine(List<IChatComponent> flattenedComponents, int lineWidth, FontRenderer font) {
+  private static Tuple2<IChatComponent, List<IChatComponent>> splitNextLine(List<IChatComponent> flattenedComponents, int lineWidth, FontEngine font) {
     IChatComponent result = null;
 
     // we only need to explicitly process the first line, and any subsequent lines can be split recursively
@@ -78,22 +78,24 @@ public class ComponentHelpers {
     return new Tuple2<>(result, new ArrayList<>());
   }
 
-  private static TrimmedComponent trimComponent(IChatComponent component, int maxWidth, boolean isLineStart, FontRenderer font) {
+  private static TrimmedComponent trimComponent(IChatComponent component, int maxWidth, boolean isLineStart, FontEngine font) {
     if (component instanceof ContainerChatComponent) {
       return trimComponent((ContainerChatComponent)component, maxWidth, isLineStart, font);
     } else if (component instanceof ChatComponentText) {
-      return trimComponent((ChatComponentText) component, maxWidth, isLineStart, font);
+      return trimComponent((ChatComponentText)component, maxWidth, isLineStart, font);
     } else if (component instanceof ImageChatComponent) {
       return trimComponent((ImageChatComponent)component, maxWidth, isLineStart, font);
-    } else if (component instanceof PrecisionChatComponentText && isLineStart) {
+    } else if (component instanceof PrecisionChatComponent && isLineStart) {
       return new TrimmedComponent(component, maxWidth, null);
+    } else if (component instanceof UserNameChatComponent) {
+      return trimmedComponent((UserNameChatComponent)component, maxWidth, isLineStart, font);
     } else {
       throw new RuntimeException(String.format("Unable to trim component (isLineStart=%s) because it is of type %s", String.valueOf(isLineStart), component.getClass().getSimpleName()));
     }
   }
 
   // note: this uses a slightly modified vanilla algorithm, and it is what does the actual work
-  private static TrimmedComponent trimComponent(ChatComponentText component, int maxWidth, boolean isLineStart, FontRenderer font) {
+  private static TrimmedComponent trimComponent(ChatComponentText component, int maxWidth, boolean isLineStart, FontEngine font) {
     ChatStyle style = component.getChatStyle().createShallowCopy();
     Function<String, String> styled = unstyled -> style.getFormattingCode() + unstyled;
     Function<String, String> unstyled = styledText -> styledText.startsWith(style.getFormattingCode()) ? styledText.substring(style.getFormattingCode().length()) : styledText;
@@ -167,27 +169,36 @@ public class ComponentHelpers {
     return new StringBuilder(reversedTrimmed).reverse().toString();
   }
 
-  private static TrimmedComponent trimComponent(ContainerChatComponent component, int maxWidth, boolean isLineStart, FontRenderer font) {
+  private static TrimmedComponent trimComponent(ContainerChatComponent component, int maxWidth, boolean isLineStart, FontEngine font) {
     // only take the direct child, so we re-wrap the container correctly later
-    IChatComponent unpackedComponent = component.component;
+    IChatComponent unpackedComponent = component.getComponent();
 
     // even though we are possibly destroying the unpacked component reference, it's ok because modifying the properties in ContainerChatComponent
     // requires a chat refresh already, meaning this method will be called anyway
     TrimmedComponent trimmed = trimComponent(unpackedComponent, maxWidth, isLineStart, font);
     IChatComponent innerComponent = trimmed.component == null ? new ChatComponentText("") : trimmed.component;
-    ContainerChatComponent trimmedContainer = new ContainerChatComponent(innerComponent, component.data);
-    ContainerChatComponent leftoverContainer = trimmed.leftover == null ? null : new ContainerChatComponent(trimmed.leftover, component.data);
+    ContainerChatComponent trimmedContainer = new ContainerChatComponent(innerComponent, component.getData());
+    ContainerChatComponent leftoverContainer = trimmed.leftover == null ? null : new ContainerChatComponent(trimmed.leftover, component.getData());
 
     return new TrimmedComponent(trimmedContainer, trimmed.trimmedWidth, leftoverContainer);
   }
 
-  private static TrimmedComponent trimComponent(ImageChatComponent component, int maxWidth, boolean isLineStart, FontRenderer font) {
-    int requiredWidth = (int)Math.ceil(component.getRequiredWidth(font.FONT_HEIGHT));
+  private static TrimmedComponent trimComponent(ImageChatComponent component, int maxWidth, boolean isLineStart, FontEngine fontEngine) {
+    int requiredWidth = (int)Math.ceil(component.getRequiredWidth(fontEngine.FONT_HEIGHT));
     if (isLineStart || maxWidth >= requiredWidth) {
       return new TrimmedComponent(component, requiredWidth, null);
     } else {
       // add to next line
       return new TrimmedComponent(new ChatComponentText(""), requiredWidth, component);
+    }
+  }
+
+  private static TrimmedComponent trimmedComponent(UserNameChatComponent component, int maxWidth, boolean isLineStart, FontEngine fontEngine) {
+    int componentWidth = fontEngine.getStringWidth(component.getDisplayName());
+    if (isLineStart || componentWidth <= maxWidth) {
+      return new TrimmedComponent(component, componentWidth, null);
+    } else {
+      return new TrimmedComponent(new ChatComponentText(""), componentWidth, component);
     }
   }
 

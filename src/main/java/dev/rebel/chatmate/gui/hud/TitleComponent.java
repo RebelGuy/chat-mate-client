@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.hud;
 
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.GuiChatMateHudScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.RenderContext;
@@ -7,8 +9,8 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.style.Shadow;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 
@@ -26,6 +28,7 @@ public class TitleComponent implements IHudComponent {
   private final Dim yOffsetSubtitle;
 
   private final Minecraft minecraft;
+  private final FontEngine fontEngine;
 
   private final DimFactory dimFactory;
   // x and y are used as an anchor around which the offsets are calculated. they are NOT the top-left corner or centre of the box.
@@ -42,9 +45,10 @@ public class TitleComponent implements IHudComponent {
   protected long fadeOutTime = 0;
   private Long startTime = null;
 
-  public TitleComponent(DimFactory dimFactory, Minecraft minecraft, boolean canRescale, boolean canTranslate) {
+  public TitleComponent(DimFactory dimFactory, Minecraft minecraft, FontEngine fontEngine, boolean canRescale, boolean canTranslate) {
     this.dimFactory = dimFactory;
     this.minecraft = minecraft;
+    this.fontEngine = fontEngine;
 
     this.resetPositionState();
     this.canRescale = canRescale;
@@ -77,9 +81,8 @@ public class TitleComponent implements IHudComponent {
       return this.dimFactory.zeroGui();
     }
 
-    FontRenderer font = this.minecraft.fontRendererObj;
-    Dim titleWidth = this.dimFactory.fromGui(font.getStringWidth(this.title) * this.mainTitleScale);
-    Dim subtitleWidth = this.dimFactory.fromGui(font.getStringWidth(this.subTitle) * this.subTitleScale);
+    Dim titleWidth = this.dimFactory.fromGui(this.fontEngine.getStringWidth(this.title) * this.mainTitleScale);
+    Dim subtitleWidth = this.dimFactory.fromGui(this.fontEngine.getStringWidth(this.subTitle) * this.subTitleScale);
 
     return Dim.max(titleWidth, subtitleWidth).times(this.scale);
   }
@@ -91,7 +94,7 @@ public class TitleComponent implements IHudComponent {
     }
 
     Dim top = this.y.plus(this.yOffsetTitle);
-    Dim bottom = this.y.plus(this.yOffsetSubtitle).plus(this.dimFactory.fromGui(this.minecraft.fontRendererObj.FONT_HEIGHT * this.subTitleScale));
+    Dim bottom = this.y.plus(this.yOffsetSubtitle).plus(this.dimFactory.fromGui(this.fontEngine.FONT_HEIGHT * this.subTitleScale));
     return bottom.minus(top).times(this.scale);
   }
 
@@ -186,23 +189,21 @@ public class TitleComponent implements IHudComponent {
     }
     
     if (alpha > 4) {
-      FontRenderer font = this.minecraft.fontRendererObj;
-      int alphaComponent = alpha << 24 & -16777216;
-      int colour = 16777215 | alphaComponent;
+      Font font = new Font().withColour(Colour.WHITE.withAlpha(alpha)).withShadow(new Shadow(this.dimFactory));
 
       GlStateManager.enableBlend();
       GlStateManager.tryBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
 
       DimPoint titleTranslation = new DimPoint(this.x, this.y.plus(this.yOffsetTitle));
       RendererHelpers.withMapping(titleTranslation, this.mainTitleScale, () -> {
-        float titleWidth = font.getStringWidth(this.title);
-        font.drawStringWithShadow(this.title, -titleWidth / 2, 0, colour);
+        float titleWidth = this.fontEngine.getStringWidth(this.title);
+        this.fontEngine.drawString(this.title, -titleWidth / 2, 0, font);
       });
 
       DimPoint subtitleTranslation = new DimPoint(this.x, this.y.plus(this.yOffsetSubtitle));
       RendererHelpers.withMapping(subtitleTranslation, this.subTitleScale, () -> {
-        float subtitleWidth = font.getStringWidth(this.subTitle);
-        font.drawStringWithShadow(this.subTitle, -subtitleWidth / 2, 0, colour);
+        float subtitleWidth = this.fontEngine.getStringWidth(this.subTitle);
+        this.fontEngine.drawString(this.subTitle, -subtitleWidth / 2, 0, font);
       });
 
       GlStateManager.disableBlend();

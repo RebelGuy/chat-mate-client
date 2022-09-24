@@ -3,9 +3,13 @@ package dev.rebel.chatmate.services;
 import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
+import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.rank.ManageRanksModal;
 import dev.rebel.chatmate.gui.Interactive.rank.PunishmentAdapters;
@@ -13,13 +17,20 @@ import dev.rebel.chatmate.gui.Interactive.rank.RankAdapters;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
 import dev.rebel.chatmate.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.store.DonationApiStore;
+import dev.rebel.chatmate.store.LivestreamApiStore;
+import dev.rebel.chatmate.store.RankApiStore;
 import net.minecraft.client.Minecraft;
+
+import java.util.Date;
 
 public class ContextMenuService {
   private final Minecraft minecraft;
@@ -36,11 +47,18 @@ public class ContextMenuService {
   private final CounterHandler counterHandler;
   private final MinecraftProxyService minecraftProxyService;
   private final CursorService cursorService;
-  private final BrowserService browserService;
+  private final UrlService urlService;
   private final Environment environment;
   private final LogService logService;
   private final RankEndpointProxy rankEndpointProxy;
   private final MinecraftChatService minecraftChatService;
+  private final FontEngine fontEngine;
+  private final ForgeEventService forgeEventService;
+  private final ChatComponentRenderer chatComponentRenderer;
+  private final DonationHudStore donationHudStore;
+  private final RankApiStore rankApiStore;
+  private final LivestreamApiStore livestreamApiStore;
+  private final DonationApiStore donationApiStore;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -56,11 +74,18 @@ public class ContextMenuService {
                             CounterHandler counterHandler,
                             MinecraftProxyService minecraftProxyService,
                             CursorService cursorService,
-                            BrowserService browserService,
+                            UrlService urlService,
                             Environment environment,
                             LogService logService,
                             RankEndpointProxy rankEndpointProxy,
-                            MinecraftChatService minecraftChatService) {
+                            MinecraftChatService minecraftChatService,
+                            FontEngine fontEngine,
+                            ForgeEventService forgeEventService,
+                            ChatComponentRenderer chatComponentRenderer,
+                            DonationHudStore donationHudStore,
+                            RankApiStore rankApiStore,
+                            LivestreamApiStore livestreamApiStore,
+                            DonationApiStore donationApiStore) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -75,11 +100,18 @@ public class ContextMenuService {
     this.counterHandler = counterHandler;
     this.minecraftProxyService = minecraftProxyService;
     this.cursorService = cursorService;
-    this.browserService = browserService;
+    this.urlService = urlService;
     this.environment = environment;
     this.logService = logService;
     this.rankEndpointProxy = rankEndpointProxy;
     this.minecraftChatService = minecraftChatService;
+    this.fontEngine = fontEngine;
+    this.forgeEventService = forgeEventService;
+    this.chatComponentRenderer = chatComponentRenderer;
+    this.donationHudStore = donationHudStore;
+    this.rankApiStore = rankApiStore;
+    this.livestreamApiStore = livestreamApiStore;
+    this.donationApiStore = donationApiStore;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -94,7 +126,8 @@ public class ContextMenuService {
   public void showHudContext(Dim x, Dim y) {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Add countdown title", this::onCountdown),
-      new ContextMenuOption("Add counter component", this::onCounter)
+      new ContextMenuOption("Add counter component", this::onCounter),
+      new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation)
     );
   }
 
@@ -110,7 +143,7 @@ public class ContextMenuService {
 
   private void onModifyExperience(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     IElement modal = new ManageExperienceModal(context, screen, user, this.experienceEndpointProxy, this.mcChatService);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -118,8 +151,8 @@ public class ContextMenuService {
 
   private void onManageRanks(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
-    RankAdapters rankAdapters = new RankAdapters(this.rankEndpointProxy);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
+    RankAdapters rankAdapters = new RankAdapters(this.rankEndpointProxy, this.rankApiStore);
     IElement modal = new ManageRanksModal(context, screen, user, rankAdapters);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -127,8 +160,8 @@ public class ContextMenuService {
 
   private void onManagePunishments(PublicUser user) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
-    PunishmentAdapters punishmentAdapters = new PunishmentAdapters(this.rankEndpointProxy, this.punishmentEndpointProxy);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
+    PunishmentAdapters punishmentAdapters = new PunishmentAdapters(this.rankEndpointProxy, this.punishmentEndpointProxy, this.rankApiStore);
     IElement modal = new ManageRanksModal(context, screen, user, punishmentAdapters);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -136,7 +169,7 @@ public class ContextMenuService {
 
   private void onCountdown() {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     IElement modal = new CountdownModal(context, screen, this.countdownHandler);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -144,7 +177,7 @@ public class ContextMenuService {
 
   private void onCounter() {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen);
+    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     IElement modal = new CounterModal(context, screen, this.counterHandler);
     screen.setMainElement(modal);
     this.minecraft.displayGuiScreen(screen);
@@ -154,20 +187,39 @@ public class ContextMenuService {
     this.minecraftProxyService.getChatGUI().deleteLine(chatLine);
   }
 
+  private void onGenerateFakeDonation() {
+    float amount = (float)(Math.random() * 100);
+    PublicDonationData donation = new PublicDonationData() {{
+      time = new Date().getTime();
+      amount = amount;
+      formattedAmount = String.format("$%.2f", amount);
+      currency = "USD";
+      name = "A Donator's Name";
+      String msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a";
+      message = msg.substring(0, (int)(Math.random() * msg.length()));
+    }};
+    this.donationHudStore.addDonation(donation);
+  }
+
   private InteractiveScreen.InteractiveContext createInteractiveContext() {
     return new InteractiveScreen.InteractiveContext(new ScreenRenderer(),
         this.mouseEventService,
         this.keyboardEventService,
         this.dimFactory,
         this.minecraft,
-        this.minecraft.fontRendererObj,
+        this.fontEngine,
         this.clipboardService,
         this.soundService,
         this.cursorService,
         this.minecraftProxyService,
-        this.browserService,
+        this.urlService,
         this.environment,
         this.logService,
-        this.minecraftChatService);
+        this.minecraftChatService,
+        this.forgeEventService,
+        this.chatComponentRenderer,
+        this.rankApiStore,
+        this.livestreamApiStore,
+        this.donationApiStore);
   }
 }

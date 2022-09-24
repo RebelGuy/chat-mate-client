@@ -82,7 +82,7 @@ public class SideBySideElement extends ContainerElement {
   }
 
   @Override
-  public DimPoint calculateThisSize(Dim maxContentSize) {
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
     // ensure everything fits on a single line
     float totalBias = Collections.eliminate(this.elementBiases.values(), Float::sum);
     Dim totalPadding = this.elementPadding.times(this.elementBiases.size() - 1);

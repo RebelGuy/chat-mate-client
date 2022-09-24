@@ -17,8 +17,8 @@ import static net.minecraft.util.ChatComponentStyle.createDeepCopyIterator;
  * and associating custom data with chat components.
  * Note that, if the contents have been replaced with a different component instance, you must refresh the chat. */
 public class ContainerChatComponent implements IChatComponent {
-  public @Nonnull IChatComponent component;
-  public @Nullable Object data;
+  private @Nonnull IChatComponent component;
+  private @Nullable Object data;
 
   /** Draws an empty line by default. */
   public ContainerChatComponent() { this.component = new ChatComponentText(""); }
@@ -30,6 +30,10 @@ public class ContainerChatComponent implements IChatComponent {
   public ContainerChatComponent(@Nonnull IChatComponent component, @Nullable Object data) {
     this.component = component;
     this.data = data;
+  }
+
+  public void setComponent(@Nonnull IChatComponent component) {
+    this.component = component;
   }
 
   /** Recursively gets the underlying component until finding the one that is NOT a ContainerChatComponent. */
@@ -45,6 +49,14 @@ public class ContainerChatComponent implements IChatComponent {
     } else {
       return this.component;
     }
+  }
+
+  public void setData(@Nullable Object data) {
+    this.data = data;
+  }
+
+  public @Nullable Object getData() {
+    return this.data;
   }
 
   //region Interface methods

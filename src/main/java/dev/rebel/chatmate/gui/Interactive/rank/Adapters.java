@@ -10,6 +10,7 @@ import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.store.RankApiStore;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,18 +38,64 @@ public class Adapters {
 
   public static abstract class EndpointAdapter {
     private final RankEndpointProxy rankEndpointProxy;
+    private final RankApiStore rankApiStore;
 
-    public EndpointAdapter(RankEndpointProxy proxy) {
+    public EndpointAdapter(RankEndpointProxy proxy, RankApiStore rankApiStore) {
       this.rankEndpointProxy = proxy;
+      this.rankApiStore = rankApiStore;
     }
 
-    public void getAccessibleRanksAsync(Consumer<PublicRank[]> onLoad, @Nullable Consumer<Throwable> onError) {
+    public final void getAccessibleRanksAsync(Consumer<PublicRank[]> onLoad, @Nullable Consumer<Throwable> onError) {
       this.rankEndpointProxy.getAccessibleRanksAsync(r -> onLoad.accept(r.accessibleRanks), onError);
     }
 
-    public abstract void getRanksAsync(int userId, Consumer<PublicUserRank[]> onLoad, @Nullable Consumer<Throwable> onError);
-    public abstract void createRank(int userId, RankName rank, @Nullable String createMessage, @Nullable Integer durationSeconds, Consumer<RankResult> onResult, Consumer<Throwable> onError);
-    public abstract void revokeRank(int userId, RankName rank, @Nullable String revokeMessage, Consumer<RankResult> onResult, Consumer<Throwable> onError);
+    // I don't quite know why we are invalidating the store everywhere
+    public final void getRanks(int userId, Consumer<List<PublicUserRank>> onLoad, @Nullable Consumer<Throwable> onError) {
+      this._getRanks(
+          userId,
+          ranks -> {
+            this.rankApiStore.invalidateUserRanks(userId);
+            onLoad.accept(ranks);
+          }, error -> {
+            this.rankApiStore.invalidateUserRanks(userId);
+            onError.accept(error);
+          });
+    }
+
+    public final void createRank(int userId, RankName rank, @Nullable String createMessage, @Nullable Integer durationSeconds, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
+      this._createRank(
+          userId,
+          rank,
+          createMessage,
+          durationSeconds,
+          result -> {
+            this.rankApiStore.invalidateUserRanks(userId);
+            onResult.accept(result);
+          }, error -> {
+            this.rankApiStore.invalidateUserRanks(userId);
+            onError.accept(error);
+          }
+      );
+    }
+
+    public void revokeRank(int userId, RankName rank, @Nullable String revokeMessage, Consumer<RankResult> onResult, Consumer<Throwable> onError) {
+      this._revokeRank(
+          userId,
+          rank,
+          revokeMessage,
+          result -> {
+            this.rankApiStore.invalidateUserRanks(userId);
+            onResult.accept(result);
+          }, error -> {
+            this.rankApiStore.invalidateUserRanks(userId);
+            onError.accept(error);
+          }
+      );
+    }
+
+    protected abstract void _getRanks(int userId, Consumer<List<PublicUserRank>> onLoad, @Nullable Consumer<Throwable> onError);
+    protected abstract void _createRank(int userId, RankName rank, @Nullable String createMessage, @Nullable Integer durationSeconds, Consumer<RankResult> onResult, Consumer<Throwable> onError);
+    protected abstract void _revokeRank(int userId, RankName rank, @Nullable String revokeMessage, Consumer<RankResult> onResult, Consumer<Throwable> onError);
 
     public static class RankResult {
       public final @Nullable PublicUserRank rank;
