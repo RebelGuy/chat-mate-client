@@ -1,10 +1,13 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedDim;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
@@ -23,7 +26,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
   private final static long ANIMATION_DURATION = 300;
   private final static Function<Float, Float> EASING_FUNCTION = frac -> 1 - (float)Math.pow(1 - frac, 5);
 
-  private final ScrollbarElement scrollbarElement;
+  public final ScrollbarElement scrollbarElement;
   private @Nullable IElement childElement;
   private @Nullable Dim maxHeight;
   private ScrollBarLayout scrollBarLayout;
@@ -35,6 +38,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
     // super.setBorder(new RectExtension(ZERO, gui(4), ZERO, ZERO)); // todo: only set border when the scrollbar is visible
     this.scrollbarElement = new ScrollbarElement(context, this)
         .setVisible(false)
+        .setMargin(new RectExtension(gui(1), ZERO, ZERO, ZERO))
         .cast();
     this.childElement = null;
     this.maxHeight = null;
@@ -92,35 +96,8 @@ public class ScrollingElement extends SingleElement { // use a single element be
   }
 
   @Override
-  public void onMouseDown(IEvent<MouseEventData.In> e) {
-    DimPoint position = e.getData().mousePositionData.point;
-    if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
-
-      e.stopPropagation();
-    }
-  }
-
-  @Override
-  public void onMouseMove(IEvent<MouseEventData.In> e) {
-    DimPoint position = e.getData().mousePositionData.point;
-    if (e.getData().mouseButtonData.pressedButtons.contains(MouseButton.LEFT_BUTTON)) {
-
-      e.stopPropagation();
-    }
-  }
-
-  @Override
-  public void onMouseUp(IEvent<MouseEventData.In> e) {
-    DimPoint position = e.getData().mousePositionData.point;
-    if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
-
-      e.stopPropagation();
-    }
-  }
-
-  @Override
   public void onMouseScroll(IEvent<MouseEventData.In> e) {
-    if (this.scrollingPosition == null) {
+    if (this.scrollingPosition == null || this.scrollbarElement.isDragging()) {
       return;
     }
 
@@ -217,23 +194,85 @@ public class ScrollingElement extends SingleElement { // use a single element be
 //    OVERLAY
   }
 
-  private class ScrollbarElement extends SingleElement {
+  private class ScrollbarElement extends SingleElement implements IDropElementListener {
     private final Dim width;
     private final Dim minBarHeight;
+
+    private @Nullable DropElement dropElement;
+    private @Nullable DimPoint dragPositionStart;
+    private @Nullable Dim scrollingPositionStart;
 
     public ScrollbarElement(InteractiveContext context, IElement parent) {
       super(context, parent);
 
       this.width = gui(2);
       this.minBarHeight = gui(6);
+
+      this.dropElement = null;
+      this.dragPositionStart = null;
+      this.scrollingPositionStart = null;
     }
 
-    // todo: implement scrollbar dragging
+    public boolean isDragging() {
+      return this.dropElement != null;
+    }
+
     // todo: while dragging the scrollbar, disable mouse events
+
+    /** Returns the draggable rect of the scroll region. */
+    private DimRect getBarRect() {
+      Dim totalHeight = ScrollingElement.this.childElement.getBox().getHeight();
+      Dim visibleHeight = ScrollingElement.this.maxHeight;
+      float ratioVisible = visibleHeight.over(totalHeight);
+      DimRect contentRect = super.getContentBox();
+      Dim barHeight = Dim.max(this.minBarHeight, contentRect.getHeight().times(ratioVisible));
+
+      Dim scrollingPosition = ScrollingElement.this.scrollingPosition.get(); // in child space
+      Dim maxScrollingPosition = ScrollingElement.this.getMaxScrollingPosition();
+      float scrollingRatio = scrollingPosition.over(maxScrollingPosition);
+      Dim barY = contentRect.getHeight().minus(barHeight).times(scrollingRatio); // in scrollbar space
+
+      return new DimRect(contentRect.getX(), contentRect.getY().plus(barY), this.width, barHeight);
+    }
+
+    @Override
+    public void onMouseDown(IEvent<MouseEventData.In> e) {
+      DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
+      if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.getBarRect().checkCollision(position)) {
+        this.dragPositionStart = position;
+        this.dropElement = new DropElement(super.context, this, true, this);
+        this.scrollingPositionStart = ScrollingElement.this.scrollingPosition.getTarget();
+        super.onInvalidateSize();
+        e.stopPropagation();
+      }
+    }
+
+    @Override
+    public void onDrag(DimPoint position) {
+      AnimatedDim scrollingPosition = ScrollingElement.this.scrollingPosition;
+      Dim maxScrollingPosition = ScrollingElement.this.getMaxScrollingPosition();
+
+      Dim deltaMouse = position.getY().minus(this.dragPositionStart.getY());
+      float deltaRatio = deltaMouse.over(super.getContentBox().getHeight());
+      Dim deltaContent = ScrollingElement.this.childElement.getBox().getHeight().times(deltaRatio);
+      Dim newTarget = Dim.clamp(this.scrollingPositionStart.plus(deltaContent), ZERO, maxScrollingPosition);
+      Dim currentTarget = scrollingPosition.getTarget();
+
+      scrollingPosition.translate(newTarget.minus(currentTarget));
+      super.onInvalidateSize();
+    }
+
+    @Override
+    public void onDrop(DimPoint position) {
+      this.dragPositionStart = null;
+      this.dropElement = null;
+      this.scrollingPositionStart = null;
+      super.onInvalidateSize();
+    }
 
     @Override
     public @Nullable List<IElement> getChildren() {
-      return null;
+      return this.dropElement == null ? null : Collections.list(this.dropElement);
     }
 
     @Override
@@ -246,25 +285,31 @@ public class ScrollingElement extends SingleElement { // use a single element be
     }
 
     @Override
+    public void setBox(DimRect box) {
+      super.setBox(box);
+
+      if (this.dropElement != null) {
+        this.dropElement.setBox(box);
+      }
+    }
+
+    @Override
     protected void renderElement() {
-      // no need to null-check anything here - the bar is hidden if scrolling is disabled
-      Dim totalHeight = ScrollingElement.this.childElement.getBox().getHeight();
-      Dim visibleHeight = ScrollingElement.this.maxHeight;
-      float ratioVisible = visibleHeight.over(totalHeight);
-      DimRect contentRect = super.getContentBox();
-      Dim barHeight = Dim.max(this.minBarHeight, contentRect.getHeight().times(ratioVisible));
-
-      Dim scrollingPosition = ScrollingElement.this.scrollingPosition.get(); // in child space
-      Dim maxScrollingPosition = ScrollingElement.this.getMaxScrollingPosition();
-      float scrollingRatio = scrollingPosition.over(maxScrollingPosition);
-      Dim barY = contentRect.getHeight().minus(barHeight).times(scrollingRatio); // in scrollbar space
-
-      DimRect bar =  new DimRect(contentRect.getX(), contentRect.getY().plus(barY), this.width, barHeight);
+      DimRect bar = this.getBarRect();
       Dim cornerRadius = gui(1);
+
+      Colour colour;
+      if (this.isDragging()) {
+        colour = Colour.GREY33;
+      } else if (this.getBarRect().checkCollision(super.context.mouseEventService.getCurrentPosition().point)) {
+        colour = Colour.GREY50;
+      } else {
+        colour = Colour.GREY67;
+      }
 
       // since this is a child of the ScrollingElement, it is rendered outside the scissor region
       RendererHelpers.withoutScissor(() -> {
-        RendererHelpers.drawRect(this.getEffectiveZIndex(), bar, Colour.GREY50, null, null, cornerRadius);
+        RendererHelpers.drawRect(this.getEffectiveZIndex(), bar, colour, null, null, cornerRadius);
       });
     }
   }

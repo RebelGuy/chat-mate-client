@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DropElement.IDropElementListener;
+import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.hud.Colour;
@@ -115,8 +115,9 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.canDrag) {
       this.lastDraggingPosition = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
-      this.dropElement = new DropElement(super.context, this, this);
+      this.dropElement = new DropElement(super.context, this, true, this);
       super.onInvalidateSize();
+      e.stopPropagation();
     }
   }
 
@@ -175,12 +176,13 @@ public abstract class HudElement extends ElementBase implements IDropElementList
         this.onRescaleContent(super.getBox(), oldScale, newScale);
       }
       super.onInvalidateSize();
+      e.stopPropagation();
     }
   }
 
   @Override
   public final void renderElement() {
-    if (super.isHovering() && (this.canScale || this.canDrag)) {
+    if (this.lastDraggingPosition != null || super.isHovering() && (this.canScale || this.canDrag)) {
       float alpha = this.lastDraggingPosition == null ? 0.1f : 0.2f;
       RendererHelpers.drawRect(0, super.getBox(), Colour.BLACK.withAlpha(alpha));
     }
