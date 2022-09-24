@@ -12,6 +12,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.StatusService.SimpleStatus;
 import dev.rebel.chatmate.services.events.ServerLogEventService;
@@ -94,8 +95,11 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
 
       super.setImage(Asset.STATUS_INDICATOR_RED);
 
-      config.getSeparatePlatforms().onChange(this::updateVisibility);
-      this.updateVisibility(config.getSeparatePlatforms().get());
+      StatefulEmitter<Boolean> showIndicators = config.getShowStatusIndicatorEmitter();
+      StatefulEmitter<Boolean> separatePlatforms = config.getSeparatePlatforms();
+      showIndicators.onChange(x -> this.updateVisibility(x, separatePlatforms.get()));
+      separatePlatforms.onChange(x -> this.updateVisibility(showIndicators.get(), x));
+      this.updateVisibility(showIndicators.get(), separatePlatforms.get());
 
       this.serverLogEvents = new AnimatedEvent<>(SERVER_LOG_ANIMATION_DURATION);
 
@@ -105,9 +109,11 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
       this.setScale(1);
     }
 
-    private void updateVisibility(boolean identifyPlatforms) {
-      if (!this.isMainIndicator) {
-        super.setVisible(identifyPlatforms);
+    private void updateVisibility(boolean indicatorsEnabled, boolean identifyPlatforms) {
+      if (this.isMainIndicator) {
+        super.setVisible(indicatorsEnabled);
+      } else {
+        super.setVisible(indicatorsEnabled && identifyPlatforms);
       }
     }
 
@@ -143,7 +149,7 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
       Texture texture = this.statusTextures.get(status);
       super.setImage(texture);
 
-      if (this.config.getShowServerLogsHeartbeat().get()) {
+      if (this.config.getShowServerLogsHeartbeat().get() && this.isMainIndicator) {
         for (Tuple<Texture, Float> logEvent : this.serverLogEvents.getAllFracs()) {
           Texture logTexture = logEvent.getFirst();
           float scale = logEvent.getSecond() * SERVER_LOG_ANIMATION_MAX_SCALE * super.scale;

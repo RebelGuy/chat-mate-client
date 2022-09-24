@@ -14,6 +14,7 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.services.StatusService;
 
 import javax.annotation.Nullable;
@@ -77,13 +78,18 @@ public class LiveViewersHudElement extends SimpleHudElementWrapper<BlockElement>
 
       this.indicatorFont = new Font().withShadow(new Shadow(context.dimFactory));
 
-      config.getSeparatePlatforms().onChange(this::updateVisibility);
-      this.updateVisibility(config.getSeparatePlatforms().get());
+      StatefulEmitter<Boolean> showViewerCount = config.getShowLiveViewersEmitter();
+      StatefulEmitter<Boolean> separatePlatforms = config.getSeparatePlatforms();
+      showViewerCount.onChange(x -> this.updateVisibility(x, separatePlatforms.get()));
+      separatePlatforms.onChange(x -> this.updateVisibility(showViewerCount.get(), x));
+      this.updateVisibility(showViewerCount.get(), separatePlatforms.get());
     }
 
-    private void updateVisibility(boolean identifyPlatforms) {
-      if (!this.isMainElement) {
-        super.setVisible(identifyPlatforms);
+    private void updateVisibility(boolean showViewerCount, boolean identifyPlatforms) {
+      if (this.isMainElement) {
+        super.setVisible(showViewerCount);
+      } else {
+        super.setVisible(showViewerCount && identifyPlatforms);
       }
     }
 

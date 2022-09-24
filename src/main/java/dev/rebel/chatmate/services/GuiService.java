@@ -145,6 +145,10 @@ public class GuiService {
   }
 
   public void displayDashboard(@Nullable DashboardRoute route) {
+    this.minecraft.displayGuiScreen(this.createDashboardScreen(route));
+  }
+
+  private InteractiveScreen createDashboardScreen(@Nullable DashboardRoute route) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.DASHBOARD);
     screen.setMainElement(new ChatMateDashboardElement(
@@ -158,7 +162,7 @@ public class GuiService {
         this.messageService,
         this.config)
     );
-    this.minecraft.displayGuiScreen(screen);
+    return screen;
   }
 
   private void addEventHandlers() {
