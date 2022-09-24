@@ -118,7 +118,7 @@ public class SidebarElement extends ContainerElement {
     }
 
     private void setSelected(boolean selected) {
-      this.label.setColour(selected ? Colour.WHITE : Colour.GREY);
+      this.label.setColour(selected ? Colour.WHITE : Colour.GREY50);
       this.horizontalDivider.setVisible(selected);
     }
 
@@ -147,7 +147,7 @@ public class SidebarElement extends ContainerElement {
       float hoveringFrac = this.isHovering.getFrac();
       if (hoveringFrac > 0) {
         DimRect rect = super.getCollisionBox();
-        Colour colour = Colour.lerp(Colour.GREY.withAlpha(0), Colour.GREY.withAlpha(0.4f), hoveringFrac);
+        Colour colour = Colour.lerp(Colour.GREY50.withAlpha(0), Colour.GREY50.withAlpha(0.4f), hoveringFrac);
         Dim cornerRadius = screen(2);
 
         RendererHelpers.drawRect(0, rect, colour, null, null, cornerRadius);

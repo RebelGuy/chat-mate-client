@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.models;
 
+import java.util.Objects;
+
 public class DimRect {
   private final Dim x;
   private final Dim y;
@@ -138,5 +140,18 @@ public class DimRect {
   @Override
   public String toString() {
     return String.format("{%s, %s}", this.getPosition().toString(), this.getSize().toString());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    DimRect dimRect = (DimRect) o;
+    return x.equals(dimRect.x) && y.equals(dimRect.y) && width.equals(dimRect.width) && height.equals(dimRect.height);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(x, y, width, height);
   }
 }

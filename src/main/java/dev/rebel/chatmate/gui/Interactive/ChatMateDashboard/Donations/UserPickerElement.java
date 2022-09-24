@@ -9,7 +9,6 @@ import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.models.Styles;
 import dev.rebel.chatmate.models.api.user.SearchUserRequest;
 import dev.rebel.chatmate.models.api.user.SearchUserResponse.SearchUserResponseData;
@@ -170,7 +169,7 @@ public class UserPickerElement extends ContainerElement {
             .setOverflow(TextOverflow.SPLIT)
             .setFontScale(0.5f)
             .setOnClick(() -> this.onSelection(userNames.user))
-            .setColour(Colour.GREY)
+            .setColour(Colour.GREY50)
             .setPadding(new RectExtension(gui(1), gui(1), ZERO, gui(1)))
             .setSizingMode(SizingMode.FILL)
             .cast();
