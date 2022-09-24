@@ -73,7 +73,7 @@ public class McChatService {
 
     this.chatMateEventService.onLevelUp(this::onLevelUp, null);
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower, null);
-    this.config.getIdentifyPlatforms().onChange(_value -> this.minecraftProxyService.refreshChat());
+    this.config.getSeparatePlatforms().onChange(_value -> this.minecraftProxyService.refreshChat());
 
     chatMateChatService.onNewChat(newChat -> {
       for (PublicChatItem chat: newChat) {

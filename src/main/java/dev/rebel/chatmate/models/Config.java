@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.models.Config.ConfigType;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.EventHandler;
@@ -54,8 +53,8 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Boolean> showServerLogsTimeSeries;
   public StatefulEmitter<Boolean> getShowServerLogsTimeSeries() { return this.showServerLogsTimeSeries; }
 
-  private final StatefulEmitter<Boolean> identifyPlatforms;
-  public StatefulEmitter<Boolean> getIdentifyPlatforms() { return this.identifyPlatforms; }
+  private final StatefulEmitter<Boolean> separatePlatforms;
+  public StatefulEmitter<Boolean> getSeparatePlatforms() { return this.separatePlatforms; }
 
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
@@ -76,7 +75,7 @@ public class Config extends EventServiceBase<ConfigType> {
     this.showLiveViewers = new StatefulEmitter<>(ConfigType.SHOW_LIVE_VIEWERS, true, this::onUpdate);
     this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, true, this::onUpdate);
     this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, false, this::onUpdate);
-    this.identifyPlatforms = new StatefulEmitter<>(ConfigType.IDENTIFY_PLATFORMS, false, this::onUpdate);
+    this.separatePlatforms = new StatefulEmitter<>(ConfigType.IDENTIFY_PLATFORMS, false, this::onUpdate);
 
     this.weakHandlers = new WeakHashMap<>();
     for (ConfigType type : ConfigType.class.getEnumConstants()) {
@@ -105,7 +104,7 @@ public class Config extends EventServiceBase<ConfigType> {
       this.showLiveViewers.set(loaded.showLiveViewers);
       this.showServerLogsHeartbeat.set(loaded.showServerLogsHeartbeat);
       this.showServerLogsTimeSeries.set(loaded.showServerLogsTimeSeries);
-      this.identifyPlatforms.set(loaded.identifyPlatforms);
+      this.separatePlatforms.set(loaded.identifyPlatforms);
       this.save();
     }
   }
@@ -119,7 +118,7 @@ public class Config extends EventServiceBase<ConfigType> {
       this.showLiveViewers.get(),
       this.showServerLogsHeartbeat.get(),
       this.showServerLogsTimeSeries.get(),
-      this.identifyPlatforms.get()
+      this.separatePlatforms.get()
     );
     this.configPersistorService.save(serialisedConfig);
   }

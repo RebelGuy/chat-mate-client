@@ -147,7 +147,17 @@ public class GuiService {
   public void displayDashboard(@Nullable DashboardRoute route) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.DASHBOARD);
-    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.statusService, this.apiRequestService, this.userEndpointProxy, this.messageService));
+    screen.setMainElement(new ChatMateDashboardElement(
+        context,
+        screen,
+        route,
+        this.chatMateEndpointProxy,
+        this.statusService,
+        this.apiRequestService,
+        this.userEndpointProxy,
+        this.messageService,
+        this.config)
+    );
     this.minecraft.displayGuiScreen(screen);
   }
 

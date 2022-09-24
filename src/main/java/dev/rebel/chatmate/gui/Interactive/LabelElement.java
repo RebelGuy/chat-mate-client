@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -12,10 +13,12 @@ import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TextHelpers;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 
 public class LabelElement extends SingleElement {
   private String text;
@@ -47,8 +50,10 @@ public class LabelElement extends SingleElement {
   }
 
   public LabelElement setText(String text) {
-    this.text = text;
-    this.onInvalidateSize();
+    if (!Objects.equals(this.text, text)) {
+      this.text = text;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -203,7 +208,18 @@ public class LabelElement extends SingleElement {
     Font font = super.isHovering() && this.hoverFont != null ? this.hoverFont : this.font;
     Dim fontHeight = fontEngine.FONT_HEIGHT_DIM.times(this.fontScale);
     DimRect box = this.getContentBox();
-    Dim y = this.getContentBox().getY();
+    Dim availableHeight = box.getHeight();
+    Dim totalHeight = super.getContentBoxHeight(super.lastCalculatedSize.getY());
+    Dim y;
+    if (super.getVerticalAlignment() == VerticalAlignment.TOP) {
+      y = box.getY();
+    } else if (super.getVerticalAlignment() == VerticalAlignment.MIDDLE) {
+      y = box.getY().plus(availableHeight.minus(totalHeight).over(2));
+    } else if (super.getVerticalAlignment() == VerticalAlignment.BOTTOM) {
+      y = box.getY().plus(availableHeight.minus(totalHeight));
+    } else {
+      throw EnumHelpers.<VerticalAlignment>assertUnreachable(super.getVerticalAlignment());
+    }
 
     for (String line : this.lines) {
       Dim width = fontEngine.getStringWidthDim(line, font).times(this.fontScale); // todo: simplify scaling by creating a FontRender wrapper with extra options

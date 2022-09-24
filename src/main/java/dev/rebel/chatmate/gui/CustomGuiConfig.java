@@ -71,7 +71,7 @@ public class CustomGuiConfig extends GuiConfig {
     CheckBoxLayout serverLogsTimeSeriesCheckbox = new CheckBoxLayout(this::onToggleServerLogsTimeSeries, config.getShowServerLogsTimeSeries()::get);
 
     LabelLayout identifyPlatformsLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Separate Youtube and Twitch", Color.WHITE);
-    CheckBoxLayout identifyPlatformsCheckbox = new CheckBoxLayout(this::onToggleIdentifyPlatforms, config.getIdentifyPlatforms()::get);
+    CheckBoxLayout identifyPlatformsCheckbox = new CheckBoxLayout(this::onToggleIdentifyPlatforms, config.getSeparatePlatforms()::get);
 
     LabelLayout chatOffsetLabel = new LabelLayout(this.fontEngineProxy, new String[] { "0%", "100%" }, () -> "Chat Height Offset", Color.WHITE);
     SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacementEmitter()::get);
@@ -163,7 +163,7 @@ public class CustomGuiConfig extends GuiConfig {
   }
 
   private void onToggleIdentifyPlatforms(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getIdentifyPlatforms().set(checkBoxActionCheckedData.checked);
+    this.config.getSeparatePlatforms().set(checkBoxActionCheckedData.checked);
   }
 
   private void onChangeChatOffset(SliderActionValueChangedData sliderActionChangeData) {

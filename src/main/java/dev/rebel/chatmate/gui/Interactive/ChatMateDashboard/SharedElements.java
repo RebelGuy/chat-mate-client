@@ -22,7 +22,7 @@ public class SharedElements {
 
   /** Light-themed checkbox. */
   public static ElementFactory<CheckboxInputElement> CHECKBOX_LIGHT = (context, parent) -> new CheckboxInputElement(context, parent)
-      .setCheckboxBorderColour(Colour.WHITE)
+      .setCheckboxBorderColour(Colour.GREY75)
       .setSizingMode(SizingMode.FILL)
       .setMargin(new Layout.RectExtension(context.dimFactory.fromGui(0), context.dimFactory.fromGui(2)))
       .cast();

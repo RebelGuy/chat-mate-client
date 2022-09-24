@@ -54,7 +54,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.reel2 = new DigitReel(minecraft, dimFactory, fontEngine);
 
     this.config.getShowLiveViewersEmitter().onChange(this._onShowLiveViewers, this);
-    this.config.getIdentifyPlatforms().onChange(this._onIdentifyPlatforms, this);
+    this.config.getSeparatePlatforms().onChange(this._onIdentifyPlatforms, this);
   }
 
   @Override
@@ -77,7 +77,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   private Anchor getAnchor() {
     // resizing in the centre feels weird when identityPlatforms is enabled
-    return this.config.getIdentifyPlatforms().get() ? Anchor.TOP_LEFT : Anchor.LEFT_CENTRE;
+    return this.config.getSeparatePlatforms().get() ? Anchor.TOP_LEFT : Anchor.LEFT_CENTRE;
   }
 
   @Override
@@ -96,7 +96,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     // we have to update this constantly because of dynamic content
     // this.onResize(this.getTextWidth().times(this.scale), this.getUnscaledHeight().times(this.scale), this.getAnchor());
 
-    if (this.config.getIdentifyPlatforms().get()) {
+    if (this.config.getSeparatePlatforms().get()) {
       this.renderViewerCount(this.reel1, this.dimFactory.zeroGui(), this.statusService.getYoutubeLiveViewerCount());
       this.renderViewerCount(this.reel2, this.dimFactory.fromGui(IDENTIFIED_Y_OFFSET_GUI * this.scale), this.statusService.getTwitchLiveViewerCount());
     } else {
@@ -148,7 +148,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   private Dim getTextWidth() {
     String text1, text2;
-    if (this.config.getIdentifyPlatforms().get()) {
+    if (this.config.getSeparatePlatforms().get()) {
       text1 = this.getText(this.statusService.getYoutubeLiveViewerCount());
       text2 = this.getText(this.statusService.getTwitchLiveViewerCount());
     } else {
@@ -172,7 +172,7 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   private Dim getUnscaledHeight() {
     Dim textHeight = this.getTextHeight();
-    if (this.config.getIdentifyPlatforms().get()) {
+    if (this.config.getSeparatePlatforms().get()) {
       return textHeight.plus(this.dimFactory.fromGui(IDENTIFIED_Y_OFFSET_GUI));
     } else {
       return textHeight;

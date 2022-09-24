@@ -34,6 +34,6 @@ public class DashboardStore {
   }
 
   public enum SettingsPage {
-    GENERAL, HUD, DONATION
+    GENERAL, HUD, CHAT, DONATION
   }
 }

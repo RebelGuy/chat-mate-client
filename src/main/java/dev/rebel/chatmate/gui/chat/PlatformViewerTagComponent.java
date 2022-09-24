@@ -29,8 +29,8 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
   public PlatformViewerTagComponent(DimFactory dimFactory, Config config, ChatPlatform platform) {
     this.dimFactory = dimFactory;
     this.platform = platform;
-    this.setComponent(config.getIdentifyPlatforms().get());
-    config.getIdentifyPlatforms().onChange(this._onChangeIdentifyPlatforms, this);
+    this.setComponent(config.getSeparatePlatforms().get());
+    config.getSeparatePlatforms().onChange(this._onChangeIdentifyPlatforms, this);
   }
 
   private void setComponent(boolean identifyPlatforms) {

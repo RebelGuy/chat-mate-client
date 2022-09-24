@@ -66,12 +66,14 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     this.unlinkedDonationsCheckbox = SharedElements.CHECKBOX_LIGHT.create(context, this)
         .setChecked(true)
         .onCheckedChanged(this::onFilterChanged)
-        .setLabel("Show only unlinked donations");
+        .setLabel("Show only unlinked donations")
+        .setScale(0.75f);
     boolean isActiveLivestream = statusService.getLivestreamStatus() != null && statusService.getLivestreamStatus().livestream.status == LivestreamStatus.Live;
     this.currentLivestreamCheckbox = SharedElements.CHECKBOX_LIGHT.create(context, this)
         .setChecked(isActiveLivestream)
         .onCheckedChanged(this::onFilterChanged)
         .setLabel("Show only donations from the current livestream")
+        .setScale(0.75f)
         .setEnabled(this, isActiveLivestream)
         .setMargin(new RectExtension(ZERO, ZERO, gui(2), gui(8)))
         .cast();

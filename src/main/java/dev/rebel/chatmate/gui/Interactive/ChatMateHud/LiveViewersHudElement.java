@@ -77,8 +77,8 @@ public class LiveViewersHudElement extends SimpleHudElementWrapper<BlockElement>
 
       this.indicatorFont = new Font().withShadow(new Shadow(context.dimFactory));
 
-      config.getIdentifyPlatforms().onChange(this::updateVisibility);
-      this.updateVisibility(config.getIdentifyPlatforms().get());
+      config.getSeparatePlatforms().onChange(this::updateVisibility);
+      this.updateVisibility(config.getSeparatePlatforms().get());
     }
 
     private void updateVisibility(boolean identifyPlatforms) {
@@ -88,7 +88,7 @@ public class LiveViewersHudElement extends SimpleHudElementWrapper<BlockElement>
     }
 
     private @Nullable Integer getViewerCount() {
-      if (this.config.getIdentifyPlatforms().get()) {
+      if (this.config.getSeparatePlatforms().get()) {
         if (this.isMainElement) {
           return this.statusService.getYoutubeLiveViewerCount();
         } else {

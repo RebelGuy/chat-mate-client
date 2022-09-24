@@ -26,7 +26,7 @@ public class ViewerTagComponentTests {
 
   @Before
   public void Setup() {
-    when(mockConfig.getIdentifyPlatforms()).thenReturn(this.identifyPlatforms);
+    when(mockConfig.getSeparatePlatforms()).thenReturn(this.identifyPlatforms);
   }
 
   @Test

@@ -94,8 +94,8 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
 
       super.setImage(Asset.STATUS_INDICATOR_RED);
 
-      config.getIdentifyPlatforms().onChange(this::updateVisibility);
-      this.updateVisibility(config.getIdentifyPlatforms().get());
+      config.getSeparatePlatforms().onChange(this::updateVisibility);
+      this.updateVisibility(config.getSeparatePlatforms().get());
 
       this.serverLogEvents = new AnimatedEvent<>(SERVER_LOG_ANIMATION_DURATION);
 
@@ -130,7 +130,7 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
     @Override
     protected void renderElement() {
       SimpleStatus status;
-      if (this.config.getIdentifyPlatforms().get()) {
+      if (this.config.getSeparatePlatforms().get()) {
         if (this.isMainIndicator) {
           status = this.statusService.getYoutubeSimpleStatus();
         } else {

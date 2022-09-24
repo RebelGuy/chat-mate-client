@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Chat.ChatSectionElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.ChatRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.DonationRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.GeneralRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
@@ -17,6 +19,7 @@ import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
 import dev.rebel.chatmate.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.proxy.UserEndpointProxy;
@@ -39,6 +42,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final static List<Tuple2<SettingsPage, String>> pageNames = new ArrayList<Tuple2<SettingsPage, String>>() {{
     add(new Tuple2<>(SettingsPage.GENERAL, "General"));
     add(new Tuple2<>(SettingsPage.HUD, "HUD"));
+    add(new Tuple2<>(SettingsPage.CHAT, "Chat"));
     add(new Tuple2<>(SettingsPage.DONATION, "Donations"));
   }};
 
@@ -50,6 +54,7 @@ public class ChatMateDashboardElement extends ContainerElement {
 
   private final GeneralSectionElement generalSection;
   private final HudSectionElement hudSection;
+  private final ChatSectionElement chatSection;
   private final DonationsSectionElement donationSection;
 
   private final SidebarElement sidebar;
@@ -63,7 +68,8 @@ public class ChatMateDashboardElement extends ContainerElement {
                                   StatusService statusService,
                                   ApiRequestService apiRequestService,
                                   UserEndpointProxy userEndpointProxy,
-                                  MessageService messageService) {
+                                  MessageService messageService,
+                                  Config config) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
@@ -76,8 +82,9 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.backgroundFadeIn = new AnimatedBool(500L, false);
     this.backgroundFadeIn.set(true);
 
-    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy);
-    this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route));
+    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy, config);
+    this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config);
+    this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
@@ -104,6 +111,9 @@ public class ChatMateDashboardElement extends ContainerElement {
         break;
       case HUD:
         newElement = this.hudSection;
+        break;
+      case CHAT:
+        newElement = this.chatSection;
         break;
       case DONATION:
         newElement = this.donationSection;
