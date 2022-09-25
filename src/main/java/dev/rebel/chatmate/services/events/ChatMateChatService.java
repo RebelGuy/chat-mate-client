@@ -33,7 +33,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
   }
 
   public void onNewChat(Consumer<PublicChatItem[]> callback, Object key) {
-    // todo: lambdas are forbidden..
+    // todo: lambdas are forbidden... will have to deal with it in a similar way to the config subscriptions
     Function<NewChatEventData.In, NewChatEventData.Out> handler = newChat -> {
       callback.accept(newChat.chatItems);
       return new NewChatEventData.Out();

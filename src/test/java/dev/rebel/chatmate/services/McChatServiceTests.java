@@ -20,6 +20,7 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateChatService;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
 import dev.rebel.chatmate.services.events.MinecraftChatEventService;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import net.minecraft.util.ChatComponentText;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,9 +28,11 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -52,7 +55,7 @@ public class McChatServiceTests {
   @Mock MinecraftChatEventService mockMinecraftChatEventService;
 
   @Mock Config mockConfig;
-  @Mock StatefulEmitter<Boolean> identifyPlatforms;
+  @Mock StatefulEmitter<Boolean> mockShowChatPlatformIconEmitter;
 
   PublicUser author1 = createAuthor("Author 1");
   PublicMessagePart text1 = createText("Text 1");
@@ -71,8 +74,9 @@ public class McChatServiceTests {
       return new ContainerChatComponent(new ChatComponentText(user.userInfo.channelName), user);
     });
 
-    when(this.mockConfig.getSeparatePlatforms()).thenReturn(this.identifyPlatforms);
-    when(this.identifyPlatforms.get()).thenReturn(false);
+    // this is for the ViewerTagComponent
+    when(this.mockConfig.getShowChatPlatformIconEmitter()).thenReturn(this.mockShowChatPlatformIconEmitter);
+
     when(this.mockMessageService.getRankComponent(any())).thenReturn(new ChatComponentText("VIEWER"));
   }
 
@@ -175,7 +179,7 @@ public class McChatServiceTests {
     // since we are dealing with a void method, the only way to retrieve the input is
     // using an ArgumentCaptor and verify()
     ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
-    verify(this.identifyPlatforms).onChange(captor.capture());
+    verify(this.mockShowChatPlatformIconEmitter).onChange(captor.capture());
 
     // notify the subscriber that the value has changed to true
     captor.getValue().accept(true);

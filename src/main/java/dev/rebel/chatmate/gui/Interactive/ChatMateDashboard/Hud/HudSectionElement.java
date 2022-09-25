@@ -4,19 +4,21 @@ import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.CHECKBOX_LIGHT;
 
 public class HudSectionElement extends ContainerElement implements ISectionElement {
-  List<InputElement> hudDependentElements = new ArrayList<>();
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeHudEnabled = this::onChangeHudEnabled;
+  private final List<InputElement> hudDependentElements = new ArrayList<>();
 
   public HudSectionElement(InteractiveContext context, IElement parent, @Nullable HudRoute route, Config config) {
     super(context, parent, LayoutMode.BLOCK);
@@ -53,8 +55,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
 
     this.hudDependentElements.forEach(super::addElement);
 
-    config.getHudEnabledEmitter().onChange(this::onHudEnabledChanged, this);
-    this.onHudEnabledChanged(config.getHudEnabledEmitter().get());
+    config.getHudEnabledEmitter().onChange(this::onChangeHudEnabled, this, true);
   }
 
   public void onShow() {
@@ -65,8 +66,9 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
 
   }
 
-  private void onHudEnabledChanged(boolean enabled) {
+  private ConfigEventData.Out<Boolean> onChangeHudEnabled(ConfigEventData.In<Boolean> in) {
+    boolean enabled = in.data;
     this.hudDependentElements.forEach(el -> el.setEnabled(this, enabled));
+    return new ConfigEventData.Out<>();
   }
-
 }

@@ -4,6 +4,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem.ChatPlatform;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,9 +13,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.function.Consumer;
+import java.util.function.Function;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,51 +23,53 @@ import static org.mockito.Mockito.when;
 public class ViewerTagComponentTests {
   @Mock DimFactory mockDimFactory;
   @Mock Config mockConfig;
-  @Mock StatefulEmitter<Boolean> identifyPlatforms;
+  @Mock StatefulEmitter<Boolean> showChatPlatformIconEmitter;
 
   @Before
   public void Setup() {
-    when(mockConfig.getSeparatePlatforms()).thenReturn(this.identifyPlatforms);
+    when(this.mockConfig.getShowChatPlatformIconEmitter()).thenReturn(this.showChatPlatformIconEmitter);
   }
 
   @Test
   public void identifyPlatformsChanged_rendersImage_onYoutubePlatform() {
-    // initial test
-    when(this.identifyPlatforms.get()).thenReturn(false);
-
     PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Youtube);
+
+    // initially false
+    ArgumentCaptor<Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>>> captor = ArgumentCaptor.forClass(Function.class);
+    verify(this.showChatPlatformIconEmitter).onChange(captor.capture(), any(Object.class), eq(true));
+    captor.getValue().apply(new ConfigEventData.In<>(false));
+
     Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
 
     // change to true
-    ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
-    verify(this.identifyPlatforms).onChange(captor.capture(), any(Object.class));
-    captor.getValue().accept(true);
+    captor.getValue().apply(new ConfigEventData.In<>(true));
 
     Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
 
     // change to false
-    captor.getValue().accept(false);
+    captor.getValue().apply(new ConfigEventData.In<>(false));
 
     Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
   }
 
   @Test
   public void identifyPlatformsChanged_rendersCorrectText_onTwitchPlatform() {
-    // initial test
-    when(this.identifyPlatforms.get()).thenReturn(true);
-
     PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Twitch);
+
+    // initially true
+    ArgumentCaptor<Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>>> captor = ArgumentCaptor.forClass(Function.class);
+    verify(this.showChatPlatformIconEmitter).onChange(captor.capture(), any(Object.class), eq(true));
+    captor.getValue().apply(new ConfigEventData.In<>(true));
+
     Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
 
     // change to false
-    ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
-    verify(this.identifyPlatforms).onChange(captor.capture(), any(Object.class));
-    captor.getValue().accept(false);
+    captor.getValue().apply(new ConfigEventData.In<>(false));
 
     Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
 
     // change to true
-    captor.getValue().accept(true);
+    captor.getValue().apply(new ConfigEventData.In<>(true));
 
     Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
   }

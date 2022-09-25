@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.models.Config.ConfigType;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV3;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.EventHandler;
 import dev.rebel.chatmate.services.events.EventServiceBase;
@@ -27,8 +27,9 @@ public class Config extends EventServiceBase<ConfigType> {
   // 4. Add a new migration file in the `configMigrations` package
   // 5. Add the migration class from the previous step and the new serialised model to the arrays in `Migration.java`
   // 6. Change the type of the saved and loaded serialised config in this file
-  private final ConfigPersistorService<SerialisedConfigV2> configPersistorService;
+  private final ConfigPersistorService<SerialisedConfigV3> configPersistorService;
 
+  // NOTE: DO **NOT** REMOVE THESE GETTERS. THEY ARE DISGUSTING BUT REQUIRED FOR TESTING
   private final StatefulEmitter<Boolean> chatMateEnabled;
   public StatefulEmitter<Boolean> getChatMateEnabledEmitter() { return this.chatMateEnabled; }
 
@@ -56,13 +57,16 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Boolean> separatePlatforms;
   public StatefulEmitter<Boolean> getSeparatePlatforms() { return this.separatePlatforms; }
 
+  private final StatefulEmitter<Boolean> showChatPlatformIcon;
+  public StatefulEmitter<Boolean> getShowChatPlatformIconEmitter() { return this.showChatPlatformIcon; }
+
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
 
   /** Only used for holding onto wrapped callback functions when an onChange subscriber uses the automatic unsubscription feature. Write-only. */
   private final Map<ConfigType, WeakHashMap<Object, Function<? extends EventIn, ? extends EventOut>>> weakHandlers;
 
-  public Config(LogService logService, ConfigPersistorService configPersistorService) {
+  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV3> configPersistorService) {
     super(ConfigType.class, logService);
     this.configPersistorService = configPersistorService;
 
@@ -76,6 +80,7 @@ public class Config extends EventServiceBase<ConfigType> {
     this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, true, this::onUpdate);
     this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, false, this::onUpdate);
     this.separatePlatforms = new StatefulEmitter<>(ConfigType.IDENTIFY_PLATFORMS, false, this::onUpdate);
+    this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, true, this::onUpdate);
 
     this.weakHandlers = new WeakHashMap<>();
     for (ConfigType type : ConfigType.class.getEnumConstants()) {
@@ -95,7 +100,7 @@ public class Config extends EventServiceBase<ConfigType> {
   }
 
   private void load() {
-    SerialisedConfigV2 loaded = this.configPersistorService.load();
+    SerialisedConfigV3 loaded = this.configPersistorService.load();
     if (loaded != null) {
       this.soundEnabled.set(loaded.soundEnabled);
       this.chatVerticalDisplacement.set(loaded.chatVerticalDisplacement);
@@ -105,12 +110,13 @@ public class Config extends EventServiceBase<ConfigType> {
       this.showServerLogsHeartbeat.set(loaded.showServerLogsHeartbeat);
       this.showServerLogsTimeSeries.set(loaded.showServerLogsTimeSeries);
       this.separatePlatforms.set(loaded.identifyPlatforms);
+      this.showChatPlatformIcon.set(loaded.showChatPlatformIcon);
       this.save();
     }
   }
 
   private void save() {
-    SerialisedConfigV2 serialisedConfig = new SerialisedConfigV2(
+    SerialisedConfigV3 serialisedConfig = new SerialisedConfigV3(
       this.soundEnabled.get(),
       this.chatVerticalDisplacement.get(),
       this.hudEnabled.get(),
@@ -118,7 +124,8 @@ public class Config extends EventServiceBase<ConfigType> {
       this.showLiveViewers.get(),
       this.showServerLogsHeartbeat.get(),
       this.showServerLogsTimeSeries.get(),
-      this.separatePlatforms.get()
+      this.separatePlatforms.get(),
+      this.showChatPlatformIcon.get()
     );
     this.configPersistorService.save(serialisedConfig);
   }
@@ -136,27 +143,44 @@ public class Config extends EventServiceBase<ConfigType> {
       Arrays.asList(initialListeners).forEach(l -> Config.this.addListener(this.type, l, null));
     }
 
-    /** Lambda allowed. */
+    /** Lambda allowed - no automatic unsubscribing. */
     public void onChange(Consumer<T> callback) {
-      this.onChange(callback, null);
-    }
-
-    /** **NO LAMBDA** */
-    public void onChange(Consumer<T> callback, Object key) {
-      this.onChange(callback, new Options<>(), key);
-    }
-
-    /** Lambda allowed. */
-    public void onChange(Consumer<T> callback, @Nullable Options<T> options) {
-      this.onChange(callback, options, null);
-    }
-
-    /** **NO LAMBDA** */
-    public void onChange(Consumer<T> callback, @Nullable Options<T> options, Object key) {
-      // must hold on to a reference of the transformed callback
       Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
-      Config.this.weakHandlers.get(this.type).put(key, handler);
+      this.onChange(handler, null);
+    }
+
+    /** **NO LAMBDA** - automatic unsubscribing. */
+    public void onChange(Function<In<T>, Out<T>> handler, Object key) {
+      this.onChange(handler, key, false);
+    }
+
+    /** **NO LAMBDA** - automatic unsubscribing. */
+    public void onChange(Function<In<T>, Out<T>> handler, Object key, boolean fireInitialOnChange) {
+      this.onChange(handler, new Options<>(), key, fireInitialOnChange);
+    }
+
+    /** Lambda allowed - no automatic unsubscribing. */
+    public void onChange(Consumer<T> callback, @Nullable Options<T> options) {
+      Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
+      this.onChange(handler, options, null, false);
+    }
+
+    /** **NO LAMBDA** - automatic unsubscribing. */
+    public void onChange(Function<In<T>, Out<T>> handler, @Nullable Options<T> options, Object key, boolean fireInitialOnChange) {
       Config.this.addListener(this.type, handler, options, key);
+
+      // fireInitialOnChange is a convenience option for callers that perform logic directly inside the callback function - don't remove it
+      if (fireInitialOnChange) {
+        if (options != null && options.filter != null && !options.filter.test(this.state)) {
+          return;
+        }
+        In<T> eventIn = new In<>(this.state);
+        try {
+          handler.apply(eventIn);
+        } catch (Exception e) {
+          Config.this.logService.logError(this, "A problem occurred while notifying listener of the", this.type, "event. Event data:", eventIn, "| Error:", e);
+        }
+      }
     }
 
     public void off(Object key) {
@@ -196,6 +220,7 @@ public class Config extends EventServiceBase<ConfigType> {
     SHOW_LIVE_VIEWERS,
     SHOW_SERVER_LOGS_HEARTBEAT,
     SHOW_SERVER_LOGS_TIME_SERIES,
-    IDENTIFY_PLATFORMS
+    IDENTIFY_PLATFORMS,
+    SHOW_CHAT_PLATFORM_ICON
   }
 }

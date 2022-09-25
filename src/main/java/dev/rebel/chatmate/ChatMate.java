@@ -12,7 +12,8 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV2;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV3;
 import dev.rebel.chatmate.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
@@ -62,7 +63,7 @@ public class ChatMate {
     IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
 
-    ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV2.class, logService, fileService);
+    ConfigPersistorService<SerialisedConfigV3> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV3.class, logService, fileService);
     Config config = new Config(logService, configPersistorService);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);

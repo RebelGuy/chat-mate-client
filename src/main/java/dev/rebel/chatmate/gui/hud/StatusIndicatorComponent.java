@@ -12,6 +12,7 @@ import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.StatusService.SimpleStatus;
 import dev.rebel.chatmate.services.events.ServerLogEventService;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import dev.rebel.chatmate.services.events.models.EventData.EventIn;
 import dev.rebel.chatmate.services.events.models.EventData.EventOut;
 import net.minecraft.client.renderer.GlStateManager;
@@ -43,8 +44,8 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
   private final static long SERVER_LOG_ANIMATION_DURATION = 1000;
   private final static float SERVER_LOG_ANIMATION_MAX_SCALE = 3;
 
-  private final Consumer<Boolean> _onShowStatusIndicator = this::onShowStatusIndicator;
-  private final Consumer<Boolean> _onIdentifyPlatforms = this::onIdentifyPlatforms;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeShowStatusIndicator = this::onChangeShowStatusIndicator;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeIdentifyPlatforms = this::onChangeIdentifyPlatforms;
   private final Function<EventIn, EventOut> _onServerLogError = this::onServerLogError;
   private final Function<EventIn, EventOut> _onServerLogWarning = this::onServerLogWarning;
 
@@ -79,11 +80,21 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.statusIndicators.put(SimpleStatus.PLATFORM_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_ORANGE, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.SERVER_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_RED, x, y, scale, canRescale, canTranslate));
 
-    this.config.getShowStatusIndicatorEmitter().onChange(this._onShowStatusIndicator, this);
-    this.config.getSeparatePlatforms().onChange(this._onIdentifyPlatforms, this);
+    this.config.getShowStatusIndicatorEmitter().onChange(this._onChangeShowStatusIndicator, this);
+    this.config.getSeparatePlatforms().onChange(this._onChangeIdentifyPlatforms, this);
 
     this.serverLogEventService.onWarning(this._onServerLogWarning, this);
     this.serverLogEventService.onError(this._onServerLogError, this);
+  }
+
+  private ConfigEventData.Out<Boolean> onChangeShowStatusIndicator(ConfigEventData.In<Boolean> in) {
+    this.onShowStatusIndicator(in.data);
+    return new ConfigEventData.Out<>();
+  }
+
+  private ConfigEventData.Out<Boolean> onChangeIdentifyPlatforms(ConfigEventData.In<Boolean> in) {
+    this.onIdentifyPlatforms(in.data);
+    return new ConfigEventData.Out<>();
   }
 
   @Override

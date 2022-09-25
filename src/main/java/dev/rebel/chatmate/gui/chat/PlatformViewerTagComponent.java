@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.chat;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem.ChatPlatform;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import net.minecraft.util.ChatComponentText;
 
 import java.util.function.Consumer;
@@ -18,7 +19,7 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
 
   private final DimFactory dimFactory;
   private final ChatPlatform platform;
-  private final Consumer<Boolean> _onChangeIdentifyPlatforms = this::setComponent;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeShowChatPlatformIcon = this::onChangeShowChatPlatformIcon;
 
   public PlatformViewerTagComponent(DimFactory dimFactory, ChatPlatform platform) {
     this.dimFactory = dimFactory;
@@ -29,12 +30,16 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
   public PlatformViewerTagComponent(DimFactory dimFactory, Config config, ChatPlatform platform) {
     this.dimFactory = dimFactory;
     this.platform = platform;
-    this.setComponent(config.getSeparatePlatforms().get());
-    config.getSeparatePlatforms().onChange(this._onChangeIdentifyPlatforms, this);
+    config.getShowChatPlatformIconEmitter().onChange(this._onChangeShowChatPlatformIcon, this, true);
   }
 
-  private void setComponent(boolean identifyPlatforms) {
-    if (identifyPlatforms) {
+  private ConfigEventData.Out<Boolean> onChangeShowChatPlatformIcon(ConfigEventData.In<Boolean> in) {
+    this.setComponent(in.data);
+    return new ConfigEventData.Out<>();
+  }
+
+  private void setComponent(boolean showChatPlatformIcon) {
+    if (showChatPlatformIcon) {
       super.setComponent(this.platform == ChatPlatform.Youtube ? YOUTUBE_COMPONENT.apply(this.dimFactory) : TWITCH_COMPONENT.apply(this.dimFactory));
     } else {
       super.setComponent(new ChatComponentText(""));

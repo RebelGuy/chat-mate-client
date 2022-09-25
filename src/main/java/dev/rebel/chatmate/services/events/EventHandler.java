@@ -26,7 +26,7 @@ public class EventHandler<In extends EventData.EventIn, Out extends EventData.Ev
   }
 
   /** Weak references. */
-  public EventHandler(Function<In, Out> callback, Options options, Object key) {
+  public EventHandler(Function<In, Out> callback, Options options, @Nullable Object key) {
     this.options = options;
     this.callbackRef = key == null ? null : new WeakReference<>(callback);
     this.callback = key == null ? callback : null;

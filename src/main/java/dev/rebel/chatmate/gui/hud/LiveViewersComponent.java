@@ -8,11 +8,13 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.StatusService;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class LiveViewersComponent extends Box implements IHudComponent {
   private final static int MAX_REEL_VALUE = 99;
@@ -34,8 +36,8 @@ public class LiveViewersComponent extends Box implements IHudComponent {
   private DigitReel reel1;
   private DigitReel reel2;
 
-  private final Consumer<Boolean> _onShowLiveViewers = this::onShowLiveViewers;
-  private final Consumer<Boolean> _onIdentifyPlatforms = this::onIdentifyPlatforms;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeShowLiveViewers = this::onChangeShowLiveViewers;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeIdentifyPlatforms = this::onChangeIdentifyPlatforms;
 
   public LiveViewersComponent(DimFactory dimFactory, float initialScale, StatusService statusService, Config config, Minecraft minecraft, FontEngine fontEngine) {
     super(dimFactory, dimFactory.fromGui(INITIAL_X_GUI), dimFactory.fromGui(INITIAL_Y_GUI), dimFactory.zeroGui(), dimFactory.zeroGui(), true, true);
@@ -53,8 +55,18 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.reel1 = new DigitReel(minecraft, dimFactory, fontEngine);
     this.reel2 = new DigitReel(minecraft, dimFactory, fontEngine);
 
-    this.config.getShowLiveViewersEmitter().onChange(this._onShowLiveViewers, this);
-    this.config.getSeparatePlatforms().onChange(this._onIdentifyPlatforms, this);
+    this.config.getShowLiveViewersEmitter().onChange(this._onChangeShowLiveViewers, this);
+    this.config.getSeparatePlatforms().onChange(this._onChangeIdentifyPlatforms, this);
+  }
+
+  private ConfigEventData.Out<Boolean> onChangeShowLiveViewers(ConfigEventData.In<Boolean> in) {
+    this.onShowLiveViewers(in.data);
+    return new ConfigEventData.Out<>();
+  }
+
+  private ConfigEventData.Out<Boolean> onChangeIdentifyPlatforms(ConfigEventData.In<Boolean> in) {
+    this.onIdentifyPlatforms(in.data);
+    return new ConfigEventData.Out<>();
   }
 
   @Override

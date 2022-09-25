@@ -1,8 +1,5 @@
 package dev.rebel.chatmate.models.configMigrations;
 
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
-
 public class v0v1 extends Migration<SerialisedConfigV0, SerialisedConfigV1> {
   @Override
   public SerialisedConfigV1 up(SerialisedConfigV0 data) {
