@@ -112,9 +112,11 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     this.showStatusIndicatorCheckbox.setEnabled(this, enabled);
     this.statusIndicatorSubElement.separatePlatformsElement.setEnabled(this, enabled); // nice use of the key functionality of setEnabled!
     this.statusIndicatorSubElement.showPlatformIconElement.setEnabled(this, enabled);
+    this.statusIndicatorSubElement.iconLocationDropdown.setEnabled(this, enabled);
     this.showViewerCountCheckbox.setEnabled(this, enabled);
     this.viewerCountSubElement.separatePlatformsElement.setEnabled(this, enabled);
     this.viewerCountSubElement.showPlatformIconElement.setEnabled(this, enabled);
+    this.viewerCountSubElement.iconLocationDropdown.setEnabled(this, enabled);
     this.showServerLogsHeartbeatCheckbox.setEnabled(this, enabled);
     this.showServerLogsTimeSeriesCheckbox.setEnabled(this, enabled);
     return new ConfigEventData.Out<>();
@@ -127,7 +129,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
 
     public final CheckboxInputElement separatePlatformsElement;
     public final CheckboxInputElement showPlatformIconElement;
-    private final DropdownSelectionElement iconLocationDropdown;
+    public final DropdownSelectionElement iconLocationDropdown;
 
     private final List<Tuple2<PlatformIconPosition, LabelElement>> selectionLabels;
 
@@ -144,8 +146,8 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
           .setScale(SCALE)
           .cast();
       this.showPlatformIconElement = CHECKBOX_LIGHT.create(context, this)
-          .onCheckedChanged(checked -> emitter.set(x -> x.withPlatformIconPosition(checked ? PlatformIconPosition.LEFT : null)))
-          .setChecked(emitter.get().platformIconPosition != null)
+          .onCheckedChanged(checked -> emitter.set(x -> x.withShowPlatformIcon(checked)))
+          .setChecked(emitter.get().showPlatformIcon)
           .setLabel("Display platform icons")
           .setScale(SCALE)
           .cast();
@@ -189,8 +191,8 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     private ConfigEventData.Out<SeparableHudElement> onChangeConfig(ConfigEventData.In<SeparableHudElement> eventIn) {
       this.setExpanded(eventIn.data.enabled);
       this.showPlatformIconElement.setEnabled(this, eventIn.data.separatePlatforms);
-      this.iconLocationDropdown.setEnabled(this, eventIn.data.separatePlatforms && eventIn.data.platformIconPosition != null);
-      this.iconLocationDropdown.label.setText(toSentenceCase(firstOrNull(eventIn.data.platformIconPosition, PlatformIconPosition.LEFT).toString()));
+      this.iconLocationDropdown.setEnabled(this, eventIn.data.separatePlatforms && eventIn.data.showPlatformIcon);
+      this.iconLocationDropdown.label.setText(toSentenceCase(eventIn.data.platformIconPosition.toString()));
       this.selectionLabels.forEach(pair -> pair._2.setColour(pair._1 == eventIn.data.platformIconPosition ? Colour.LIGHT_YELLOW : Colour.WHITE));
 
       return new ConfigEventData.Out<>();

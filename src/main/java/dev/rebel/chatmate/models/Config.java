@@ -78,8 +78,8 @@ public class Config extends EventServiceBase<ConfigType> {
     this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, true, this::onUpdate);
     this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, false, this::onUpdate);
     this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, true, this::onUpdate);
-    this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, new SeparableHudElement(false, false, null), this::onUpdate);
-    this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, new SeparableHudElement(false, false, null), this::onUpdate);
+    this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT), this::onUpdate);
+    this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT), this::onUpdate);
 
     this.weakHandlers = new WeakHashMap<>();
     for (ConfigType type : ConfigType.class.getEnumConstants()) {
@@ -228,24 +228,30 @@ public class Config extends EventServiceBase<ConfigType> {
   public static class SeparableHudElement {
     public final boolean enabled;
     public final boolean separatePlatforms;
-    public final @Nullable PlatformIconPosition platformIconPosition;
+    public final boolean showPlatformIcon;
+    public final PlatformIconPosition platformIconPosition;
 
-    public SeparableHudElement(boolean enabled, boolean separatePlatforms, @Nullable PlatformIconPosition platformIconPosition) {
+    public SeparableHudElement(boolean enabled, boolean separatePlatforms, boolean showPlatformIcon, PlatformIconPosition platformIconPosition) {
       this.enabled = enabled;
       this.separatePlatforms = separatePlatforms;
+      this.showPlatformIcon = showPlatformIcon;
       this.platformIconPosition = platformIconPosition;
     }
 
     public SeparableHudElement withEnabled(boolean enabled) {
-      return new SeparableHudElement(enabled, this.separatePlatforms, this.platformIconPosition);
+      return new SeparableHudElement(enabled, this.separatePlatforms, this.showPlatformIcon, this.platformIconPosition);
     }
 
     public SeparableHudElement withSeparatePlatforms(boolean separatePlatforms) {
-      return new SeparableHudElement(this.enabled, separatePlatforms, this.platformIconPosition);
+      return new SeparableHudElement(this.enabled, separatePlatforms, this.showPlatformIcon, this.platformIconPosition);
     }
 
-    public SeparableHudElement withPlatformIconPosition(@Nullable PlatformIconPosition platformIconPosition) {
-      return new SeparableHudElement(this.enabled, this.separatePlatforms, platformIconPosition);
+    public SeparableHudElement withShowPlatformIcon(boolean showPlatformIcon) {
+      return new SeparableHudElement(this.enabled, this.separatePlatforms, showPlatformIcon, this.platformIconPosition);
+    }
+
+    public SeparableHudElement withPlatformIconPosition(PlatformIconPosition platformIconPosition) {
+      return new SeparableHudElement(this.enabled, this.separatePlatforms, this.showPlatformIcon, platformIconPosition);
     }
 
     @Override
@@ -253,12 +259,12 @@ public class Config extends EventServiceBase<ConfigType> {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       SeparableHudElement that = (SeparableHudElement) o;
-      return enabled == that.enabled && separatePlatforms == that.separatePlatforms && platformIconPosition == that.platformIconPosition;
+      return enabled == that.enabled && separatePlatforms == that.separatePlatforms && showPlatformIcon == that.showPlatformIcon && platformIconPosition == that.platformIconPosition;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(enabled, separatePlatforms, platformIconPosition);
+      return Objects.hash(enabled, separatePlatforms, showPlatformIcon, platformIconPosition);
     }
 
     public enum PlatformIconPosition { TOP, BOTTOM, LEFT, RIGHT }

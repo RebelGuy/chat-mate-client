@@ -41,18 +41,21 @@ public class SerialisedConfigV3 extends SerialisedConfigVersions.Version {
   public static class SerialisedSeparableHudElement {
     public final boolean enabled;
     public final boolean separatePlatforms;
-    public final @Nullable String platformIconPosition;
+    public final boolean showPlatformIcon;
+    public final String platformIconPosition;
 
-    public SerialisedSeparableHudElement(boolean enabled, boolean separatePlatforms, String platformIconPosition) {
+    public SerialisedSeparableHudElement(boolean enabled, boolean separatePlatforms, boolean showPlatformIcon, String platformIconPosition) {
       this.enabled = enabled;
       this.separatePlatforms = separatePlatforms;
+      this.showPlatformIcon = showPlatformIcon;
       this.platformIconPosition = platformIconPosition;
     }
 
     public SerialisedSeparableHudElement(Config.SeparableHudElement separableHudElement) {
       this(separableHudElement.enabled,
           separableHudElement.separatePlatforms,
-          separableHudElement.platformIconPosition == null ? null : separableHudElement.platformIconPosition.toString().toLowerCase()
+          separableHudElement.showPlatformIcon,
+          separableHudElement.platformIconPosition.toString().toLowerCase()
       );
     }
 
@@ -60,11 +63,12 @@ public class SerialisedConfigV3 extends SerialisedConfigVersions.Version {
       return new Config.SeparableHudElement(
           this.enabled,
           this.separatePlatforms,
+          this.showPlatformIcon,
           this.platformIconPosition == "left" ? PlatformIconPosition.LEFT
               : this.platformIconPosition == "top" ? PlatformIconPosition.TOP
               : this.platformIconPosition == "right" ? PlatformIconPosition.RIGHT
               : this.platformIconPosition == "bottom" ? PlatformIconPosition.BOTTOM
-              : null
+              : PlatformIconPosition.LEFT
       );
     }
   }
