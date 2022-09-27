@@ -58,11 +58,11 @@ public class CustomGuiConfig extends GuiConfig {
     LabelLayout hudLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Enable ChatMate HUD", Color.WHITE);
     CheckBoxLayout hudCheckbox = new CheckBoxLayout(this::onToggleHud, config.getHudEnabledEmitter()::get);
 
-    LabelLayout indicatorLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Status Indicator", Color.WHITE);
-    CheckBoxLayout indicatorCheckbox = new CheckBoxLayout(this::onToggleIndicator, config.getShowStatusIndicatorEmitter()::get);
-
-    LabelLayout viewerCountLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Viewer Count", Color.WHITE);
-    CheckBoxLayout viewerCountCheckbox = new CheckBoxLayout(this::onToggleViewerCount, config.getShowLiveViewersEmitter()::get);
+//    LabelLayout indicatorLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Status Indicator", Color.WHITE);
+//    CheckBoxLayout indicatorCheckbox = new CheckBoxLayout(this::onToggleIndicator, config.getShowStatusIndicatorEmitter()::get);
+//
+//    LabelLayout viewerCountLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Viewer Count", Color.WHITE);
+//    CheckBoxLayout viewerCountCheckbox = new CheckBoxLayout(this::onToggleViewerCount, config.getShowLiveViewersEmitter()::get);
 
     LabelLayout serverLogsHeartbeatLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Server Logs Heartbeat", Color.WHITE);
     CheckBoxLayout serverLogsHeartbeatCheckbox = new CheckBoxLayout(this::onToggleServerLogsHeartbeat, config.getShowServerLogsHeartbeat()::get);
@@ -70,8 +70,8 @@ public class CustomGuiConfig extends GuiConfig {
     LabelLayout serverLogsTimeSeriesLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Show Server Logs Time Series", Color.WHITE);
     CheckBoxLayout serverLogsTimeSeriesCheckbox = new CheckBoxLayout(this::onToggleServerLogsTimeSeries, config.getShowServerLogsTimeSeries()::get);
 
-    LabelLayout identifyPlatformsLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Separate Youtube and Twitch", Color.WHITE);
-    CheckBoxLayout identifyPlatformsCheckbox = new CheckBoxLayout(this::onToggleIdentifyPlatforms, config.getSeparatePlatforms()::get);
+//    LabelLayout identifyPlatformsLabel = new LabelLayout(this.fontEngineProxy, new String[]{ "0%", "100%" }, () -> "Separate Youtube and Twitch", Color.WHITE);
+//    CheckBoxLayout identifyPlatformsCheckbox = new CheckBoxLayout(this::onToggleIdentifyPlatforms, config.getSeparatePlatforms()::get);
 
     LabelLayout chatOffsetLabel = new LabelLayout(this.fontEngineProxy, new String[] { "0%", "100%" }, () -> "Chat Height Offset", Color.WHITE);
     SliderLayout chatOffsetSlider = new SliderLayout(new String[]{ "100px" , "50%" }, "", "px", 0, 100, this::onChangeChatOffset, config.getChatVerticalDisplacementEmitter()::get);
@@ -80,11 +80,11 @@ public class CustomGuiConfig extends GuiConfig {
         .withRow(chatMateLabel, chatMateCheckbox)
         .withRow(soundLabel, soundCheckbox)
         .withRow(hudLabel, hudCheckbox)
-        .withRow(indicatorLabel, indicatorCheckbox)
-        .withRow(viewerCountLabel, viewerCountCheckbox)
+//        .withRow(indicatorLabel, indicatorCheckbox)
+//        .withRow(viewerCountLabel, viewerCountCheckbox)
         .withRow(serverLogsHeartbeatLabel, serverLogsHeartbeatCheckbox)
         .withRow(serverLogsTimeSeriesLabel, serverLogsTimeSeriesCheckbox)
-        .withRow(identifyPlatformsLabel, identifyPlatformsCheckbox)
+//        .withRow(identifyPlatformsLabel, identifyPlatformsCheckbox)
         .withRow(chatOffsetLabel, chatOffsetSlider)
         .instantiate();
   }
@@ -146,13 +146,13 @@ public class CustomGuiConfig extends GuiConfig {
     this.config.getHudEnabledEmitter().set(checkBoxActionCheckedData.checked);
   }
 
-  private void onToggleIndicator(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getShowStatusIndicatorEmitter().set(checkBoxActionCheckedData.checked);
-  }
-
-  private void onToggleViewerCount(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getShowLiveViewersEmitter().set(checkBoxActionCheckedData.checked);
-  }
+//  private void onToggleIndicator(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+//    this.config.getShowStatusIndicatorEmitter().set(checkBoxActionCheckedData.checked);
+//  }
+//
+//  private void onToggleViewerCount(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+//    this.config.getShowLiveViewersEmitter().set(checkBoxActionCheckedData.checked);
+//  }
 
   private void onToggleServerLogsHeartbeat(CheckBoxActionCheckedData checkBoxActionCheckedData) {
     this.config.getShowServerLogsHeartbeat().set(checkBoxActionCheckedData.checked);
@@ -162,9 +162,9 @@ public class CustomGuiConfig extends GuiConfig {
     this.config.getShowServerLogsTimeSeries().set(checkBoxActionCheckedData.checked);
   }
 
-  private void onToggleIdentifyPlatforms(CheckBoxActionCheckedData checkBoxActionCheckedData) {
-    this.config.getSeparatePlatforms().set(checkBoxActionCheckedData.checked);
-  }
+//  private void onToggleIdentifyPlatforms(CheckBoxActionCheckedData checkBoxActionCheckedData) {
+//    this.config.getSeparatePlatforms().set(checkBoxActionCheckedData.checked);
+//  }
 
   private void onChangeChatOffset(SliderActionValueChangedData sliderActionChangeData) {
     this.config.getChatVerticalDisplacementEmitter().set(sliderActionChangeData.newValue);

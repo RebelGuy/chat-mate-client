@@ -1,4 +1,4 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations;
+package dev.rebel.chatmate.services.util;
 
 import dev.rebel.chatmate.services.util.TaskWrapper;
 

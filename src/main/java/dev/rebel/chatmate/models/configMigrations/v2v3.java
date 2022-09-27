@@ -6,12 +6,11 @@ public class v2v3 extends Migration<SerialisedConfigV2, SerialisedConfigV3> {
     return new SerialisedConfigV3(data.soundEnabled,
         data.chatVerticalDisplacement,
         data.hudEnabled,
-        data.showStatusIndicator,
-        data.showLiveViewers,
-        true,
-        false,
+        data.showServerLogsHeartbeat,
+        data.showServerLogsTimeSeries,
         data.identifyPlatforms,
-        true);
+        new SerialisedConfigV3.SerialisedSeparableHudElement(data.showStatusIndicator, data.identifyPlatforms, "left"),
+        new SerialisedConfigV3.SerialisedSeparableHudElement(data.showLiveViewers, data.identifyPlatforms, "left"));
   }
 
   @Override
@@ -19,10 +18,10 @@ public class v2v3 extends Migration<SerialisedConfigV2, SerialisedConfigV3> {
     return new SerialisedConfigV2(data.soundEnabled,
         data.chatVerticalDisplacement,
         data.hudEnabled,
-        data.showStatusIndicator,
-        data.showLiveViewers,
-        data.identifyPlatforms,
+        data.statusIndicator.enabled,
+        data.viewerCount.enabled,
+        data.showServerLogsHeartbeat,
         data.showServerLogsTimeSeries,
-        data.identifyPlatforms);
+        data.statusIndicator.separatePlatforms || data.viewerCount.separatePlatforms);
   }
 }

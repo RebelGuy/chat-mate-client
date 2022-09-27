@@ -21,6 +21,7 @@ import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.Debouncer;
 import net.minecraft.util.IChatComponent;
 import org.lwjgl.input.Keyboard;
 

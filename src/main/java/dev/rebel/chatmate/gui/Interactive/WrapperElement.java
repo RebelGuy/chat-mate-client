@@ -11,12 +11,25 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class WrapperElement extends SingleElement {
-  private final IElement contents;
+  private IElement contents;
+
+  public WrapperElement(InteractiveContext context, IElement parent) {
+    super(context, parent);
+  }
 
   public WrapperElement(InteractiveContext context, IElement parent, IElement contents) {
     super(context, parent);
     this.contents = contents;
     contents.setParent(this);
+  }
+
+  public WrapperElement setContent(IElement element) {
+    if (!this.compareContents(element)) {
+      super.onInvalidateSize();
+      element.setParent(this);
+      this.contents = element;
+    }
+    return this;
   }
 
   public boolean compareContents(IElement element) {

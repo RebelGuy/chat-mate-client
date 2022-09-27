@@ -22,8 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.lwjgl.opengl.GL11.GL_POLYGON;
-import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.*;
 
 public class RendererHelpers {
   public static void withTranslation(DimPoint translation, Runnable onRender) {
@@ -509,6 +508,47 @@ public class RendererHelpers {
 
   public static void addVertex(WorldRenderer worldRenderer, int zLevel, DimPoint point, Colour colour) {
     worldRenderer.pos(point.getX().round().getGui(), point.getY().round().getGui(), zLevel).color(colour.red / 255.0f, colour.green / 255.0f, colour.blue / 255.0f, colour.alpha / 255.0f).endVertex();
+  }
+
+  public static void drawArrow(DimPoint centre, Dim radius, float directionRadians, Colour colour) {
+    DimPoint p1 = rotate(new DimPoint(radius, radius.times(0)), directionRadians);
+    DimPoint p2 = rotate(p1, -2 * (float)Math.PI / 3); // negative rotation to go counter-clockwise because y is inverted
+    DimPoint p3 = rotate(p2, -2 * (float)Math.PI / 3);
+
+    GlStateManager.pushMatrix();
+    GlStateManager.enableBlend();
+    GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+    GlStateManager.disableAlpha();
+    GlStateManager.disableTexture2D();
+    GlStateManager.depthMask(false); // this ensures we can draw multiple transparent things on top of each other
+    GlStateManager.shadeModel(GL11.GL_SMOOTH); // for being able to draw colour gradients
+
+    withTranslation(centre, () -> {
+      Tessellator tessellator = Tessellator.getInstance();
+      WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+      worldRenderer.begin(GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+
+      addVertex(worldRenderer, 0, p1, colour);
+      addVertex(worldRenderer, 0, p2, colour);
+      addVertex(worldRenderer, 0, p3, colour);
+
+      tessellator.draw();
+    });
+
+    GlStateManager.disableBlend();
+    GlStateManager.enableAlpha();
+    GlStateManager.enableTexture2D();
+    GlStateManager.depthMask(true);
+    GlStateManager.shadeModel(GL11.GL_FLAT);
+    GlStateManager.popMatrix();
+  }
+
+  public static DimPoint rotate(DimPoint point, float rotationRadians) {
+    // using the 2D rotation matrix
+    return new DimPoint(
+        point.getX().times((float)Math.cos(rotationRadians)).minus(point.getY().times((float)Math.sin(rotationRadians))),
+        point.getX().times((float)Math.sin(rotationRadians)).plus(point.getY().times((float)Math.cos(rotationRadians)))
+    );
   }
 
   public static class Transform {

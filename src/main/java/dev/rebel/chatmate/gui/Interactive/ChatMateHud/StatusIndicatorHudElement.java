@@ -12,7 +12,6 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.services.StatusService.SimpleStatus;
 import dev.rebel.chatmate.services.events.ServerLogEventService;
@@ -95,18 +94,19 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
 
       super.setImage(Asset.STATUS_INDICATOR_RED);
 
-      StatefulEmitter<Boolean> showIndicators = config.getShowStatusIndicatorEmitter();
-      StatefulEmitter<Boolean> separatePlatforms = config.getSeparatePlatforms();
-      showIndicators.onChange(x -> this.updateVisibility(x, separatePlatforms.get()));
-      separatePlatforms.onChange(x -> this.updateVisibility(showIndicators.get(), x));
-      this.updateVisibility(showIndicators.get(), separatePlatforms.get());
-
       this.serverLogEvents = new AnimatedEvent<>(SERVER_LOG_ANIMATION_DURATION);
 
       this.serverLogEventService.onWarning(this._onServerLogWarning, this);
       this.serverLogEventService.onError(this._onServerLogError, this);
       this.defaultSize = context.dimFactory.fromGui(8); // size at 100% scale
       this.setScale(1);
+
+      config.getStatusIndicatorEmitter().onChange(this::onChangeStatusIndicatorConfig);
+      this.onChangeStatusIndicatorConfig(config.getStatusIndicatorEmitter().get());
+    }
+
+    private void onChangeStatusIndicatorConfig(Config.SeparableHudElement data) {
+      this.updateVisibility(data.enabled, data.separatePlatforms);
     }
 
     private void updateVisibility(boolean indicatorsEnabled, boolean identifyPlatforms) {
@@ -136,7 +136,7 @@ public class StatusIndicatorHudElement extends SimpleHudElementWrapper<BlockElem
     @Override
     protected void renderElement() {
       SimpleStatus status;
-      if (this.config.getSeparatePlatforms().get()) {
+      if (this.config.getStatusIndicatorEmitter().get().separatePlatforms) {
         if (this.isMainIndicator) {
           status = this.statusService.getYoutubeSimpleStatus();
         } else {

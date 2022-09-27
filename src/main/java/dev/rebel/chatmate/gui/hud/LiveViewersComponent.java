@@ -55,8 +55,8 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     this.reel1 = new DigitReel(minecraft, dimFactory, fontEngine);
     this.reel2 = new DigitReel(minecraft, dimFactory, fontEngine);
 
-    this.config.getShowLiveViewersEmitter().onChange(this._onChangeShowLiveViewers, this);
-    this.config.getSeparatePlatforms().onChange(this._onChangeIdentifyPlatforms, this);
+//    this.config.getShowLiveViewersEmitter().onChange(this._onChangeShowLiveViewers, this);
+//    this.config.getSeparatePlatforms().onChange(this._onChangeIdentifyPlatforms, this);
   }
 
   private ConfigEventData.Out<Boolean> onChangeShowLiveViewers(ConfigEventData.In<Boolean> in) {
@@ -89,14 +89,15 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   private Anchor getAnchor() {
     // resizing in the centre feels weird when identityPlatforms is enabled
-    return this.config.getSeparatePlatforms().get() ? Anchor.TOP_LEFT : Anchor.LEFT_CENTRE;
+//    return this.config.getSeparatePlatforms().get() ? Anchor.TOP_LEFT : Anchor.LEFT_CENTRE;
+    return Anchor.TOP_LEFT;
   }
 
   @Override
   public void render(RenderContext context) {
-    if (!this.config.getShowLiveViewersEmitter().get()) {
-      return;
-    }
+//    if (!this.config.getShowLiveViewersEmitter().get()) {
+//      return;
+//    }
 
     if (!this.initialised) {
       // we can't call this in the constructor because the fontRenderer might not have been initialised yet.
@@ -108,12 +109,12 @@ public class LiveViewersComponent extends Box implements IHudComponent {
     // we have to update this constantly because of dynamic content
     // this.onResize(this.getTextWidth().times(this.scale), this.getUnscaledHeight().times(this.scale), this.getAnchor());
 
-    if (this.config.getSeparatePlatforms().get()) {
-      this.renderViewerCount(this.reel1, this.dimFactory.zeroGui(), this.statusService.getYoutubeLiveViewerCount());
-      this.renderViewerCount(this.reel2, this.dimFactory.fromGui(IDENTIFIED_Y_OFFSET_GUI * this.scale), this.statusService.getTwitchLiveViewerCount());
-    } else {
+//    if (this.config.getSeparatePlatforms().get()) {
+//      this.renderViewerCount(this.reel1, this.dimFactory.zeroGui(), this.statusService.getYoutubeLiveViewerCount());
+//      this.renderViewerCount(this.reel2, this.dimFactory.fromGui(IDENTIFIED_Y_OFFSET_GUI * this.scale), this.statusService.getTwitchLiveViewerCount());
+//    } else {
       this.renderViewerCount(this.reel1, this.dimFactory.zeroGui(), this.statusService.getTotalLiveViewerCount());
-    }
+//    }
   }
 
   private void renderViewerCount(DigitReel reel, Dim yOffset, @Nullable Integer viewCount) {
@@ -160,13 +161,13 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   private Dim getTextWidth() {
     String text1, text2;
-    if (this.config.getSeparatePlatforms().get()) {
+//    if (this.config.getSeparatePlatforms().get()) {
       text1 = this.getText(this.statusService.getYoutubeLiveViewerCount());
       text2 = this.getText(this.statusService.getTwitchLiveViewerCount());
-    } else {
-      text1 = this.getText(this.statusService.getTotalLiveViewerCount());
-      text2 = "";
-    }
+//    } else {
+//      text1 = this.getText(this.statusService.getTotalLiveViewerCount());
+//      text2 = "";
+//    }
     return this.dimFactory.fromGui(Math.max(this.fontEngine.getStringWidth(text1), this.fontEngine.getStringWidth(text2)));
   }
 
@@ -184,10 +185,10 @@ public class LiveViewersComponent extends Box implements IHudComponent {
 
   private Dim getUnscaledHeight() {
     Dim textHeight = this.getTextHeight();
-    if (this.config.getSeparatePlatforms().get()) {
+//    if (this.config.getSeparatePlatforms().get()) {
       return textHeight.plus(this.dimFactory.fromGui(IDENTIFIED_Y_OFFSET_GUI));
-    } else {
-      return textHeight;
-    }
+//    } else {
+//      return textHeight;
+//    }
   }
 }

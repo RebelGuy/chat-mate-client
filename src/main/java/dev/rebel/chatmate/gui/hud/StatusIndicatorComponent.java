@@ -55,8 +55,10 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
         dimFactory,
         dimFactory.fromGui(INITIAL_X_GUI),
         dimFactory.fromGui(INITIAL_Y_GUI),
-        dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * initialScale : 0),
-        dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? getUnscaledHeight(config.getSeparatePlatforms().get()) * initialScale : 0),
+        dimFactory.zeroGui(),
+        dimFactory.zeroGui(),
+//        dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * initialScale : 0),
+//        dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? getUnscaledHeight(config.getSeparatePlatforms().get()) * initialScale : 0),
         true,
         true
     );
@@ -80,8 +82,8 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
     this.statusIndicators.put(SimpleStatus.PLATFORM_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_ORANGE, x, y, scale, canRescale, canTranslate));
     this.statusIndicators.put(SimpleStatus.SERVER_UNREACHABLE, new ImageComponent(dimFactory, Asset.STATUS_INDICATOR_RED, x, y, scale, canRescale, canTranslate));
 
-    this.config.getShowStatusIndicatorEmitter().onChange(this._onChangeShowStatusIndicator, this);
-    this.config.getSeparatePlatforms().onChange(this._onChangeIdentifyPlatforms, this);
+//    this.config.getShowStatusIndicatorEmitter().onChange(this._onChangeShowStatusIndicator, this);
+//    this.config.getSeparatePlatforms().onChange(this._onChangeIdentifyPlatforms, this);
 
     this.serverLogEventService.onWarning(this._onServerLogWarning, this);
     this.serverLogEventService.onError(this._onServerLogError, this);
@@ -111,24 +113,24 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
       return;
     }
 
-    Dim newW = this.dimFactory.fromGui(BASE_SIZE_GUI * newScale);
-    Dim newH = this.dimFactory.fromGui(getUnscaledHeight(config.getSeparatePlatforms().get()) * newScale);
-    this.onResize(newW, newH, Anchor.MIDDLE);
+//    Dim newW = this.dimFactory.fromGui(BASE_SIZE_GUI * newScale);
+//    Dim newH = this.dimFactory.fromGui(getUnscaledHeight(config.getSeparatePlatforms().get()) * newScale);
+//    this.onResize(newW, newH, Anchor.MIDDLE);
     this.scale = newScale;
   }
 
   @Override
   public void render(RenderContext context) {
-    if (!this.config.getShowStatusIndicatorEmitter().get()) {
-      return;
-    }
+//    if (!this.config.getShowStatusIndicatorEmitter().get()) {
+//      return;
+//    }
 
-    if (this.config.getSeparatePlatforms().get()) {
+//    if (this.config.getSeparatePlatforms().get()) {
       this.renderStatus(context, this.statusService.getYoutubeSimpleStatus(), 0);
       this.renderStatus(context, this.statusService.getTwitchSimpleStatus(), IDENTIFIED_Y_OFFSET_GUI * this.scale);
-    } else {
-      this.renderStatus(context, this.statusService.getAggregateSimpleStatus(), 0);
-    }
+//    } else {
+//      this.renderStatus(context, this.statusService.getAggregateSimpleStatus(), 0);
+//    }
   }
 
   private void renderStatus(RenderContext context, SimpleStatus status, float yOffset) {
@@ -152,17 +154,17 @@ public class StatusIndicatorComponent extends Box implements IHudComponent {
   }
 
   private void onShowStatusIndicator(boolean enabled) {
-    Dim x = dimFactory.fromGui(INITIAL_X_GUI);
-    Dim y = dimFactory.fromGui(INITIAL_Y_GUI);
-    Dim w = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * this.scale : 0);
-    Dim h = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? getUnscaledHeight(config.getSeparatePlatforms().get()) * this.scale : 0);
-    this.setRect(x, y, w, h);
-    this.scale = this.initialScale;
+//    Dim x = dimFactory.fromGui(INITIAL_X_GUI);
+//    Dim y = dimFactory.fromGui(INITIAL_Y_GUI);
+//    Dim w = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? BASE_SIZE_GUI * this.scale : 0);
+//    Dim h = dimFactory.fromGui(config.getShowStatusIndicatorEmitter().get() ? getUnscaledHeight(config.getSeparatePlatforms().get()) * this.scale : 0);
+//    this.setRect(x, y, w, h);
+//    this.scale = this.initialScale;
   }
 
   private void onIdentifyPlatforms(boolean identify) {
-    Dim height = this.dimFactory.fromGui(getUnscaledHeight(config.getSeparatePlatforms().get()) * this.scale);
-    this.setRect(this.getX(), this.getY(), this.getWidth(), height);
+//    Dim height = this.dimFactory.fromGui(getUnscaledHeight(config.getSeparatePlatforms().get()) * this.scale);
+//    this.setRect(this.getX(), this.getY(), this.getWidth(), height);
   }
 
   private EventOut onServerLogError(EventIn eventIn) {
