@@ -267,7 +267,7 @@ public class Config extends EventServiceBase<ConfigType> {
       return Objects.hash(enabled, separatePlatforms, showPlatformIcon, platformIconPosition);
     }
 
-    public enum PlatformIconPosition { TOP, BOTTOM, LEFT, RIGHT }
+    public enum PlatformIconPosition { LEFT, RIGHT, TOP, BOTTOM }
   }
 
   public enum ConfigType {

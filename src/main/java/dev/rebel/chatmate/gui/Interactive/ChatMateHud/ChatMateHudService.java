@@ -10,7 +10,9 @@ public class ChatMateHudService {
   public ChatMateHudService(ChatMateHudStore chatMateHudStore, Config config, StatusService statusService, ServerLogEventService serverLogEventService) {
     this.chatMateHudStore = chatMateHudStore;
 
-    this.chatMateHudStore.addElement((context, parent) -> new StatusIndicatorHudElement(context, parent, statusService, config, serverLogEventService));
+    StatusIndicatorHudElement mainIndicator = this.chatMateHudStore.addElement((context, parent) -> new StatusIndicatorHudElement(context, parent, null, statusService, config, serverLogEventService));
+    this.chatMateHudStore.addElement((context, parent) -> new StatusIndicatorHudElement(context, parent, mainIndicator, statusService, config, serverLogEventService));
+
     this.chatMateHudStore.addElement((context, parent) -> new LiveViewersHudElement(context, parent, statusService, config));
     this.chatMateHudStore.addElement((context, parent) -> new ServerLogsTimeSeriesHudElement(context, parent, serverLogEventService, config));
   }
