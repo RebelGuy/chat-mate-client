@@ -35,21 +35,6 @@ public class ViewerCountElement extends SingleElement implements SeparableHudEle
     this.reel = new DigitReel(context.minecraft, context.dimFactory, context.fontEngine);
 
     this.indicatorFont = new Font().withShadow(new Shadow(context.dimFactory));
-
-    config.getViewerCountEmitter().onChange(this::onChangeViewerCountConfig);
-    this.onChangeViewerCountConfig(config.getViewerCountEmitter().get());
-  }
-
-  private void onChangeViewerCountConfig(Config.SeparableHudElement data) {
-    this.updateVisibility(data.enabled, data.separatePlatforms);
-  }
-
-  private void updateVisibility(boolean showViewerCount, boolean identifyPlatforms) {
-    if (this.isMainElement) {
-      super.setVisible(showViewerCount);
-    } else {
-      super.setVisible(showViewerCount && identifyPlatforms);
-    }
   }
 
   private @Nullable Integer getViewerCount() {
