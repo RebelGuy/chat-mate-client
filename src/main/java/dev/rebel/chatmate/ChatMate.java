@@ -193,7 +193,7 @@ public class ChatMate {
         donationApiStore,
         customGuiNewChat);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config, guiChatMateHud);
-    ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, config, statusService, serverLogEventService);
+    ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
 
     CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
     GuiService guiService = new GuiService(this.isDev,
