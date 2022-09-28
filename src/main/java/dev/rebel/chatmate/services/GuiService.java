@@ -261,6 +261,7 @@ public class GuiService {
         this.chatComponentRenderer,
         this.rankApiStore,
         this.livestreamApiStore,
-        this.donationApiStore);
+        this.donationApiStore,
+        this.config);
   }
 }

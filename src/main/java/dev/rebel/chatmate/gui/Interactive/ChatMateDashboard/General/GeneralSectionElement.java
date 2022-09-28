@@ -31,14 +31,23 @@ public class GeneralSectionElement extends ContainerElement implements ISectionE
         .setSizingMode(SizingMode.FILL)
     );
     super.addElement(CHECKBOX_LIGHT.create(context, this)
-        .setLabel("Enable Sound")
+        .setLabel("Enable sound")
         .setChecked(config.getSoundEnabledEmitter().get())
         .onCheckedChanged(config.getSoundEnabledEmitter()::set)
         .setScale(0.75f)
     );
 
-    this.livestreamElement = new GeneralSectionLivestreamElement(context, this, chatMateEndpointProxy);
+    this.livestreamElement = new GeneralSectionLivestreamElement(context, this, chatMateEndpointProxy)
+        .setMargin(new RectExtension(ZERO, ZERO, ZERO, gui(6)))
+        .cast();
     super.addElement(this.livestreamElement);
+
+    super.addElement(CHECKBOX_LIGHT.create(context, this)
+        .setLabel("Enable Debug Mode")
+        .setChecked(config.getDebugModeEnabled().get())
+        .onCheckedChanged(config.getDebugModeEnabled()::set)
+        .setScale(0.75f)
+    );
   }
 
   public void onShow() {

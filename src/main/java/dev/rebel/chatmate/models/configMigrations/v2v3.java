@@ -10,7 +10,8 @@ public class v2v3 extends Migration<SerialisedConfigV2, SerialisedConfigV3> {
         data.showServerLogsTimeSeries,
         data.identifyPlatforms,
         new SerialisedConfigV3.SerialisedSeparableHudElement(data.showStatusIndicator, data.identifyPlatforms, data.identifyPlatforms, "left"),
-        new SerialisedConfigV3.SerialisedSeparableHudElement(data.showLiveViewers, data.identifyPlatforms, data.identifyPlatforms, "left"));
+        new SerialisedConfigV3.SerialisedSeparableHudElement(data.showLiveViewers, data.identifyPlatforms, data.identifyPlatforms, "left"),
+        false);
   }
 
   @Override

@@ -10,10 +10,12 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.Out.KeyboardHandlerAction;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
@@ -46,6 +48,7 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseScroll = this::onMouseScroll;
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> _onKeyDown = this::onKeyDown;
   private final Function<ScreenResizeData.In, ScreenResizeData.Out> _onScreenResize = this::onScreenResize;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
 
   protected boolean requiresRecalculation = true;
   protected boolean shouldCloseScreen = false;
@@ -78,6 +81,8 @@ public class InteractiveScreen extends Screen implements IElement {
 
     // we don't want to override the default `onScreenSizeUpdated()` because it fires only when this interactive screen is active in `Minecraft`, which may not necessarily be the case (e.g. for the HUD)
     this.context.forgeEventService.onScreenResize(this._onScreenResize, new ScreenResizeData.Options(), this);
+
+    this.context.config.getDebugModeEnabled().onChange(this._onChangeDebugModeEnabled, this, false);
   }
 
   public void setMainElement(IElement mainElement) {
@@ -380,7 +385,7 @@ public class InteractiveScreen extends Screen implements IElement {
     } else if (in.isPressed(Keyboard.KEY_F11)) {
       this.context.minecraft.toggleFullscreen();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-    } else if (in.isPressed(Keyboard.KEY_F3)) {
+    } else if (in.isPressed(Keyboard.KEY_F3) && this.context.config.getDebugModeEnabled().get()) {
       this.toggleDebug();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     } else if (in.isPressed(Keyboard.KEY_F5)) {
@@ -552,6 +557,13 @@ public class InteractiveScreen extends Screen implements IElement {
     RendererHelpers.drawTooltip(context.dimFactory, context.fontEngine, context.mousePosition, tooltip);
   }
 
+  private ConfigEventData.Out<Boolean> onChangeDebugModeEnabled(ConfigEventData.In<Boolean> eventIn) {
+    this.debugModeEnabled = false;
+    this.debugElementSelected = false;
+    this.context.debugElement = null;
+    return new ConfigEventData.Out<>();
+  }
+
   //region Empty or delegated IElement methods
   @Override
   public List<IElement> getChildren() { return Collections.list(this.mainElement); }
@@ -704,6 +716,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final RankApiStore rankApiStore;
     public final LivestreamApiStore livestreamApiStore;
     public final DonationApiStore donationApiStore;
+    public final Config config;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -728,7 +741,8 @@ public class InteractiveScreen extends Screen implements IElement {
                               ChatComponentRenderer chatComponentRenderer,
                               RankApiStore rankApiStore,
                               LivestreamApiStore livestreamApiStore,
-                              DonationApiStore donationApiStore) {
+                              DonationApiStore donationApiStore,
+                              Config config) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -748,6 +762,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.rankApiStore = rankApiStore;
       this.livestreamApiStore = livestreamApiStore;
       this.donationApiStore = donationApiStore;
+      this.config = config;
     }
   }
 

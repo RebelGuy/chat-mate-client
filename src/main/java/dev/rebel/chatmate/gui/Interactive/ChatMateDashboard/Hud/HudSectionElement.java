@@ -36,6 +36,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
   private final static float SCALE = 0.75f;
 
   private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeHudEnabled = this::onChangeHudEnabled;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
   private final InputElement showStatusIndicatorCheckbox;
   private final ExpandableElement statusIndicatorSubElement;
   private final InputElement showViewerCountCheckbox;
@@ -97,6 +98,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     super.addElement(this.showServerLogsTimeSeriesCheckbox);
 
     config.getHudEnabledEmitter().onChange(this._onChangeHudEnabled, this, true);
+    config.getDebugModeEnabled().onChange(this._onChangeDebugModeEnabled, this, true);
   }
 
   public void onShow() {
@@ -119,6 +121,12 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     this.viewerCountSubElement.iconLocationDropdown.setEnabled(this, enabled);
     this.showServerLogsHeartbeatCheckbox.setEnabled(this, enabled);
     this.showServerLogsTimeSeriesCheckbox.setEnabled(this, enabled);
+    return new ConfigEventData.Out<>();
+  }
+
+  private ConfigEventData.Out<Boolean> onChangeDebugModeEnabled(ConfigEventData.In<Boolean> in) {
+    this.showServerLogsHeartbeatCheckbox.setVisible(in.data);
+    this.showServerLogsTimeSeriesCheckbox.setVisible(in.data);
     return new ConfigEventData.Out<>();
   }
 

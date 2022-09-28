@@ -12,7 +12,6 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV2;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV3;
 import dev.rebel.chatmate.proxy.*;
 import dev.rebel.chatmate.services.*;
@@ -159,7 +158,8 @@ public class ChatMate {
         chatComponentRenderer,
         rankApiStore,
         livestreamApiStore,
-        donationApiStore);
+        donationApiStore,
+        config);
 
     ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, chatMateHudStore);
@@ -191,7 +191,8 @@ public class ChatMate {
         rankApiStore,
         livestreamApiStore,
         donationApiStore,
-        customGuiNewChat);
+        customGuiNewChat,
+        config);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config, guiChatMateHud);
     ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
 

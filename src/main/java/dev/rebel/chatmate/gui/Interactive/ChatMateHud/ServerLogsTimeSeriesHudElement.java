@@ -52,7 +52,7 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
 
   @Override
   public void onRenderElement() {
-    if (!this.config.getShowServerLogsTimeSeries().get()) {
+    if (!this.config.getShowServerLogsTimeSeries().get() || !this.config.getDebugModeEnabled().get()) {
       return;
     }
 

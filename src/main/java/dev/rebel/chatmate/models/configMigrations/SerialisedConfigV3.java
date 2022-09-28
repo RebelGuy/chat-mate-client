@@ -3,8 +3,6 @@ package dev.rebel.chatmate.models.configMigrations;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.Config.SeparableHudElement.PlatformIconPosition;
 
-import javax.annotation.Nullable;
-
 public class SerialisedConfigV3 extends SerialisedConfigVersions.Version {
   public boolean soundEnabled;
   public int chatVerticalDisplacement;
@@ -14,6 +12,7 @@ public class SerialisedConfigV3 extends SerialisedConfigVersions.Version {
   public final boolean showChatPlatformIcon;
   public final SerialisedSeparableHudElement statusIndicator;
   public final SerialisedSeparableHudElement viewerCount;
+  public final boolean debugModeEnabled;
 
   public SerialisedConfigV3(boolean soundEnabled,
                             int chatVerticalDisplacement,
@@ -22,7 +21,8 @@ public class SerialisedConfigV3 extends SerialisedConfigVersions.Version {
                             boolean showServerLogsTimeSeries,
                             boolean showChatPlatformIcon,
                             SerialisedSeparableHudElement statusIndicator,
-                            SerialisedSeparableHudElement viewerCount) {
+                            SerialisedSeparableHudElement viewerCount,
+                            boolean debugModeEnabled) {
     this.soundEnabled = soundEnabled;
     this.chatVerticalDisplacement = chatVerticalDisplacement;
     this.hudEnabled = hudEnabled;
@@ -31,6 +31,7 @@ public class SerialisedConfigV3 extends SerialisedConfigVersions.Version {
     this.showChatPlatformIcon = showChatPlatformIcon;
     this.statusIndicator = statusIndicator;
     this.viewerCount = viewerCount;
+    this.debugModeEnabled = debugModeEnabled;
   }
 
   @Override

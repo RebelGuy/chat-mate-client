@@ -29,5 +29,7 @@ public class ChatMateHudService {
     this.chatMateHudStore.addElement((context, parent) ->
         new SeparableHudElement(context, parent, mainViewerCount, viewerCountFactory, config.getViewerCountEmitter(), defaultViewerCountPosition)
     );
+
+    this.chatMateHudStore.addElement((context, parent) -> new ServerLogsTimeSeriesHudElement(context, parent, serverLogEventService, config));
   }
 }

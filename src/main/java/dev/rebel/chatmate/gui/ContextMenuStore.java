@@ -14,6 +14,10 @@ import dev.rebel.chatmate.services.events.models.Tick;
 import net.minecraft.client.Minecraft;
 import scala.Tuple2;
 
+import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Objects;
+
 public class ContextMenuStore {
   private final Minecraft minecraft;
   private final ForgeEventService forgeEventService;
@@ -68,8 +72,9 @@ public class ContextMenuStore {
     return new MouseEventData.Out();
   }
 
-  public void showContextMenu(Dim x, Dim y, ContextMenuOption... options) {
-    this.currentMenu = new ContextMenu(this.dimFactory, x, y, options);
+  public void showContextMenu(Dim x, Dim y, @Nullable ContextMenuOption... options) {
+    ContextMenuOption[] nonNullOptions = Arrays.stream(options).filter(Objects::nonNull).toArray(ContextMenuOption[]::new); // yuck
+    this.currentMenu = new ContextMenu(this.dimFactory, x, y, nonNullOptions);
     this.setClear = false;
   }
 

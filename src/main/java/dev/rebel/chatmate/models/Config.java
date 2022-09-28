@@ -58,6 +58,9 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<SeparableHudElement> viewerCount;
   public StatefulEmitter<SeparableHudElement> getViewerCountEmitter() { return this.viewerCount; }
 
+  private final StatefulEmitter<Boolean> debugModeEnabled;
+  public StatefulEmitter<Boolean> getDebugModeEnabled() { return this.debugModeEnabled; }
+
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
 
@@ -80,6 +83,7 @@ public class Config extends EventServiceBase<ConfigType> {
     this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, true, this::onUpdate);
     this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT), this::onUpdate);
     this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT), this::onUpdate);
+    this.debugModeEnabled = new StatefulEmitter<>(ConfigType.DEBUG_MODE_ENABLED, false, this::onUpdate);
 
     this.weakHandlers = new WeakHashMap<>();
     for (ConfigType type : ConfigType.class.getEnumConstants()) {
@@ -131,8 +135,8 @@ public class Config extends EventServiceBase<ConfigType> {
           this.showServerLogsTimeSeries.get(),
           this.showChatPlatformIcon.get(),
           new SerialisedConfigV3.SerialisedSeparableHudElement(this.statusIndicator.get()),
-          new SerialisedConfigV3.SerialisedSeparableHudElement(this.viewerCount.get())
-      );
+          new SerialisedConfigV3.SerialisedSeparableHudElement(this.viewerCount.get()),
+          this.debugModeEnabled.get());
       this.configPersistorService.save(serialisedConfig);
     } catch (Exception e) {
       this.logService.logError(this, "Failed to save config:", e);
@@ -279,6 +283,7 @@ public class Config extends EventServiceBase<ConfigType> {
     SHOW_SERVER_LOGS_TIME_SERIES,
     SHOW_CHAT_PLATFORM_ICON,
     STATUS_INDICATOR,
-    VIEWER_COUNT
+    VIEWER_COUNT,
+    DEBUG_MODE_ENABLED
   }
 }
