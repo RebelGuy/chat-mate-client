@@ -21,7 +21,13 @@ public class ChatMateHudService {
         new SeparableHudElement(context, parent, mainIndicator, statusIndicatorFactory, config.getStatusIndicatorEmitter(), defaultStatusIndicatorPosition)
     );
 
-    this.chatMateHudStore.addElement((context, parent) -> new LiveViewersHudElement(context, parent, statusService, config));
-    this.chatMateHudStore.addElement((context, parent) -> new ServerLogsTimeSeriesHudElement(context, parent, serverLogEventService, config));
+    ViewerCountElement.Factory viewerCountFactory = new ViewerCountElement.Factory(config, statusService);
+    DimPoint defaultViewerCountPosition = new DimPoint(dimFactory.fromGui(23), dimFactory.fromGui(10));
+    SeparableHudElement mainViewerCount = this.chatMateHudStore.addElement((context, parent) ->
+        new SeparableHudElement(context, parent, null, viewerCountFactory, config.getViewerCountEmitter(), defaultViewerCountPosition)
+    );
+    this.chatMateHudStore.addElement((context, parent) ->
+        new SeparableHudElement(context, parent, mainViewerCount, viewerCountFactory, config.getViewerCountEmitter(), defaultViewerCountPosition)
+    );
   }
 }

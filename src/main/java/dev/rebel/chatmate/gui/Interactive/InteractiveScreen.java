@@ -143,8 +143,17 @@ public class InteractiveScreen extends Screen implements IElement {
     }
   }
 
-  // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   protected void recalculateLayout() {
+    this._recalculateLayout(0);
+  }
+
+  // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
+  private void _recalculateLayout(int depth) {
+    if (depth > 10) {
+      this.context.logService.logError(this, "Encountered infinite loop while recalculating layout - aborting.");
+      return;
+    }
+
     if (this.mainElement == null || this.shouldCloseScreen) {
       return;
     }
@@ -172,6 +181,9 @@ public class InteractiveScreen extends Screen implements IElement {
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
     this.context.renderer._executeSideEffects();
+
+    // it is possible that running side effects (or calling calculateSize/setBox) changed the layout
+    this._recalculateLayout(depth++);
   }
 
   @Override

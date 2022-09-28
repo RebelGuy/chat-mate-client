@@ -26,7 +26,8 @@ public interface IElement {
 
   /** [Upwards] To be called when an element requests the screen to be closed. */
   void onCloseScreen();
-  /** [Upwards] To be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere. */
+  /** [Upwards] To be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere.
+   * Careful: the layout will be regenerated before a render until no more elements invalidate their sizes, so it is possible to run into an infinite loop. */
   void onInvalidateSize();
   DimPoint calculateSize(Dim maxWidth); // provides the maximum width that the child's full box can take up, and expects the size of the calculated full box to be returned
   DimPoint getLastCalculatedSize(); // full box size, for caching purposes only - any direct use should probably be avoided

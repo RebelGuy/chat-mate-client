@@ -22,7 +22,7 @@ import java.util.function.Function;
 import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_ORANGE;
 import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_RED;
 
-public class IndicatorElement extends ImageElement implements SeparableHudElement.ISeparableMainElement {
+public class IndicatorElement extends ImageElement implements SeparableHudElement.ISeparableElement {
   private final static long SERVER_LOG_ANIMATION_DURATION = 1000;
   private final static float SERVER_LOG_ANIMATION_MAX_SCALE = 3;
 
@@ -106,7 +106,7 @@ public class IndicatorElement extends ImageElement implements SeparableHudElemen
     super.renderElement();
   }
 
-  public static class Factory implements SeparableHudElement.ISeparableMainElementFactory {
+  public static class Factory implements SeparableHudElement.ISeparableElementFactory {
     private final Config config;
     private final StatusService statusService;
     private final ServerLogEventService serverLogEventService;

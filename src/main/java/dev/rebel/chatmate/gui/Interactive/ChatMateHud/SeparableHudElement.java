@@ -24,14 +24,14 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
 
   private final Dim defaultHeight;
   private final boolean isMainIndicator;
-  private final ISeparableMainElement mainElement;
+  private final ISeparableElement mainElement;
   private final float platformIconScale; // image scale at 100% hud scale
   private final ImageElement platformIcon;
 
   private @Nullable PlatformIconPosition prevIconPosition; // null if it isn't shown
   private boolean requiresSecondPass; // if true, should re-initialise the container after the box has been set
 
-  public SeparableHudElement(InteractiveContext context, IElement parent, @Nullable HudElement parentIndicatorElement, ISeparableMainElementFactory separableMainElementFactory, Config.StatefulEmitter<Config.SeparableHudElement> settings, DimPoint defaultMainPosition) {
+  public SeparableHudElement(InteractiveContext context, IElement parent, @Nullable HudElement parentIndicatorElement, ISeparableElementFactory separableMainElementFactory, Config.StatefulEmitter<Config.SeparableHudElement> settings, DimPoint defaultMainPosition) {
     super(context, parent);
 
     this.settings = settings;
@@ -171,12 +171,12 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
     }
   }
 
-  public interface ISeparableMainElement extends IElement {
+  public interface ISeparableElement extends IElement {
     public void setHudScale(float scale);
   }
 
   @FunctionalInterface
-  public interface ISeparableMainElementFactory {
-    public ISeparableMainElement create(InteractiveContext context, IElement parent, boolean isMainIndicator, Dim defaultHeight);
+  public interface ISeparableElementFactory {
+    public ISeparableElement create(InteractiveContext context, IElement parent, boolean isMainIndicator, Dim defaultHeight);
   }
 }
