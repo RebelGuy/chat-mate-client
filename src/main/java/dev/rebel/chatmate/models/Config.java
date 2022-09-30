@@ -1,8 +1,7 @@
 package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.models.Config.ConfigType;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV3;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.EventHandler;
 import dev.rebel.chatmate.services.events.EventServiceBase;
@@ -13,6 +12,7 @@ import dev.rebel.chatmate.services.events.models.ConfigEventData.Out;
 import dev.rebel.chatmate.services.events.models.EventData.EventIn;
 import dev.rebel.chatmate.services.events.models.EventData.EventOut;
 import dev.rebel.chatmate.services.util.Callback;
+import dev.rebel.chatmate.services.util.Debouncer;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -28,8 +28,9 @@ public class Config extends EventServiceBase<ConfigType> {
   // 4. Add a new migration file in the `configMigrations` package
   // 5. Add the migration class from the previous step and the new serialised model to the arrays in `Migration.java`
   // 6. Change the type of the saved and loaded serialised config in this file
-  private final ConfigPersistorService<SerialisedConfigV2> configPersistorService;
+  private final ConfigPersistorService<SerialisedConfigV3> configPersistorService;
 
+  // NOTE: DO **NOT** REMOVE THESE GETTERS. THEY ARE DISGUSTING BUT REQUIRED FOR TESTING
   private final StatefulEmitter<Boolean> chatMateEnabled;
   public StatefulEmitter<Boolean> getChatMateEnabledEmitter() { return this.chatMateEnabled; }
 
@@ -42,20 +43,23 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Boolean> hudEnabled;
   public StatefulEmitter<Boolean> getHudEnabledEmitter() { return this.hudEnabled; }
 
-  private final StatefulEmitter<Boolean> showStatusIndicator;
-  public StatefulEmitter<Boolean> getShowStatusIndicatorEmitter() { return this.showStatusIndicator; }
-
-  private final StatefulEmitter<Boolean> showLiveViewers;
-  public StatefulEmitter<Boolean> getShowLiveViewersEmitter() { return this.showLiveViewers; }
-
   private final StatefulEmitter<Boolean> showServerLogsHeartbeat;
   public StatefulEmitter<Boolean> getShowServerLogsHeartbeat() { return this.showServerLogsHeartbeat; }
 
   private final StatefulEmitter<Boolean> showServerLogsTimeSeries;
   public StatefulEmitter<Boolean> getShowServerLogsTimeSeries() { return this.showServerLogsTimeSeries; }
 
-  private final StatefulEmitter<Boolean> identifyPlatforms;
-  public StatefulEmitter<Boolean> getIdentifyPlatforms() { return this.identifyPlatforms; }
+  private final StatefulEmitter<Boolean> showChatPlatformIcon;
+  public StatefulEmitter<Boolean> getShowChatPlatformIconEmitter() { return this.showChatPlatformIcon; }
+
+  private final StatefulEmitter<SeparableHudElement> statusIndicator;
+  public StatefulEmitter<SeparableHudElement> getStatusIndicatorEmitter() { return this.statusIndicator; }
+
+  private final StatefulEmitter<SeparableHudElement> viewerCount;
+  public StatefulEmitter<SeparableHudElement> getViewerCountEmitter() { return this.viewerCount; }
+
+  private final StatefulEmitter<Boolean> debugModeEnabled;
+  public StatefulEmitter<Boolean> getDebugModeEnabled() { return this.debugModeEnabled; }
 
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
@@ -63,7 +67,9 @@ public class Config extends EventServiceBase<ConfigType> {
   /** Only used for holding onto wrapped callback functions when an onChange subscriber uses the automatic unsubscription feature. Write-only. */
   private final Map<ConfigType, WeakHashMap<Object, Function<? extends EventIn, ? extends EventOut>>> weakHandlers;
 
-  public Config(LogService logService, ConfigPersistorService configPersistorService) {
+  private final Debouncer saveDebouncer;
+
+  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV3> configPersistorService) {
     super(ConfigType.class, logService);
     this.configPersistorService = configPersistorService;
 
@@ -72,17 +78,26 @@ public class Config extends EventServiceBase<ConfigType> {
     this.soundEnabled = new StatefulEmitter<>(ConfigType.ENABLE_SOUND, true, this::onUpdate);
     this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, 10, this::onUpdate);
     this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, true, this::onUpdate);
-    this.showStatusIndicator = new StatefulEmitter<>(ConfigType.SHOW_STATUS_INDICATOR, true, this::onUpdate);
-    this.showLiveViewers = new StatefulEmitter<>(ConfigType.SHOW_LIVE_VIEWERS, true, this::onUpdate);
     this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, true, this::onUpdate);
     this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, false, this::onUpdate);
-    this.identifyPlatforms = new StatefulEmitter<>(ConfigType.IDENTIFY_PLATFORMS, false, this::onUpdate);
+    this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, true, this::onUpdate);
+    this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT), this::onUpdate);
+    this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT), this::onUpdate);
+    this.debugModeEnabled = new StatefulEmitter<>(ConfigType.DEBUG_MODE_ENABLED, false, this::onUpdate);
 
     this.weakHandlers = new WeakHashMap<>();
     for (ConfigType type : ConfigType.class.getEnumConstants()) {
       this.weakHandlers.put(type, new WeakHashMap<>());
     }
-    this.load();
+
+    this.saveDebouncer = new Debouncer(500, this::save);
+
+    // if loading fails, the user will be left with the default settings which is fine
+    try {
+      this.load();
+    } catch (Exception e) {
+      this.logService.logError(this, "Failed to load the config file:", e);
+    }
   }
 
   public void listenAny(Callback callback) {
@@ -90,38 +105,42 @@ public class Config extends EventServiceBase<ConfigType> {
   }
 
   private <T> Out<T> onUpdate(In<T> _unused) {
-    this.save();
+    this.saveDebouncer.doDebounce();
     this.updateListeners.forEach(Callback::call);
     return new Out<>();
   }
 
   private void load() {
-    SerialisedConfigV2 loaded = this.configPersistorService.load();
+    SerialisedConfigV3 loaded = this.configPersistorService.load();
     if (loaded != null) {
       this.soundEnabled.set(loaded.soundEnabled);
       this.chatVerticalDisplacement.set(loaded.chatVerticalDisplacement);
       this.hudEnabled.set(loaded.hudEnabled);
-      this.showStatusIndicator.set(loaded.showStatusIndicator);
-      this.showLiveViewers.set(loaded.showLiveViewers);
       this.showServerLogsHeartbeat.set(loaded.showServerLogsHeartbeat);
       this.showServerLogsTimeSeries.set(loaded.showServerLogsTimeSeries);
-      this.identifyPlatforms.set(loaded.identifyPlatforms);
-      this.save();
+      this.showChatPlatformIcon.set(loaded.showChatPlatformIcon);
+      this.statusIndicator.set(loaded.statusIndicator.deserialise());
+      this.viewerCount.set(loaded.viewerCount.deserialise());
+      this.saveDebouncer.doDebounce();
     }
   }
 
   private void save() {
-    SerialisedConfigV2 serialisedConfig = new SerialisedConfigV2(
-      this.soundEnabled.get(),
-      this.chatVerticalDisplacement.get(),
-      this.hudEnabled.get(),
-      this.showStatusIndicator.get(),
-      this.showLiveViewers.get(),
-      this.showServerLogsHeartbeat.get(),
-      this.showServerLogsTimeSeries.get(),
-      this.identifyPlatforms.get()
-    );
-    this.configPersistorService.save(serialisedConfig);
+    try {
+      SerialisedConfigV3 serialisedConfig = new SerialisedConfigV3(
+          this.soundEnabled.get(),
+          this.chatVerticalDisplacement.get(),
+          this.hudEnabled.get(),
+          this.showServerLogsHeartbeat.get(),
+          this.showServerLogsTimeSeries.get(),
+          this.showChatPlatformIcon.get(),
+          new SerialisedConfigV3.SerialisedSeparableHudElement(this.statusIndicator.get()),
+          new SerialisedConfigV3.SerialisedSeparableHudElement(this.viewerCount.get()),
+          this.debugModeEnabled.get());
+      this.configPersistorService.save(serialisedConfig);
+    } catch (Exception e) {
+      this.logService.logError(this, "Failed to save config:", e);
+    }
   }
 
   /** Represents a state that emits an event when modified */
@@ -137,27 +156,45 @@ public class Config extends EventServiceBase<ConfigType> {
       Arrays.asList(initialListeners).forEach(l -> Config.this.addListener(this.type, l, null));
     }
 
-    /** Lambda allowed. */
+    /** Lambda allowed - no automatic unsubscribing. */
     public void onChange(Consumer<T> callback) {
-      this.onChange(callback, null);
-    }
-
-    /** **NO LAMBDA** */
-    public void onChange(Consumer<T> callback, Object key) {
-      this.onChange(callback, new Options<>(), key);
-    }
-
-    /** Lambda allowed. */
-    public void onChange(Consumer<T> callback, @Nullable Options<T> options) {
-      this.onChange(callback, options, null);
-    }
-
-    /** **NO LAMBDA** */
-    public void onChange(Consumer<T> callback, @Nullable Options<T> options, Object key) {
-      // must hold on to a reference of the transformed callback
       Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
-      Config.this.weakHandlers.get(this.type).put(key, handler);
+      this.onChange(handler, null);
+    }
+
+    /** **NO LAMBDA** - automatic unsubscribing. */
+    public void onChange(Function<In<T>, Out<T>> handler, Object key) {
+      this.onChange(handler, key, false);
+    }
+
+    // if you try to add a lambda it won't stay subscribed - create a field first which may be a lambda
+    /** **NO LAMBDA** - automatic unsubscribing. */
+    public void onChange(Function<In<T>, Out<T>> handler, Object key, boolean fireInitialOnChange) {
+      this.onChange(handler, new Options<>(), key, fireInitialOnChange);
+    }
+
+    /** Lambda allowed - no automatic unsubscribing. */
+    public void onChange(Consumer<T> callback, @Nullable Options<T> options) {
+      Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
+      this.onChange(handler, options, null, false);
+    }
+
+    /** **NO LAMBDA** - automatic unsubscribing. */
+    public void onChange(Function<In<T>, Out<T>> handler, @Nullable Options<T> options, Object key, boolean fireInitialOnChange) {
       Config.this.addListener(this.type, handler, options, key);
+
+      // fireInitialOnChange is a convenience option for callers that perform logic directly inside the callback function - don't remove it
+      if (fireInitialOnChange) {
+        if (options != null && options.filter != null && !options.filter.test(this.state)) {
+          return;
+        }
+        In<T> eventIn = new In<>(this.state);
+        try {
+          handler.apply(eventIn);
+        } catch (Exception e) {
+          Config.this.logService.logError(this, "A problem occurred while notifying listener of the", this.type, "event. Event data:", eventIn, "| Error:", e);
+        }
+      }
     }
 
     public void off(Object key) {
@@ -165,7 +202,7 @@ public class Config extends EventServiceBase<ConfigType> {
     }
 
     public void set(T newValue) {
-      if (this.state == null && newValue == null || this.state != null && this.state.equals(newValue)) {
+      if (Objects.equals(this.state, newValue)) {
         return;
       } else {
         this.state = newValue;
@@ -183,9 +220,58 @@ public class Config extends EventServiceBase<ConfigType> {
       }
     }
 
+    public void set(Function<T, T> newValue) {
+      this.set(newValue.apply(this.state));
+    }
+
     public T get() {
       return this.state;
     }
+  }
+
+  public static class SeparableHudElement {
+    public final boolean enabled;
+    public final boolean separatePlatforms;
+    public final boolean showPlatformIcon;
+    public final PlatformIconPosition platformIconPosition;
+
+    public SeparableHudElement(boolean enabled, boolean separatePlatforms, boolean showPlatformIcon, PlatformIconPosition platformIconPosition) {
+      this.enabled = enabled;
+      this.separatePlatforms = separatePlatforms;
+      this.showPlatformIcon = showPlatformIcon;
+      this.platformIconPosition = platformIconPosition;
+    }
+
+    public SeparableHudElement withEnabled(boolean enabled) {
+      return new SeparableHudElement(enabled, this.separatePlatforms, this.showPlatformIcon, this.platformIconPosition);
+    }
+
+    public SeparableHudElement withSeparatePlatforms(boolean separatePlatforms) {
+      return new SeparableHudElement(this.enabled, separatePlatforms, this.showPlatformIcon, this.platformIconPosition);
+    }
+
+    public SeparableHudElement withShowPlatformIcon(boolean showPlatformIcon) {
+      return new SeparableHudElement(this.enabled, this.separatePlatforms, showPlatformIcon, this.platformIconPosition);
+    }
+
+    public SeparableHudElement withPlatformIconPosition(PlatformIconPosition platformIconPosition) {
+      return new SeparableHudElement(this.enabled, this.separatePlatforms, this.showPlatformIcon, platformIconPosition);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      SeparableHudElement that = (SeparableHudElement) o;
+      return enabled == that.enabled && separatePlatforms == that.separatePlatforms && showPlatformIcon == that.showPlatformIcon && platformIconPosition == that.platformIconPosition;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(enabled, separatePlatforms, showPlatformIcon, platformIconPosition);
+    }
+
+    public enum PlatformIconPosition { LEFT, RIGHT, TOP, BOTTOM }
   }
 
   public enum ConfigType {
@@ -193,10 +279,11 @@ public class Config extends EventServiceBase<ConfigType> {
     ENABLE_SOUND,
     CHAT_VERTICAL_DISPLACEMENT,
     ENABLE_HUD,
-    SHOW_STATUS_INDICATOR,
-    SHOW_LIVE_VIEWERS,
     SHOW_SERVER_LOGS_HEARTBEAT,
     SHOW_SERVER_LOGS_TIME_SERIES,
-    IDENTIFY_PLATFORMS
+    SHOW_CHAT_PLATFORM_ICON,
+    STATUS_INDICATOR,
+    VIEWER_COUNT,
+    DEBUG_MODE_ENABLED
   }
 }

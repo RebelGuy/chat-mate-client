@@ -1,7 +1,11 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
@@ -15,6 +19,8 @@ import dev.rebel.chatmate.models.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.services.events.ChatMateChatService;
 import dev.rebel.chatmate.services.events.ChatMateEventService;
+import dev.rebel.chatmate.services.events.MinecraftChatEventService;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import net.minecraft.util.ChatComponentText;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,9 +28,11 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -33,6 +41,8 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(MockitoJUnitRunner.class) // this lets us use @Mock for auto-initialising mock objects
 public class McChatServiceTests {
+  @Mock DimFactory mockDimFactory;
+  @Mock CustomGuiNewChat mockCustomGuiNewChat;
   @Mock MinecraftProxyService mockMinecraftProxyService;
   @Mock LogService mockLogService;
   @Mock FilterService mockFilterService;
@@ -42,9 +52,10 @@ public class McChatServiceTests {
   @Mock ImageService mockImageService;
   @Mock ChatMateChatService mockChatMateService;
   @Mock FontEngine mockFontEngine;
+  @Mock MinecraftChatEventService mockMinecraftChatEventService;
 
   @Mock Config mockConfig;
-  @Mock StatefulEmitter<Boolean> identifyPlatforms;
+  @Mock StatefulEmitter<Boolean> mockShowChatPlatformIconEmitter;
 
   PublicUser author1 = createAuthor("Author 1");
   PublicMessagePart text1 = createText("Text 1");
@@ -63,8 +74,9 @@ public class McChatServiceTests {
       return new ContainerChatComponent(new ChatComponentText(user.userInfo.channelName), user);
     });
 
-    when(this.mockConfig.getIdentifyPlatforms()).thenReturn(this.identifyPlatforms);
-    when(this.identifyPlatforms.get()).thenReturn(false);
+    // this is for the ViewerTagComponent
+    when(this.mockConfig.getShowChatPlatformIconEmitter()).thenReturn(this.mockShowChatPlatformIconEmitter);
+
     when(this.mockMessageService.getRankComponent(any())).thenReturn(new ChatComponentText("VIEWER"));
   }
 
@@ -99,7 +111,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_unicodeEmoji_PrintedDirectly() {
     PublicChatItem item = createItem(author1, emoji1);
-    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
+    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(new Dim(() -> 1, DimAnchor.GUI).setGui(1));
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
@@ -133,7 +145,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_textEmoji_spacingBetween() {
     PublicChatItem item = createItem(author1, text1, emoji2, emoji1, text2);
-    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(1);
+    when(this.mockFontEngine.getCharWidth(emoji1.emojiData.name.charAt(0))).thenReturn(new Dim(() -> 1, DimAnchor.GUI).setGui(1));
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);
@@ -167,7 +179,7 @@ public class McChatServiceTests {
     // since we are dealing with a void method, the only way to retrieve the input is
     // using an ArgumentCaptor and verify()
     ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
-    verify(this.identifyPlatforms).onChange(captor.capture());
+    verify(this.mockShowChatPlatformIconEmitter).onChange(captor.capture());
 
     // notify the subscriber that the value has changed to true
     captor.getValue().accept(true);
@@ -193,7 +205,10 @@ public class McChatServiceTests {
         this.mockImageService,
         this.mockConfig,
         this.mockChatMateService,
-        this.mockFontEngine);
+        this.mockFontEngine,
+        this.mockDimFactory,
+        this.mockCustomGuiNewChat,
+        this.mockMinecraftChatEventService);
   }
 
   // The below methods should be used for mock data creation. It sets all

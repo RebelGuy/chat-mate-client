@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.chat;
 
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.gui.models.Dim;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.IChatComponent;
 
@@ -8,12 +9,12 @@ import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
 public class ImageChatComponent extends ChatComponentBase {
-  public final float paddingGuiLeft;
-  public final float paddingGuiRight;
+  public final Dim paddingGuiLeft;
+  public final Dim paddingGuiRight;
   private @Nullable Texture texture;
   private final Supplier<Texture> textureSupplier;
 
-  public ImageChatComponent(Supplier<Texture> textureSupplier, float paddingGuiLeft, float paddingGuiRight) {
+  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight) {
     super();
     this.textureSupplier = textureSupplier;
     this.paddingGuiLeft = paddingGuiLeft;
@@ -36,15 +37,15 @@ public class ImageChatComponent extends ChatComponentBase {
   }
 
   /** Returns the image width, in GUI units. */
-  public float getImageWidth(int guiHeight) {
+  public Dim getImageWidth(Dim guiHeight) {
     Texture texture = this.getTexture();
     float aspectRatio = (float)texture.width / texture.height;
-    return guiHeight * aspectRatio;
+    return guiHeight.times(aspectRatio);
   }
 
   /** Returns the horizontal space required to display this image, in GUI units. */
-  public float getRequiredWidth(int guiHeight) {
-    return this.getImageWidth(guiHeight) + this.paddingGuiLeft + this.paddingGuiRight;
+  public Dim getRequiredWidth(Dim guiHeight) {
+    return this.getImageWidth(guiHeight).plus(this.paddingGuiLeft).plus(this.paddingGuiRight);
   }
 
   @Override

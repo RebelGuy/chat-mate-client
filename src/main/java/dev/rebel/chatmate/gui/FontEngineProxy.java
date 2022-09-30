@@ -67,7 +67,7 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final int getCharWidth(char character) {
-    return this.fontEngine.getCharWidth(character);
+    return (int)this.fontEngine.getCharWidth(character).getGui();
   }
 
   @Override

@@ -1,11 +1,7 @@
 package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.models.configMigrations.Migration;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.Version;
-//import dev.rebel.chatmate.models.configMigrations.v0v1;
-import dev.rebel.chatmate.models.configMigrations.v0v1;
 import dev.rebel.chatmate.services.FileService;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.util.TaskWrapper;
@@ -14,7 +10,7 @@ import javax.annotation.Nullable;
 import java.util.Timer;
 
 public class ConfigPersistorService<SerialisedConfig extends Version> {
-  private final static int CURRENT_SCHEMA = 2;
+  private final static int CURRENT_SCHEMA = 3;
 
   private final Class<SerialisedConfig> currentSerialisedVersion;
   private final LogService logService;

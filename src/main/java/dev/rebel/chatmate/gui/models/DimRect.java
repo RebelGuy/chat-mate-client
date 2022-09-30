@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.models;
 
+import java.util.Objects;
+
 public class DimRect {
   private final Dim x;
   private final Dim y;
@@ -33,6 +35,10 @@ public class DimRect {
     return this.height;
   }
 
+  public Dim getLeft() { return this.x.plus(this.x); }
+
+  public Dim getTop() { return this.y.plus(this.y); }
+
   public Dim getRight() { return this.x.plus(this.width); }
 
   public Dim getBottom() { return this.y.plus(this.height); }
@@ -63,12 +69,13 @@ public class DimRect {
 
   public DimPoint getRightCentre() { return new DimPoint(this.getRight(), this.getY().plus(this.getHeight().over(2))); }
 
-  /** Returns true if the point is contained within the rect, or touches its boundary. */
+  /** Returns true if the point is contained within the rect that is gte the top-left point, and lt the bottom-right point. */
   public boolean checkCollision(DimPoint point) {
+    // we check lt the bottom-right so that, if a collection of rects were filling a space with no overlaps, there would only ever be a single collision hit at any point within that space with no edge (literally) cases.
     return this.x.lte(point.getX())
-        && this.x.plus(this.width).gte(point.getX())
+        && this.x.plus(this.width).gt(point.getX())
         && this.y.lte(point.getY())
-        && this.y.plus(this.height).gte(point.getY());
+        && this.y.plus(this.height).gt(point.getY());
   }
 
   public boolean checkCollisionX(Dim x) {
@@ -103,7 +110,11 @@ public class DimRect {
 
   public DimRect withHeight(Dim height) { return new DimRect(this.x, this.y, this.width, height); }
 
-  /** Truncates the sides of this rect such that it fits into the given rect (loose fit). */
+  public float getAreaGui() {
+    return this.getWidth().getGui() * this.getHeight().getGui();
+  }
+
+  /** Truncates the sides of this rect such that it fits into the given rect. */
   public DimRect clamp(DimRect other) {
     Dim x = Dim.max(this.getX(), other.getX());
     Dim y = Dim.max(this.getY(), other.getY());
@@ -129,5 +140,18 @@ public class DimRect {
   @Override
   public String toString() {
     return String.format("{%s, %s}", this.getPosition().toString(), this.getSize().toString());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    DimRect dimRect = (DimRect) o;
+    return x.equals(dimRect.x) && y.equals(dimRect.y) && width.equals(dimRect.width) && height.equals(dimRect.height);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(x, y, width, height);
   }
 }

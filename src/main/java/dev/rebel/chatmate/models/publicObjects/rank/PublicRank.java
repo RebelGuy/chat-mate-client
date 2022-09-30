@@ -9,6 +9,7 @@ public class PublicRank extends PublicObject {
   @Override
   public Integer GetExpectedSchema() { return 1; }
 
+  public Number id;
   public RankName name;
   public RankGroup group;
   public String displayNameNoun;

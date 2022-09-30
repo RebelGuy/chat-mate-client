@@ -27,6 +27,7 @@ public class DropdownMenuV2 extends OverlayElement {
 
   private HorizontalPosition horizontalPosition;
   private VerticalPosition verticalPosition;
+  private Colour background;
 
   public DropdownMenuV2(InteractiveContext context, IElement anchor, AnchorBoxSizing anchorBoxSizing) {
     super(context, anchor, LayoutMode.BLOCK, Collections.list(anchor));
@@ -36,6 +37,8 @@ public class DropdownMenuV2 extends OverlayElement {
     this.anchorBoxSizing = anchorBoxSizing;
     this.horizontalPosition = HorizontalPosition.LEFT;
     this.verticalPosition = VerticalPosition.BELOW;
+    this.background = new Colour(0, 0, 0, 127); // dark gray
+
     this.itemsElement = new BlockElement(context, this)
         .setSizingMode(SizingMode.FILL) // so `block` hitboxes in the event boundary are consistent with the drawn background
         .cast();
@@ -69,6 +72,11 @@ public class DropdownMenuV2 extends OverlayElement {
       this.verticalPosition = verticalPosition;
       super.onInvalidateSize();
     }
+    return this;
+  }
+
+  public DropdownMenuV2 setBackground(Colour background) {
+    this.background = background;
     return this;
   }
 
@@ -141,12 +149,11 @@ public class DropdownMenuV2 extends OverlayElement {
       return;
     }
 
-    Colour background = new Colour(0, 0, 0, 127); // dark gray
     Dim borderSize = Dim.max(this.getBorder().left, this.getBorder().right, this.getBorder().top, this.getBorder().bottom);
     Dim cornerRadius = gui(1);
     Dim shadowDistance = gui(1);
     DimRect paddingBox = super.getPaddingBox();
-    RendererHelpers.drawRect(0, paddingBox, background, borderSize, Colour.BLACK, cornerRadius, shadowDistance, Colour.BLACK);
+    RendererHelpers.drawRect(0, paddingBox, this.background, borderSize, Colour.BLACK, cornerRadius, shadowDistance, Colour.BLACK);
 
     super.renderElement();
   }

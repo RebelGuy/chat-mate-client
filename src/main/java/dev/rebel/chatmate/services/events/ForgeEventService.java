@@ -25,9 +25,15 @@ import java.util.function.Function;
 public class ForgeEventService extends EventServiceBase<Events> {
   private final Minecraft minecraft;
 
+  private int prevDisplayWidth;
+  private int prevDisplayHeight;
+
   public ForgeEventService(LogService logService, Minecraft minecraft) {
     super(Events.class, logService);
     this.minecraft = minecraft;
+
+    this.prevDisplayHeight = this.minecraft.displayHeight;
+    this.prevDisplayWidth = this.minecraft.displayWidth;
   }
 
   public void onOpenGuiModList(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
@@ -79,6 +85,10 @@ public class ForgeEventService extends EventServiceBase<Events> {
     this.addListener(Events.GuiScreenKeyboard, handler, options);
   }
 
+  /** Stored as a weak reference - lambda forbidden. */
+  public void onScreenResize(Function<ScreenResizeData.In, ScreenResizeData.Out> handler, @Nullable ScreenResizeData.Options options, Object key) {
+    this.addListener(Events.ScreenResize, handler, options, key);
+  }
 
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
@@ -206,6 +216,19 @@ public class ForgeEventService extends EventServiceBase<Events> {
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(TickEvent.RenderTickEvent event) {
+    // check if the screen was resized every frame
+    int displayWidth = this.minecraft.displayWidth;
+    int displayHeight = this.minecraft.displayHeight;
+    if (this.prevDisplayWidth != displayWidth || this.prevDisplayHeight != displayHeight) {
+      this.prevDisplayWidth = displayWidth;
+      this.prevDisplayHeight = displayHeight;
+
+      for (EventHandler<ScreenResizeData.In, ScreenResizeData.Out, ScreenResizeData.Options> handler : this.getListeners(Events.ScreenResize, ScreenResizeData.class)) {
+        ScreenResizeData.In eventIn = new ScreenResizeData.In(displayWidth, displayHeight);
+        ScreenResizeData.Out eventOut = this.safeDispatch(Events.ScreenResize, handler, eventIn);
+      }
+    }
+
     Events eventType = Events.RenderTick;
     for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(eventType, Tick.class)) {
       Tick.In eventIn = new Tick.In();
@@ -267,6 +290,7 @@ public class ForgeEventService extends EventServiceBase<Events> {
     RenderTick,
     ClientTick,
     GuiScreenMouse,
-    GuiScreenKeyboard
+    GuiScreenKeyboard,
+    ScreenResize
   }
 }

@@ -19,7 +19,7 @@ public class Colour {
   public static final Colour DARK_GREEN = new Colour(0, 170, 0); // same as Minecraft's DARK_GREEN style
   public static final Colour GREY25 = new Colour(Color.DKGREY);
   public static final Colour GREY33 = new Colour(85, 85, 85); // same as Minecraft's DARK_GRAY style
-  public static final Colour GREY = new Colour(Color.GREY);
+  public static final Colour GREY50 = new Colour(Color.GREY);
   public static final Colour GREY67 = new Colour(170, 170, 170); // same as Minecraft's GRAY style
   public static final Colour GREY75 = new Colour(Color.LTGREY);
   public static final Colour ORANGE = new Colour(Color.ORANGE);

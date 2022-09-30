@@ -2,7 +2,6 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.*;
@@ -21,9 +20,9 @@ import org.lwjgl.util.Color;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-import static org.lwjgl.opengl.GL11.GL_POLYGON;
-import static org.lwjgl.opengl.GL11.GL_QUADS;
+import static org.lwjgl.opengl.GL11.*;
 
 public class RendererHelpers {
   public static void withTranslation(DimPoint translation, Runnable onRender) {
@@ -33,12 +32,27 @@ public class RendererHelpers {
     GlStateManager.popMatrix();
   }
 
+  public static void withTranslation(DimPoint translation, Consumer<Transform> onRender) {
+    GlStateManager.pushMatrix();
+    GlStateManager.translate(translation.getX().getGui(), translation.getY().getGui(), 0);
+    onRender.accept(new Transform(translation, 1));
+    GlStateManager.popMatrix();
+  }
+
   /** Maps the render space such that (0, 0) will correspond to the given translation. onRender should only use relative coordinates to the translated space. */
   public static void withMapping(DimPoint translation, float scale, Runnable onRender) {
     GlStateManager.pushMatrix();
     GlStateManager.translate(translation.getX().getGui(), translation.getY().getGui(), 0);
     GlStateManager.scale(scale, scale, 1);
     onRender.run();
+    GlStateManager.popMatrix();
+  }
+
+  public static void withMapping(DimPoint translation, float scale, Consumer<Transform> onRender) {
+    GlStateManager.pushMatrix();
+    GlStateManager.translate(translation.getX().getGui(), translation.getY().getGui(), 0);
+    GlStateManager.scale(scale, scale, 1);
+    onRender.accept(new Transform(translation, scale));
     GlStateManager.popMatrix();
   }
 
@@ -56,6 +70,34 @@ public class RendererHelpers {
     GL11.glPushAttrib(glAttribMask);
     onRender.run();
     GL11.glPopAttrib();
+  }
+
+  /** Clips the renderings to the provided rect. */
+  public static void withScissor(DimRect rect, DimPoint screenSize, Runnable onRender) {
+    // 1. real-world use case of `getScreen` - it was all worth it in the end!
+    // 2. amusingly, the scissor test assumes a rect in cartesian coordinates, not screen coordinates: https://www.khronos.org/opengl/wiki/Scissor_Test
+    int cartX = (int)rect.getX().getScreen();
+    int cartY = (int)screenSize.getY().minus(rect.getBottom()).getScreen();
+    int width = (int)rect.getWidth().getScreen();
+    int height = (int)rect.getHeight().getScreen();
+
+    GL11.glEnable(GL11.GL_SCISSOR_TEST);
+    GL11.glScissor(cartX, cartY, width, height);
+    onRender.run();
+    GL11.glDisable(GL11.GL_SCISSOR_TEST);
+  }
+
+  public static void withoutScissor(Runnable onRender) {
+    boolean isScissorEnabled = GL11.glIsEnabled(GL11.GL_SCISSOR_TEST);
+    if (isScissorEnabled) {
+      GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    onRender.run();
+
+    if (isScissorEnabled) {
+      GL11.glEnable(GL11.GL_SCISSOR_TEST);
+    }
   }
 
   /** Draws a coloured rect. */
@@ -172,6 +214,7 @@ public class RendererHelpers {
     tessellator.draw();
   }
 
+  /** Scales the texture about the given position. */
   public static void drawTextureCentred(TextureManager textureManager, DimFactory dimFactory, Texture texture, DimPoint centre, float scale, @Nullable Colour colour) {
     DimPoint topLeft = new DimPoint(
         centre.getX().minus(dimFactory.fromGui(texture.width / 2.0f * scale)),
@@ -465,6 +508,65 @@ public class RendererHelpers {
 
   public static void addVertex(WorldRenderer worldRenderer, int zLevel, DimPoint point, Colour colour) {
     worldRenderer.pos(point.getX().round().getGui(), point.getY().round().getGui(), zLevel).color(colour.red / 255.0f, colour.green / 255.0f, colour.blue / 255.0f, colour.alpha / 255.0f).endVertex();
+  }
+
+  public static void drawArrow(DimPoint centre, Dim radius, float directionRadians, Colour colour) {
+    DimPoint p1 = rotate(new DimPoint(radius, radius.times(0)), directionRadians);
+    DimPoint p2 = rotate(p1, -2 * (float)Math.PI / 3); // negative rotation to go counter-clockwise because y is inverted
+    DimPoint p3 = rotate(p2, -2 * (float)Math.PI / 3);
+
+    GlStateManager.pushMatrix();
+    GlStateManager.enableBlend();
+    GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+    GlStateManager.disableAlpha();
+    GlStateManager.disableTexture2D();
+    GlStateManager.depthMask(false); // this ensures we can draw multiple transparent things on top of each other
+    GlStateManager.shadeModel(GL11.GL_SMOOTH); // for being able to draw colour gradients
+
+    withTranslation(centre, () -> {
+      Tessellator tessellator = Tessellator.getInstance();
+      WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+      worldRenderer.begin(GL_TRIANGLES, DefaultVertexFormats.POSITION_COLOR);
+
+      addVertex(worldRenderer, 0, p1, colour);
+      addVertex(worldRenderer, 0, p2, colour);
+      addVertex(worldRenderer, 0, p3, colour);
+
+      tessellator.draw();
+    });
+
+    GlStateManager.disableBlend();
+    GlStateManager.enableAlpha();
+    GlStateManager.enableTexture2D();
+    GlStateManager.depthMask(true);
+    GlStateManager.shadeModel(GL11.GL_FLAT);
+    GlStateManager.popMatrix();
+  }
+
+  public static DimPoint rotate(DimPoint point, float rotationRadians) {
+    // using the 2D rotation matrix
+    return new DimPoint(
+        point.getX().times((float)Math.cos(rotationRadians)).minus(point.getY().times((float)Math.sin(rotationRadians))),
+        point.getX().times((float)Math.sin(rotationRadians)).plus(point.getY().times((float)Math.cos(rotationRadians)))
+    );
+  }
+
+  public static class Transform {
+    public final DimPoint translation;
+    public final float scale;
+
+    public Transform(DimPoint translation, float scale) {
+      this.translation = translation;
+      this.scale = scale;
+    }
+
+    public DimPoint unTransform(DimPoint point) {
+      return point.scale(1 / this.scale).minus(this.translation);
+    }
+
+    public DimRect unTransform(DimRect rect) {
+      return rect.withSize(rect.getSize().scale(1 / this.scale)).withTranslation(this.translation);
+    }
   }
 
   private enum GradientDirection {

@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.chat;
 
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ChatPagination.PaginationRenderer;
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.util.Collections;
@@ -17,9 +18,9 @@ public class UserNameRenderer extends PaginationRenderer<PublicUserNames> {
   }
 
   @Override
-  public IChatComponent renderItem(PublicUserNames item, PublicUserNames[] allItemsOnPage, FontEngine fontEngine, int chatWidth, int effectiveChatWidth) {
-    List<Integer> allNameWidths = Collections.map(Collections.list(allItemsOnPage), userNames -> fontEngine.getStringWidth(userNames.user.userInfo.channelName));
-    int width = Math.max(effectiveChatWidth / 2, Collections.max(allNameWidths));
+  public IChatComponent renderItem(PublicUserNames item, PublicUserNames[] allItemsOnPage, FontEngine fontEngine, Dim chatWidth, Dim effectiveChatWidth) {
+    List<Dim> allNameWidths = Collections.map(Collections.list(allItemsOnPage), userNames -> fontEngine.getStringWidthDim(userNames.user.userInfo.channelName));
+    Dim width = Dim.max(effectiveChatWidth.over(2), Dim.max(allNameWidths));
 
     return this.messageService.getChannelNamesMessage(item, width);
   }

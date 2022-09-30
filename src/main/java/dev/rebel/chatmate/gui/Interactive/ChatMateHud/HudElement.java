@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DropElement.IDropElementListener;
+import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.hud.Colour;
@@ -14,6 +14,7 @@ import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.services.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,11 +27,14 @@ public abstract class HudElement extends ElementBase implements IDropElementList
 
   protected @Nonnull DimPoint defaultPosition;
   protected @Nonnull Anchor defaultPositionAnchor;
+  protected @Nullable Anchor scrollResizeAnchor;
+  protected @Nullable Anchor contentResizeAnchor;
   protected float currentScale = 1;
-  protected Anchor anchor = Anchor.TOP_LEFT;
+  protected Anchor autoAnchor = Anchor.TOP_LEFT;
 
   private boolean canDrag = false;
   private boolean canScale = false;
+  private boolean isScrolling = false;
 
   // using the drop element leads to a smoother dragging experience where large deltas don't interrupt the drag flow
   private @Nullable DropElement dropElement = null;
@@ -41,6 +45,8 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     
     this.defaultPosition = new DimPoint(ZERO, ZERO);
     this.defaultPositionAnchor = Anchor.TOP_LEFT;
+    this.scrollResizeAnchor = null;
+    this.contentResizeAnchor = null;
   }
   
   public HudElement setCanDrag(boolean canDrag) {
@@ -53,10 +59,22 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     return this;
   }
 
-  /** Sets the initial position of the HUD element, where the anchored point of the box will be placed at the provided position. */
+  /** Sets the initial position of the HUD element, where the anchored point of the box will be placed at the provided position. Only effective before the element has first been rendered. */
   public HudElement setDefaultPosition(@Nonnull DimPoint point, @Nonnull Anchor boxAnchor) {
     this.defaultPosition = point;
     this.defaultPositionAnchor = boxAnchor;
+    return this;
+  }
+
+  /** Sets the anchor of the box about which the box should be resized when scrolling. If null, automatically chooses the resize anchor. */
+  public HudElement setScrollResizeAnchor(@Nullable Anchor anchor) {
+    this.scrollResizeAnchor = anchor;
+    return this;
+  }
+
+  /** Sets the anchor of the box about which the box should be resized when the content changes. If null, automatically chooses the resize anchor. */
+  public HudElement setContentResizeAnchor(@Nullable Anchor anchor) {
+    this.contentResizeAnchor = anchor;
     return this;
   }
 
@@ -97,8 +115,9 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.canDrag) {
       this.lastDraggingPosition = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
-      this.dropElement = new DropElement(super.context, this, this);
+      this.dropElement = new DropElement(super.context, this, true, this);
       super.onInvalidateSize();
+      e.stopPropagation();
     }
   }
 
@@ -123,13 +142,14 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     if (super.getBox() == null) {
       box = setBoxPositionAtAnchor(new DimRect(this.defaultPosition, this.lastCalculatedSize), this.defaultPosition, this.defaultPositionAnchor);
       this.setBoxUnsafe(box);
-      // the initial anchor is determined by the initial box
-      this.anchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     } else {
       // if there's no resize, the box will stay the same
-      box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), this.anchor);
+      Anchor resizeAnchor = this.isScrolling ? this.scrollResizeAnchor : this.contentResizeAnchor; // infer why we are resizing the box
+      box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), Objects.firstOrNull(resizeAnchor, this.autoAnchor));
     }
 
+    this.isScrolling = false;
+    this.autoAnchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     super.setBox(box);
     this.onHudBoxSet(box);
     if (this.dropElement != null) {
@@ -152,15 +172,17 @@ public abstract class HudElement extends ElementBase implements IDropElementList
       if (this.currentScale != newScale) {
         float oldScale = this.currentScale;
         this.currentScale = newScale;
+        this.isScrolling = true;
         this.onRescaleContent(super.getBox(), oldScale, newScale);
       }
       super.onInvalidateSize();
+      e.stopPropagation();
     }
   }
 
   @Override
   public final void renderElement() {
-    if (super.isHovering() && (this.canScale || this.canDrag)) {
+    if (this.lastDraggingPosition != null || super.isHovering() && (this.canScale || this.canDrag)) {
       float alpha = this.lastDraggingPosition == null ? 0.1f : 0.2f;
       RendererHelpers.drawRect(0, super.getBox(), Colour.BLACK.withAlpha(alpha));
     }
@@ -184,7 +206,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
 
     Dim x;
     Dim y;
-    switch (this.anchor) {
+    switch (this.autoAnchor) {
       case TOP_LEFT:
         x = alignLower(horizontal, position, size, screenSizeData);
         y = alignLower(vertical, position, size, screenSizeData);
@@ -222,7 +244,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
         y = alignUpper(vertical, position, size, screenSizeData);
         break;
       default:
-        throw new RuntimeException("Invalid anchor " + this.anchor);
+        throw new RuntimeException("Invalid anchor " + this.autoAnchor);
     }
 
     super.setBox(box.withPosition(new DimPoint(x, y)));
@@ -390,7 +412,7 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   }
 
   protected static DimRect setBoxPositionAtAnchor(DimRect box, DimPoint point, Anchor anchor) {
-    // calculate the anchor's position relative to the box's permission
+    // calculate the anchor's position relative to the box's position
     Dim x = box.getX();
     Dim y = box.getY();
     Dim w = box.getWidth();

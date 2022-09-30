@@ -66,6 +66,7 @@ public class GuiService {
   private final LivestreamApiStore livestreamApiStore;
   private final DonationApiStore donationApiStore;
   private final RankApiStore rankApiStore;
+  private final CustomGuiNewChat customGuiNewChat;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -99,7 +100,8 @@ public class GuiService {
                     MessageService messageService,
                     LivestreamApiStore livestreamApiStore,
                     DonationApiStore donationApiStore,
-                    RankApiStore rankApiStore) {
+                    RankApiStore rankApiStore,
+                    CustomGuiNewChat customGuiNewChat) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -133,6 +135,7 @@ public class GuiService {
     this.livestreamApiStore = livestreamApiStore;
     this.donationApiStore = donationApiStore;
     this.rankApiStore = rankApiStore;
+    this.customGuiNewChat = customGuiNewChat;
 
     this.addEventHandlers();
   }
@@ -142,10 +145,24 @@ public class GuiService {
   }
 
   public void displayDashboard(@Nullable DashboardRoute route) {
+    this.minecraft.displayGuiScreen(this.createDashboardScreen(route));
+  }
+
+  private InteractiveScreen createDashboardScreen(@Nullable DashboardRoute route) {
     InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.DASHBOARD);
-    screen.setMainElement(new ChatMateDashboardElement(context, screen, route, this.chatMateEndpointProxy, this.statusService, this.apiRequestService, this.userEndpointProxy, this.messageService));
-    this.minecraft.displayGuiScreen(screen);
+    screen.setMainElement(new ChatMateDashboardElement(
+        context,
+        screen,
+        route,
+        this.chatMateEndpointProxy,
+        this.statusService,
+        this.apiRequestService,
+        this.userEndpointProxy,
+        this.messageService,
+        this.config)
+    );
+    return screen;
   }
 
   private void addEventHandlers() {
@@ -211,7 +228,8 @@ public class GuiService {
         this.contextMenuService,
         this.cursorService,
         this.urlService,
-        this.forgeEventService);
+        this.forgeEventService,
+        this.customGuiNewChat);
     return new OpenGui.Out(replaceWithGui);
   }
 
@@ -243,6 +261,7 @@ public class GuiService {
         this.chatComponentRenderer,
         this.rankApiStore,
         this.livestreamApiStore,
-        this.donationApiStore);
+        this.donationApiStore,
+        this.config);
   }
 }

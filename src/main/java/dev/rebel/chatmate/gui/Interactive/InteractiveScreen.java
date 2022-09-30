@@ -10,14 +10,17 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.events.ForgeEventService;
 import dev.rebel.chatmate.services.events.KeyboardEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData;
 import dev.rebel.chatmate.services.events.models.KeyboardEventData.Out.KeyboardHandlerAction;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
 import dev.rebel.chatmate.services.events.models.MouseEventData.Out.MouseHandlerAction;
+import dev.rebel.chatmate.services.events.models.ScreenResizeData;
 import dev.rebel.chatmate.services.util.Collections;
 import dev.rebel.chatmate.store.DonationApiStore;
 import dev.rebel.chatmate.store.LivestreamApiStore;
@@ -44,6 +47,8 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseUp = this::onMouseUp;
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseScroll = this::onMouseScroll;
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> _onKeyDown = this::onKeyDown;
+  private final Function<ScreenResizeData.In, ScreenResizeData.Out> _onScreenResize = this::onScreenResize;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
 
   protected boolean requiresRecalculation = true;
   protected boolean shouldCloseScreen = false;
@@ -73,6 +78,11 @@ public class InteractiveScreen extends Screen implements IElement {
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_UP, this._onMouseUp, new MouseEventData.Options(true), this);
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_SCROLL, this._onMouseScroll, new MouseEventData.Options(true), this);
     this.context.keyboardEventService.on(KeyboardEventService.Events.KEY_DOWN, this._onKeyDown, new KeyboardEventData.Options(true, null, null, null), this);
+
+    // we don't want to override the default `onScreenSizeUpdated()` because it fires only when this interactive screen is active in `Minecraft`, which may not necessarily be the case (e.g. for the HUD)
+    this.context.forgeEventService.onScreenResize(this._onScreenResize, new ScreenResizeData.Options(), this);
+
+    this.context.config.getDebugModeEnabled().onChange(this._onChangeDebugModeEnabled, this, false);
   }
 
   public void setMainElement(IElement mainElement) {
@@ -106,8 +116,7 @@ public class InteractiveScreen extends Screen implements IElement {
     }
   }
 
-  @Override
-  protected void onScreenSizeUpdated() {
+  protected ScreenResizeData.Out onScreenResize(ScreenResizeData.In eventIn) {
     this.onInvalidateSize();
 
     int newScaleFactor = this.context.dimFactory.getScaleFactor();
@@ -119,6 +128,8 @@ public class InteractiveScreen extends Screen implements IElement {
 
     this.screenSize = newSize;
     this.minecraftScaleFactor = newScaleFactor;
+
+    return new ScreenResizeData.Out();
   }
 
   @Override
@@ -137,8 +148,17 @@ public class InteractiveScreen extends Screen implements IElement {
     }
   }
 
-  // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
   protected void recalculateLayout() {
+    this._recalculateLayout(0);
+  }
+
+  // this always fires after any element changes so that, by the time we get to rendering, everything has been laid out
+  private void _recalculateLayout(int depth) {
+    if (depth > 10) {
+      this.context.logService.logError(this, "Encountered infinite loop while recalculating layout - aborting.");
+      return;
+    }
+
     if (this.mainElement == null || this.shouldCloseScreen) {
       return;
     }
@@ -166,6 +186,9 @@ public class InteractiveScreen extends Screen implements IElement {
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
     this.context.renderer._executeSideEffects();
+
+    // it is possible that running side effects (or calling calculateSize/setBox) changed the layout
+    this._recalculateLayout(depth++);
   }
 
   @Override
@@ -362,7 +385,7 @@ public class InteractiveScreen extends Screen implements IElement {
     } else if (in.isPressed(Keyboard.KEY_F11)) {
       this.context.minecraft.toggleFullscreen();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-    } else if (in.isPressed(Keyboard.KEY_F3)) {
+    } else if (in.isPressed(Keyboard.KEY_F3) && this.context.config.getDebugModeEnabled().get()) {
       this.toggleDebug();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     } else if (in.isPressed(Keyboard.KEY_F5)) {
@@ -534,6 +557,13 @@ public class InteractiveScreen extends Screen implements IElement {
     RendererHelpers.drawTooltip(context.dimFactory, context.fontEngine, context.mousePosition, tooltip);
   }
 
+  private ConfigEventData.Out<Boolean> onChangeDebugModeEnabled(ConfigEventData.In<Boolean> eventIn) {
+    this.debugModeEnabled = false;
+    this.debugElementSelected = false;
+    this.context.debugElement = null;
+    return new ConfigEventData.Out<>();
+  }
+
   //region Empty or delegated IElement methods
   @Override
   public List<IElement> getChildren() { return Collections.list(this.mainElement); }
@@ -603,6 +633,12 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public IElement setZIndex(int zIndex) { return this; }
+
+  @Override
+  public @Nullable DimRect getVisibleBox() { return null; }
+
+  @Override
+  public IElement setVisibleBox(@Nullable DimRect visibleBox) { return this; }
 
   @Override
   public InteractiveScreen setHorizontalAlignment(HorizontalAlignment horizontalAlignment) { return null; }
@@ -680,6 +716,7 @@ public class InteractiveScreen extends Screen implements IElement {
     public final RankApiStore rankApiStore;
     public final LivestreamApiStore livestreamApiStore;
     public final DonationApiStore donationApiStore;
+    public final Config config;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -704,7 +741,8 @@ public class InteractiveScreen extends Screen implements IElement {
                               ChatComponentRenderer chatComponentRenderer,
                               RankApiStore rankApiStore,
                               LivestreamApiStore livestreamApiStore,
-                              DonationApiStore donationApiStore) {
+                              DonationApiStore donationApiStore,
+                              Config config) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -724,6 +762,7 @@ public class InteractiveScreen extends Screen implements IElement {
       this.rankApiStore = rankApiStore;
       this.livestreamApiStore = livestreamApiStore;
       this.donationApiStore = donationApiStore;
+      this.config = config;
     }
   }
 

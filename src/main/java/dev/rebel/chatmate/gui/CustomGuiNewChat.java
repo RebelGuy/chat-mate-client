@@ -2,23 +2,27 @@ package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
-import dev.rebel.chatmate.gui.StateManagement.AnimatedSelection;
-import dev.rebel.chatmate.gui.StateManagement.State;
+import dev.rebel.chatmate.gui.Interactive.RendererHelpers.Transform;
+import dev.rebel.chatmate.gui.StateManagement.*;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.*;
 import dev.rebel.chatmate.gui.models.ChatLine;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ForgeEventService;
+import dev.rebel.chatmate.services.events.MinecraftChatEventService;
 import dev.rebel.chatmate.services.events.MouseEventService;
 import dev.rebel.chatmate.services.events.MouseEventService.Events;
 import dev.rebel.chatmate.services.events.models.GuiScreenChanged;
 import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
@@ -31,6 +35,7 @@ import scala.Tuple2;
 import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 
 import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
@@ -40,10 +45,12 @@ import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
  * the screen shown when opening the chat. */
 public class CustomGuiNewChat extends GuiNewChat {
   private static final Logger logger = LogManager.getLogger();
-  private static final Integer MAX_DRAWN_LINES = 100; // limits drawnChatLines
-  private static final Integer MAX_LINES = 100; // limits chatLines
+  private static final Integer MAX_DRAWN_LINES = 500; // limits drawnChatLines
+  private static final Integer MAX_LINES = 500; // limits chatLines
   private static final Integer LEFT = 2; // distance of the chat window to the left side of the screen, in GUI units
+  private static final Integer BOTTOM = 20;
   private static final Integer LEFT_PADDING = 1; // padding between the start of the chat line, and the start of the text, in GUI units
+  private static final float SCROLL_MULT = 0.5f;
 
   private final Minecraft minecraft;
   private final LogService logService;
@@ -54,6 +61,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final ContextMenuStore contextMenuStore;
   private final FontEngine fontEngine;
   private final ChatComponentRenderer chatComponentRenderer;
+  private final MinecraftChatEventService minecraftChatEventService;
 
   private final List<String> sentMessages = Lists.newArrayList();
   private final List<AbstractChatLine> abstractChatLines = Lists.newArrayList();
@@ -61,8 +69,13 @@ public class CustomGuiNewChat extends GuiNewChat {
   private final AnimatedSelection<AbstractChatLine> selectedLine;
   private final AnimatedSelection<AbstractChatLine> hoveredLine;
 
-  private int scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
-  private boolean isScrolled;
+  private final AnimatedFloat scrollPos; // number of scrolled lines. 0 means we have scrolled to the bottom (most recent chat).
+  private boolean isScrolled = false;
+  private ChatDimensions currentDimensions;
+  private @Nullable DimRect scrollBarRect = null;
+  private @Nullable DimPoint scrollBarDragPosition = null;
+  private @Nullable Float scrollBarPositionAtDrag = null;
+  private final AnimatedBool hoveringOverScrollbar = new AnimatedBool(300L, false);
 
   public CustomGuiNewChat(Minecraft minecraft,
                           LogService logService,
@@ -72,7 +85,8 @@ public class CustomGuiNewChat extends GuiNewChat {
                           MouseEventService mouseEventService,
                           ContextMenuStore contextMenuStore,
                           FontEngine fontEngine,
-                          ChatComponentRenderer chatComponentRenderer) {
+                          ChatComponentRenderer chatComponentRenderer,
+                          MinecraftChatEventService minecraftChatEventService) {
     super(minecraft);
     this.minecraft = minecraft;
     this.logService = logService;
@@ -83,21 +97,69 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.contextMenuStore = contextMenuStore;
     this.fontEngine = fontEngine;
     this.chatComponentRenderer = chatComponentRenderer;
+    this.minecraftChatEventService = minecraftChatEventService;
 
     this.hoveredLine = new AnimatedSelection<>(150L);
     this.selectedLine = new AnimatedSelection<>(100L);
+    this.currentDimensions = new ChatDimensions(minecraft.gameSettings);
+    this.scrollPos = new AnimatedFloat(400L, 0f);
+    this.scrollPos.setEasing(frac -> 1 - (float)Math.pow(1 - frac, 5));
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
     this.forgeEventService.onGuiScreenChanged(this::onChatLoseFocus, new GuiScreenChanged.Options(GuiScreenChanged.ListenType.CLOSE_ONLY, CustomGuiChat.class));
+    this.mouseEventService.on(Events.MOUSE_DOWN, this::onMouseDown, new MouseEventData.Options(), null);
+    this.mouseEventService.on(Events.MOUSE_UP, this::onMouseUp, new MouseEventData.Options(), null);
     this.mouseEventService.on(Events.MOUSE_MOVE, this::onMouseMove, new MouseEventData.Options(), null);
   }
 
   private GuiScreenChanged.Out onChatLoseFocus(GuiScreenChanged.In in) {
     this.hoveredLine.setSelected(null);
+    this.scrollBarDragPosition = null;
+    this.scrollBarPositionAtDrag = null;
+    this.hoveringOverScrollbar.set(false);
     return new GuiScreenChanged.Out();
   }
 
+  private MouseEventData.Out onMouseDown(MouseEventData.In in) {
+    DimPoint position = in.mousePositionData.point.setAnchor(DimAnchor.GUI);
+    if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.scrollBarRect != null && this.scrollBarRect.checkCollision(position)) {
+      this.scrollBarDragPosition = position;
+      this.scrollBarPositionAtDrag = this.scrollPos.get();
+    }
+    return new MouseEventData.Out();
+  }
+
+  private MouseEventData.Out onMouseUp(MouseEventData.In in) {
+    if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
+      this.scrollBarDragPosition = null;
+      this.scrollBarPositionAtDrag = null;
+    }
+
+    return new MouseEventData.Out();
+  }
+
   private MouseEventData.Out onMouseMove(MouseEventData.In in) {
+    DimPoint position = in.mousePositionData.point.setAnchor(DimAnchor.GUI);
+    this.hoveringOverScrollbar.set(this.scrollBarRect != null && this.scrollBarRect.checkCollision(position));
+
+    if (this.scrollBarDragPosition != null) {
+      int storedLines = this.chatLines.size();
+      int visibleLines = Math.min(storedLines, this.getLineCount());
+
+      float lineHeight = this.fontEngine.FONT_HEIGHT * this.getChatScale();
+      float renderedHeight = visibleLines * lineHeight;
+      float barHeight = this.scrollBarRect.getHeight().getGui();
+
+      float linesScrolledPerUnitMoved = (storedLines - visibleLines) / (renderedHeight - barHeight); // non-visible lines over the free sidebar space
+
+      // mouseDelta determines how far the bar has moved
+      float mouseDelta = position.getY().minus(this.scrollBarDragPosition.getY()).getGui();
+
+      float newScrollTarget = this.scrollBarPositionAtDrag - mouseDelta * linesScrolledPerUnitMoved; // scrolling is inverted: a positive-y delta decreases the scrolling position
+      float currentScrollTarget = this.scrollPos.getTarget();
+      this.scroll(newScrollTarget - currentScrollTarget, true);
+    }
+
     this.updateHoveredLine();
     return new MouseEventData.Out();
   }
@@ -114,21 +176,36 @@ public class CustomGuiNewChat extends GuiNewChat {
   private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
     RenderGameOverlayEvent.Chat event = eventIn.event;
     event.setCanceled(true);
-    float posX = event.posX;
-    float posY = eventIn.event.posY - this.config.getChatVerticalDisplacementEmitter().get();
 
-    // copied from the GuiIngameForge::renderChat, except using our own GuiNewChat implementation
-    GlStateManager.pushMatrix();
-    GlStateManager.translate(posX, posY, 0.0F);
-    this.drawChat(this.minecraft.ingameGUI.getUpdateCounter());
-    GlStateManager.popMatrix();
+    float posX = event.posX + LEFT;
+    float posY = eventIn.event.posY - this.config.getChatVerticalDisplacementEmitter().get() + BOTTOM;
+    DimPoint translation = new DimPoint(this.dimFactory.fromGui(posX), this.dimFactory.fromGui(posY)); // bottom left position
+
+    // clip the chat vertically
+    Dim height = this.dimFactory.fromGui(this.getChatHeight()).times(this.getChatScale()); // scale has to be applied here
+    DimRect chatRect = new DimRect(
+        this.dimFactory.zeroGui(),
+        translation.getY().minus(height),
+        this.dimFactory.getMinecraftSize().getX(),
+        height
+    );
+
+    RendererHelpers.withTranslation(translation, transform -> {
+      RendererHelpers.withScissor(chatRect, this.dimFactory.getMinecraftSize(), () -> {
+        this.drawChat(this.minecraft.ingameGUI.getUpdateCounter(), chatRect.withTranslation(translation.scale(-1)), transform);
+      });
+    });
+
     this.minecraft.mcProfiler.endSection();
-
     return new RenderChatGameOverlay.Out();
   }
 
   @Override
   public void drawChat(int updateCounter) {
+    this.drawChat(updateCounter, null, null); // I don't think this gets called anywhere
+  }
+
+  public void drawChat(int updateCounter, DimRect chatRect, Transform transform) {
     if (this.minecraft.gameSettings.chatVisibility == EntityPlayer.EnumChatVisibility.HIDDEN) {
       return;
     }
@@ -142,57 +219,64 @@ public class CustomGuiNewChat extends GuiNewChat {
     float opacity = this.minecraft.gameSettings.chatOpacity * 0.9F + 0.1F;
 
     float scale = this.getChatScale();
-    int width = MathHelper.ceiling_float_int((float)this.getChatWidth() / scale);
-    GlStateManager.pushMatrix();
-    GlStateManager.translate(LEFT, 20.0F, 0.0F);
-    GlStateManager.scale(scale, scale, 1.0F);
 
-    LineIterator lineIterator = lineAction -> {
-      for (int i = 0; i + this.scrollPos < this.chatLines.size() && i < maxLines; ++i) {
-        ChatLine line = this.chatLines.get(i + this.scrollPos);
-        if (line == null) {
-          continue;
+    // the fractional amount of scrollPos represents the proportion of the top line that is visible (or one minus the proportion of the bottom line).
+    // we want to effectively scroll the chat down (and it will be clipped by the scissor in the parent method)
+    float scrollPos = this.scrollPos.get();
+    float verticalOffset = (scrollPos - (float)Math.floor(scrollPos)) * this.fontEngine.FONT_HEIGHT * scale;
+    DimPoint verticalOffsetDim = new DimPoint(this.dimFactory.zeroGui(), this.dimFactory.fromGui(verticalOffset));
+
+    RendererHelpers.withMapping(verticalOffsetDim, scale, () -> {
+      LineIterator lineIterator = lineAction -> {
+        int startLine = (int)Math.floor(scrollPos);
+        int endLine = (int)Math.ceil(scrollPos + maxLines);
+        int nLines = endLine - startLine; // this is either maxLines (for integer scrollPos) or maxLines + 1 (for fractional scrollPos, where we need to display an additional fractional line)
+
+        for (int i = 0; i + startLine < this.chatLines.size() && i < nLines; i++) {
+          ChatLine line = this.chatLines.get(i + startLine);
+          if (line == null) {
+            continue;
+          }
+
+          int lineOpacity = this.getLineOpacity(updateCounter, line, opacity);
+          if (lineOpacity < 4) {
+            // todo: standardise magic transparency number, we've seen this before when drawing the view count reels
+            continue;
+          }
+
+          lineAction.act(line, i, lineOpacity);
         }
+      };
 
-        int lineOpacity = this.getLineOpacity(updateCounter, line, opacity);
-        if (lineOpacity < 4) {
-          // todo: standardise magic transparency number, we've seen this before when drawing the view count reels
-          continue;
-        }
-
-        lineAction.act(line, i, lineOpacity);
-      }
-    };
-
-    // render visible lines. draw the background first so that any chat line contents with negative y offsets are
-    // not clipped by the background of the line above it
-    lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLineBackground(line, i, lineOpacity, width));
-    lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLine(line, i, lineOpacity, width));
-    State<Integer> renderedLines = new State<>(0); // how many lines we have actually rendered
-    lineIterator.forEachLine((line, i, lineOpacity) -> renderedLines.setState(current -> current + 1));
+      // render visible lines. draw the background first so that any chat line contents with negative y offsets are
+      // not clipped by the background of the line above it
+      lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLineBackground(line, i, lineOpacity));
+      lineIterator.forEachLine((line, i, lineOpacity) -> this.drawLine(line, i, lineOpacity, chatRect.withTranslation(verticalOffsetDim.scale(-1))));
+    });
 
     if (this.getChatOpen()) {
-      this.drawScrollBar(lineCount, renderedLines.getState());
+      this.drawScrollBar(transform);
+    } else {
+      this.scrollBarRect = null;
     }
-
-    GlStateManager.popMatrix();
   }
 
-  private void drawLineBackground(ChatLine line, int index, int opacity, int width) {
+  private void drawLineBackground(ChatLine line, int index, int opacity) {
     int lineBottom = -index * this.fontEngine.FONT_HEIGHT; // negative because we iterate from the bottom line to the top line
     int lineTop = lineBottom - this.fontEngine.FONT_HEIGHT;
+    Dim lineWidth = this.getChatWidthForTextDim();
 
     Dim x = this.dimFactory.fromGui(0);
     Dim y = this.dimFactory.fromGui(lineTop);
-    Dim w = this.dimFactory.fromGui(width + 4);
+    Dim w = lineWidth.plus(this.dimFactory.fromGui(4));
     Dim h = this.fontEngine.FONT_HEIGHT_DIM;
     RendererHelpers.drawRect(-100, new DimRect(x, y, w, h), this.getBackgroundColour(line, opacity));
   }
 
-  private void drawLine(ChatLine line, int index, int opacity, int width) {
-    int lineLeft = LEFT_PADDING;
-    int lineBottom = -index * this.fontEngine.FONT_HEIGHT; // negative because we iterate from the bottom line to the top line
-    int lineTop = lineBottom - this.fontEngine.FONT_HEIGHT;
+  private void drawLine(ChatLine line, int index, int opacity, DimRect chatRect) {
+    Dim lineLeft = this.dimFactory.fromGui(LEFT_PADDING);
+    Dim lineBottom = this.fontEngine.FONT_HEIGHT_DIM.times(-index); // negative because we iterate from the bottom line to the top line
+    Dim lineTop = lineBottom.minus(this.fontEngine.FONT_HEIGHT_DIM);
 
     GlStateManager.enableBlend();
 
@@ -205,14 +289,15 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     if (chatComponent instanceof PrecisionChatComponent) {
       PrecisionChatComponent component = (PrecisionChatComponent)chatComponent;
+      Dim width = this.getChatWidthForTextDim();
       for (Tuple2<PrecisionChatComponent.PrecisionLayout, IChatComponent> pair : component.getComponentsForLine(this.fontEngine, width)) {
-        int left = lineLeft + pair._1.position.getGuiValue(width);
-        this.chatComponentRenderer.drawChatComponent(pair._2, left, lineTop, opacity);
+        Dim left = lineLeft.plus(pair._1.position);
+        this.chatComponentRenderer.drawChatComponent(pair._2, left, lineTop, opacity, chatRect);
       }
     } else {
-      int x = 0;
+      Dim x = this.dimFactory.zeroGui();
       for (IChatComponent component : chatComponent) {
-        x += this.chatComponentRenderer.drawChatComponent(component, lineLeft + x, lineTop, opacity);
+        x = x.plus(this.chatComponentRenderer.drawChatComponent(component, lineLeft.plus(x), lineTop, opacity, chatRect));
       }
     }
 
@@ -236,21 +321,38 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   /** Given the lineCount (total lines) and the renderedLines (how many lines are visible on screen), draws the scrollbar to the left of the chat GUI. */
-  private void drawScrollBar(int lineCount, int renderedLines) {
-    int lineHeight = this.fontEngine.FONT_HEIGHT;
-    GlStateManager.translate(-3.0F, 0.0F, 0.0F);
-    int fullHeight = lineCount * lineHeight + lineCount;
-    int renderedHeight = renderedLines * lineHeight + renderedLines;
-    int j3 = this.scrollPos * renderedHeight / lineCount;
-    int k1 = renderedHeight * renderedHeight / fullHeight;
-
-    if (fullHeight != renderedHeight)
-    {
-      int k3 = j3 > 0 ? 170 : 96;
-      int l3 = this.isScrolled ? 13382451 : 3355562;
-      drawRect(0, -j3, 2, -j3 - k1, l3 + (k3 << 24));
-      drawRect(2, -j3, 1, -j3 - k1, 13421772 + (k3 << 24));
+  private void drawScrollBar(Transform transform) {
+    int storedLines = this.chatLines.size();
+    int visibleLines = Math.min(storedLines, this.getLineCount());
+    if (visibleLines >= storedLines) {
+      this.scrollBarRect = null;
+      return;
     }
+
+    float lineHeight = this.fontEngine.FONT_HEIGHT * this.getChatScale();
+    float fullHeight = storedLines * lineHeight;
+    float renderedHeight = visibleLines * lineHeight;
+    float barHeight = Math.max(renderedHeight / fullHeight * renderedHeight, lineHeight);
+    float scrollRatio = this.scrollPos.get() / (storedLines - visibleLines); // how far up the scroll bar is
+    float barOffsetBottom = (renderedHeight - barHeight) * scrollRatio;
+
+    // recall that (0, 0) is at the bottom-left corner of the chat window
+    DimRect barRect = new DimRect(
+        this.dimFactory.fromGui(-LEFT),
+        this.dimFactory.fromGui(-barOffsetBottom - barHeight),
+        this.dimFactory.fromGui(LEFT),
+        this.dimFactory.fromGui(barHeight)
+    );
+    Dim cornerRadius = this.dimFactory.fromScreen(4);
+    Colour colour;
+    if (this.scrollBarDragPosition != null) {
+      colour = Colour.WHITE.withAlpha(0.7f);
+    } else {
+      colour = Colour.lerp(Colour.GREY75, Colour.WHITE, this.hoveringOverScrollbar.getFrac()).withAlpha(0.5f);
+    }
+    RendererHelpers.drawRect(100, barRect, colour, null, null, cornerRadius);
+
+    this.scrollBarRect = transform.unTransform(barRect);
   }
 
   private int getLineOpacity(int updateCounter, ChatLine line, float baseOpacity) {
@@ -302,7 +404,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Adds a new chat message. Automatically splits up the component's text based on its text width. */
   private void addComponent(IChatComponent chatComponent, int chatLineId, int updateCounter) {
     AbstractChatLine newLine = this.pushFullComponent(chatComponent, chatLineId, updateCounter);
-    this.pushDrawnComponent(newLine, chatComponent, chatLineId, updateCounter);
+    this.pushDrawnComponent(newLine, chatComponent, chatLineId, updateCounter, true);
 
     // todo: replace with our own logger
     logger.info("[CHAT] " + chatComponent.getUnformattedText());
@@ -329,7 +431,7 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   /** Adds the component to `drawnChatLines` after processing its contents. */
-  private void pushDrawnComponent(AbstractChatLine parent, IChatComponent chatComponent, int chatLineId, int updateCounter) {
+  private void pushDrawnComponent(AbstractChatLine parent, IChatComponent chatComponent, int chatLineId, int updateCounter, boolean autoScroll) {
     boolean processContents = true;
     if (chatComponent instanceof PrecisionChatComponent) {
       processContents = false;
@@ -340,13 +442,13 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     if (!processContents) {
       // push as-is
-      this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId, parent));
+      this.pushDrawnChatLine(new ChatLine(updateCounter, chatComponent, chatLineId, parent), autoScroll);
 
     } else {
       int lineWidth = this.getLineWidth();
       List<IChatComponent> splitComponents = ComponentHelpers.splitText(chatComponent, lineWidth, this.fontEngine); // useful
       for (IChatComponent component : splitComponents) {
-        this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId, parent));
+        this.pushDrawnChatLine(new ChatLine(updateCounter, component, chatLineId, parent), autoScroll);
       }
     }
 
@@ -354,13 +456,13 @@ public class CustomGuiNewChat extends GuiNewChat {
   }
 
   /** Adds the ChatLine to the `drawnChatLines`. */
-  private void pushDrawnChatLine(ChatLine line) {
+  private void pushDrawnChatLine(ChatLine line, boolean autoScroll) {
     this.chatLines.add(0, line);
 
     // make sure we keep the same lines visible even as we push more lines to the bottom of the chat
-    if (this.getChatOpen() && this.scrollPos > 0) {
+    if (this.getChatOpen() && autoScroll && this.scrollPos.getTarget() > 0) {
       this.isScrolled = true;
-      this.scroll(1);
+      this.scroll(1, true);
     }
 
     // purge entries at the top
@@ -371,14 +473,17 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   /** Re-draws all `this.chatLines`, generating a new list of `drawnChatLines`. Probably used when the chat width has been changed. */
   @Override
-  public void refreshChat()
-  {
+  public void refreshChat() {
     this.refreshChat(false);
   }
 
   public void refreshChat(boolean keepScrollPos) {
-    int initialScrollPos = this.scrollPos;
-    boolean initialIsScrolled = this.isScrolled;
+    // `refreshChat` is called by `GameSettings` when the dimensions have been changed
+    ChatDimensions newDimensions = new ChatDimensions(this.minecraft.gameSettings);
+    if (!Objects.equals(this.currentDimensions, newDimensions)) {
+      this.currentDimensions = newDimensions;
+      this.minecraftChatEventService.dispatchUpdateChatDimensionsEvent();
+    }
 
     this.chatLines.clear();
     if (!keepScrollPos) {
@@ -387,12 +492,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     for (int i = this.abstractChatLines.size() - 1; i >= 0; --i) {
       AbstractChatLine chatline = this.abstractChatLines.get(i);
-      this.pushDrawnComponent(chatline, chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter());
-    }
-
-    if (keepScrollPos) {
-      this.scrollPos = initialScrollPos;
-      this.isScrolled = initialIsScrolled;
+      this.pushDrawnComponent(chatline, chatline.getChatComponent(), chatline.getChatLineID(), chatline.getUpdatedCounter(), false);
     }
   }
 
@@ -412,25 +512,44 @@ public class CustomGuiNewChat extends GuiNewChat {
   /** Resets the chat scroll (executed when the GUI is closed, among others). */
   @Override
   public void resetScroll() {
-    this.scrollPos = 0;
+    this.scrollPos.set(0f);
     this.isScrolled = false;
   }
 
   /** Scrolls the chat by the given number of lines. */
   @Override
   public void scroll(int amount) {
-    this.scrollPos += amount;
+    this.scroll(amount * SCROLL_MULT, false);
+  }
+
+  /** Scrolls the chat by the given number of lines. */
+  public void scroll(float amount, boolean skipAnimation) {
+    // prevent scrolling while dragging the scroll bar
+    if (this.scrollBarDragPosition != null && !skipAnimation) {
+      return;
+    }
+
+    float currentScrollTarget = this.scrollPos.getTarget();
+    float newScrollTarget = currentScrollTarget + amount;
+
     int i = this.chatLines.size();
 
     // clamp maximum
-    if (this.scrollPos > i - this.getLineCount()) {
-      this.scrollPos = i - this.getLineCount();
+    if (newScrollTarget > i - this.getLineCount()) {
+      newScrollTarget = i - this.getLineCount();
     }
 
     // clamp minimum and stop scrolling
-    if (this.scrollPos <= 0) {
-      this.scrollPos = 0;
+    if (newScrollTarget <= 0) {
+      newScrollTarget = 0;
       this.isScrolled = false;
+    }
+
+    if (skipAnimation) {
+      amount = newScrollTarget - currentScrollTarget; // in case it was clipped above
+      this.scrollPos.translate(amount);
+    } else {
+      this.scrollPos.set(newScrollTarget);
     }
   }
 
@@ -445,17 +564,17 @@ public class CustomGuiNewChat extends GuiNewChat {
   @Override
   public IChatComponent getChatComponent(int mouseX, int mouseY) {
     Tuple2<Integer, Integer> coords = this.mapInvertedScreenPositionIntoChat(mouseX, mouseY);
-    int x = coords._1;
-    int y = coords._2;
-    int maxX = this.getLineWidth();
+    Dim x = this.dimFactory.fromGui(coords._1); // mouseX and mouseY are in gui coords...
+    Dim y = this.dimFactory.fromGui(coords._2);
+    Dim maxX = this.getLineWidthDim();
 
-    ChatLine chatLine = this.getRenderedChatLine(x, y);
+    ChatLine chatLine = this.getRenderedChatLine((int)x.getGui(), (int)y.getGui());
     if (chatLine == null) {
       return null;
     }
 
     // walk from component to component until we first pass our desired x-position
-    int lineX = 0;
+    Dim lineX = this.dimFactory.zeroGui();
     for (IChatComponent component : chatLine.getChatComponent()) {
       IChatComponent originalComponent = component;
 
@@ -465,8 +584,8 @@ public class CustomGuiNewChat extends GuiNewChat {
       }
 
       if (component instanceof ChatComponentText) {
-        lineX += this.fontEngine.getStringWidth(getFormattedText((ChatComponentText)component));
-        if (lineX > x) {
+        lineX = lineX.plus(this.fontEngine.getStringWidthDim(getFormattedText((ChatComponentText)component)));
+        if (lineX.gt(x)) {
           return originalComponent;
         }
       } else if (component instanceof PrecisionChatComponent) {
@@ -477,18 +596,18 @@ public class CustomGuiNewChat extends GuiNewChat {
 
       } else if (component instanceof ImageChatComponent) {
         ImageChatComponent imageComponent = (ImageChatComponent)component;
-        lineX += imageComponent.paddingGuiLeft;
+        lineX = lineX.plus(imageComponent.paddingGuiLeft);
 
-        int width = (int)Math.ceil(imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT));
-        if (lineX <= x && lineX + width >= x) {
+        Dim width = imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT_DIM);
+        if (lineX.lte(x) && lineX.plus(width).gte(x)) {
           return originalComponent;
         }
-        lineX += width + imageComponent.paddingGuiRight;
+        lineX = lineX.plus(width).plus(imageComponent.paddingGuiRight);
 
       } else if (component instanceof UserNameChatComponent) {
         UserNameChatComponent userNameChatComponent = (UserNameChatComponent)component;
-        lineX += userNameChatComponent.getWidth();
-        if (lineX > x) {
+        lineX = lineX.plus(userNameChatComponent.getWidth());
+        if (lineX.gt(x)) {
           return originalComponent;
         }
 
@@ -535,7 +654,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     }
 
     // the line index at the current y-position
-    int lineIndex = mappedY / this.fontEngine.FONT_HEIGHT + this.scrollPos;
+    int lineIndex = (int)Math.floor((float)mappedY / this.fontEngine.FONT_HEIGHT + this.scrollPos.get());
     if (lineIndex < 0 || lineIndex >= this.chatLines.size()) {
       return null;
     }
@@ -575,8 +694,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   @Override
   public void deleteChatLine(int id) {
-    this.abstractChatLines.removeIf(line -> line.getChatLineID() == id);
-    this.chatLines.removeIf(line -> line.getChatLineID() == id);
+    this.deleteLine(ln -> ln.getChatLineID() == id);
   }
 
   /** Removes the component. Note that you must call `refreshChat` for the changes to come into effect. */
@@ -601,18 +719,30 @@ public class CustomGuiNewChat extends GuiNewChat {
     }
 
     // this ensures that the bottom lines will shift upwards to fill the gap, if we are currently scrolled
-    this.scroll(-removed);
+    this.scroll(-removed, true);
   }
 
+  /** Returns the actual chat width. */
   @Override
   public int getChatWidth() {
     return calculateChatboxWidth(this.minecraft.gameSettings.chatWidth);
+  }
+
+  /** Returns the actual chat width. */
+  public Dim getChatWidthDim() {
+    return this.dimFactory.fromGui(this.getChatWidth());
   }
 
   /** Returns the effective chat width that takes into account scaling. If the font renderer measures text to be at most this width, it will fit onto the chat GUI. */
   public int getChatWidthForText() {
     float scale = this.getChatScale();
     return MathHelper.floor_float((float)this.getChatWidth() / scale);
+  }
+
+  /** Returns the effective chat width that takes into account scaling. If the font renderer measures text to be at most this width, it will fit onto the chat GUI. */
+  public Dim getChatWidthForTextDim() {
+    float scale = this.getChatScale();
+    return this.getChatWidthDim().over(scale);
   }
 
   @Override
@@ -633,19 +763,23 @@ public class CustomGuiNewChat extends GuiNewChat {
 
   public static int calculateChatboxHeight(float scale) {
     int i = 180;
-    int j = 20;
+    int j = BOTTOM;
     return MathHelper.floor_float(scale * (float)(i - j) + (float)j);
   }
 
   /** Returns the maximum number of lines that fit into the visible chat window. */
   @Override
   public int getLineCount() {
-    return this.getChatHeight() / 9;
+    return this.getChatHeight() / this.fontEngine.FONT_HEIGHT;
   }
 
   /** Returns the width in GUI space. */
   private int getLineWidth() {
     return MathHelper.floor_float((float)this.getChatWidth() / this.getChatScale());
+  }
+
+  private Dim getLineWidthDim() {
+    return this.getChatWidthDim().over(this.getChatScale());
   }
 
   @FunctionalInterface
@@ -656,5 +790,36 @@ public class CustomGuiNewChat extends GuiNewChat {
   @FunctionalInterface
   private interface LineAction {
     void act(ChatLine line, int index, int opacity);
+  }
+
+  private static class ChatDimensions {
+    public final float chatHeightFocused;
+    public final float chatHeightUnfocused;
+    public final float chatWidth;
+    public final float chatScale;
+
+    private ChatDimensions(float chatHeightFocused, float chatHeightUnfocused, float chatWidth, float chatScale) {
+      this.chatHeightFocused = chatHeightFocused;
+      this.chatHeightUnfocused = chatHeightUnfocused;
+      this.chatWidth = chatWidth;
+      this.chatScale = chatScale;
+    }
+
+    public ChatDimensions(GameSettings gameSettings) {
+      this(gameSettings.chatHeightFocused, gameSettings.chatHeightUnfocused, gameSettings.chatWidth, gameSettings.chatScale);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ChatDimensions that = (ChatDimensions) o;
+      return Float.compare(that.chatHeightFocused, chatHeightFocused) == 0 && Float.compare(that.chatHeightUnfocused, chatHeightUnfocused) == 0 && Float.compare(that.chatWidth, chatWidth) == 0 && Float.compare(that.chatScale, chatScale) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(chatHeightFocused, chatHeightUnfocused, chatWidth, chatScale);
+    }
   }
 }

@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.chat;
 
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -85,21 +86,21 @@ public class UserNameChatComponent extends ChatComponentBase {
     return this.displayName;
   }
 
-  public int getWidth() {
-    return (int)this.fontEngine.getStringWidthDim(this.displayName, this.baseFont).getGui();
+  public Dim getWidth() {
+    return this.fontEngine.getStringWidthDim(this.displayName, this.baseFont);
   }
 
   /** Returns the width. */
-  public int renderComponent(Dim x, Dim y, int alphaInt) {
+  public Dim renderComponent(Dim x, Dim y, int alphaInt, DimRect chatRect) {
     float alpha = alphaInt / 255f;
     Dim newX;
     if (this.useEffects && this.donationService.shouldShowDonationEffect(this.userId)) {
-      newX = this.renderEffect(x, y, alpha);
+      newX = this.renderEffect(x, y, alpha, chatRect);
     } else {
       newX = this.renderDefault(x, y, alpha);
     }
 
-    return (int)newX.minus(x).getGui();
+    return newX.minus(x);
   }
 
   @Override
@@ -116,7 +117,7 @@ public class UserNameChatComponent extends ChatComponentBase {
     return this.fontEngine.drawString(this.displayName, x, y, this.baseFont.withColour(this.baseFont.getColour().withAlpha(alpha)));
   }
 
-  private Dim renderEffect(Dim x, Dim y, float alpha) {
+  private Dim renderEffect(Dim x, Dim y, float alpha, DimRect chatRect) {
     double t = ((double)new Date().getTime() / 1000) + this.tOffset;
     double deltaT = t - this.lastT;
     this.lastT = t;
@@ -124,8 +125,8 @@ public class UserNameChatComponent extends ChatComponentBase {
     // particle effect (member)
     if (Collections.map(this.rankApiStore.getCurrentUserRanks(this.userId), r -> r.rank.name).contains(RankName.MEMBER)) {
       // draw this below the text because it looks nicer that way
-      DimRect rect = new DimRect(x, y, this.dimFactory.fromGui(this.getWidth()), this.fontEngine.FONT_HEIGHT_DIM);
-      this.renderParticles(t, deltaT, alpha, rect);
+      DimRect rect = new DimRect(x, y, this.getWidth(), this.fontEngine.FONT_HEIGHT_DIM);
+      this.renderParticles(t, deltaT, alpha, rect, chatRect);
     }
 
     String fullString = this.displayName;
@@ -165,12 +166,16 @@ public class UserNameChatComponent extends ChatComponentBase {
     }
   }
 
-  private void renderParticles(double t, double deltaT, float alpha, DimRect rect) {
+  private void renderParticles(double t, double deltaT, float alpha, DimRect componentRect, DimRect chatRect) {
     double particlesPerSecond = 2;
-    boolean spawnParticle = Math.random() < particlesPerSecond * deltaT;
+
+    // make sure we don't spawn particles outside the chat area, and scale the chance of spawning a new particle if the component's rect was clipped
+    DimRect clippedRect = componentRect.clamp(chatRect);
+    float ratio = clippedRect.getAreaGui() / componentRect.getAreaGui();
+    boolean spawnParticle = Math.random() < particlesPerSecond * deltaT * ratio;
 
     if (spawnParticle) {
-      this.particles.add(new Particle(this.dimFactory, rect, t));
+      this.particles.add(new Particle(this.dimFactory, clippedRect, t));
     }
 
     this.particles = Collections.filter(this.particles, p -> !p.isComplete(t));
@@ -227,7 +232,11 @@ public class UserNameChatComponent extends ChatComponentBase {
 
       this.updatePosition(deltaT);
       this.updateVelocity(deltaT);
-      this.draw(t, alpha);
+
+      // we don't want the particles to get clipped by the
+      RendererHelpers.withoutScissor(() -> {
+        this.draw(t, alpha);
+      });
     }
 
     public boolean isComplete(double t) {

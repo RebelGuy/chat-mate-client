@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.chat;
 
 import com.google.common.collect.Iterators;
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.services.util.Objects;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
@@ -30,7 +31,7 @@ public class PrecisionChatComponent implements IChatComponent {
   }
 
   /** Gets the effective components for a chat line. Note that any action events may be lost - they are only retained in the original components. */
-  public List<Tuple2<PrecisionLayout, IChatComponent>> getComponentsForLine(FontEngine fontEngine, int guiLineWidth) {
+  public List<Tuple2<PrecisionLayout, IChatComponent>> getComponentsForLine(FontEngine fontEngine, Dim guiLineWidth) {
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
 
     for (Tuple2<PrecisionLayout, IChatComponent> pair : components) {
@@ -43,22 +44,22 @@ public class PrecisionChatComponent implements IChatComponent {
 
   /** If fullWidth is true, will use the whole layout box for the text component's hitbox, otherwise,
    * will use only the visible text region. Returns the original text component instance. */
-  public @Nullable IChatComponent getComponentAtGuiPosition(int guiPosition, int guiLineWidth, boolean fullWidth, FontEngine fontEngine) {
+  public @Nullable IChatComponent getComponentAtGuiPosition(Dim guiPosition, Dim guiLineWidth, boolean fullWidth, FontEngine fontEngine) {
     for (Tuple2<PrecisionLayout, IChatComponent> component : this.components) {
-      int start, width;
+      Dim start, width;
       if (fullWidth) {
         // full layout (may include whitespace)
-        start = component._1.position.getGuiValue(guiLineWidth);
-        width = component._1.width.getGuiValue(guiLineWidth);
+        start = component._1.position;
+        width = component._1.width;
       } else {
         // truncated/positioned layout (text region only)
         Tuple2<PrecisionLayout, IChatComponent> effective = this.getEffectiveComponent(component, guiLineWidth, fontEngine);
-        start = effective._1.position.getGuiValue(guiLineWidth);
-        width = effective._1.width.getGuiValue(guiLineWidth);
+        start = effective._1.position;
+        width = effective._1.width;
       }
 
-      int end = start + width;
-      if (guiPosition >= start && guiPosition < end) {
+      Dim end = start.plus(width);
+      if (guiPosition.gte(start) && guiPosition.lt(end)) {
         return component._2;
       }
     }
@@ -68,30 +69,30 @@ public class PrecisionChatComponent implements IChatComponent {
 
   /** Returns the left-aligned, truncated chat component that should be rendered to satisfy the layout of the provided component.
    * Retains all chat style properties of this component. The layout box is flush with the text. */
-  private Tuple2<PrecisionLayout, IChatComponent> getEffectiveComponent(Tuple2<PrecisionLayout, IChatComponent> pair, int lineWidth, FontEngine fontEngine) {
+  private Tuple2<PrecisionLayout, IChatComponent> getEffectiveComponent(Tuple2<PrecisionLayout, IChatComponent> pair, Dim lineWidth, FontEngine fontEngine) {
     PrecisionLayout layout = pair._1;
     IChatComponent component = pair._2;
-    int maxWidth = layout.width.getGuiValue(lineWidth);
+    Dim maxWidth = layout.width;
 
     String text = component.getFormattedText();
-    int textWidth = fontEngine.getStringWidth(text);
+    Dim textWidth = fontEngine.getStringWidthDim(text);
 
-    if (textWidth > maxWidth) {
+    if (textWidth.gt(maxWidth)) {
       String truncation = layout.customTruncation == null ? "…" : layout.customTruncation;
-      int suffixWidth = fontEngine.getStringWidth(truncation);
-      text = listFormattedStringToWidth(component.getFormattedText(), maxWidth - suffixWidth, fontEngine).get(0) + truncation;
-      textWidth = fontEngine.getStringWidth(text);
+      Dim suffixWidth = fontEngine.getStringWidthDim(truncation);
+      text = listFormattedStringToWidth(component.getFormattedText(), maxWidth.minus(suffixWidth), fontEngine).get(0) + truncation;
+      textWidth = fontEngine.getStringWidthDim(text);
     }
 
     // at this point, the text is guaranteed to be <= maxWidth
-    int originalPosition = layout.position.getGuiValue(lineWidth);
-    int effectivePosition;
+    Dim originalPosition = layout.position;
+    Dim effectivePosition;
     if (layout.alignment == PrecisionAlignment.LEFT) {
       effectivePosition = originalPosition;
     } else if (layout.alignment == PrecisionAlignment.CENTRE) {
-      effectivePosition = originalPosition + Math.round((maxWidth - textWidth) / 2.0f);
+      effectivePosition = originalPosition.plus(maxWidth.minus(textWidth).over(2));
     } else if (layout.alignment == PrecisionAlignment.RIGHT) {
-      effectivePosition = originalPosition + (maxWidth - textWidth);
+      effectivePosition = originalPosition.plus(maxWidth.minus(textWidth));
     } else {
       throw new RuntimeException("Did not expect layout alignment " + layout.alignment);
     }
@@ -106,7 +107,7 @@ public class PrecisionChatComponent implements IChatComponent {
     } else {
       effectiveComponent = new ChatComponentText(text);
     }
-    PrecisionLayout effectiveLayout = new PrecisionLayout(new PrecisionValue(effectivePosition), new PrecisionValue(textWidth), PrecisionAlignment.LEFT);
+    PrecisionLayout effectiveLayout = new PrecisionLayout(effectivePosition, textWidth, PrecisionAlignment.LEFT);
     return new Tuple2<>(effectiveLayout, effectiveComponent);
   }
 
@@ -149,12 +150,12 @@ public class PrecisionChatComponent implements IChatComponent {
   // Note: the following overrides are required when trimming formatted strings because,
   // by default, the FontRenderer tries to split in-between words only.
 
-  private List<String> listFormattedStringToWidth(String text, int width, FontEngine fontEngine) {
+  private List<String> listFormattedStringToWidth(String text, Dim width, FontEngine fontEngine) {
     return Arrays.asList(this.wrapFormattedStringToWidth(text, width, fontEngine).split("\n"));
   }
 
   /** From the FontRenderer::wrapFormattedStringToWidth, except it treats spaces as just another character and ignores newlines. */
-  private String wrapFormattedStringToWidth(String text, int width, FontEngine fontEngine) {
+  private String wrapFormattedStringToWidth(String text, Dim width, FontEngine fontEngine) {
     int i = this.sizeStringToWidth(text, width, fontEngine);
     if (text.length() <= i) {
       return text;
@@ -164,9 +165,9 @@ public class PrecisionChatComponent implements IChatComponent {
   }
 
   /** Same as the FontRenderer implementation, except it treats spaces as just another character. */
-  private int sizeStringToWidth(String text, int width, FontEngine fontEngine) {
+  private int sizeStringToWidth(String text, Dim width, FontEngine fontEngine) {
     int i = text.length();
-    int j = 0;
+    Dim j = width.setGui(0);
     int k = 0;
     int l = -1;
 
@@ -178,9 +179,9 @@ public class PrecisionChatComponent implements IChatComponent {
           break;
 
         default:
-          j += fontEngine.getCharWidth(c0);
+          j = j.plus(fontEngine.getStringWidthDim("" + c0));
           if (flag) {
-            ++j;
+            j = j.plus(j.setGui(1)); // equivalent to j++
           }
           break;
         case '§':
@@ -203,7 +204,7 @@ public class PrecisionChatComponent implements IChatComponent {
         break;
       }
 
-      if (j > width) {
+      if (j.gt(width)) {
         break;
       }
     }
@@ -217,19 +218,19 @@ public class PrecisionChatComponent implements IChatComponent {
   //endregion
 
   public static class PrecisionLayout {
-    public final PrecisionValue position;
-    public final PrecisionValue width;
+    public final Dim position;
+    public final Dim width;
     public final PrecisionAlignment alignment;
     public final @Nullable String customTruncation;
 
-    public PrecisionLayout(PrecisionValue position, PrecisionValue width, PrecisionAlignment alignment) {
+    public PrecisionLayout(Dim position, Dim width, PrecisionAlignment alignment) {
       this.position = position;
       this.width = width;
       this.alignment = alignment;
       this.customTruncation = null;
     }
 
-    public PrecisionLayout(PrecisionValue position, PrecisionValue width, PrecisionAlignment alignment, String customTruncation) {
+    public PrecisionLayout(Dim position, Dim width, PrecisionAlignment alignment, String customTruncation) {
       this.position = position;
       this.width = width;
       this.alignment = alignment;
@@ -239,35 +240,5 @@ public class PrecisionChatComponent implements IChatComponent {
 
   public enum PrecisionAlignment {
     LEFT, CENTRE, RIGHT
-  }
-
-  public static class PrecisionValue {
-    public final @Nullable Integer guiValue;
-    public final @Nullable Float relativeValue;
-
-    public PrecisionValue(@Nonnull Integer guiValue) {
-      this.guiValue = guiValue;
-      this.relativeValue = null;
-    }
-    public PrecisionValue(@Nonnull Float relativeValue) {
-      this.guiValue = null;
-      this.relativeValue = relativeValue;
-    }
-
-    public int getGuiValue(int fullGuiSize) {
-      if (this.guiValue != null) {
-        return this.guiValue;
-      } else {
-        return (int)(this.relativeValue * fullGuiSize);
-      }
-    }
-
-    public float getRelativeValue(int fullGuiSize) {
-      if (this.relativeValue != null) {
-        return this.relativeValue;
-      } else {
-        return (float)this.guiValue / fullGuiSize;
-      }
-    }
   }
 }

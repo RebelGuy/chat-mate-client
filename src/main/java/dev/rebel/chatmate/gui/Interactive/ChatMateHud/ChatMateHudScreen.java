@@ -200,7 +200,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
       }
     }
 
-    if (this.shown) {
+    if (this.shown && !super.context.minecraft.gameSettings.showDebugInfo) {
       super.drawScreen(0, 0, 0);
     }
     return new Tick.Out();

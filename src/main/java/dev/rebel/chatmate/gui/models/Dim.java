@@ -89,6 +89,10 @@ public class Dim {
 
   public static Dim min(Dim a, Dim b) { return a.lte(b) ? a : b; }
 
+  public static Dim clamp(Dim x, Dim min, Dim max) {
+    return Dim.min(Dim.max(x, min), max);
+  }
+
   public static Dim sum(List<Dim> items) {
     return Collections.eliminate(items, Dim::plus);
   }

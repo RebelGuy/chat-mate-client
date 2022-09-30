@@ -1,12 +1,16 @@
 package dev.rebel.chatmate.gui.chat;
 
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionLayout;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionValue;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.MinecraftProxyService;
+import dev.rebel.chatmate.services.events.MinecraftChatEventService;
+import dev.rebel.chatmate.services.events.models.EventData;
 import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
@@ -15,18 +19,23 @@ import scala.Tuple2;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static dev.rebel.chatmate.models.Styles.*;
 
 public class ChatPagination<T> {
   private final LogService logService;
-  private MinecraftProxyService minecraftProxyService;
+  private final MinecraftProxyService minecraftProxyService;
+  private final CustomGuiNewChat customGuiNewChat;
+  private final DimFactory dimFactory;
   private MessageService messageService;
+  private final MinecraftChatEventService minecraftChatEventService;
   private FontEngine fontEngine;
   private final T[] items;
   private final int itemsPerPage;
   private final PaginationRenderer<T> renderer;
   private final int maxPage;
+  private final Function<EventData.EventIn, EventData.EventOut> _onChatDimensionsUpdate = this::onChatDimensionsUpdate;
 
   private @Nullable String headerText;
   private boolean initialised;
@@ -39,7 +48,10 @@ public class ChatPagination<T> {
 
   public ChatPagination(LogService logService,
                         MinecraftProxyService minecraftProxyService,
+                        CustomGuiNewChat customGuiNewChat,
+                        DimFactory dimFactory,
                         MessageService messageService,
+                        MinecraftChatEventService minecraftChatEventService,
                         FontEngine fontEngine,
                         PaginationRenderer<T> renderer,
                         T[] items,
@@ -47,7 +59,10 @@ public class ChatPagination<T> {
                         @Nullable String headerText) {
     this.logService = logService;
     this.minecraftProxyService = minecraftProxyService;
+    this.customGuiNewChat = customGuiNewChat;
+    this.dimFactory = dimFactory;
     this.messageService = messageService;
+    this.minecraftChatEventService = minecraftChatEventService;
     this.fontEngine = fontEngine;
     this.renderer = renderer;
     this.items = items;
@@ -65,14 +80,21 @@ public class ChatPagination<T> {
     }
     this.renderedFooter = new ContainerChatComponent();
     this.emptyLine = new ChatComponentText("");
+
+    this.minecraftChatEventService.onUpdateChatDimensions(this._onChatDimensionsUpdate, this);
+  }
+
+  private EventData.EventOut onChatDimensionsUpdate(EventData.EventIn eventIn) {
+    this.render();
+    return new EventData.EventOut();
   }
 
   /** Renders the paginated entries to chat. */
   public void render() {
     this.renderHeader();
 
-    int chatWidth = this.minecraftProxyService.getChatWidth();
-    int effectiveChatWidth = this.minecraftProxyService.getChatWidthForText();
+    Dim chatWidth = this.customGuiNewChat.getChatWidthDim();
+    Dim effectiveChatWidth = this.customGuiNewChat.getChatWidthForTextDim();
     T[] visibleItems = this.getVisibleItems();
     for (int i = 0; i < renderedComponents.length; i++) {
       if (i < visibleItems.length) {
@@ -142,10 +164,10 @@ public class ChatPagination<T> {
     if (this.headerText == null) {
       this.renderedHeader1.setComponent(new ChatComponentText(""));
     } else {
-      PrecisionLayout layout = new PrecisionLayout(new PrecisionValue(0.0f), new PrecisionValue(1.0f), PrecisionAlignment.CENTRE);
+      PrecisionLayout layout = new PrecisionLayout(this.dimFactory.zeroGui(), this.customGuiNewChat.getChatWidthForTextDim(), PrecisionAlignment.CENTRE);
       ChatComponentText component = new ChatComponentText(this.headerText);
 
-      PrecisionLayout closeLayout = new PrecisionLayout(new PrecisionValue(0.0f), new PrecisionValue(1.0f), PrecisionAlignment.RIGHT);
+      PrecisionLayout closeLayout = new PrecisionLayout(this.dimFactory.zeroGui(), this.customGuiNewChat.getChatWidthForTextDim(), PrecisionAlignment.RIGHT);
       ClickEventWithCallback onClose = new ClickEventWithCallback(this.logService, this::delete, true);
       ChatComponentText closeComponent = styledText("[x]", onClose.bind(INTERACTIVE_STYLE_DE_EMPHASISE.get()));
 
@@ -156,7 +178,7 @@ public class ChatPagination<T> {
 
   private void renderFooter() {
     this.renderedFooter.setComponent(this.messageService.getPaginationFooterMessage(
-        this.minecraftProxyService.getChatWidthForText(),
+        this.customGuiNewChat.getChatWidthForTextDim(),
         this.currentPage + 1,
         this.maxPage + 1,
         this.enablePreviousPage() ? this::onPreviousPage : null,
@@ -228,6 +250,6 @@ public class ChatPagination<T> {
     /** Should return the chat component for rendering the given item. To help with layout, all items that are visible on the current page are also provided.
      * @param chatWidth is the actual chat width in GUI units.
      * @param effectiveChatWidth is the effective chat width for text rendering considerations. If you limit your text to this width, it will fit onto a single line. */
-    public abstract IChatComponent renderItem(T item, T[] allItemsOnPage, FontEngine fontEngine, int chatWidth, int effectiveChatWidth);
+    public abstract IChatComponent renderItem(T item, T[] allItemsOnPage, FontEngine fontEngine, Dim chatWidth, Dim effectiveChatWidth);
   }
 }
