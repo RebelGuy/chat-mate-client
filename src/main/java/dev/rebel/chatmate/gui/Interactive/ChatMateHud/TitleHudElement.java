@@ -46,7 +46,7 @@ public class TitleHudElement extends SimpleHudElementWrapper<BlockElement> {
     this.titleElement = new LabelElement(context, this)
         .setFontScale(TITLE_SCALE)
         .setHorizontalAlignment(HorizontalAlignment.CENTRE)
-        .cast(); // todo: fade out doesn't work, todo: check if the first second is supposed to be printed, or not
+        .cast();
     this.subTitleElement = new LabelElement(context, this)
         .setFontScale(SUB_TITLE_SCALE)
         .setHorizontalAlignment(HorizontalAlignment.CENTRE)

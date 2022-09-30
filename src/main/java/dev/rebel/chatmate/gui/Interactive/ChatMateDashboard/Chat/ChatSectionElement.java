@@ -23,7 +23,7 @@ public class ChatSectionElement extends ContainerElement implements ISectionElem
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .setMargin(new RectExtension(ZERO, gui(3), ZERO, ZERO))
         .cast();
-    ValueSliderElement chatDisplacementSlider = new ValueSliderElement(context, this) // todo: when scrolling, increment by the smallest possible unit
+    ValueSliderElement chatDisplacementSlider = new ValueSliderElement(context, this)
         .setDecimals(0)
         .setMinValue(0)
         .setMaxValue(100)

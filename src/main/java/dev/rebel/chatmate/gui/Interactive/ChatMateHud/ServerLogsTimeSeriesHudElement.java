@@ -129,7 +129,6 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
         GL11.glDisable(GL11.GL_ALPHA_TEST); // required for smooth alpha transitions
         RendererHelpers.drawTexture(super.context.minecraft.getTextureManager(), super.context.dimFactory, point.texture, pointTranslation, scale, Colour.WHITE.withAlpha(alpha));
       }
-
     }
 
     private static class DataPoint {

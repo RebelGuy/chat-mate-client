@@ -35,7 +35,6 @@ public class ScrollingElement extends SingleElement { // use a single element be
   public ScrollingElement(InteractiveContext context, IElement parent) {
     super(context, parent);
 
-    // super.setBorder(new RectExtension(ZERO, gui(4), ZERO, ZERO)); // todo: only set border when the scrollbar is visible
     this.scrollbarElement = new ScrollbarElement(context, this)
         .setVisible(false)
         .setMargin(new RectExtension(gui(1), ZERO, ZERO, ZERO))
@@ -216,9 +215,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
     public boolean isDragging() {
       return this.dropElement != null;
     }
-
-    // todo: while dragging the scrollbar, disable mouse events
-
+    
     /** Returns the draggable rect of the scroll region. */
     private DimRect getBarRect() {
       Dim totalHeight = ScrollingElement.this.childElement.getBox().getHeight();
