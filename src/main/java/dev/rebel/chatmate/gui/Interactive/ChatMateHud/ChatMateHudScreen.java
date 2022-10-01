@@ -48,10 +48,11 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
 
     // don't have to worry about unsubscribing because this Screen instance is re-used during the entirety of the application lifetime
     this.context.forgeEventService.onRenderTick(this::onRenderTick, null);
-    config.getHudEnabledEmitter().onChange(this::onChangeHudEnabled);
+    config.getHudEnabledEmitter().onChange(x -> this.updateVisibility());
+    config.getChatMateEnabledEmitter().onChange(x -> this.updateVisibility());
     chatMateHudStore.addListener(this);
 
-    this.onChangeHudEnabled(config.getHudEnabledEmitter().get());
+    this.updateVisibility();
   }
 
   public void show() {
@@ -210,7 +211,8 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
     return super.context.minecraft.currentScreen != this || !this.shown;
   }
 
-  private void onChangeHudEnabled(Boolean enabled) {
+  private void updateVisibility() {
+    boolean enabled = this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get();
     if (enabled) {
       this.show();
     } else {

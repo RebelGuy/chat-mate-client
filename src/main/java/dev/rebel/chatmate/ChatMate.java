@@ -38,6 +38,9 @@ public class ChatMate {
   // from https://forums.minecraftforge.net/topic/68571-1122-check-if-environment-is-deobfuscated/
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
+  // must hold on to reference in this class, otherwise it will be garbage collected (wtf)
+  ChatMateChatService chatMateChatService;
+
   @Mod.EventHandler
   public void onFMLInitialization(FMLInitializationEvent event) throws Exception {
     String currentDir = System.getProperty("user.dir").replace("\\", "/");
@@ -92,7 +95,7 @@ public class ChatMate {
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
-    ChatMateChatService chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
+    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
 
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
