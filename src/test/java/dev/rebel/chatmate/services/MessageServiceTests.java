@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.models.publicObjects.user.PublicChannelInfo;
@@ -47,7 +48,8 @@ public class MessageServiceTests {
 
   @Test
   public void ensureNonempty_ComponentWithImage_ReturnsArgument() {
-    IChatComponent component = new ImageChatComponent(() -> null, 0, 0);
+    Dim padding = new Dim(() -> 1, Dim.DimAnchor.GUI);
+    IChatComponent component = new ImageChatComponent(() -> null, padding, padding);
 
     IChatComponent result = this.messageService.ensureNonempty(component, "Test");
 

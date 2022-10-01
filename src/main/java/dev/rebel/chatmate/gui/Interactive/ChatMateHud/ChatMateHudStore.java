@@ -2,6 +2,8 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.Events;
 import dev.rebel.chatmate.gui.Interactive.IElement;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ElementFactory;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.Interactive.Layout.LayoutGroup;
@@ -27,8 +29,9 @@ public class ChatMateHudStore {
     this.hudContext = hudContext;
   }
 
-  public <TElement extends HudElement> TElement addElement(BiFunction<InteractiveContext, IElement, TElement> createElement) {
-    TElement element = createElement.apply(this.hudContext, this.emptyElement);
+  /** Important: do NOT add elements before ChatMateHudScreen has been instantiated, otherwise you will get invalid parents. */
+  public <TElement extends HudElement> TElement addElement(ElementFactory<TElement> createElement) {
+    TElement element = createElement.create(this.hudContext, this.emptyElement);
     this.elements.add(element);
     this.listeners.forEach(listener -> listener.onAddElement(element));
     return element;
@@ -174,6 +177,16 @@ public class ChatMateHudStore {
 
     @Override
     public IElement setZIndex(int zIndex) {
+      return null;
+    }
+
+    @Override
+    public @Nullable DimRect getVisibleBox() {
+      return null;
+    }
+
+    @Override
+    public IElement setVisibleBox(@Nullable DimRect visibleBox) {
       return null;
     }
 

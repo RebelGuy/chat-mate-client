@@ -26,14 +26,15 @@ public interface IElement {
 
   /** [Upwards] To be called when an element requests the screen to be closed. */
   void onCloseScreen();
-  /** [Upwards] To be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere. */
+  /** [Upwards] To be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere.
+   * Careful: the layout will be regenerated before a render until no more elements invalidate their sizes, so it is possible to run into an infinite loop. */
   void onInvalidateSize();
   DimPoint calculateSize(Dim maxWidth); // provides the maximum width that the child's full box can take up, and expects the size of the calculated full box to be returned
   DimPoint getLastCalculatedSize(); // full box size, for caching purposes only - any direct use should probably be avoided
   void setBox(DimRect box); // sets the full box of the element. if the element has any children, it is its responsibility to set the derived boxes of the children too.
   DimRect getBox();
   // render the element to the screen renderer. called every frame. if the element has any children, it is its responsibility to render them too.
-  // the element rendering will be performed within the `renderContextWrapper`, if provided. it has to be done this way because rendering is usually deferred, so e.g. changing the GL state before calling `child.render()` won't have an effect.
+  // the element rendering (and ONLY the element rendering) will be performed within the `renderContextWrapper`, if provided. it has to be done this way because rendering is usually deferred, so e.g. changing the GL state before calling `child.render()` won't have an effect.
   void render(@Nullable Consumer<Runnable> renderContextWrapper); // perhaps instead add a transformation object (same concept) that is a matrix (or perhaps a Consumer<Runnable>, which will apply to only visuals), so we can also apply it to the box, and the debug screen?
 
   boolean getVisible();
@@ -51,6 +52,10 @@ public interface IElement {
   int getZIndex();
   int getEffectiveZIndex();
   IElement setZIndex(int zIndex);
+
+  // if defined, any and all visual content of this element, and all its children, will be clipped if exceeding this box
+  @Nullable DimRect getVisibleBox();
+  IElement setVisibleBox(@Nullable DimRect visibleBox);
 
   // how the element should be horizontally positioned in the parent content box. relevant in the parent's setBox method.
   HorizontalAlignment getHorizontalAlignment();

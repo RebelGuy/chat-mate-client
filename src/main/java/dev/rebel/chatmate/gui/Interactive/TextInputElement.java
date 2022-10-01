@@ -432,17 +432,12 @@ public class TextInputElement extends InputElement {
     }
 
     // make sure the placeholder doesn't clip out of the text box
-    // 1. real-world use case of `getScreen` - it was all worth it in the end!
-    // 2. amusingly, the scissor test assumes a rect in cartesian coordinates, not screen coordinates: https://www.khronos.org/opengl/wiki/Scissor_Test
     DimRect box = super.getPaddingBox();
-    int cartX = (int)box.getX().getScreen();
-    int cartY = super.context.minecraft.displayHeight - (int)box.getBottom().getScreen();
-    GL11.glEnable(GL11.GL_SCISSOR_TEST);
-    GL11.glScissor( cartX, cartY, (int)box.getWidth().getScreen(), (int)box.getHeight().getScreen());
-    RendererHelpers.withMapping(super.getContentBox().getPosition(), this.textScale, () -> {
-      this.context.fontEngine.drawString(this.placeholder, ZERO, ZERO, new Font().withColour(this.disabledColour).withItalic(true));
+    RendererHelpers.withScissor(box, super.context.dimFactory.getMinecraftSize(), () -> {
+      RendererHelpers.withMapping(super.getContentBox().getPosition(), this.textScale, () -> {
+        this.context.fontEngine.drawString(this.placeholder, ZERO, ZERO, new Font().withColour(this.disabledColour).withItalic(true));
+      });
     });
-    GL11.glDisable(GL11.GL_SCISSOR_TEST);
   }
 
   private void drawEditableText() {

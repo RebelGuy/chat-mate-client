@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,6 +48,10 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final int drawString(String text, int x, int y, int color) {
+    // forge is misusing colours in some places, such as GuiIngame.java::584 - providing a partially transparent colour which is not intended to be rendered that way because blending isn't enabled (wtf)
+    if (!GL11.glIsEnabled(GL11.GL_BLEND)) {
+      color = new Colour(color).withAlpha(255).toInt();
+    }
     return this.drawString(text, (float)x, (float)y, color, false);
   }
 
@@ -67,7 +72,7 @@ public class FontEngineProxy extends FontRenderer {
 
   @Override
   public final int getCharWidth(char character) {
-    return this.fontEngine.getCharWidth(character);
+    return (int)this.fontEngine.getCharWidth(character).getGui();
   }
 
   @Override

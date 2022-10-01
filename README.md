@@ -70,6 +70,20 @@ List of unicode emojis that can be printed directly in chat: https://archive.ph/
 
 # Change Log
 
+## v1.18 - The Quality Update [30/9/2022]
+- All ChatMate configuration has now been moved to the Dashboard
+- More fine-tuned settings for platform separation
+  - Displaying the YouTube/Twitch icon next to chat messages can now be toggled
+  - The status indicator and viewer count can now each be separated, with the option of also displaying the respective platform icon
+- Chat box improvements
+  - Scrolling the chat is now animated
+  - Scrolling positions are no longer clamped to lines, increasing smoothness
+  - The left scrollbar is now more visible and draggable
+  - Higher message retainment
+  - Fixed screen-resizing causing layout issues with some chat components
+- Migrated all HUD components to the new Interactive system
+- More `Dim`ification in the codebase. For chat-related calculations, this actually results in higher precision
+
 ## v1.17 - The Donation Update [14/9/2022]
 - Added a fancy Donations section to the ChatMate Dashboard with intuitive and fluent UI
   - Lists the donations with some filtering options

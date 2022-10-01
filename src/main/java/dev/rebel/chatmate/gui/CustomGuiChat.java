@@ -43,6 +43,7 @@ public class CustomGuiChat extends GuiChat {
   private final CursorService cursorService;
   private final UrlService urlService;
   private final ForgeEventService forgeEventService;
+  private final CustomGuiNewChat customGuiNewChat;
   private final Function<MouseEventData.In, MouseEventData.Out> onMouseDown = this::onMouseDown;
 
   private URI clickedLinkURI;
@@ -54,7 +55,8 @@ public class CustomGuiChat extends GuiChat {
                        ContextMenuService contextMenuService,
                        CursorService cursorService,
                        UrlService urlService,
-                       ForgeEventService forgeEventService) {
+                       ForgeEventService forgeEventService,
+                       CustomGuiNewChat customGuiNewChat) {
     super(defaultInput);
 
     this.minecraftProxyService = minecraftProxyService;
@@ -64,6 +66,7 @@ public class CustomGuiChat extends GuiChat {
     this.cursorService = cursorService;
     this.urlService = urlService;
     this.forgeEventService = forgeEventService;
+    this.customGuiNewChat = customGuiNewChat;
 
     this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(), this);
     this.forgeEventService.onRenderTick(this::onRender, null);
@@ -74,14 +77,13 @@ public class CustomGuiChat extends GuiChat {
       return new MouseEventData.Out();
     }
 
-    CustomGuiNewChat chatGui = this.minecraftProxyService.getChatGUI();
-    chatGui.setSelectedLine(null);
+    this.customGuiNewChat.setSelectedLine(null);
 
     if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
       Dim x = in.mousePositionData.x;
       Dim y = in.mousePositionData.y;
 
-      IChatComponent component = chatGui.getChatComponent(x, y);
+      IChatComponent component = this.customGuiNewChat.getChatComponent(x, y);
 
       if (component instanceof ContainerChatComponent) {
         ContainerChatComponent container = (ContainerChatComponent)component;
@@ -91,10 +93,10 @@ public class CustomGuiChat extends GuiChat {
         }
       }
 
-      AbstractChatLine chatLine = chatGui.getAbstractChatLine(x, y);
+      AbstractChatLine chatLine = this.customGuiNewChat.getAbstractChatLine(x, y);
       if (chatLine != null) {
         this.contextMenuService.showChatLineContext(x, y, chatLine);
-        chatGui.setSelectedLine(chatLine);
+        this.customGuiNewChat.setSelectedLine(chatLine);
       }
     }
 
@@ -113,7 +115,7 @@ public class CustomGuiChat extends GuiChat {
 
     Dim mouseX = this.mouseEventService.getCurrentPosition().x;
     Dim mouseY = this.mouseEventService.getCurrentPosition().y;
-    IChatComponent component = this.minecraftProxyService.getChatGUI().getChatComponent(mouseX, mouseY);
+    IChatComponent component = this.customGuiNewChat.getChatComponent(mouseX, mouseY);
     ComponentActionType action = this.getComponentActionType(component);
 
     if (action == ComponentActionType.CLICK) {
@@ -266,7 +268,7 @@ public class CustomGuiChat extends GuiChat {
 
   @Override
   public void onGuiClosed() {
-    this.minecraftProxyService.getChatGUI().setSelectedLine(null);
+    this.customGuiNewChat.setSelectedLine(null);
     super.onGuiClosed();
   }
 

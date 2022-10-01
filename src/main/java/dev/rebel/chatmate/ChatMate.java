@@ -6,16 +6,13 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
 import dev.rebel.chatmate.gui.*;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudService;
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV3;
 import dev.rebel.chatmate.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
@@ -41,6 +38,9 @@ public class ChatMate {
   // from https://forums.minecraftforge.net/topic/68571-1122-check-if-environment-is-deobfuscated/
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
+  // must hold on to reference in this class, otherwise it will be garbage collected (wtf)
+  ChatMateChatService chatMateChatService;
+
   @Mod.EventHandler
   public void onFMLInitialization(FMLInitializationEvent event) throws Exception {
     String currentDir = System.getProperty("user.dir").replace("\\", "/");
@@ -52,7 +52,6 @@ public class ChatMate {
     ForgeEventService forgeEventService = new ForgeEventService(logService, minecraft);
     // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
     MinecraftForge.EVENT_BUS.register(forgeEventService);
-    MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService);
     DimFactory dimFactory = new DimFactory(minecraft);
     FontEngine fontEngine = new FontEngine(dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
     FontEngineProxy fontEngineProxy = new FontEngineProxy(fontEngine, dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
@@ -66,7 +65,7 @@ public class ChatMate {
     IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
 
-    ConfigPersistorService configPersistorService = new ConfigPersistorService<>(SerialisedConfigV2.class, logService, fileService);
+    ConfigPersistorService<SerialisedConfigV3> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV3.class, logService, fileService);
     Config config = new Config(logService, configPersistorService);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
@@ -96,7 +95,23 @@ public class ChatMate {
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
-    ChatMateChatService chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
+    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
+
+    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
+    ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
+    MinecraftChatEventService minecraftChatEventService = new MinecraftChatEventService(logService);
+    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
+        minecraft,
+        logService,
+        config,
+        forgeEventService,
+        dimFactory,
+        mouseEventService,
+        contextMenuStore,
+        fontEngine,
+        chatComponentRenderer,
+        minecraftChatEventService);
+    MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService, customGuiNewChat);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory);
@@ -113,18 +128,19 @@ public class ChatMate {
         imageService,
         config,
         chatMateChatService,
-        fontEngine);
+        fontEngine,
+        dimFactory,
+        customGuiNewChat,
+        minecraftChatEventService);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory, livestreamApiStore);
 
     RenderService renderService = new RenderService(minecraft, forgeEventService, fontEngine, dimFactory);
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
     ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
     GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, fontEngine, dimFactory, forgeEventService, statusService, config, serverLogEventService);
-    ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ClipboardService clipboardService = new ClipboardService();
     UrlService urlService = new UrlService(logService);
-    MinecraftChatService minecraftChatService = new MinecraftChatService(minecraftProxyService);
-    ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
+    MinecraftChatService minecraftChatService = new MinecraftChatService(customGuiNewChat);
 
     InteractiveContext hudContext = new InteractiveContext(
         new InteractiveScreen.ScreenRenderer(),
@@ -145,10 +161,11 @@ public class ChatMate {
         chatComponentRenderer,
         rankApiStore,
         livestreamApiStore,
-        donationApiStore);
+        donationApiStore,
+        config);
 
     ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
-    CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, guiChatMateHud);
+    CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, chatMateHudStore);
     CounterHandler counterHandler = new CounterHandler(keyBindingService, chatMateHudStore, dimFactory);
     DonationHudStore donationHudStore = new DonationHudStore();
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
@@ -176,19 +193,12 @@ public class ChatMate {
         donationHudStore,
         rankApiStore,
         livestreamApiStore,
-        donationApiStore);
+        donationApiStore,
+        customGuiNewChat,
+        config);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config, guiChatMateHud);
+    ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
 
-    CustomGuiNewChat customGuiNewChat = new CustomGuiNewChat(
-        minecraft,
-        logService,
-        config,
-        forgeEventService,
-        dimFactory,
-        mouseEventService,
-        contextMenuStore,
-        fontEngine,
-        chatComponentRenderer);
     CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
     GuiService guiService = new GuiService(this.isDev,
         logService,
@@ -222,7 +232,8 @@ public class ChatMate {
         messageService,
         livestreamApiStore,
         donationApiStore,
-        rankApiStore);
+        rankApiStore,
+        customGuiNewChat);
     DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(

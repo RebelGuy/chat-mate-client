@@ -4,7 +4,7 @@ import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionAlignment;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionLayout;
-import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionValue;
+import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem.ChatPlatform;
@@ -29,8 +29,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import static dev.rebel.chatmate.models.Styles.*;
-import static dev.rebel.chatmate.services.util.ChatHelpers.joinComponents;
-import static dev.rebel.chatmate.services.util.ChatHelpers.stringWithWidth;
+import static dev.rebel.chatmate.services.util.ChatHelpers.*;
 
 public class MessageService {
   private static final IChatComponent INFO_PREFIX = styledText("ChatMate>", INFO_MSG_PREFIX_STYLE);
@@ -82,49 +81,50 @@ public class MessageService {
     return joinComponents(" ", list);
   }
 
-  public IChatComponent getRankedEntryMessage(PublicRankedUser entry, boolean deEmphasise, int rankDigits, int levelDigits, int nameWidth, int messageWidth) {
+  public IChatComponent getRankedEntryMessage(PublicRankedUser entry, boolean deEmphasise, int rankDigits, int levelDigits, Dim nameWidth, Dim messageWidth) {
     // example:
     // #24 ShiroTheS... 41 |⣿⣿⣿⣿⣿     | 42
     // rank name levelStart barStart barFilled barBlank barEnd levelEnd
 
-    int padding = 4;
+    Dim padding = this.dimFactory.fromGui(4);
+    Dim zero = this.dimFactory.zeroGui();
 
-    int rankNumberWidth = this.fontEngine.getStringWidth("#" + String.join("", Collections.nCopies(rankDigits, "4")));
-    PrecisionLayout rankLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(rankNumberWidth), PrecisionAlignment.RIGHT);
+    Dim rankNumberWidth = this.fontEngine.getStringWidthDim("#" + String.join("", Collections.nCopies(rankDigits, "4")));
+    PrecisionLayout rankLayout = new PrecisionLayout(zero, rankNumberWidth, PrecisionAlignment.RIGHT);
     String rankText = "#" + entry.rank;
-    int x = rankNumberWidth + padding;
+    Dim x = rankNumberWidth.plus(padding);
 
-    PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(nameWidth), PrecisionAlignment.LEFT);
-    x += nameWidth + padding;
+    PrecisionLayout nameLayout = new PrecisionLayout(x, nameWidth, PrecisionAlignment.LEFT);
+    x = x.plus(nameWidth).plus(padding);
 
-    int levelNumberWidth = this.fontEngine.getStringWidth(String.join("", Collections.nCopies(levelDigits, "4")));
-    PrecisionLayout levelStartLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(levelNumberWidth), PrecisionAlignment.CENTRE);
+    Dim levelNumberWidth = this.fontEngine.getStringWidthDim(String.join("", Collections.nCopies(levelDigits, "4")));
+    PrecisionLayout levelStartLayout = new PrecisionLayout(x, levelNumberWidth, PrecisionAlignment.CENTRE);
     String levelStart = String.valueOf(entry.user.levelInfo.level);
-    x += levelNumberWidth + padding;
+    x = x.plus(levelNumberWidth).plus(padding);
 
     String barStart = "|";
-    int barStartWidth = this.fontEngine.getStringWidth(barStart);
-    PrecisionLayout barStartLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(barStartWidth), PrecisionAlignment.RIGHT);
-    x += barStartWidth; // no padding
+    Dim barStartWidth = this.fontEngine.getStringWidthDim(barStart);
+    PrecisionLayout barStartLayout = new PrecisionLayout(x, barStartWidth, PrecisionAlignment.RIGHT);
+    x = x.plus(barStartWidth); // no padding
 
     String barEnd = "|";
-    int barEndWidth = this.fontEngine.getStringWidth(barStart) + padding;
+    Dim barEndWidth = this.fontEngine.getStringWidthDim(barEnd).plus(padding);
 
-    int barBodyWidth = messageWidth - x - barEndWidth - levelNumberWidth;
-    int fillWidth = Math.round(barBodyWidth * entry.user.levelInfo.levelProgress);
-    String filledBar = stringWithWidth(this.fontEngine, "", "", '⣿', fillWidth) + "⣿";
-    PrecisionLayout filledBarLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(fillWidth), PrecisionAlignment.LEFT, "");
-    x += fillWidth; // no padding
+    Dim barBodyWidth = messageWidth.minus(x).minus(barEndWidth).minus(levelNumberWidth);
+    Dim fillWidth = barBodyWidth.times(entry.user.levelInfo.levelProgress);
+    String filledBar = stringWithWidthDim(this.fontEngine, "", "", '⣿', fillWidth) + "⣿";
+    PrecisionLayout filledBarLayout = new PrecisionLayout(x, fillWidth, PrecisionAlignment.LEFT, "");
+    x = x.plus(fillWidth); // no padding
 
-    int emptyBarWidth = barBodyWidth - fillWidth;
+    Dim emptyBarWidth = barBodyWidth.minus(fillWidth);
     String emptyBar = "";
-    PrecisionLayout emptyBarLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(emptyBarWidth), PrecisionAlignment.LEFT);
-    x += emptyBarWidth; // no padding
+    PrecisionLayout emptyBarLayout = new PrecisionLayout(x, emptyBarWidth, PrecisionAlignment.LEFT);
+    x = x.plus(emptyBarWidth); // no padding
 
-    PrecisionLayout barEndLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(barEndWidth), PrecisionAlignment.LEFT);
-    x += barEndWidth; // padding already included
+    PrecisionLayout barEndLayout = new PrecisionLayout(x, barEndWidth, PrecisionAlignment.LEFT);
+    x = x.plus(barEndWidth); // padding already included
 
-    PrecisionLayout levelEndLayout = new PrecisionLayout(new PrecisionValue(x), new PrecisionValue(levelNumberWidth), PrecisionAlignment.CENTRE);
+    PrecisionLayout levelEndLayout = new PrecisionLayout(x, levelNumberWidth, PrecisionAlignment.CENTRE);
     String levelEnd = String.valueOf(entry.user.levelInfo.level + 1);
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
@@ -139,20 +139,22 @@ public class MessageService {
     return new PrecisionChatComponent(list);
   }
 
-  public IChatComponent getChannelNamesMessage(PublicUserNames userNames, int messageWidth) {
+  public IChatComponent getChannelNamesMessage(PublicUserNames userNames, Dim messageWidth) {
+    Dim four = this.dimFactory.fromGui(4);
+
     // since different users may share the same channel name, it is helpful to also show each user's current level
     String level = String.valueOf(userNames.user.levelInfo.level);
-    int levelNumberWidth = this.fontEngine.getStringWidth("444");
-    PrecisionLayout levelLayout = new PrecisionLayout(new PrecisionValue(4), new PrecisionValue(levelNumberWidth), PrecisionAlignment.RIGHT);
+    Dim levelNumberWidth = this.fontEngine.getStringWidthDim("444");
+    PrecisionLayout levelLayout = new PrecisionLayout(four, levelNumberWidth, PrecisionAlignment.RIGHT);
 
-    PlatformViewerTagComponent platform = new PlatformViewerTagComponent(userNames.youtubeChannelNames.length > 0 ? ChatPlatform.Youtube : ChatPlatform.Twitch);
+    PlatformViewerTagComponent platform = new PlatformViewerTagComponent(this.dimFactory, userNames.youtubeChannelNames.length > 0 ? ChatPlatform.Youtube : ChatPlatform.Twitch);
     ImageChatComponent imageChatComponent = (ImageChatComponent)platform.getComponent();
-    int platformWidth = (int)imageChatComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT);
-    PrecisionLayout platformLayout = new PrecisionLayout(new PrecisionValue(4 + levelNumberWidth), new PrecisionValue(platformWidth), PrecisionAlignment.LEFT);
+    Dim platformWidth = imageChatComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT_DIM);
+    PrecisionLayout platformLayout = new PrecisionLayout(four.plus(levelNumberWidth), platformWidth, PrecisionAlignment.LEFT);
 
     // todo CHAT-270: at the moment we are only showing the default channel name, but in the future it is possible that a single user
     // has multiple channels so then we must print a list
-    PrecisionLayout nameLayout = new PrecisionLayout(new PrecisionValue(4 + levelNumberWidth + platformWidth + 4), new PrecisionValue(messageWidth), PrecisionAlignment.LEFT);
+    PrecisionLayout nameLayout = new PrecisionLayout(four.plus(levelNumberWidth).plus(platformWidth).plus(four), messageWidth, PrecisionAlignment.LEFT);
     Font font = Font.fromChatStyle(VIEWER_NAME_STYLE, this.dimFactory);
     IChatComponent component = this.getUserComponent(userNames.user, font, userNames.user.userInfo.channelName, true, true);
 
@@ -163,53 +165,53 @@ public class MessageService {
     return new PrecisionChatComponent(list);
   }
 
-  public IChatComponent getPaginationFooterMessage(int messageWidth, int currentPage, int maxPage, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
+  public IChatComponent getPaginationFooterMessage(Dim messageWidth, int currentPage, int maxPage, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
     if (onPrevPage == null && onNextPage == null) {
-      IChatComponent footer = styledText(stringWithWidth(this.fontEngine, "", "", '-', messageWidth), INFO_MSG_STYLE);
-      PrecisionLayout footerLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(messageWidth), PrecisionAlignment.CENTRE);
+      IChatComponent footer = styledText(stringWithWidthDim(this.fontEngine, "", "", '-', messageWidth), INFO_MSG_STYLE);
+      PrecisionLayout footerLayout = new PrecisionLayout(this.dimFactory.zeroGui(), messageWidth, PrecisionAlignment.CENTRE);
       return new PrecisionChatComponent(Arrays.asList(new Tuple2<>(footerLayout, footer)));
     }
 
     String padding = "  ";
-    int paddingWidth = this.fontEngine.getStringWidth(padding);
+    Dim paddingWidth = this.fontEngine.getStringWidthDim(padding);
 
     String shortPageString = String.valueOf(currentPage);
-    int shortPageStringWidth = this.fontEngine.getStringWidth(shortPageString);
+    Dim shortPageStringWidth = this.fontEngine.getStringWidthDim(shortPageString);
 
     String longPageString = String.format("%d of %d", currentPage, maxPage);
-    int longPageStringWidth = this.fontEngine.getStringWidth(longPageString);
+    Dim longPageStringWidth = this.fontEngine.getStringWidthDim(longPageString);
 
     // we use layouts for the buttons because we want them to be fixed, even if the footer contents change sizes slightly
     // (e.g. the page number width could change - we don't want the buttons to slightly shift their positions as a result)
     String prevPageMsg = "<< Previous";
-    int prevPageMsgWidth = this.fontEngine.getStringWidth(prevPageMsg);
-    PrecisionLayout prevPageLayout = new PrecisionLayout(new PrecisionValue(paddingWidth), new PrecisionValue(messageWidth - paddingWidth), PrecisionAlignment.LEFT);
+    Dim prevPageMsgWidth = this.fontEngine.getStringWidthDim(prevPageMsg);
+    PrecisionLayout prevPageLayout = new PrecisionLayout(paddingWidth, messageWidth.minus(paddingWidth), PrecisionAlignment.LEFT);
 
     String nextPageMsg = "Next >>";
-    int nextPageMsgWidth = this.fontEngine.getStringWidth(nextPageMsg);
-    PrecisionLayout nextPageLayout = new PrecisionLayout(new PrecisionValue(0), new PrecisionValue(messageWidth - paddingWidth), PrecisionAlignment.RIGHT);
+    Dim nextPageMsgWidth = this.fontEngine.getStringWidthDim(nextPageMsg);
+    PrecisionLayout nextPageLayout = new PrecisionLayout(this.dimFactory.zeroGui(), messageWidth.minus(paddingWidth), PrecisionAlignment.RIGHT);
 
     // we now have to decide what we want to render in the centre of the footer. this is how much free room we have:
-    int interiorWidth = messageWidth - (paddingWidth + prevPageMsgWidth + paddingWidth + paddingWidth + nextPageMsgWidth + paddingWidth);
+    Dim interiorWidth = messageWidth.minus(paddingWidth.plus(prevPageMsgWidth).plus(paddingWidth).plus(paddingWidth).plus(nextPageMsgWidth).plus(paddingWidth));
 
     String interior;
-    if (interiorWidth < shortPageStringWidth) {
+    if (interiorWidth.lt(shortPageStringWidth)) {
       // fill with `-`
-      interior = stringWithWidth(this.fontEngine, "", "", '-', interiorWidth);
-    } else if (interiorWidth < longPageStringWidth) {
+      interior = stringWithWidthDim(this.fontEngine, "", "", '-', interiorWidth);
+    } else if (interiorWidth.lt(longPageStringWidth)) {
       interior = shortPageString;
     } else {
       interior = longPageString;
     }
 
     // now try to also add some `-` fills to the left and right of the interior, if there is enough room.
-    int availableToFillSides = (interiorWidth - (this.fontEngine.getStringWidth(interior) + paddingWidth + paddingWidth)) / 2;
-    if (availableToFillSides >= this.fontEngine.getStringWidth("-")) {
-      String interiorSides = stringWithWidth(this.fontEngine, "", "", '-', availableToFillSides);
+    Dim availableToFillSides = interiorWidth.minus(this.fontEngine.getStringWidthDim(interior).plus(paddingWidth).plus(paddingWidth)).over(2);
+    if (availableToFillSides.gte(this.fontEngine.getStringWidthDim("-"))) {
+      String interiorSides = stringWithWidthDim(this.fontEngine, "", "", '-', availableToFillSides);
       interior = interiorSides + padding + interior + padding + interiorSides;
     }
     // centre the interior exactly between the outer buttons
-    PrecisionLayout interiorLayout = new PrecisionLayout(new PrecisionValue(prevPageMsgWidth), new PrecisionValue(messageWidth - prevPageMsgWidth - nextPageMsgWidth), PrecisionAlignment.CENTRE);
+    PrecisionLayout interiorLayout = new PrecisionLayout(prevPageMsgWidth, messageWidth.minus(prevPageMsgWidth).minus(nextPageMsgWidth), PrecisionAlignment.CENTRE);
 
     ClickEventWithCallback onPrevClick = new ClickEventWithCallback(this.logService, onPrevPage, true);
     ClickEventWithCallback onNextClick = new ClickEventWithCallback(this.logService, onNextPage, true);

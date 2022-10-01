@@ -16,7 +16,7 @@ import java.util.function.Function;
 
 // happy scrolling lmao
 public abstract class EventServiceBase<Events extends Enum<Events>> {
-  private final LogService logService;
+  protected final LogService logService;
   private final Map<Events, List<EventHandler<?, ?, ?>>> listeners;
 
   public EventServiceBase(Class<Events> events, LogService logService) {

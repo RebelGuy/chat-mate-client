@@ -72,20 +72,24 @@ public class LogService {
   }
 
   private String stringify(Object obj) {
-    if (obj == null) {
-      return "null";
-    } else if (obj instanceof Exception) {
-      Exception e = (Exception)obj;
-      return String.format("\n---EXCEPTION LOG START\nEncountered error of type %s. Error message: %s\n%s\n---EXCEPTION LOG END\n",
-          e.getClass().getSimpleName(),
-          ExceptionUtils.getMessage(e),
-          ExceptionUtils.getStackTrace(e));
-    } else if (obj instanceof String) {
-      return (String)obj;
-    } else if (ClassUtils.isPrimitiveOrWrapper(obj.getClass())) {
-      return obj.toString();
-    } else {
-      return this.gson.toJson(obj);
+    try {
+      if (obj == null) {
+        return "null";
+      } else if (obj instanceof Exception) {
+        Exception e = (Exception) obj;
+        return String.format("\n---EXCEPTION LOG START\nEncountered error of type %s. Error message: %s\n%s\n---EXCEPTION LOG END\n",
+            e.getClass().getSimpleName(),
+            ExceptionUtils.getMessage(e),
+            ExceptionUtils.getStackTrace(e));
+      } else if (obj instanceof String) {
+        return (String) obj;
+      } else if (ClassUtils.isPrimitiveOrWrapper(obj.getClass())) {
+        return obj.toString();
+      } else {
+        return this.gson.toJson(obj);
+      }
+    } catch (Exception e) {
+      return String.format("[Unable to stringify exception object of type %s. Exception message: %s]", obj.getClass().getName(), e.getMessage());
     }
   }
 }

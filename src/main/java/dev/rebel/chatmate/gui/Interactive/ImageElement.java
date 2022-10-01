@@ -16,7 +16,7 @@ import java.util.Objects;
 
 public class ImageElement extends SingleElement {
   private @Nullable Texture image;
-  private float scale;
+  protected float scale;
   private @Nullable Colour colour;
 
   public ImageElement(InteractiveContext context, IElement parent) {

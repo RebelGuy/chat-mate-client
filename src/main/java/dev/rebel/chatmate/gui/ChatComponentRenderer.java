@@ -7,6 +7,7 @@ import dev.rebel.chatmate.gui.chat.UserNameChatComponent;
 import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import net.minecraft.client.Minecraft;
@@ -28,38 +29,34 @@ public class ChatComponentRenderer extends Gui {
     this.minecraft = minecraft;
   }
 
-  public int drawChatComponent(IChatComponent component, int x, int y, int opacity) {
+  /** Returns the width of the drawn component. */
+  public Dim drawChatComponent(IChatComponent component, Dim x, Dim y, int opacity, DimRect chatRect) {
     if (component instanceof ContainerChatComponent) {
       ContainerChatComponent container = (ContainerChatComponent)component;
-      return drawChatComponent(container.getComponent(), x, y, opacity);
+      return drawChatComponent(container.getComponent(), x, y, opacity, chatRect);
 
     } else if (component instanceof ChatComponentText) {
       String formattedText = getFormattedText((ChatComponentText) component);
       Font font = new Font().withColour(Colour.WHITE.withAlpha(opacity)).withShadow(new Shadow(this.dimFactory));
       this.fontEngine.drawString(formattedText, x, y, font);
-      return this.fontEngine.getStringWidth(formattedText);
+      return this.fontEngine.getStringWidthDim(formattedText);
 
     } else if (component instanceof ImageChatComponent) {
       ImageChatComponent imageComponent = (ImageChatComponent)component;
       Texture texture = imageComponent.getTexture();
       if (texture == null) {
-        return 0;
+        return x.setGui(0);
       }
 
-      // if the image is not square, it's possible that it will not be positioned properly in the dedicated space in the chat line
-      // due to rounding error. the following adjustment will fix that
-      float requiredWidth = imageComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT);
-      int requiredWidthInt = (int)Math.ceil(requiredWidth);
-      float xAdjustment = (requiredWidthInt - requiredWidth) / 2;
-
+      Dim requiredWidth = imageComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT_DIM);
       Dim targetHeight = this.dimFactory.fromGui(this.fontEngine.FONT_HEIGHT);
       Dim currentHeight = this.dimFactory.fromScreen(texture.height);
-      float imageX = x + imageComponent.paddingGuiLeft + xAdjustment;
-      float imageY = y;
+      Dim imageX = x.plus(imageComponent.paddingGuiLeft);
+      Dim imageY = y;
 
       float scaleToReachTarget = targetHeight.getGui() / currentHeight.getGui();
       float scaleY = currentHeight.getGui() / 256 * scaleToReachTarget;
-      float aspectRatio = imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT) / targetHeight.getGui();
+      float aspectRatio = imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT_DIM).over(targetHeight);
       float scaleX = aspectRatio * scaleY;
 
       GlStateManager.pushMatrix();
@@ -71,19 +68,19 @@ public class ChatComponentRenderer extends Gui {
       GlStateManager.disableLighting();
 
       // undo the scaling
-      float scaledX = imageX / scaleX;
-      float scaledY = imageY / scaleY;
+      float scaledX = imageX.over(scaleX).getGui();
+      float scaledY = imageY.over(scaleY).getGui();
       int u = 0, v = 0;
       this.minecraft.getTextureManager().bindTexture(texture.resourceLocation);
       this.drawTexturedModalRect(scaledX, scaledY, u, v, 256, 256);
 
       GlStateManager.popMatrix();
 
-      return requiredWidthInt;
+      return requiredWidth;
 
     } else if (component instanceof UserNameChatComponent) {
       UserNameChatComponent userNameChatComponent = (UserNameChatComponent)component;
-      return userNameChatComponent.renderComponent(this.dimFactory.fromGui(x), this.dimFactory.fromGui(y), opacity);
+      return userNameChatComponent.renderComponent(x, y, opacity, chatRect);
 
     } else {
       throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());

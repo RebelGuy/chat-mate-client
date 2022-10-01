@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import net.minecraft.util.IChatComponent;
@@ -7,14 +8,14 @@ import net.minecraft.util.IChatComponent;
 import java.util.Objects;
 
 public class MinecraftChatService {
-  private final MinecraftProxyService minecraftProxyService;
+  private final CustomGuiNewChat customGuiNewChat;
 
-  public MinecraftChatService(MinecraftProxyService minecraftProxyService) {
-    this.minecraftProxyService = minecraftProxyService;
+  public MinecraftChatService(CustomGuiNewChat customGuiNewChat) {
+    this.customGuiNewChat = customGuiNewChat;
   }
 
   public void clearChatMessagesByUser(PublicUser user) {
-    this.minecraftProxyService.getChatGUI().deleteLine(line -> {
+    this.customGuiNewChat.deleteLine(line -> {
       for (IChatComponent component : line.getChatComponent()) {
         // thanks, Java
         if (!(component instanceof ContainerChatComponent)) {

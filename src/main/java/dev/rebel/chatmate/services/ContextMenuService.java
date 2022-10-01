@@ -6,6 +6,7 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.ContextMenuStore;
+import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
@@ -17,6 +18,7 @@ import dev.rebel.chatmate.gui.Interactive.rank.RankAdapters;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
@@ -59,6 +61,8 @@ public class ContextMenuService {
   private final RankApiStore rankApiStore;
   private final LivestreamApiStore livestreamApiStore;
   private final DonationApiStore donationApiStore;
+  private final CustomGuiNewChat customGuiNewChat;
+  private final Config config;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -85,7 +89,9 @@ public class ContextMenuService {
                             DonationHudStore donationHudStore,
                             RankApiStore rankApiStore,
                             LivestreamApiStore livestreamApiStore,
-                            DonationApiStore donationApiStore) {
+                            DonationApiStore donationApiStore,
+                            CustomGuiNewChat customGuiNewChat,
+                            Config config) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -112,6 +118,8 @@ public class ContextMenuService {
     this.rankApiStore = rankApiStore;
     this.livestreamApiStore = livestreamApiStore;
     this.donationApiStore = donationApiStore;
+    this.customGuiNewChat = customGuiNewChat;
+    this.config = config;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -127,7 +135,7 @@ public class ContextMenuService {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Add countdown title", this::onCountdown),
       new ContextMenuOption("Add counter component", this::onCounter),
-      new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation)
+      this.config.getDebugModeEnabled().get() ? new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation) : null
     );
   }
 
@@ -184,7 +192,7 @@ public class ContextMenuService {
   }
 
   private void onHideMessage(AbstractChatLine chatLine) {
-    this.minecraftProxyService.getChatGUI().deleteLine(chatLine);
+    this.customGuiNewChat.deleteLine(chatLine);
   }
 
   private void onGenerateFakeDonation() {
@@ -220,6 +228,7 @@ public class ContextMenuService {
         this.chatComponentRenderer,
         this.rankApiStore,
         this.livestreamApiStore,
-        this.donationApiStore);
+        this.donationApiStore,
+        this.config);
   }
 }

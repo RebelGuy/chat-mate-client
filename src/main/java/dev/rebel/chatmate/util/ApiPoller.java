@@ -3,6 +3,7 @@ package dev.rebel.chatmate.util;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.HttpException;
 import dev.rebel.chatmate.services.LogService;
+import dev.rebel.chatmate.services.events.models.ConfigEventData;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import dev.rebel.chatmate.services.util.TaskWrapper;
 
@@ -12,6 +13,7 @@ import java.util.Date;
 import java.util.Timer;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static dev.rebel.chatmate.services.util.Objects.ifClass;
 
@@ -26,7 +28,7 @@ public class ApiPoller<D> {
   private final Long timeoutWaitTime;
   private boolean requestInProgress;
 
-  private final Consumer<Boolean> _onChatMateEnabledChanged = this::onChatMateEnabledChanged;
+  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChatMateEnabledChanged = this::onChatMateEnabledChanged;
 
   private @Nullable Timer timer;
   private @Nullable Long pauseUntil;
@@ -52,11 +54,11 @@ public class ApiPoller<D> {
     this.pauseUntil = null;
     this.requestInProgress = false;
 
-    this.config.getChatMateEnabledEmitter().onChange(this._onChatMateEnabledChanged, this);
-    this.onChatMateEnabledChanged(this.config.getChatMateEnabledEmitter().get());
+    this.config.getChatMateEnabledEmitter().onChange(this._onChatMateEnabledChanged, this, true);
   }
 
-  private void onChatMateEnabledChanged(Boolean enabled) {
+  private ConfigEventData.Out<Boolean> onChatMateEnabledChanged(ConfigEventData.In<Boolean> in) {
+    boolean enabled = in.data;
     if (enabled) {
       if (this.timer == null) {
         this.pauseUntil = null;
@@ -75,6 +77,8 @@ public class ApiPoller<D> {
         this.timer = null;
       }
     }
+
+    return new ConfigEventData.Out<>();
   }
 
   private void pollApi() {

@@ -401,7 +401,7 @@ public class ManageRanksModal extends ModalElement {
       } else if (channelRankChanges.length == 0) {
         this.channelActionsHeader = new LabelElement(context, this)
             .setText(this.channelRankChangeAdapter.noActionsMessage)
-            .setColour(Colour.GREY);
+            .setColour(Colour.GREY50);
         this.channelActionsList = null;
 
       } else {

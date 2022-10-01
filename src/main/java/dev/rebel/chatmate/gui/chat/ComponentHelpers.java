@@ -184,7 +184,7 @@ public class ComponentHelpers {
   }
 
   private static TrimmedComponent trimComponent(ImageChatComponent component, int maxWidth, boolean isLineStart, FontEngine fontEngine) {
-    int requiredWidth = (int)Math.ceil(component.getRequiredWidth(fontEngine.FONT_HEIGHT));
+    int requiredWidth = (int)component.getRequiredWidth(fontEngine.FONT_HEIGHT_DIM).getGui();
     if (isLineStart || maxWidth >= requiredWidth) {
       return new TrimmedComponent(component, requiredWidth, null);
     } else {

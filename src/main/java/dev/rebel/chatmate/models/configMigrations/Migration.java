@@ -1,17 +1,23 @@
 package dev.rebel.chatmate.models.configMigrations;
 
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV0;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV1;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.SerialisedConfigV2;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.Version;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigVersions.*;
 import dev.rebel.chatmate.models.VersionedData;
 
 import java.lang.reflect.Method;
 
 /** Represents a model of version `V` that can be migrated to version `V+1`. */
 public abstract class Migration<FromModel extends Version, ToModel extends Version> {
-  private final static Class<Migration<?, ?>>[] migrations = new Class[] { v0v1.class, v1v2.class };
-  private final static Class<Version>[] versions = new Class[] { SerialisedConfigV0.class, SerialisedConfigV1.class, SerialisedConfigV2.class};
+  private final static Class<Migration<?, ?>>[] migrations = new Class[] {
+      v0v1.class,
+      v1v2.class,
+      v2v3.class
+  };
+  private final static Class<Version>[] versions = new Class[] {
+      SerialisedConfigV0.class,
+      SerialisedConfigV1.class,
+      SerialisedConfigV2.class,
+      SerialisedConfigV3.class,
+  };
 
   abstract ToModel up(FromModel data);
 

@@ -17,11 +17,19 @@ public abstract class DashboardRoute {
       super(SettingsPage.GENERAL);
     }
   }
+
   public abstract static class HudRoute extends DashboardRoute {
     public HudRoute() {
       super(SettingsPage.HUD);
     }
   }
+
+  public abstract static class ChatRoute extends DashboardRoute {
+    public ChatRoute() {
+      super(SettingsPage.CHAT);
+    }
+  }
+
   public abstract static class DonationRoute extends DashboardRoute {
     public DonationRoute() {
       super(SettingsPage.DONATION);

@@ -48,12 +48,14 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
     this.label = new LabelElement(context, this)
         .setText("Active livestream:")
+        .setFontScale(0.75f)
         .setMaxWidth(gui(200))
         .setSizingMode(SizingMode.MINIMISE)
         .setPadding(new RectExtension(ZERO, gui(4), ZERO, ZERO))
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .cast();
     this.livestreamInputField = new TextInputElement(context, this)
+        .setTextScale(0.75f)
         .onTextChange(this::onChange)
         .setPlaceholder("No active livestream")
         .setEnabled(this, false)
@@ -61,7 +63,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .cast();
 
-    Dim iconWidth = gui(context.fontEngine.FONT_HEIGHT).plus(gui(4));
+    Dim iconWidth = context.fontEngine.FONT_HEIGHT_DIM.plus(gui(4)).times(0.75f);
     RectExtension buttonMargin = new RectExtension(gui(2), ZERO);
     this.clearButton = new IconButtonElement(context, this)
         .setImage(Asset.GUI_CLEAR_ICON)
