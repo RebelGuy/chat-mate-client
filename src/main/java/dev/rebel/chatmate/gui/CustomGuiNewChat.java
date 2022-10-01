@@ -300,9 +300,6 @@ public class CustomGuiNewChat extends GuiNewChat {
         x = x.plus(this.chatComponentRenderer.drawChatComponent(component, lineLeft.plus(x), lineTop, opacity, chatRect));
       }
     }
-
-    GlStateManager.disableAlpha();
-    GlStateManager.disableBlend();
   }
 
   private Colour getBackgroundColour(ChatLine line, int chatOpacity) {

@@ -6,6 +6,7 @@ import dev.rebel.chatmate.services.events.models.*;
 import dev.rebel.chatmate.services.util.EnumHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.fml.client.GuiModList;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -234,6 +235,10 @@ public class ForgeEventService extends EventServiceBase<Events> {
       Tick.In eventIn = new Tick.In();
       Tick.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
     }
+
+    // HACK - something is disabling alpha, but Forge expects alpha to be enabled else it causes problems when rendering textures in the server menu. reset it here after we are done rendering all our custom stuff.
+    // another example why OpenGL's state machine is fucking dumb
+    GlStateManager.enableAlpha();
   }
 
   @SideOnly(Side.CLIENT)
