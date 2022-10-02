@@ -236,7 +236,7 @@ public class GuiService {
   }
 
   private Boolean onOpenChatMateHud() {
-    if (this.config.getHudEnabledEmitter().get()) {
+    if (this.config.getHudEnabledEmitter().get() && this.config.getChatMateEnabledEmitter().get()) {
       this.minecraft.displayGuiScreen(this.chatMateHudScreen);
       return true;
     } else {
