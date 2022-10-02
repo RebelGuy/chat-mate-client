@@ -3,17 +3,17 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.models.api.experience.ModifyExperienceRequest;
-import dev.rebel.chatmate.models.api.experience.ModifyExperienceResponse.ModifyExperienceResponseData;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.proxy.EndpointProxy;
-import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
+import dev.rebel.chatmate.api.models.experience.ModifyExperienceRequest;
+import dev.rebel.chatmate.api.models.experience.ModifyExperienceResponse.ModifyExperienceResponseData;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.api.proxy.EndpointProxy;
+import dev.rebel.chatmate.api.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.services.McChatService;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
+import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
 
 public class ManageExperienceModal extends ModalElement {
   private final PublicUser user;

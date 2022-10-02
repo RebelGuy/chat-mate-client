@@ -5,12 +5,11 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.Interactive.SingleElement;
-import dev.rebel.chatmate.gui.hud.DigitReel;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.StatusService;
 
 import javax.annotation.Nullable;

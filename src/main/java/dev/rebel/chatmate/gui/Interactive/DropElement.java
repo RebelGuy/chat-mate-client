@@ -1,16 +1,12 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.Events;
-import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractionEventBoundaryElement.IInteractionEventBoundaryListener;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
-import dev.rebel.chatmate.gui.Interactive.SingleElement;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.List;

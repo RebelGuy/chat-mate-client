@@ -3,11 +3,8 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.Interactive.InteractionEventBoundaryElement.IInteractionEventBoundaryListener;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.LayoutGroup;
-import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.events.models.KeyboardEventData;
+import dev.rebel.chatmate.events.models.MouseEventData;
 
 import javax.annotation.Nullable;
 import java.util.List;

@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.StateManagement.State;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;

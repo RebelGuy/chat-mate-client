@@ -6,13 +6,11 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.hud.Colour;
-import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
-import dev.rebel.chatmate.gui.hud.TitleComponent;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
-import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
 import java.util.Date;

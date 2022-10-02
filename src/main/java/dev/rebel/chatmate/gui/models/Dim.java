@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui.models;
 
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.TextHelpers;
 
 import java.util.List;
 import java.util.Objects;

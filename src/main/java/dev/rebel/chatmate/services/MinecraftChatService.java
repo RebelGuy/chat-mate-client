@@ -2,7 +2,7 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import net.minecraft.util.IChatComponent;
 
 import java.util.Objects;

@@ -2,14 +2,13 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.Objects;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.gui.GuiScreen;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-import static dev.rebel.chatmate.services.util.Objects.casted;
+import static dev.rebel.chatmate.util.Objects.casted;
 
 /** For configuring when a particular HUD element should be visible. */
 public class HudFilters {

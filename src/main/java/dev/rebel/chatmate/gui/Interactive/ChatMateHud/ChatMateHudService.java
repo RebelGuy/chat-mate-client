@@ -2,9 +2,9 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.StatusService;
-import dev.rebel.chatmate.services.events.ServerLogEventService;
+import dev.rebel.chatmate.events.ServerLogEventService;
 
 public class ChatMateHudService {
   private final ChatMateHudStore chatMateHudStore;

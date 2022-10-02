@@ -7,10 +7,9 @@ import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.KeyboardEventData;
+import dev.rebel.chatmate.events.models.MouseEventData;
 import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;

@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
-import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
+import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;

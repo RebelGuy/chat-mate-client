@@ -9,16 +9,16 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData.In;
+import dev.rebel.chatmate.events.models.KeyboardEventData.In;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
+import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
 
 public abstract class ModalElement extends ContainerElement {
   protected Dim width;

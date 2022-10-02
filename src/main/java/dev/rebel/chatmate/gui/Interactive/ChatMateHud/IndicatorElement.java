@@ -6,13 +6,13 @@ import dev.rebel.chatmate.gui.Interactive.ImageElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedEvent;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.StatusService;
-import dev.rebel.chatmate.services.events.ServerLogEventService;
-import dev.rebel.chatmate.services.events.models.EventData;
+import dev.rebel.chatmate.events.ServerLogEventService;
+import dev.rebel.chatmate.events.models.EventData;
 import net.minecraft.util.Tuple;
 
 import java.util.HashMap;

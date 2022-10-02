@@ -1,20 +1,16 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.api.chatMate.GetStatusResponse.GetStatusResponseData;
-import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream;
-import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream.LivestreamStatus;
-import dev.rebel.chatmate.models.publicObjects.status.PublicApiStatus.ApiStatus;
-import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus;
-import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
-import dev.rebel.chatmate.services.util.TaskWrapper;
-import dev.rebel.chatmate.store.LivestreamApiStore;
+import dev.rebel.chatmate.api.models.chatMate.GetStatusResponse.GetStatusResponseData;
+import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
+import dev.rebel.chatmate.api.publicObjects.status.PublicApiStatus.ApiStatus;
+import dev.rebel.chatmate.api.publicObjects.status.PublicLivestreamStatus;
+import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.stores.LivestreamApiStore;
 import dev.rebel.chatmate.util.ApiPoller;
 import dev.rebel.chatmate.util.ApiPoller.PollType;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 
 import javax.annotation.Nullable;
-import java.util.Timer;
 import java.util.function.Consumer;
 
 public class StatusService {

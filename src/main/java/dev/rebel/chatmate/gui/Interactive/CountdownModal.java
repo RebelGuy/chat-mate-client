@@ -9,7 +9,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
+import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
 
 public class CountdownModal extends ModalElement {
   private final CountdownHandler countdownHandler;

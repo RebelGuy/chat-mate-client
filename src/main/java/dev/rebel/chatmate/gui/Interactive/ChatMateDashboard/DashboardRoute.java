@@ -1,8 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
-import dev.rebel.chatmate.models.publicObjects.donation.PublicDonation;
-import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
+import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
 
 /** When supplied to the constructor of the DashboardScreen, it will automatically show the screen with prefilled details */
 public abstract class DashboardRoute {

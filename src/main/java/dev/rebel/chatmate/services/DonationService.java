@@ -1,16 +1,16 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.models.publicObjects.donation.PublicDonation;
-import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream;
-import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream.LivestreamStatus;
-import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
-import dev.rebel.chatmate.services.events.ChatMateEventService;
-import dev.rebel.chatmate.services.events.models.DonationEventData;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.EnumHelpers;
-import dev.rebel.chatmate.store.DonationApiStore;
-import dev.rebel.chatmate.store.LivestreamApiStore;
-import dev.rebel.chatmate.store.RankApiStore;
+import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
+import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream;
+import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
+import dev.rebel.chatmate.events.ChatMateEventService;
+import dev.rebel.chatmate.events.models.DonationEventData;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
+import dev.rebel.chatmate.stores.DonationApiStore;
+import dev.rebel.chatmate.stores.LivestreamApiStore;
+import dev.rebel.chatmate.stores.RankApiStore;
 import dev.rebel.chatmate.util.Memoiser;
 import scala.Tuple2;
 

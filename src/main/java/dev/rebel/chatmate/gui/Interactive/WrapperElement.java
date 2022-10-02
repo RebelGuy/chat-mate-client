@@ -5,7 +5,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.List;

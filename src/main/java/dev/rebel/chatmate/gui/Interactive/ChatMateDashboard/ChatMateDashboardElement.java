@@ -15,27 +15,24 @@ import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
-import dev.rebel.chatmate.proxy.DonationEndpointProxy;
-import dev.rebel.chatmate.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.StatusService;
-import dev.rebel.chatmate.services.util.EnumHelpers;
-import dev.rebel.chatmate.store.DonationApiStore;
-import dev.rebel.chatmate.store.RankApiStore;
+import dev.rebel.chatmate.util.EnumHelpers;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.rebel.chatmate.services.util.Objects.castOrNull;
+import static dev.rebel.chatmate.util.Objects.castOrNull;
 
 /** The main element that should be rendered into the interactive screen. */
 public class ChatMateDashboardElement extends ContainerElement {

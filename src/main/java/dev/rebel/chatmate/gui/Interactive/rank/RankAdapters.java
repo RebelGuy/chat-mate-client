@@ -7,26 +7,26 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
-import dev.rebel.chatmate.models.api.rank.AddModRankRequest;
-import dev.rebel.chatmate.models.api.rank.AddUserRankRequest;
-import dev.rebel.chatmate.models.api.rank.AddUserRankRequest.AddRankName;
-import dev.rebel.chatmate.models.api.rank.RemoveModRankRequest;
-import dev.rebel.chatmate.models.api.rank.RemoveUserRankRequest;
-import dev.rebel.chatmate.models.api.rank.RemoveUserRankRequest.RemoveRankName;
-import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
-import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankGroup;
-import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
-import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
-import dev.rebel.chatmate.proxy.RankEndpointProxy;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.store.RankApiStore;
+import dev.rebel.chatmate.api.models.rank.AddModRankRequest;
+import dev.rebel.chatmate.api.models.rank.AddUserRankRequest;
+import dev.rebel.chatmate.api.models.rank.AddUserRankRequest.AddRankName;
+import dev.rebel.chatmate.api.models.rank.RemoveModRankRequest;
+import dev.rebel.chatmate.api.models.rank.RemoveUserRankRequest;
+import dev.rebel.chatmate.api.models.rank.RemoveUserRankRequest.RemoveRankName;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankGroup;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
+import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.stores.RankApiStore;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.services.util.TextHelpers.dateToDayAccuracy;
-import static dev.rebel.chatmate.services.util.TextHelpers.toSentenceCase;
+import static dev.rebel.chatmate.util.TextHelpers.dateToDayAccuracy;
+import static dev.rebel.chatmate.util.TextHelpers.toSentenceCase;
 
 public class RankAdapters extends Adapters {
   public RankAdapters(RankEndpointProxy rankEndpointProxy, RankApiStore rankApiStore) {

@@ -1,11 +1,11 @@
 package dev.rebel.chatmate.gui;
 
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Memoiser;
 import net.minecraft.client.renderer.GlStateManager;
 import scala.Tuple2;

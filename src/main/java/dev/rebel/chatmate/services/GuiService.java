@@ -9,21 +9,21 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenTyp
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
-import dev.rebel.chatmate.proxy.DonationEndpointProxy;
-import dev.rebel.chatmate.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
+import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
-import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.KeyboardEventService;
-import dev.rebel.chatmate.services.events.MouseEventService;
-import dev.rebel.chatmate.services.events.models.OpenGui;
-import dev.rebel.chatmate.services.events.models.Tick;
-import dev.rebel.chatmate.services.events.models.Tick.In;
-import dev.rebel.chatmate.services.events.models.Tick.Out;
-import dev.rebel.chatmate.store.DonationApiStore;
-import dev.rebel.chatmate.store.LivestreamApiStore;
-import dev.rebel.chatmate.store.RankApiStore;
+import dev.rebel.chatmate.events.ForgeEventService;
+import dev.rebel.chatmate.events.KeyboardEventService;
+import dev.rebel.chatmate.events.MouseEventService;
+import dev.rebel.chatmate.events.models.OpenGui;
+import dev.rebel.chatmate.events.models.Tick;
+import dev.rebel.chatmate.events.models.Tick.In;
+import dev.rebel.chatmate.events.models.Tick.Out;
+import dev.rebel.chatmate.stores.DonationApiStore;
+import dev.rebel.chatmate.stores.LivestreamApiStore;
+import dev.rebel.chatmate.stores.RankApiStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
@@ -40,7 +40,6 @@ public class GuiService {
   private final KeyBindingService keyBindingService;
   private final Minecraft minecraft;
   private final MinecraftProxyService minecraftProxyService;
-  private final GuiChatMateHud guiChatMateHud;
   private final SoundService soundService;
   private final DimFactory dimFactory;
   private final ContextMenuStore contextMenuStore;
@@ -56,7 +55,6 @@ public class GuiService {
   private final FontEngine fontEngine;
   private final FontEngineProxy fontEngineProxy;
   private final DonationEndpointProxy donationEndpointProxy;
-
   private final ChatMateHudScreen chatMateHudScreen;
   private final ChatComponentRenderer chatComponentRenderer;
   private final StatusService statusService;
@@ -76,7 +74,6 @@ public class GuiService {
                     KeyBindingService keyBindingService,
                     Minecraft minecraft,
                     MinecraftProxyService minecraftProxyService,
-                    GuiChatMateHud guiChatMateHud,
                     SoundService soundService,
                     DimFactory dimFactory,
                     ContextMenuStore contextMenuStore,
@@ -110,7 +107,6 @@ public class GuiService {
     this.keyBindingService = keyBindingService;
     this.minecraft = minecraft;
     this.minecraftProxyService = minecraftProxyService;
-    this.guiChatMateHud = guiChatMateHud;
     this.soundService = soundService;
     this.dimFactory = dimFactory;
     this.contextMenuStore = contextMenuStore;

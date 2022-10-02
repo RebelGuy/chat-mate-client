@@ -20,7 +20,7 @@ import org.lwjgl.input.Mouse;
 // - ActionPerformedEvent.Pre and ActionPerformedEvent.Post
 
 @SideOnly(Side.CLIENT)
-public abstract class Screen extends GuiScreen
+public abstract class Screen extends GuiScreen // todo: do we need this? is this just a copy?
 {
   private int eventButton;
   private long lastMouseEvent;

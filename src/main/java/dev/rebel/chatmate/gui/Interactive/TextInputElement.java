@@ -3,18 +3,17 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.StateManagement.State;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData.In.KeyModifier;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.KeyboardEventData;
+import dev.rebel.chatmate.events.models.KeyboardEventData.In.KeyModifier;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -23,7 +22,6 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.MathHelper;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,7 +30,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static dev.rebel.chatmate.services.util.TextHelpers.isNullOrEmpty;
+import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
 
 /** Border: actually draws a border. Padding: space between text and border. */
 public class TextInputElement extends InputElement {

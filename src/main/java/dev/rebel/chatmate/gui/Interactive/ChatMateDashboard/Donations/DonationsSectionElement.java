@@ -15,29 +15,26 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.models.api.donation.GetDonationsResponse.GetDonationsResponseData;
-import dev.rebel.chatmate.models.publicObjects.donation.PublicDonation;
-import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream.LivestreamStatus;
-import dev.rebel.chatmate.models.publicObjects.status.PublicLivestreamStatus;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.proxy.EndpointProxy;
-import dev.rebel.chatmate.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
+import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
+import dev.rebel.chatmate.api.publicObjects.status.PublicLivestreamStatus;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.api.proxy.EndpointProxy;
+import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.StatusService;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.store.DonationApiStore;
-import dev.rebel.chatmate.store.RankApiStore;
+import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.services.util.Objects.casted;
-import static dev.rebel.chatmate.services.util.TextHelpers.dateToDayAccuracy;
+import static dev.rebel.chatmate.util.Objects.casted;
+import static dev.rebel.chatmate.util.TextHelpers.dateToDayAccuracy;
 
 public class DonationsSectionElement extends ContainerElement implements ISectionElement {
   private final @Nullable Integer highlightDonation;

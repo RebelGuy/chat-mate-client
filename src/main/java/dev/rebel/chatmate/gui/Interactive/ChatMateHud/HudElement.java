@@ -4,17 +4,16 @@ import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
-import dev.rebel.chatmate.gui.hud.Colour;
-import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.Objects;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -467,5 +466,18 @@ public abstract class HudElement extends ElementBase implements IDropElementList
 
     DimPoint newPosition = point.minus(new DimPoint(dx, dy));
     return box.withPosition(newPosition);
+  }
+
+  /** Denotes the point of the box. */
+  public enum Anchor {
+    TOP_LEFT,
+    TOP_CENTRE,
+    TOP_RIGHT,
+    BOTTOM_LEFT,
+    BOTTOM_CENTRE,
+    BOTTOM_RIGHT,
+    LEFT_CENTRE,
+    RIGHT_CENTRE,
+    MIDDLE
   }
 }

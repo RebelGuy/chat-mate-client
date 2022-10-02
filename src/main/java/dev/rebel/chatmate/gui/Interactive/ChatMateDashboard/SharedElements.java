@@ -7,7 +7,7 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 
 public class SharedElements {
   public static ElementFactory<LabelElement> ERROR_LABEL = (context, parent) -> new LabelElement(context, parent)

@@ -11,13 +11,13 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.In;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import scala.Tuple2;
 
 import java.net.URI;

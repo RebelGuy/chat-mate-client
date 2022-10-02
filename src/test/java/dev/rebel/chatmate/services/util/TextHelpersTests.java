@@ -1,9 +1,10 @@
 package dev.rebel.chatmate.services.util;
 
+import dev.rebel.chatmate.util.TextHelpers;
 import org.junit.Assert;
 import org.junit.Test;
 
-import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
+import dev.rebel.chatmate.util.TextHelpers.ExtractedFormatting;
 
 public class TextHelpersTests {
   @Test

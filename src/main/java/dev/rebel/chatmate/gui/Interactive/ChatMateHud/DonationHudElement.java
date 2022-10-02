@@ -8,8 +8,8 @@ import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
+import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.List;

@@ -8,8 +8,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.EnumHelpers;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
 import scala.Tuple2;
 import scala.Tuple3;
 

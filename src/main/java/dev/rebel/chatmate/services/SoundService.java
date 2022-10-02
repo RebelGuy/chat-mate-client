@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.util.ResourceLocation;

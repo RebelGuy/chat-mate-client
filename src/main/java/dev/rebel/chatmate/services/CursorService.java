@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Asset;
-import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.models.Tick;
+import dev.rebel.chatmate.events.ForgeEventService;
+import dev.rebel.chatmate.events.models.Tick;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
 import org.lwjgl.BufferUtils;

@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.StateManagement;
 
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.util.Tuple;
 
 import java.util.ArrayList;

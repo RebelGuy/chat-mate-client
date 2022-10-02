@@ -1,9 +1,9 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
-import dev.rebel.chatmate.services.util.TextHelpers;
-import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
-import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
+import dev.rebel.chatmate.util.TextHelpers;
+import dev.rebel.chatmate.util.TextHelpers.StringMask;
+import dev.rebel.chatmate.util.TextHelpers.WordFilter;
 
 import org.junit.Assert;
 import org.junit.Test;

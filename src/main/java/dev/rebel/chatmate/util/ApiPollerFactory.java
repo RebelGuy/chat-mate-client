@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.util;
 
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.util.ApiPoller.PollType;
 

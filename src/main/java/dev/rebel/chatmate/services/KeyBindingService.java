@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.models.Tick;
+import dev.rebel.chatmate.events.ForgeEventService;
+import dev.rebel.chatmate.events.models.Tick;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import org.lwjgl.input.Keyboard;

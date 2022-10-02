@@ -4,13 +4,12 @@ import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ChatPagination.PaginationRenderer;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
+import dev.rebel.chatmate.api.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.services.MessageService;
 import net.minecraft.util.IChatComponent;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 

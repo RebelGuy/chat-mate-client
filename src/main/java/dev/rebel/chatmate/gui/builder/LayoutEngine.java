@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.builder;
 
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.util.Collections;
 
 import java.util.ArrayList;
 import java.util.List;

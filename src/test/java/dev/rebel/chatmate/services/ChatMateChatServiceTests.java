@@ -1,11 +1,11 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.Config.StatefulEmitter;
-import dev.rebel.chatmate.models.api.chat.GetChatResponse.GetChatResponseData;
-import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
-import dev.rebel.chatmate.proxy.ChatEndpointProxy;
-import dev.rebel.chatmate.services.events.ChatMateChatService;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.Config.StatefulEmitter;
+import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
+import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
+import dev.rebel.chatmate.events.ChatMateChatService;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;

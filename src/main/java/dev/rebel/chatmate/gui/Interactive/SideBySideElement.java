@@ -1,16 +1,12 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.util.Collections;
 import scala.Tuple2;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

@@ -5,13 +5,12 @@ import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.Config.SeparableHudElement.PlatformIconPosition;
-import dev.rebel.chatmate.services.util.EnumHelpers;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
+import dev.rebel.chatmate.util.EnumHelpers;
 
 import javax.annotation.Nullable;
 

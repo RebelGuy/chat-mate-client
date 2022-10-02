@@ -1,8 +1,5 @@
 package dev.rebel.chatmate.util;
 
-import dev.rebel.chatmate.services.util.Collections;
-import scala.Tuple2;
-
 import java.util.*;
 import java.util.function.Supplier;
 

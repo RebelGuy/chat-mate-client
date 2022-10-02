@@ -1,12 +1,8 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.services.util.EnumHelpers;
-import scala.Tuple2;
+import dev.rebel.chatmate.util.EnumHelpers;
 
 import java.util.Date;
-
-import static com.ibm.icu.impl.duration.TimeUnitConstants.DAY;
-import static dev.rebel.chatmate.services.DateTimeService.UnitOfTime.*;
 
 public class DateTimeService {
   public long now() {

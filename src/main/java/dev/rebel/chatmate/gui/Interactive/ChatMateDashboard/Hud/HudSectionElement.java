@@ -8,15 +8,15 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.Config.SeparableHudElement;
-import dev.rebel.chatmate.models.Config.SeparableHudElement.PlatformIconPosition;
-import dev.rebel.chatmate.models.Config.StatefulEmitter;
-import dev.rebel.chatmate.services.events.models.ConfigEventData;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.Config.SeparableHudElement;
+import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
+import dev.rebel.chatmate.config.Config.StatefulEmitter;
+import dev.rebel.chatmate.events.models.ConfigEventData;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.CHECKBOX_LIGHT;
-import static dev.rebel.chatmate.services.util.TextHelpers.toSentenceCase;
+import static dev.rebel.chatmate.util.TextHelpers.toSentenceCase;
 
 public class HudSectionElement extends ContainerElement implements ISectionElement {
   private final static float SCALE = 0.75f;
@@ -161,7 +161,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
           .cast();
       this.iconLocationDropdown.label
           .setFontScale(SCALE);
-      this.iconLocationDropdown.dropdownMenuV2
+      this.iconLocationDropdown.dropdownMenu
           .setBackground(Colour.BLACK.withAlpha(0.8f));
 
       this.selectionLabels = new ArrayList<>();
@@ -169,12 +169,12 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
         LabelElement label = new LabelElement(context, this)
             .setText(toSentenceCase(position.toString()))
             .setFontScale(SCALE)
-            .setOnClick(() -> { this.onClickSelection(position); this.iconLocationDropdown.dropdownMenuV2.setVisible(false); })
+            .setOnClick(() -> { this.onClickSelection(position); this.iconLocationDropdown.dropdownMenu.setVisible(false); })
             .setPadding(new RectExtension(gui(3), gui(1)))
             .setSizingMode(SizingMode.FILL)
             .cast();
         this.selectionLabels.add(new Tuple2<>(position, label));
-        this.iconLocationDropdown.dropdownMenuV2.addOption(new BackgroundElement(context, this, label)
+        this.iconLocationDropdown.dropdownMenu.addOption(new BackgroundElement(context, this, label)
             .setCornerRadius(gui(2))
             .setHoverColour(Colour.GREY75.withAlpha(0.2f))
             .setMargin(new RectExtension(gui(1), gui(1)))

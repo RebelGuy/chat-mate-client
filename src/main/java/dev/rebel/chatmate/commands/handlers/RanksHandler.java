@@ -1,9 +1,7 @@
 package dev.rebel.chatmate.commands.handlers;
 
-import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
+import dev.rebel.chatmate.api.proxy.ExperienceEndpointProxy;
 import dev.rebel.chatmate.services.McChatService;
-
-import javax.annotation.Nullable;
 
 public class RanksHandler {
   private final McChatService mcChatService;

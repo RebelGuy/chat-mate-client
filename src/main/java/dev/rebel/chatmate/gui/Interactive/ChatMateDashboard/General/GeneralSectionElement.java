@@ -7,8 +7,8 @@ import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
 
 import javax.annotation.Nullable;
 
