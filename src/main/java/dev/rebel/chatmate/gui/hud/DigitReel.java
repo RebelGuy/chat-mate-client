@@ -193,7 +193,7 @@ public class DigitReel {
     GlStateManager.translate(xGui, yGui, 10);
     GlStateManager.scale(scaleX, scaleY, 1);
 
-    this.fontEngine.drawString(text, 0, 0, this.font);
+    this.fontEngine.drawString(text, 0, 0, this.font.withColour(c -> c.withAlpha(alpha)));
 
     GlStateManager.popMatrix();
   }

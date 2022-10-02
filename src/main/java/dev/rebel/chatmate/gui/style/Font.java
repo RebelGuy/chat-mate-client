@@ -94,6 +94,10 @@ public class Font {
     return this.update(font -> font._colour = colour);
   }
 
+  public Font withColour(Function<Colour, Colour> colourUpdater) {
+    return this.update(font -> font._colour = colourUpdater.apply(font._colour));
+  }
+
   public Colour getColour() {
     return this._colour;
   }
