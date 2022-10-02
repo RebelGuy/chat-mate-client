@@ -15,6 +15,7 @@ import dev.rebel.chatmate.services.StatusService;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 
 public class ViewerCountElement extends SingleElement implements SeparableHudElement.ISeparableElement {
   private static final int MAX_REEL_VALUE = 99;
@@ -26,6 +27,7 @@ public class ViewerCountElement extends SingleElement implements SeparableHudEle
   private final Font indicatorFont;
 
   private float scale = 1;
+  private String prevText = "";
 
   public ViewerCountElement(InteractiveContext context, IElement parent, boolean isMainElement, Dim defaultHeight, StatusService statusService, Config config) {
     super(context, parent);
@@ -51,7 +53,14 @@ public class ViewerCountElement extends SingleElement implements SeparableHudEle
 
   private String getText() {
     @Nullable Integer viewerCount = this.getViewerCount();
-    return viewerCount == null ? "n/a" : String.format("%02d", viewerCount);
+    String text = viewerCount == null ? "n/a" : String.format("%02d", viewerCount);
+
+    if (!Objects.equals(this.prevText, text)) {
+      super.onInvalidateSize();
+      this.prevText = text;
+    }
+
+    return text;
   }
 
   @Override

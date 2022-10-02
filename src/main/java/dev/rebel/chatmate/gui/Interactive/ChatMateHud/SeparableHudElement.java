@@ -168,6 +168,9 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
 
       super.setContentResizeAnchor(resizeAnchor);
       super.setElement(container);
+    } else {
+      // we have finished our second pass (or don't need to do it), set the anchor back to the default
+      super.setContentResizeAnchor(Anchor.TOP_LEFT);
     }
   }
 

@@ -188,7 +188,7 @@ public class InteractiveScreen extends Screen implements IElement {
     this.context.renderer._executeSideEffects();
 
     // it is possible that running side effects (or calling calculateSize/setBox) changed the layout
-    this._recalculateLayout(depth++);
+    this._recalculateLayout(depth + 1);
   }
 
   @Override

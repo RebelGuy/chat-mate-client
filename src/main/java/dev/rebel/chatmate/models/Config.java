@@ -121,6 +121,7 @@ public class Config extends EventServiceBase<ConfigType> {
       this.showChatPlatformIcon.set(loaded.showChatPlatformIcon);
       this.statusIndicator.set(loaded.statusIndicator.deserialise());
       this.viewerCount.set(loaded.viewerCount.deserialise());
+      this.debugModeEnabled.set(loaded.debugModeEnabled);
       this.saveDebouncer.doDebounce();
     }
   }
