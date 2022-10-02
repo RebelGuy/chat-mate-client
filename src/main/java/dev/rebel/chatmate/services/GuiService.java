@@ -212,13 +212,15 @@ public class GuiService {
 
     // HACK: we need to get this private field, otherwise pressing "/" no longer pre-fills the chat window
     String defaultValue = "";
-    try {
       // obfuscated field name found using trial and error
       String fieldName = this.isDev ? "defaultInputFieldText" : "field_146409_v";
+    try {
       Field field = GuiChat.class.getDeclaredField(fieldName);
       field.setAccessible(true); // otherwise we get an IllegalAccessException
       defaultValue = (String)field.get(guiChat);
-    } catch (Exception e) { throw new RuntimeException("This should never happen"); }
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Unable to override field value GuiChat.%s. `isDev` is %s. Error message: %s", fieldName, this.isDev, e.getMessage());
+    }
 
     GuiScreen replaceWithGui = new CustomGuiChat(
         defaultValue,
