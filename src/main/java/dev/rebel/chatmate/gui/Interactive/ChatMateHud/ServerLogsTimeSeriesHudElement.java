@@ -2,21 +2,17 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.IElement;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.Interactive.SingleElement;
 import dev.rebel.chatmate.gui.hud.Colour;
-import dev.rebel.chatmate.gui.hud.IHudComponent;
 import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
-import dev.rebel.chatmate.gui.hud.ServerLogsTimeSeriesComponent;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.services.events.ServerLogEventService;
 import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
@@ -52,7 +48,7 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
 
   @Override
   public void onRenderElement() {
-    if (!this.config.getShowServerLogsTimeSeries().get() || !this.config.getDebugModeEnabled().get()) {
+    if (!this.config.getShowServerLogsTimeSeries().get() || !this.config.getDebugModeEnabledEmitter().get()) {
       return;
     }
 

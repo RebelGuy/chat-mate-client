@@ -135,7 +135,7 @@ public class ContextMenuService {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Add countdown title", this::onCountdown),
       new ContextMenuOption("Add counter component", this::onCounter),
-      this.config.getDebugModeEnabled().get() ? new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation) : null
+      this.config.getDebugModeEnabledEmitter().get() ? new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation) : null
     );
   }
 

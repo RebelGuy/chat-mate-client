@@ -8,6 +8,8 @@ import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.models.publicObjects.event.PublicLevelUpData;
 import dev.rebel.chatmate.models.publicObjects.event.PublicNewTwitchFollowerData;
 import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.services.DateTimeService;
+import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.models.DonationEventData;
 import dev.rebel.chatmate.services.events.models.LevelUpEventData;
@@ -30,14 +32,16 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
   private final ChatMateEndpointProxy chatMateEndpointProxy;
   private final LogService logService;
   private final ApiPoller<GetEventsResponseData> apiPoller;
+  private final Config config;
+  private final DateTimeService dateTimeService;
 
-  private @Nullable Long lastTimestamp = null;
-
-  public ChatMateEventService(LogService logService, ChatMateEndpointProxy chatMateEndpointProxy, ApiPollerFactory apiPollerFactory) {
+  public ChatMateEventService(LogService logService, ChatMateEndpointProxy chatMateEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService) {
     super(ChatMateEventType.class, logService);
     this.chatMateEndpointProxy = chatMateEndpointProxy;
     this.logService = logService;
     this.apiPoller = apiPollerFactory.Create(this::onApiResponse, null, this::onMakeRequest, 1000L, PollType.CONSTANT_PADDING, TIMEOUT_WAIT);
+    this.config = config;
+    this.dateTimeService = dateTimeService;
   }
 
   public void onLevelUp(Function<LevelUpEventData.In, LevelUpEventData.Out> handler, @Nullable LevelUpEventData.Options options) {
@@ -53,11 +57,18 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
   }
 
   private void onMakeRequest(Consumer<GetEventsResponseData> callback, Consumer<Throwable> onError) {
-    this.chatMateEndpointProxy.getEventsAsync(callback, onError, this.lastTimestamp);
+    @Nullable Long sinceTimestamp = this.config.getLastGetChatMateEventsResponseEmitter().get();
+    long lastAllowedTimestamp = this.dateTimeService.nowPlus(UnitOfTime.HOUR, -1.0);
+    if (sinceTimestamp == 0) {
+      sinceTimestamp = null;
+    } else if (sinceTimestamp < lastAllowedTimestamp) {
+      sinceTimestamp = this.dateTimeService.now();
+    }
+    this.chatMateEndpointProxy.getEventsAsync(callback, onError, sinceTimestamp);
   }
 
   private void onApiResponse(GetEventsResponseData response) {
-    this.lastTimestamp = response.reusableTimestamp;
+    this.config.getLastGetChatMateEventsResponseEmitter().set(response.reusableTimestamp);
     for (PublicChatMateEvent event : response.events) {
       if (event.type == ChatMateEventType.LEVEL_UP) {
         ChatMateEventType eventType = ChatMateEventType.LEVEL_UP;

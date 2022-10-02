@@ -4,8 +4,6 @@ import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.BackgroundElement;
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
-import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.AnchorBoxSizing;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
@@ -19,7 +17,6 @@ import dev.rebel.chatmate.models.Config.SeparableHudElement;
 import dev.rebel.chatmate.models.Config.SeparableHudElement.PlatformIconPosition;
 import dev.rebel.chatmate.models.Config.StatefulEmitter;
 import dev.rebel.chatmate.services.events.models.ConfigEventData;
-import dev.rebel.chatmate.services.util.TextHelpers;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -29,7 +26,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.CHECKBOX_LIGHT;
-import static dev.rebel.chatmate.services.util.Objects.firstOrNull;
 import static dev.rebel.chatmate.services.util.TextHelpers.toSentenceCase;
 
 public class HudSectionElement extends ContainerElement implements ISectionElement {
@@ -98,7 +94,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     super.addElement(this.showServerLogsTimeSeriesCheckbox);
 
     config.getHudEnabledEmitter().onChange(this._onChangeHudEnabled, this, true);
-    config.getDebugModeEnabled().onChange(this._onChangeDebugModeEnabled, this, true);
+    config.getDebugModeEnabledEmitter().onChange(this._onChangeDebugModeEnabled, this, true);
   }
 
   public void onShow() {

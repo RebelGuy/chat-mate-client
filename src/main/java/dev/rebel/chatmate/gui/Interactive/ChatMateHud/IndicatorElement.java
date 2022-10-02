@@ -93,7 +93,7 @@ public class IndicatorElement extends ImageElement implements SeparableHudElemen
     Asset.Texture texture = this.statusTextures.get(status);
     super.setImage(texture);
 
-    if (this.config.getShowServerLogsHeartbeat().get() && this.config.getDebugModeEnabled().get() && this.isMainIndicator) {
+    if (this.config.getShowServerLogsHeartbeat().get() && this.config.getDebugModeEnabledEmitter().get() && this.isMainIndicator) {
       for (Tuple<Asset.Texture, Float> logEvent : this.serverLogEvents.getAllFracs()) {
         Asset.Texture logTexture = logEvent.getFirst();
         float scale = logEvent.getSecond() * SERVER_LOG_ANIMATION_MAX_SCALE * super.scale;

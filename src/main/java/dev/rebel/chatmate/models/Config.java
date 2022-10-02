@@ -2,6 +2,7 @@ package dev.rebel.chatmate.models;
 
 import dev.rebel.chatmate.models.Config.ConfigType;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV3;
+import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV4;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.EventHandler;
 import dev.rebel.chatmate.services.events.EventServiceBase;
@@ -28,7 +29,7 @@ public class Config extends EventServiceBase<ConfigType> {
   // 4. Add a new migration file in the `configMigrations` package
   // 5. Add the migration class from the previous step and the new serialised model to the arrays in `Migration.java`
   // 6. Change the type of the saved and loaded serialised config in this file
-  private final ConfigPersistorService<SerialisedConfigV3> configPersistorService;
+  private final ConfigPersistorService<SerialisedConfigV4> configPersistorService;
 
   // NOTE: DO **NOT** REMOVE THESE GETTERS. THEY ARE DISGUSTING BUT REQUIRED FOR TESTING
   private final StatefulEmitter<Boolean> chatMateEnabled;
@@ -59,7 +60,13 @@ public class Config extends EventServiceBase<ConfigType> {
   public StatefulEmitter<SeparableHudElement> getViewerCountEmitter() { return this.viewerCount; }
 
   private final StatefulEmitter<Boolean> debugModeEnabled;
-  public StatefulEmitter<Boolean> getDebugModeEnabled() { return this.debugModeEnabled; }
+  public StatefulEmitter<Boolean> getDebugModeEnabledEmitter() { return this.debugModeEnabled; }
+
+  private final StatefulEmitter<Long> lastGetChatResponse;
+  public StatefulEmitter<Long> getLastGetChatResponseEmitter() { return this.lastGetChatResponse; }
+
+  private final StatefulEmitter<Long> lastGetChatMateEventsResponse;
+  public StatefulEmitter<Long> getLastGetChatMateEventsResponseEmitter() { return this.lastGetChatMateEventsResponse; }
 
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
@@ -69,35 +76,31 @@ public class Config extends EventServiceBase<ConfigType> {
 
   private final Debouncer saveDebouncer;
 
-  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV3> configPersistorService) {
+  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV4> configPersistorService) {
     super(ConfigType.class, logService);
     this.configPersistorService = configPersistorService;
-
+    this.saveDebouncer = new Debouncer(400, this::save); // has to be less than the API polling rate
     this.updateListeners = new ArrayList<>();
-    this.chatMateEnabled = new StatefulEmitter<>(ConfigType.ENABLE_CHAT_MATE, false, this::onUpdate);
-    this.soundEnabled = new StatefulEmitter<>(ConfigType.ENABLE_SOUND, true, this::onUpdate);
-    this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, 10, this::onUpdate);
-    this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, true, this::onUpdate);
-    this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, true, this::onUpdate);
-    this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, false, this::onUpdate);
-    this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, true, this::onUpdate);
-    this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT), this::onUpdate);
-    this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT), this::onUpdate);
-    this.debugModeEnabled = new StatefulEmitter<>(ConfigType.DEBUG_MODE_ENABLED, false, this::onUpdate);
 
     this.weakHandlers = new WeakHashMap<>();
     for (ConfigType type : ConfigType.class.getEnumConstants()) {
       this.weakHandlers.put(type, new WeakHashMap<>());
     }
 
-    this.saveDebouncer = new Debouncer(500, this::save);
-
     // if loading fails, the user will be left with the default settings which is fine
-    try {
-      this.load();
-    } catch (Exception e) {
-      this.logService.logError(this, "Failed to load the config file:", e);
-    }
+    @Nullable SerialisedConfigV4 data = this.load();
+    this.chatMateEnabled = new StatefulEmitter<>(ConfigType.ENABLE_CHAT_MATE, false, this::onUpdate);
+    this.soundEnabled = new StatefulEmitter<>(ConfigType.ENABLE_SOUND, data == null ? true : data.soundEnabled, this::onUpdate);
+    this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, data == null ? 10 : data.chatVerticalDisplacement, this::onUpdate);
+    this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, data == null ? true : data.hudEnabled, this::onUpdate);
+    this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, data == null ? true : data.showServerLogsHeartbeat, this::onUpdate);
+    this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, data == null ? false : data.showServerLogsTimeSeries, this::onUpdate);
+    this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, data == null ? true : data.showChatPlatformIcon, this::onUpdate);
+    this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, data == null ? new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.statusIndicator.deserialise(), this::onUpdate);
+    this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, data == null ? new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.viewerCount.deserialise(), this::onUpdate);
+    this.debugModeEnabled = new StatefulEmitter<>(ConfigType.DEBUG_MODE_ENABLED, data == null ? false : data.debugModeEnabled, this::onUpdate);
+    this.lastGetChatResponse = new StatefulEmitter<>(ConfigType.LAST_GET_CHAT_RESPONSE, data == null ? 0L : data.lastGetChatResponse, this::onUpdate);
+    this.lastGetChatMateEventsResponse = new StatefulEmitter<>(ConfigType.LAST_GET_CHAT_MATE_EVENTS_RESPONSE, data == null ? 0L : data.lastGetChatMateEventsResponse, this::onUpdate);
   }
 
   public void listenAny(Callback callback) {
@@ -110,34 +113,29 @@ public class Config extends EventServiceBase<ConfigType> {
     return new Out<>();
   }
 
-  private void load() {
-    SerialisedConfigV3 loaded = this.configPersistorService.load();
+  @Nullable
+  private SerialisedConfigV4 load() {
+    SerialisedConfigV4 loaded = this.configPersistorService.load();
     if (loaded != null) {
-      this.soundEnabled.set(loaded.soundEnabled);
-      this.chatVerticalDisplacement.set(loaded.chatVerticalDisplacement);
-      this.hudEnabled.set(loaded.hudEnabled);
-      this.showServerLogsHeartbeat.set(loaded.showServerLogsHeartbeat);
-      this.showServerLogsTimeSeries.set(loaded.showServerLogsTimeSeries);
-      this.showChatPlatformIcon.set(loaded.showChatPlatformIcon);
-      this.statusIndicator.set(loaded.statusIndicator.deserialise());
-      this.viewerCount.set(loaded.viewerCount.deserialise());
-      this.debugModeEnabled.set(loaded.debugModeEnabled);
       this.saveDebouncer.doDebounce();
     }
+    return loaded;
   }
 
   private void save() {
     try {
-      SerialisedConfigV3 serialisedConfig = new SerialisedConfigV3(
+      SerialisedConfigV4 serialisedConfig = new SerialisedConfigV4(
           this.soundEnabled.get(),
           this.chatVerticalDisplacement.get(),
           this.hudEnabled.get(),
           this.showServerLogsHeartbeat.get(),
           this.showServerLogsTimeSeries.get(),
           this.showChatPlatformIcon.get(),
-          new SerialisedConfigV3.SerialisedSeparableHudElement(this.statusIndicator.get()),
-          new SerialisedConfigV3.SerialisedSeparableHudElement(this.viewerCount.get()),
-          this.debugModeEnabled.get());
+          new SerialisedConfigV4.SerialisedSeparableHudElement(this.statusIndicator.get()),
+          new SerialisedConfigV4.SerialisedSeparableHudElement(this.viewerCount.get()),
+          this.debugModeEnabled.get(),
+          this.lastGetChatResponse.get(),
+          this.lastGetChatMateEventsResponse.get());
       this.configPersistorService.save(serialisedConfig);
     } catch (Exception e) {
       this.logService.logError(this, "Failed to save config:", e);
@@ -285,6 +283,8 @@ public class Config extends EventServiceBase<ConfigType> {
     SHOW_CHAT_PLATFORM_ICON,
     STATUS_INDICATOR,
     VIEWER_COUNT,
-    DEBUG_MODE_ENABLED
+    DEBUG_MODE_ENABLED,
+    LAST_GET_CHAT_RESPONSE,
+    LAST_GET_CHAT_MATE_EVENTS_RESPONSE
   }
 }

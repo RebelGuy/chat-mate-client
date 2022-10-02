@@ -4,6 +4,8 @@ import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.api.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.proxy.ChatEndpointProxy;
+import dev.rebel.chatmate.services.DateTimeService;
+import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.events.ChatMateChatService.EventType;
 import dev.rebel.chatmate.services.events.models.NewChatEventData;
@@ -21,15 +23,16 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
 
   private final ChatEndpointProxy chatEndpointProxy;
   private final ApiPoller<GetChatResponseData> apiPoller;
+  private final Config config;
+  private final DateTimeService dateTimeService;
 
-  private @Nullable Long lastTimestamp = null;
-
-
-  public ChatMateChatService(LogService logService, ChatEndpointProxy chatEndpointProxy, ApiPollerFactory apiPollerFactory) {
+  public ChatMateChatService(LogService logService, ChatEndpointProxy chatEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService) {
     super(EventType.class, logService);
 
     this.chatEndpointProxy = chatEndpointProxy;
     this.apiPoller = apiPollerFactory.Create(this::onApiResponse, null, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT);
+    this.config = config;
+    this.dateTimeService = dateTimeService;
   }
 
   public void onNewChat(Consumer<PublicChatItem[]> callback, Object key) {
@@ -42,11 +45,18 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
   }
 
   private void onMakeRequest(Consumer<GetChatResponseData> callback, Consumer<Throwable> onError) {
-    this.chatEndpointProxy.getChatAsync(callback, onError, this.lastTimestamp, null);
+    @Nullable Long sinceTimestamp = this.config.getLastGetChatResponseEmitter().get();
+    long lastAllowedTimestamp = this.dateTimeService.nowPlus(UnitOfTime.HOUR, -1.0);
+    if (sinceTimestamp == 0) {
+      sinceTimestamp = null;
+    } else if (sinceTimestamp < lastAllowedTimestamp) {
+      sinceTimestamp = this.dateTimeService.now();
+    }
+    this.chatEndpointProxy.getChatAsync(callback, onError, sinceTimestamp, null);
   }
 
   private void onApiResponse(GetChatResponseData response) {
-    this.lastTimestamp = response.reusableTimestamp;
+    this.config.getLastGetChatResponseEmitter().set(response.reusableTimestamp);
     for (EventHandler<NewChatEventData.In, NewChatEventData.Out, NewChatEventData.Options> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
       NewChatEventData.In eventIn = new NewChatEventData.In(response.chat);
       super.safeDispatch(EventType.NEW_CHAT, handler, eventIn);

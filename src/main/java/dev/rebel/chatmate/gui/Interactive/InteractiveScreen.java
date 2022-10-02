@@ -82,7 +82,7 @@ public class InteractiveScreen extends Screen implements IElement {
     // we don't want to override the default `onScreenSizeUpdated()` because it fires only when this interactive screen is active in `Minecraft`, which may not necessarily be the case (e.g. for the HUD)
     this.context.forgeEventService.onScreenResize(this._onScreenResize, new ScreenResizeData.Options(), this);
 
-    this.context.config.getDebugModeEnabled().onChange(this._onChangeDebugModeEnabled, this, false);
+    this.context.config.getDebugModeEnabledEmitter().onChange(this._onChangeDebugModeEnabled, this, false);
   }
 
   public void setMainElement(IElement mainElement) {
@@ -385,7 +385,7 @@ public class InteractiveScreen extends Screen implements IElement {
     } else if (in.isPressed(Keyboard.KEY_F11)) {
       this.context.minecraft.toggleFullscreen();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-    } else if (in.isPressed(Keyboard.KEY_F3) && this.context.config.getDebugModeEnabled().get()) {
+    } else if (in.isPressed(Keyboard.KEY_F3) && this.context.config.getDebugModeEnabledEmitter().get()) {
       this.toggleDebug();
       return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
     } else if (in.isPressed(Keyboard.KEY_F5)) {
