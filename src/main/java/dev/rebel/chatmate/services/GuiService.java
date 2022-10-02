@@ -219,7 +219,7 @@ public class GuiService {
       field.setAccessible(true); // otherwise we get an IllegalAccessException
       defaultValue = (String)field.get(guiChat);
     } catch (Exception e) {
-      throw new RuntimeException(String.format("Unable to override field value GuiChat.%s. `isDev` is %s. Error message: %s", fieldName, this.isDev, e.getMessage());
+      throw new RuntimeException(String.format("Unable to override field value GuiChat.%s. `isDev` is %s. Error message: %s", fieldName, this.isDev, e.getMessage()));
     }
 
     GuiScreen replaceWithGui = new CustomGuiChat(
