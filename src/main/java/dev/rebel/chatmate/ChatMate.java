@@ -13,6 +13,8 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.models.Config;
 import dev.rebel.chatmate.models.ConfigPersistorService;
 import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV3;
+import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream;
+import dev.rebel.chatmate.models.publicObjects.livestream.PublicLivestream.LivestreamStatus;
 import dev.rebel.chatmate.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
@@ -250,9 +252,15 @@ public class ChatMate {
       }
     });
 
-    // to make our life easier, auto enable when in a dev environment
+    // to make our life easier, auto enable when in a dev environment or if a livestream is running
     if (this.isDev) {
       config.getChatMateEnabledEmitter().set(true);
+    } else {
+      chatMateEndpointProxy.getStatusAsync(res -> {
+        if (res.livestreamStatus != null && res.livestreamStatus.livestream.status == LivestreamStatus.Live) {
+          config.getChatMateEnabledEmitter().set(true);
+        }
+      }, e -> {}, false);
     }
   }
 }
