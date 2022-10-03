@@ -7,6 +7,7 @@ import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.Screen;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
@@ -47,6 +48,7 @@ public class InteractiveScreen extends Screen implements IElement {
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseUp = this::onMouseUp;
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseScroll = this::onMouseScroll;
   private final Function<KeyboardEventData.In, KeyboardEventData.Out> _onKeyDown = this::onKeyDown;
+  private final Function<KeyboardEventData.In, KeyboardEventData.Out> _onKeyUp = this::onKeyUp;
   private final Function<ScreenResizeData.In, ScreenResizeData.Out> _onScreenResize = this::onScreenResize;
   private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
 
@@ -78,6 +80,7 @@ public class InteractiveScreen extends Screen implements IElement {
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_UP, this._onMouseUp, new MouseEventData.Options(true), this);
     this.context.mouseEventService.on(MouseEventService.Events.MOUSE_SCROLL, this._onMouseScroll, new MouseEventData.Options(true), this);
     this.context.keyboardEventService.on(KeyboardEventService.Events.KEY_DOWN, this._onKeyDown, new KeyboardEventData.Options(true, null, null, null), this);
+    this.context.keyboardEventService.on(KeyboardEventService.Events.KEY_UP, this._onKeyUp, new KeyboardEventData.Options(true, null, null, null), this);
 
     // we don't want to override the default `onScreenSizeUpdated()` because it fires only when this interactive screen is active in `Minecraft`, which may not necessarily be the case (e.g. for the HUD)
     this.context.forgeEventService.onScreenResize(this._onScreenResize, new ScreenResizeData.Options(), this);
@@ -263,7 +266,7 @@ public class InteractiveScreen extends Screen implements IElement {
       return new MouseEventData.Out(null);
     }
 
-    this.context.mousePosition = in.mousePositionData.point;
+    this.context.mousePosition = in.mousePositionData.point.setAnchor(DimAnchor.GUI);
 
     // if we are debugging and haven't selected an element, enter "discovery mode" by temp-debugging the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
@@ -411,7 +414,23 @@ public class InteractiveScreen extends Screen implements IElement {
     return new KeyboardEventData.Out(null);
   }
 
-  private void toggleDebug() {
+  protected KeyboardEventData.Out onKeyUp(KeyboardEventData.In in) {
+    if (this.mainElement == null || this.shouldCloseScreen) {
+      return new KeyboardEventData.Out(null);
+    }
+
+    this.recalculateLayout();
+    boolean handled = this.propagateKeyboardEvent(EventType.KEY_UP, in);
+    this.recalculateLayout();
+    if (handled) {
+      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+    }
+
+    this.recalculateLayout();
+    return new KeyboardEventData.Out(null);
+  }
+
+    private void toggleDebug() {
     this.debugModeEnabled = !this.debugModeEnabled;
     this.debugElementSelected = false;
     this.context.debugElement = null;
@@ -484,15 +503,22 @@ public class InteractiveScreen extends Screen implements IElement {
 
   /** Propagates the keyboard event to the currently focused element. */
   private boolean propagateKeyboardEvent(EventType type, KeyboardEventData.In data) {
-    IElement target = this.context.focusedElement;
-    if (this.mainElement == null || target == null) {
+    if (this.mainElement == null) {
       return false;
     }
 
-    List<IElement> elements = ElementHelpers.findElementFromChild(target, this);
+    IElement target = this.context.focusedElement;
+    List<IElement> elements = target == null ? new ArrayList<>() : ElementHelpers.findElementFromChild(target, this);
     if (elements == null) {
       System.out.println("Cannot find elements to propagate keyboard event");
       return false;
+    }
+
+    // notify subscribers directly (order is undefined at the moment)
+    for (IElement element : this.context.keyboardSubscribers) {
+      if (element != null) {
+        elements.add(0, element);
+      }
     }
 
     InteractiveEvent<KeyboardEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target, true);
@@ -722,6 +748,11 @@ public class InteractiveScreen extends Screen implements IElement {
     public @Nullable IElement debugElement = null;
     public @Nullable InputElement focusedElement = null;
     public @Nullable DimPoint mousePosition = null;
+
+    // elements that are not focussable (or where it doesn't make sense to require focus) that want to receive keyboard events must register themselves here.
+    // note that these will be the lowest priority in the propagation chain, so if event propagation was stopped during propagation to/from a focussed element,
+    // the event won't make it to the subscribers.
+    public Set<IElement> keyboardSubscribers = java.util.Collections.newSetFromMap(new WeakHashMap<>());
 
     public InteractiveContext(ScreenRenderer renderer,
                               MouseEventService mouseEventService,

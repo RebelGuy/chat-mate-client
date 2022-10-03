@@ -138,7 +138,8 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.getSliderRect().checkCollision(position)) {
-      this.dropElement = new DropElement(context, this, true, this);
+      this.dropElement = new DropElement(context, this, this)
+          .setBlockInteractionEvents(true);
       this.dragPositionStart = position;
       this.dragValueStart = this.value;
       super.onInvalidateSize();
@@ -155,8 +156,8 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onDrag(DimPoint position) {
-    Dim deltaMouse = position.minus(this.dragPositionStart).getX();
+  public void onDrag(DimPoint prevPosition, DimPoint currentPosition) {
+    Dim deltaMouse = currentPosition.minus(this.dragPositionStart).getX();
     Dim sliderWidth = this.getSliderRect().getWidth();
     float deltaRatio = deltaMouse.over(super.getContentBox().getWidth().minus(sliderWidth));
     float deltaValue = deltaRatio * (this.maxValue - this.minValue);
@@ -169,7 +170,7 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onDrop(DimPoint position) {
+  public void onDrop(DimPoint startPosition, DimPoint currentPosition, Dim totalDistanceTravelled) {
     this.dropElement = null;
     this.dragPositionStart = null;
     this.dragValueStart = null;

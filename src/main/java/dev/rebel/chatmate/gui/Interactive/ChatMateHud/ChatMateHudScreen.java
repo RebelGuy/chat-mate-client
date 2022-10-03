@@ -23,6 +23,7 @@ import static dev.rebel.chatmate.util.Objects.castedVoid;
 
 // note: use the `ChatMateHudStore` to add components to this screen.
 public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreListener {
+  private final ChatMateHudStore chatMateHudStore;
   private final ContextMenuService contextMenuService;
   private final Config config;
 
@@ -30,6 +31,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
 
   public ChatMateHudScreen(ChatMateHudStore chatMateHudStore, ContextMenuService contextMenuService, InteractiveContext context, Config config) {
     super(context, null, InteractiveScreenType.HUD);
+    this.chatMateHudStore = chatMateHudStore;
     this.contextMenuService = contextMenuService;
     this.config = config;
 
@@ -118,6 +120,8 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
     super.shouldCloseScreen = false;
 
     super.context.debugElement = null;
+
+    this.chatMateHudStore.clearSelectedElements();
   }
 
   @Override

@@ -237,7 +237,8 @@ public class ScrollingElement extends SingleElement { // use a single element be
       DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
       if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.getBarRect().checkCollision(position)) {
         this.dragPositionStart = position;
-        this.dropElement = new DropElement(super.context, this, true, this);
+        this.dropElement = new DropElement(super.context, this, this)
+            .setBlockInteractionEvents(true);
         this.scrollingPositionStart = ScrollingElement.this.scrollingPosition.getTarget();
         super.onInvalidateSize();
         e.stopPropagation();
@@ -245,11 +246,11 @@ public class ScrollingElement extends SingleElement { // use a single element be
     }
 
     @Override
-    public void onDrag(DimPoint position) {
+    public void onDrag(DimPoint prevPosition, DimPoint currentPosition) {
       AnimatedDim scrollingPosition = ScrollingElement.this.scrollingPosition;
       Dim maxScrollingPosition = ScrollingElement.this.getMaxScrollingPosition();
 
-      Dim deltaMouse = position.getY().minus(this.dragPositionStart.getY());
+      Dim deltaMouse = currentPosition.getY().minus(this.dragPositionStart.getY());
       float deltaRatio = deltaMouse.over(super.getContentBox().getHeight());
       Dim deltaContent = ScrollingElement.this.childElement.getBox().getHeight().times(deltaRatio);
       Dim newTarget = Dim.clamp(this.scrollingPositionStart.plus(deltaContent), ZERO, maxScrollingPosition);
@@ -260,7 +261,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
     }
 
     @Override
-    public void onDrop(DimPoint position) {
+    public void onDrop(DimPoint startPosition, DimPoint currentPosition, Dim totalDistanceTravelled) {
       this.dragPositionStart = null;
       this.dropElement = null;
       this.scrollingPositionStart = null;

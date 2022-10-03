@@ -10,18 +10,17 @@ import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Objects;
+import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-public abstract class HudElement extends ElementBase implements IDropElementListener {
+public abstract class HudElement extends ElementBase {
   private @Nullable List<IHudFilter> hudElementFilter = null;
 
   protected @Nonnull DimPoint defaultPosition;
@@ -31,17 +30,14 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   protected float currentScale = 1;
   protected Anchor autoAnchor = Anchor.TOP_LEFT;
 
+  private boolean isSelected = false;
   private boolean canDrag = false;
   private boolean canScale = false;
   private boolean isScrolling = false;
 
-  // using the drop element leads to a smoother dragging experience where large deltas don't interrupt the drag flow
-  private @Nullable DropElement dropElement = null;
-  private @Nullable DimPoint lastDraggingPosition = null;
-
   public HudElement(InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
-    
+
     this.defaultPosition = new DimPoint(ZERO, ZERO);
     this.defaultPositionAnchor = Anchor.TOP_LEFT;
     this.scrollResizeAnchor = null;
@@ -56,6 +52,14 @@ public abstract class HudElement extends ElementBase implements IDropElementList
   public HudElement setCanScale(boolean canScale) {
     this.canScale = canScale;
     return this;
+  }
+
+  public boolean canDrag() {
+    return this.canDrag;
+  }
+
+  public boolean canScale() {
+    return this.canScale;
   }
 
   /** Sets the initial position of the HUD element, where the anchored point of the box will be placed at the provided position. Only effective before the element has first been rendered. */
@@ -92,46 +96,13 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     return this.hudElementFilter;
   }
 
-  @Override
-  public final @Nullable List<IElement> getChildren() {
-    @Nullable List<IElement> superChildren = this.onGetChildren();
-
-    if (this.dropElement == null) {
-      return superChildren;
-    } else if (superChildren == null) {
-      superChildren = new ArrayList<>();
-    }
-
-    List<IElement> result = Collections.list(superChildren);
-    result.add(this.dropElement);
-    return result;
+  public HudElement setSelected(boolean isSelected) {
+    this.isSelected = isSelected;
+    return this;
   }
 
-  /** Implement this instead of the standard `getChildren`. */
-  public abstract @Nullable List<IElement> onGetChildren();
-
-  @Override
-  public void onMouseDown(IEvent<MouseEventData.In> e) {
-    if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.canDrag) {
-      this.lastDraggingPosition = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
-      this.dropElement = new DropElement(super.context, this, true, this);
-      super.onInvalidateSize();
-      e.stopPropagation();
-    }
-  }
-
-  @Override
-  public void onDrag(DimPoint position) {
-    DimPoint positionDelta = position.minus(this.lastDraggingPosition).setAnchor(DimAnchor.GUI);
-    this.lastDraggingPosition = position;
+  public void onDrag(DimPoint positionDelta) {
     super.setBoxUnsafe(super.getBox().withTranslation(positionDelta));
-    super.onInvalidateSize();
-  }
-
-  @Override
-  public void onDrop(DimPoint position) {
-    this.lastDraggingPosition = null;
-    this.dropElement = null;
     super.onInvalidateSize();
   }
 
@@ -151,9 +122,6 @@ public abstract class HudElement extends ElementBase implements IDropElementList
     this.autoAnchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     super.setBox(box);
     this.onHudBoxSet(box);
-    if (this.dropElement != null) {
-      this.dropElement.setBox(box);
-    }
   }
 
   /** Called when the box has been set for this element (do NOT call `super.setBox`). Provides the positioned box with the size specified by the returned value of `calculateThisSize`. */
@@ -181,8 +149,8 @@ public abstract class HudElement extends ElementBase implements IDropElementList
 
   @Override
   public final void renderElement() {
-    if (this.lastDraggingPosition != null || super.isHovering() && (this.canScale || this.canDrag)) {
-      float alpha = this.lastDraggingPosition == null ? 0.1f : 0.2f;
+    if (this.isSelected || super.isHovering() && (this.canScale || this.canDrag)) {
+      float alpha = this.isSelected ? 0.2f : 0.1f;
       RendererHelpers.drawRect(0, super.getBox(), Colour.BLACK.withAlpha(alpha));
     }
 

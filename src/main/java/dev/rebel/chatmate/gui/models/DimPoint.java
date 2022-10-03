@@ -41,6 +41,13 @@ public class DimPoint {
     return new DimPoint(this.x.times(scaleX), this.y.times(scaleY));
   }
 
+  public Dim distanceTo(DimPoint other) {
+    float deltaX = this.getX().minus(other.getX()).getGui();
+    float deltaY = this.getY().minus(other.getY()).getGui();
+
+    return this.x.setGui((float)Math.sqrt(deltaX * deltaX + deltaY * deltaY));
+  }
+
   @Override
   public String toString() {
     return String.format("(%s, %s)", this.x.toString(), this.y.toString());

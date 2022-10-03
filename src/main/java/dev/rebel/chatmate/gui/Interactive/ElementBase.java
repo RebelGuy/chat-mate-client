@@ -195,8 +195,11 @@ public abstract class ElementBase implements IElement {
       case KEY_DOWN:
         this.onCaptureKeyDown((IEvent<KeyboardEventData.In>)event);
         break;
+      case KEY_UP:
+        this.onCaptureKeyUp((IEvent<KeyboardEventData.In>)event);
+        break;
       default:
-        throw new RuntimeException("Invalid event type at CAPTURE phase: " + type);
+        throw new RuntimeException("fInvalid event type at CAPTURE phase: " + type);
     }
   }
 
@@ -217,6 +220,9 @@ public abstract class ElementBase implements IElement {
       case KEY_DOWN:
         this.onKeyDown((IEvent<KeyboardEventData.In>)event);
         break;
+      case KEY_UP:
+        this.onKeyUp((IEvent<KeyboardEventData.In>)event);
+        break;
       default:
         throw new RuntimeException("Invalid event type at BUBBLE phase: " + type);
     }
@@ -232,6 +238,8 @@ public abstract class ElementBase implements IElement {
   public void onCaptureMouseScroll(IEvent<MouseEventData.In> e) {}
   public void onKeyDown(IEvent<KeyboardEventData.In> e) {}
   public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {}
+  public void onKeyUp(IEvent<KeyboardEventData.In> e) {}
+  public void onCaptureKeyUp(IEvent<KeyboardEventData.In> e) {}
   public void onFocus(IEvent<FocusEventData> e) {}
   public void onBlur(IEvent<FocusEventData> e) {}
   /** Target-only - this cannot be cancelled. */

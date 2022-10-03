@@ -59,6 +59,10 @@ public class MouseEventService extends EventServiceBase<Events> {
     return new In(Events.MOUSE_MOVE, this.getCurrentPosition(), new MouseButtonData(null, this.prevHeld), null);
   }
 
+  public boolean isHeldDown(MouseButton button) {
+    return this.constructSyntheticMoveEvent().mouseButtonData.pressedButtons.contains(button);
+  }
+
   private Tick.Out onRenderTick(Tick.In in) {
     int x = Mouse.getX();
     int y = Mouse.getY();

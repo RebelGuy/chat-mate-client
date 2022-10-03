@@ -13,7 +13,9 @@ import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ChatMateHudStore {
@@ -22,9 +24,28 @@ public class ChatMateHudStore {
   private final EmptyElement emptyElement = new EmptyElement();
   private boolean hudVisible = false;
   private List<HudElement> elements = new ArrayList<>();
+  private Set<HudElement> selectedElements = new HashSet<>();
 
   public ChatMateHudStore(InteractiveContext hudContext) {
     this.hudContext = hudContext;
+  }
+
+  public void setElementSelection(HudElement element, boolean selected) {
+    element.setSelected(selected);
+    if (selected) {
+      this.selectedElements.add(element);
+    } else {
+      this.selectedElements.remove(element);
+    }
+  }
+
+  public void clearSelectedElements() {
+    this.selectedElements.forEach(el -> el.setSelected(false));
+    this.selectedElements.clear();
+  }
+
+  public List<HudElement> getSelectedElements() {
+    return Collections.list(this.selectedElements);
   }
 
   /** Important: do NOT add elements before ChatMateHudScreen has been instantiated, otherwise you will get invalid parents. */

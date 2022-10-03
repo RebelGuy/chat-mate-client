@@ -71,7 +71,7 @@ public class DonationHudElement extends HudElement {
   }
 
   @Override
-  public @Nullable List<IElement> onGetChildren() {
+  public @Nullable List<IElement> getChildren() {
     return Collections.list(this.donationElement);
   }
 

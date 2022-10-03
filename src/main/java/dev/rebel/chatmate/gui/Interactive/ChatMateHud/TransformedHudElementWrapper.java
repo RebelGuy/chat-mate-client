@@ -37,7 +37,7 @@ public class TransformedHudElementWrapper<TElement extends SingleElement> extend
   }
 
   @Override
-  public @Nullable List<IElement> onGetChildren() {
+  public @Nullable List<IElement> getChildren() {
     return Collections.list(this.element);
   }
 
