@@ -97,7 +97,7 @@ public class TitleHudElement extends SimpleHudElementWrapper<BlockElement> {
   }
   
   @Override
-  protected void onRescaleContent(DimRect oldBox, float oldScale, float newScale) {
+  protected void onElementRescaled(DimRect oldBox, float oldScale, float newScale) {
     this.titleElement.setFontScale(TITLE_SCALE * newScale);
     this.subTitleElement.setFontScale(SUB_TITLE_SCALE * newScale)
         .setMargin(new RectExtension(ZERO, ZERO, gui(DEFAULT_PADDING * newScale), ZERO));

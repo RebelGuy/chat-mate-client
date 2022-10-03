@@ -116,7 +116,7 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
   }
 
   @Override
-  protected void onRescaleContent(DimRect oldBox, float oldScale, float newScale) {
+  protected void onElementRescaled(DimRect oldBox, float oldScale, float newScale) {
     this.mainElement.setHudScale(newScale);
     this.platformIcon.setScale(this.platformIconScale * newScale);
   }

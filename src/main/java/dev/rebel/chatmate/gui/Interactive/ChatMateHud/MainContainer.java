@@ -15,8 +15,10 @@ import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class MainContainer extends ElementBase implements IDropElementListener {
   private final ChatMateHudStore store;
@@ -148,6 +150,32 @@ public class MainContainer extends ElementBase implements IDropElementListener {
     this.onToggleSelection = null;
     this.dropElement = null;
     super.onInvalidateSize();
+  }
+
+  @Override
+  public void onMouseScroll(IEvent<MouseEventData.In> e) {
+    DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
+    @Nullable HudElement hoveredElement = null;
+    for (HudElement element : this.store.getElements()) {
+      if (!this.shouldRenderElement(element) || !element.canScale()) {
+        continue;
+      }
+
+      if (getCollisionBox(element).checkCollision(position)) {
+        hoveredElement = element;
+        break;
+      }
+    }
+
+    if (hoveredElement == null) {
+      return;
+    }
+
+    Set<HudElement> elements = new HashSet<>(this.store.getSelectedElements());
+    elements.add(hoveredElement);
+    elements.forEach(el -> el.onScroll(e.getData().mouseScrollData.scrollDirection));
+
+    e.stopPropagation();
   }
 
   @Override

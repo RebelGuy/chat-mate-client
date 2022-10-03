@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
-import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.style.Colour;
@@ -13,7 +12,6 @@ import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Objects;
-import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -102,7 +100,28 @@ public abstract class HudElement extends ElementBase {
   }
 
   public void onDrag(DimPoint positionDelta) {
+    if (!this.canDrag) {
+      return;
+    }
+
     super.setBoxUnsafe(super.getBox().withTranslation(positionDelta));
+    super.onInvalidateSize();
+  }
+
+  public void onScroll(ScrollDirection direction) {
+    if (!this.canScale) {
+      return;
+    }
+
+    int multiplier = direction == ScrollDirection.UP ? 1 : -1;
+    float newScale = Math.min(5, Math.max(0.1f, this.currentScale + multiplier * 0.1f));
+
+    if (this.currentScale != newScale) {
+      float oldScale = this.currentScale;
+      this.currentScale = newScale;
+      this.isScrolling = true;
+      this.onElementRescaled(super.getBox(), oldScale, newScale);
+    }
     super.onInvalidateSize();
   }
 
@@ -128,24 +147,7 @@ public abstract class HudElement extends ElementBase {
   public abstract void onHudBoxSet(DimRect box);
 
   /** Called when the user has changed the scale of the component, before re-rendering occurs. `oldScale` and `newScale` are guaranteed to be different. */
-  protected void onRescaleContent(DimRect oldBox, float oldScale, float newScale) { }
-
-  @Override
-  public void onMouseScroll(IEvent<MouseEventData.In> e) {
-    if (this.canScale) {
-      int multiplier = e.getData().mouseScrollData.scrollDirection == ScrollDirection.UP ? 1 : -1;
-      float newScale = Math.min(5, Math.max(0.1f, this.currentScale + multiplier * 0.1f));
-      
-      if (this.currentScale != newScale) {
-        float oldScale = this.currentScale;
-        this.currentScale = newScale;
-        this.isScrolling = true;
-        this.onRescaleContent(super.getBox(), oldScale, newScale);
-      }
-      super.onInvalidateSize();
-      e.stopPropagation();
-    }
-  }
+  protected void onElementRescaled(DimRect oldBox, float oldScale, float newScale) { }
 
   @Override
   public final void renderElement() {
