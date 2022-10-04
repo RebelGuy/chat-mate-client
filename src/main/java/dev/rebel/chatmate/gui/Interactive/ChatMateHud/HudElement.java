@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.config.Config.HudElementTransform;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
@@ -8,15 +9,18 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
+
+import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
 
 public abstract class HudElement extends ElementBase {
   private @Nullable List<IHudFilter> hudElementFilter = null;
@@ -26,12 +30,16 @@ public abstract class HudElement extends ElementBase {
   protected @Nullable Anchor scrollResizeAnchor;
   protected @Nullable Anchor contentResizeAnchor;
   protected float currentScale = 1;
+  private float defaultScale = 1;
   protected Anchor autoAnchor = Anchor.TOP_LEFT;
 
   private boolean isSelected = false;
   private boolean canDrag = false;
   private boolean canScale = false;
   private boolean isScrolling = false;
+  private boolean isInitialised = false;
+  private String persistName = "";
+  private boolean persistTransform = false;
 
   public HudElement(InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
@@ -52,6 +60,14 @@ public abstract class HudElement extends ElementBase {
     return this;
   }
 
+  /** Call this in your constructor to automatically manage persistence (read and write).
+   * If a persisted transform exists, it will take precedence over `setDefaultPosition` and `setDefaultScale`. */
+  public HudElement enablePersistTransform(String persistName) {
+    this.persistName = persistName;
+    this.persistTransform = true;
+    return this;
+  }
+
   public boolean canDrag() {
     return this.canDrag;
   }
@@ -67,6 +83,11 @@ public abstract class HudElement extends ElementBase {
     return this;
   }
 
+  public HudElement setDefaultScale(float defaultScale) {
+    this.defaultScale = defaultScale;
+    return this;
+  }
+
   /** Sets the anchor of the box about which the box should be resized when scrolling. If null, automatically chooses the resize anchor. */
   public HudElement setScrollResizeAnchor(@Nullable Anchor anchor) {
     this.scrollResizeAnchor = anchor;
@@ -79,11 +100,6 @@ public abstract class HudElement extends ElementBase {
     return this;
   }
 
-  public HudElement setDefaultScale(float scale) {
-    this.currentScale = scale;
-    return this;
-  }
-
   /** By default, HUD elements are always shown, but you can provide a list of filters to customise this behaviour. */
   public HudElement setHudElementFilter(@Nullable IHudFilter... filters) {
     this.hudElementFilter = filters == null || filters.length == 0 ? null : Collections.list(filters);
@@ -92,6 +108,27 @@ public abstract class HudElement extends ElementBase {
 
   public @Nullable List<IHudFilter> getHudElementFilter() {
     return this.hudElementFilter;
+  }
+
+  private void persistTransform() {
+    if (!this.persistTransform || isNullOrEmpty(this.persistName)) {
+      return;
+    }
+
+    HudElementTransform transform = new HudElementTransform(super.getBox().getX(), super.getBox().getY(), this.currentScale);
+    super.context.config.getHudTransformsEmitter().set(prev -> {
+      Map<String, HudElementTransform> current = new HashMap<>(prev);
+      current.put(this.persistName, transform);
+      return current;
+    });
+  }
+
+  private @Nullable HudElementTransform getPersistedTransform() {
+    if (!this.persistTransform || isNullOrEmpty(this.persistName)) {
+      return null;
+    }
+
+    return super.context.config.getHudTransformsEmitter().get().get(this.persistName);
   }
 
   public HudElement setSelected(boolean isSelected) {
@@ -120,7 +157,8 @@ public abstract class HudElement extends ElementBase {
       float oldScale = this.currentScale;
       this.currentScale = newScale;
       this.isScrolling = true;
-      this.onElementRescaled(super.getBox(), oldScale, newScale);
+      this.onElementRescaled(oldScale, newScale);
+      this.persistTransform();
     }
     super.onInvalidateSize();
   }
@@ -129,11 +167,35 @@ public abstract class HudElement extends ElementBase {
   public final void setBox(DimRect box) {
     // the box provided here will be incorrect, we handle our own sizing functionality.
     if (super.getBox() == null) {
+      @Nullable HudElementTransform persistedTransform = this.getPersistedTransform();
+      if (persistedTransform != null) {
+        this.defaultPosition = persistedTransform.getPosition();
+        this.defaultPositionAnchor = Anchor.TOP_LEFT;
+        this.defaultScale = persistedTransform.scale;
+      }
+
       box = setBoxPositionAtAnchor(new DimRect(this.defaultPosition, this.lastCalculatedSize), this.defaultPosition, this.defaultPositionAnchor);
       this.setBoxUnsafe(box);
+
+      // since elements start off with a scale of 1, we have to notify listeners of the resizing so they can handle it as required
+      if (this.defaultScale != this.currentScale) {
+        float oldScale = this.currentScale;
+        this.currentScale = this.defaultScale;
+        this.onElementRescaled(oldScale, this.defaultScale);
+      }
     } else {
-      // if there's no resize, the box will stay the same
-      Anchor resizeAnchor = this.isScrolling ? this.scrollResizeAnchor : this.contentResizeAnchor; // infer why we are resizing the box
+      // infer why we are resizing the box
+      Anchor resizeAnchor;
+      if (!this.isInitialised) {
+        resizeAnchor = Anchor.TOP_LEFT;
+        this.isInitialised = true;
+      } else if (this.isScrolling) {
+        resizeAnchor = scrollResizeAnchor;
+      } else {
+        resizeAnchor = this.contentResizeAnchor;
+      }
+
+      // if there's no resize, the box will stay the same.
       box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), Objects.firstOrNull(resizeAnchor, this.autoAnchor));
     }
 
@@ -141,13 +203,14 @@ public abstract class HudElement extends ElementBase {
     this.autoAnchor = calculateAnchor(super.context.dimFactory.getMinecraftRect(), box);
     super.setBox(box);
     this.onHudBoxSet(box);
+    this.persistTransform();
   }
 
   /** Called when the box has been set for this element (do NOT call `super.setBox`). Provides the positioned box with the size specified by the returned value of `calculateThisSize`. */
   public abstract void onHudBoxSet(DimRect box);
 
   /** Called when the user has changed the scale of the component, before re-rendering occurs. `oldScale` and `newScale` are guaranteed to be different. */
-  protected void onElementRescaled(DimRect oldBox, float oldScale, float newScale) { }
+  protected void onElementRescaled(float oldScale, float newScale) { }
 
   @Override
   public final void renderElement() {

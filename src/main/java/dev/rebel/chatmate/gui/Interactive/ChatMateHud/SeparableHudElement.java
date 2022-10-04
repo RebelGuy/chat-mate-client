@@ -2,27 +2,25 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.Config.HudElementTransform;
+import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
 import dev.rebel.chatmate.util.EnumHelpers;
 
 import javax.annotation.Nullable;
+import java.util.Map;
 
 /** A HUD element that can be separated into platform-specific elements, with optional platform icons. */
 public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElement> {
-  private final static int INITIAL_X_GUI = 10;
-  private final static int INITIAL_Y_GUI = 10;
-
   private final Config.StatefulEmitter<Config.SeparableHudElement> settings;
 
   private final Dim defaultHeight;
-  private final boolean isMainIndicator;
+  private final boolean isMainElement;
   private final ISeparableElement mainElement;
   private final float platformIconScale; // image scale at 100% hud scale
   private final ImageElement platformIcon;
@@ -30,16 +28,23 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
   private @Nullable PlatformIconPosition prevIconPosition; // null if it isn't shown
   private boolean requiresSecondPass; // if true, should re-initialise the container after the box has been set
 
-  public SeparableHudElement(InteractiveContext context, IElement parent, @Nullable HudElement parentIndicatorElement, ISeparableElementFactory separableMainElementFactory, Config.StatefulEmitter<Config.SeparableHudElement> settings, DimPoint defaultMainPosition) {
+  public SeparableHudElement(InteractiveContext context,
+                             IElement parent,
+                             boolean isMainElement,
+                             ISeparableElementFactory separableMainElementFactory,
+                             Config.StatefulEmitter<Config.SeparableHudElement> settings,
+                             Config.StatefulEmitter<Map<String, HudElementTransform>> transformEmitter,
+                             HudElementTransform defaultTransform,
+                             String persistName) {
     super(context, parent);
 
     this.settings = settings;
+    this.name = persistName;
     this.defaultHeight = gui(8); // size at 100% scale
-    this.isMainIndicator = parentIndicatorElement == null;
+    this.isMainElement = isMainElement;
 
     super.setCanDrag(true);
     super.setCanScale(true);
-    super.setDefaultPosition(parentIndicatorElement == null ? defaultMainPosition : defaultMainPosition.plus(new DimPoint(ZERO, this.defaultHeight.plus(gui(5)))), Anchor.TOP_LEFT);
     super.setScrollResizeAnchor(Anchor.MIDDLE);
     super.setContentResizeAnchor(Anchor.TOP_LEFT); // when toggling the platform icon, fix the hud element's position. this can result in overlap between the indicators and icons if set to top/bottom, and it is up to the user to fix this
     super.setHudElementFilter(); // shown everywhere
@@ -47,11 +52,11 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
     this.prevIconPosition = null;
     this.requiresSecondPass = false;
 
-    this.mainElement = separableMainElementFactory.create(context, this, this.isMainIndicator, this.defaultHeight)
+    this.mainElement = separableMainElementFactory.create(context, this, this.isMainElement, this.defaultHeight)
         .setMargin(new RectExtension(gui(2)))
         .cast();
 
-    Texture image = this.isMainIndicator ? Asset.LOGO_YOUTUBE : Asset.LOGO_TWITCH;
+    Texture image = this.isMainElement ? Asset.LOGO_YOUTUBE : Asset.LOGO_TWITCH;
     this.platformIconScale = this.defaultHeight.over(gui(image.width));
     this.platformIcon = new ImageElement(context, this)
         .setImage(image)
@@ -64,6 +69,10 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
 
     settings.onChange(this::onChangeStatusIndicatorConfig);
     this.onChangeStatusIndicatorConfig(settings.get());
+
+    super.setDefaultPosition(defaultTransform.getPosition(), Anchor.TOP_LEFT);
+    super.setDefaultScale(defaultTransform.scale);
+    super.enablePersistTransform(persistName);
   }
 
   private void onChangeStatusIndicatorSettings(Config.SeparableHudElement settings) {
@@ -108,7 +117,7 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
   }
 
   private void updateVisibility(boolean indicatorEnabled, boolean separatePlatforms) {
-    if (this.isMainIndicator) {
+    if (this.isMainElement) {
       super.setVisible(indicatorEnabled);
     } else {
       super.setVisible(indicatorEnabled && separatePlatforms);
@@ -116,7 +125,7 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
   }
 
   @Override
-  protected void onElementRescaled(DimRect oldBox, float oldScale, float newScale) {
+  protected void onElementRescaled(float oldScale, float newScale) {
     this.mainElement.setHudScale(newScale);
     this.platformIcon.setScale(this.platformIconScale * newScale);
   }

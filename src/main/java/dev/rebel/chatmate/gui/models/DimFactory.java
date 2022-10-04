@@ -26,6 +26,10 @@ public class DimFactory {
     return new Dim(this::getScaleFactor, DimAnchor.GUI).setGui(guiValue);
   }
 
+  public Dim fromValue(float underlyingValue, DimAnchor anchor) {
+    return new Dim(this::getScaleFactor, anchor, underlyingValue);
+  }
+
   public Dim zeroGui() {
     return this.fromGui(0);
   }

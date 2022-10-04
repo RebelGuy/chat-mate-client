@@ -3,6 +3,8 @@ package dev.rebel.chatmate.config.migrations;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV3;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
 
+import java.util.HashMap;
+
 public class v3v4 extends Migration<SerialisedConfigV3, SerialisedConfigV4> {
   @Override
   public SerialisedConfigV4 up(SerialisedConfigV3 data) {
@@ -16,7 +18,8 @@ public class v3v4 extends Migration<SerialisedConfigV3, SerialisedConfigV4> {
         new SerialisedConfigV4.SerialisedSeparableHudElement(data.viewerCount.enabled, data.viewerCount.separatePlatforms, data.viewerCount.showPlatformIcon, data.viewerCount.platformIconPosition),
         data.debugModeEnabled,
         0,
-        0);
+        0,
+        new HashMap<>());
   }
 
   @Override

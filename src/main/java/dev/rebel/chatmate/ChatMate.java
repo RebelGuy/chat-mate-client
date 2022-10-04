@@ -68,7 +68,7 @@ public class ChatMate {
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
 
     ConfigPersistorService<SerialisedConfigV4> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV4.class, logService, fileService);
-    Config config = new Config(logService, configPersistorService);
+    Config config = new Config(logService, configPersistorService, dimFactory);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 

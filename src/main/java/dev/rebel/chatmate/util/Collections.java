@@ -113,6 +113,12 @@ public class Collections {
     return result;
   }
 
+  public static <K, V, R> Map<K, R> map(Map<K, V> items, Function<V, R> mapper) {
+    Map<K, R> result = new HashMap<>();
+    items.forEach((k, v) -> result.put(k, mapper.apply(v)));
+    return result;
+  }
+
   public static <T> List<T> filter(List<T> list, Predicate<T> filter) {
     if (list == null) {
       return new ArrayList<>();

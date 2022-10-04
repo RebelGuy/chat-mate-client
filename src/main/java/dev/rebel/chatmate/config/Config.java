@@ -2,6 +2,9 @@ package dev.rebel.chatmate.config;
 
 import dev.rebel.chatmate.config.Config.ConfigType;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.events.EventHandler;
 import dev.rebel.chatmate.events.EventServiceBase;
@@ -67,6 +70,9 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Long> lastGetChatMateEventsResponse;
   public StatefulEmitter<Long> getLastGetChatMateEventsResponseEmitter() { return this.lastGetChatMateEventsResponse; }
 
+  private final StatefulEmitter<Map<String, HudElementTransform>> hudTransforms;
+  public StatefulEmitter<Map<String, HudElementTransform>> getHudTransformsEmitter() { return this.hudTransforms; }
+
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
 
@@ -75,7 +81,7 @@ public class Config extends EventServiceBase<ConfigType> {
 
   private final Debouncer saveDebouncer;
 
-  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV4> configPersistorService) {
+  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV4> configPersistorService, DimFactory dimFactory) {
     super(ConfigType.class, logService);
     this.configPersistorService = configPersistorService;
     this.saveDebouncer = new Debouncer(400, this::save); // has to be less than the API polling rate
@@ -95,11 +101,12 @@ public class Config extends EventServiceBase<ConfigType> {
     this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, data == null ? true : data.showServerLogsHeartbeat, this::onUpdate);
     this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, data == null ? false : data.showServerLogsTimeSeries, this::onUpdate);
     this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, data == null ? true : data.showChatPlatformIcon, this::onUpdate);
-    this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, data == null ? new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.statusIndicator.deserialise(), this::onUpdate);
-    this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, data == null ? new SeparableHudElement(false, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.viewerCount.deserialise(), this::onUpdate);
+    this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, data == null ? new SeparableHudElement(true, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.statusIndicator.deserialise(), this::onUpdate);
+    this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, data == null ? new SeparableHudElement(true, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.viewerCount.deserialise(), this::onUpdate);
     this.debugModeEnabled = new StatefulEmitter<>(ConfigType.DEBUG_MODE_ENABLED, data == null ? false : data.debugModeEnabled, this::onUpdate);
     this.lastGetChatResponse = new StatefulEmitter<>(ConfigType.LAST_GET_CHAT_RESPONSE, data == null ? 0L : data.lastGetChatResponse, this::onUpdate);
     this.lastGetChatMateEventsResponse = new StatefulEmitter<>(ConfigType.LAST_GET_CHAT_MATE_EVENTS_RESPONSE, data == null ? 0L : data.lastGetChatMateEventsResponse, this::onUpdate);
+    this.hudTransforms = new StatefulEmitter<>(ConfigType.HUD_TRANSFORMS, data == null ? new HashMap<>() : dev.rebel.chatmate.util.Collections.map(data.hudTransforms, s -> s.deserialise(dimFactory)), this::onUpdate);
   }
 
   public void listenAny(Callback callback) {
@@ -134,7 +141,8 @@ public class Config extends EventServiceBase<ConfigType> {
           new SerialisedConfigV4.SerialisedSeparableHudElement(this.viewerCount.get()),
           this.debugModeEnabled.get(),
           this.lastGetChatResponse.get(),
-          this.lastGetChatMateEventsResponse.get());
+          this.lastGetChatMateEventsResponse.get(),
+          dev.rebel.chatmate.util.Collections.map(this.hudTransforms.get(), SerialisedConfigV4.SerialisedHudElementTransform::new)); // no import aliasing in Java..
       this.configPersistorService.save(serialisedConfig);
     } catch (Exception e) {
       this.logService.logError(this, "Failed to save config:", e);
@@ -272,6 +280,34 @@ public class Config extends EventServiceBase<ConfigType> {
     public enum PlatformIconPosition { LEFT, RIGHT, TOP, BOTTOM }
   }
 
+  public static class HudElementTransform {
+    public final Dim x;
+    public final Dim y;
+    public final float scale;
+
+    public HudElementTransform(Dim x, Dim y, float scale) {
+      this.x = x;
+      this.y = y;
+      this.scale = scale;
+    }
+
+    public DimPoint getPosition() {
+      return new DimPoint(this.x, this.y);
+    }
+
+    public HudElementTransform withX(Dim x) {
+      return new HudElementTransform(x, this.y, this.scale);
+    }
+
+    public HudElementTransform withY(Dim y) {
+      return new HudElementTransform(this.x, y, this.scale);
+    }
+
+    public HudElementTransform withScale(float scale) {
+      return new HudElementTransform(this.x, this.y, scale);
+    }
+  }
+
   public enum ConfigType {
     ENABLE_CHAT_MATE,
     ENABLE_SOUND,
@@ -284,6 +320,7 @@ public class Config extends EventServiceBase<ConfigType> {
     VIEWER_COUNT,
     DEBUG_MODE_ENABLED,
     LAST_GET_CHAT_RESPONSE,
-    LAST_GET_CHAT_MATE_EVENTS_RESPONSE
+    LAST_GET_CHAT_MATE_EVENTS_RESPONSE,
+    HUD_TRANSFORMS
   }
 }

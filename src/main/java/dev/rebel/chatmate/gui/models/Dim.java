@@ -19,12 +19,21 @@ public class Dim {
     this.anchor = anchor;
   }
 
+  public Dim(Supplier<Integer> scaleFactor, DimAnchor anchor, float underlyingValue) {
+    this(scaleFactor, anchor);
+    this.value = underlyingValue;
+  }
+
   public float getScreen() {
     return this.value * this.getConversionFactor(this.anchor, DimAnchor.SCREEN);
   }
 
   public float getGui() {
     return this.value * this.getConversionFactor(this.anchor, DimAnchor.GUI);
+  }
+
+  public float getUnderlyingValue() {
+    return this.value;
   }
 
   public Dim setScreen(float screenValue) {

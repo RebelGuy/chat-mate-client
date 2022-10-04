@@ -2,6 +2,12 @@ package dev.rebel.chatmate.config.serialised;
 
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
+import dev.rebel.chatmate.gui.models.DimFactory;
+
+import java.util.Map;
+import java.util.Objects;
 
 public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
   public boolean soundEnabled;
@@ -15,6 +21,7 @@ public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
   public final boolean debugModeEnabled;
   public final long lastGetChatResponse;
   public final long lastGetChatMateEventsResponse;
+  public final Map<String, SerialisedHudElementTransform> hudTransforms;
 
   public SerialisedConfigV4(boolean soundEnabled,
                             int chatVerticalDisplacement,
@@ -26,7 +33,8 @@ public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
                             SerialisedSeparableHudElement viewerCount,
                             boolean debugModeEnabled,
                             long lastGetChatResponse,
-                            long lastGetChatMateEventsResponse) {
+                            long lastGetChatMateEventsResponse,
+                            Map<String, SerialisedHudElementTransform> hudTransforms) {
     this.soundEnabled = soundEnabled;
     this.chatVerticalDisplacement = chatVerticalDisplacement;
     this.hudEnabled = hudEnabled;
@@ -38,6 +46,7 @@ public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
     this.debugModeEnabled = debugModeEnabled;
     this.lastGetChatResponse = lastGetChatResponse;
     this.lastGetChatMateEventsResponse = lastGetChatMateEventsResponse;
+    this.hudTransforms = hudTransforms;
   }
 
   @Override
@@ -71,11 +80,45 @@ public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
           this.enabled,
           this.separatePlatforms,
           this.showPlatformIcon,
-          this.platformIconPosition == "left" ? PlatformIconPosition.LEFT
-              : this.platformIconPosition == "top" ? PlatformIconPosition.TOP
-              : this.platformIconPosition == "right" ? PlatformIconPosition.RIGHT
-              : this.platformIconPosition == "bottom" ? PlatformIconPosition.BOTTOM
+          Objects.equals(this.platformIconPosition, "left") ? PlatformIconPosition.LEFT
+              : Objects.equals(this.platformIconPosition, "top") ? PlatformIconPosition.TOP
+              : Objects.equals(this.platformIconPosition, "right") ? PlatformIconPosition.RIGHT
+              : Objects.equals(this.platformIconPosition, "bottom") ? PlatformIconPosition.BOTTOM
               : PlatformIconPosition.LEFT
+      );
+    }
+  }
+
+  public static class SerialisedHudElementTransform {
+    public final float x;
+    public final String xAnchor;
+    public final float y;
+    public final String yAnchor;
+    public final float scale;
+
+    public SerialisedHudElementTransform(float x, String xAnchor, float y, String yAnchor, float scale) {
+      this.x = x;
+      this.xAnchor = xAnchor;
+      this.y = y;
+      this.yAnchor = yAnchor;
+      this.scale = scale;
+    }
+
+    public SerialisedHudElementTransform(Config.HudElementTransform transform) {
+      this(
+          transform.x.getUnderlyingValue(),
+          transform.x.anchor == DimAnchor.GUI ? "GUI" : "SCREEN",
+          transform.y.getUnderlyingValue(),
+          transform.y.anchor == DimAnchor.GUI ? "GUI" : "SCREEN",
+          transform.scale
+      );
+    }
+
+    public Config.HudElementTransform deserialise(DimFactory dimFactory) {
+      return new Config.HudElementTransform(
+          dimFactory.fromValue(this.x, Objects.equals(this.xAnchor, "GUI") ? DimAnchor.GUI : DimAnchor.SCREEN),
+          dimFactory.fromValue(this.y, Objects.equals(this.yAnchor, "GUI") ? DimAnchor.GUI : DimAnchor.SCREEN),
+          this.scale
       );
     }
   }
