@@ -210,10 +210,11 @@ public class InteractiveScreen extends Screen implements IElement {
     this.context.renderer._executeRender();
 
     // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect
-    // it is not clear if we should do this after EVERY side effect execution (if side effects were scheduled), or only after size invalidation - for now, see how we go.
     this.context.renderer.runSideEffect(() -> {
-      // if this causes any more side effects, those will be executed immediately as part of this cycle
-      this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
+      if (this.requiresRecalculation) {
+        // if this causes any more side effects, those will be executed immediately as part of this cycle
+        this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
+      }
     });
 
     this.context.renderer._executeSideEffects();
