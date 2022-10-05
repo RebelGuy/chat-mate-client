@@ -133,7 +133,7 @@ public class StatusService {
       @Nullable PublicLivestreamStatus prevStatus = this.lastStatusResponse.livestreamStatus;
       @Nullable PublicLivestreamStatus newStatus = response.livestreamStatus;
       if ((prevStatus == null) != (newStatus == null) || prevStatus != null && newStatus != null && prevStatus.livestream.status != newStatus.livestream.status) {
-        this.livestreamApiStore.invalidateStore();
+        this.livestreamApiStore.clear();
       }
     }
 

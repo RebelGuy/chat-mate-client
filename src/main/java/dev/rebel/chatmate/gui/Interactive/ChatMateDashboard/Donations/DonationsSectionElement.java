@@ -126,11 +126,13 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     this.donationsTable.setFilter(this.currentLivestreamCheckbox.getChecked(), this.unlinkedDonationsCheckbox.getChecked());
   }
 
+  @Override
   public void onShow() {
     super.context.donationApiStore.loadDonations(this::onGetDonations, this::onError, false);
     this.loadingSpinner.setVisible(true);
   }
 
+  @Override
   public void onHide() {
     this.errorLabel.setVisible(false);
     this.donationsTable.setVisible(false);

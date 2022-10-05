@@ -53,6 +53,11 @@ public class LruCache<TKey, TValue> {
     keys.forEach(this::remove);
   }
 
+  public void clear() {
+    this.keys.clear();
+    this.map.clear();
+  }
+
   private void pruneCache() {
     while (this.keys.size() > this.limit) {
       TKey lastKey = Collections.last(this.keys);

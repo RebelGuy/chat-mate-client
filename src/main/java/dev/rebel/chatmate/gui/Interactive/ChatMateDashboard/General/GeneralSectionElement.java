@@ -47,10 +47,12 @@ public class GeneralSectionElement extends ContainerElement implements ISectionE
     );
   }
 
+  @Override
   public void onShow() {
     this.livestreamElement.onShow();
   }
 
+  @Override
   public void onHide() {
     this.livestreamElement.onHide();
   }

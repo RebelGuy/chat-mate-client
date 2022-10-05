@@ -24,6 +24,7 @@ public class ButtonElement extends InputElement {
   private @Nullable IElement childElement;
   private @Nullable Runnable onClick;
   private Dim borderCornerRadius;
+  private Colour borderColour;
 
   public ButtonElement(InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
@@ -32,6 +33,7 @@ public class ButtonElement extends InputElement {
     this.childElement = null;
     this.onClick = null;
     this.borderCornerRadius = gui(3.5f);
+    this.borderColour = Colour.BLACK;
 
     super.setCursor(CursorType.CLICK);
     super.setBorder(new RectExtension(gui(0.5f)));
@@ -60,6 +62,11 @@ public class ButtonElement extends InputElement {
 
   public ButtonElement setBorderCornerRadius(Dim cornerRadius) {
     this.borderCornerRadius = cornerRadius;
+    return this;
+  }
+
+  public ButtonElement setBorderColour(Colour borderColour) {
+    this.borderColour = borderColour;
     return this;
   }
 
@@ -119,7 +126,7 @@ public class ButtonElement extends InputElement {
     // the inner border is drawn *around the content box*
 
     Dim borderWidth = super.getBorder().left;
-    RendererHelpers.drawRect(0, this.getPaddingBox(), Colour.TRANSPARENT, borderWidth, Colour.BLACK, this.borderCornerRadius);
+    RendererHelpers.drawRect(0, this.getPaddingBox(), Colour.TRANSPARENT, borderWidth, this.borderColour, this.borderCornerRadius);
 
     if (super.isHovering() && this.getEnabled()) {
       Dim borderDistance = super.getPadding().left;
@@ -152,6 +159,11 @@ public class ButtonElement extends InputElement {
 
     public TextButtonElement setText(String text) {
       this.label.setText(text);
+      return this;
+    }
+
+    public TextButtonElement setTextScale(float scale) {
+      this.label.setFontScale(scale);
       return this;
     }
 

@@ -27,6 +27,12 @@ public class RankApiStore {
     this.memoiser = new Memoiser();
   }
 
+  public void clear() {
+    this.cache.clear();
+    this.memoiser.clear();
+    this.loading.clear();
+  }
+
   /** This should be called whenever an action of ours ends up (or may end up) affecting a user's ranks. */
   public void invalidateUserRanks(int userId) {
     this.cache.remove(getKey(userId));

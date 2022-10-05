@@ -130,7 +130,7 @@ public class DonationService {
   }
 
   private DonationEventData.Out onNewDonation(DonationEventData.In in) {
-    this.donationApiStore.invalidateStore();
+    this.donationApiStore.clear();
     return new DonationEventData.Out();
   }
 }

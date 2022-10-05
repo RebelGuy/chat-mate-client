@@ -27,7 +27,7 @@ public class LivestreamApiStore {
     this.loading = false;
   }
 
-  public void invalidateStore() {
+  public void clear() {
     this.livestreams = null;
   }
 

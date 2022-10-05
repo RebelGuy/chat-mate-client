@@ -30,7 +30,7 @@ public class DonationApiStore {
     this.loading = false;
   }
 
-  public void invalidateStore() {
+  public void clear() {
     this.donations = null;
   }
 

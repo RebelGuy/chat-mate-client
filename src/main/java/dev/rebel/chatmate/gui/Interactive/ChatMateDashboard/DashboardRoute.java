@@ -42,4 +42,10 @@ public abstract class DashboardRoute {
       this.donation = donation;
     }
   }
+
+  public abstract static class DebugRoute extends DashboardRoute {
+    public DebugRoute() {
+      super(SettingsPage.DEBUG);
+    }
+  }
 }

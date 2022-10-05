@@ -25,7 +25,7 @@ import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_RED;
 import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper<ServerLogsTimeSeriesHudElement.TimeSeriesElement> {
-  private static String NAME = "serverLogsTimeSeries";
+  private static final String NAME = "serverLogsTimeSeries";
 
   private final TimeSeriesElement timeSeriesElement;
   private final ServerLogEventService serverLogEventService;

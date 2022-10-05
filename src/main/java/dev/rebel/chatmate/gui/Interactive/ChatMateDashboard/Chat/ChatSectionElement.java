@@ -49,10 +49,12 @@ public class ChatSectionElement extends ContainerElement implements ISectionElem
     );
   }
 
+  @Override
   public void onShow() {
 
   }
 
+  @Override
   public void onHide() {
 
   }

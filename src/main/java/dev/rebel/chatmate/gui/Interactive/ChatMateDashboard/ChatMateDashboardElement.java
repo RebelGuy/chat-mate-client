@@ -2,11 +2,9 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Chat.ChatSectionElement;
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.ChatRoute;
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.DonationRoute;
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.GeneralRoute;
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Debug.DebugSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.DonationsSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General.GeneralSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud.HudSectionElement;
@@ -41,6 +39,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     add(new Tuple2<>(SettingsPage.HUD, "HUD"));
     add(new Tuple2<>(SettingsPage.CHAT, "Chat"));
     add(new Tuple2<>(SettingsPage.DONATION, "Donations"));
+    add(new Tuple2<>(SettingsPage.DEBUG, "Debug"));
   }};
 
   private final DashboardStore store;
@@ -53,6 +52,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final HudSectionElement hudSection;
   private final ChatSectionElement chatSection;
   private final DonationsSectionElement donationSection;
+  private final DebugSectionElement debugSection;
 
   private final SidebarElement sidebar;
   private final WrapperElement contentWrapper;
@@ -83,6 +83,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
+    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route));
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))
@@ -114,6 +115,9 @@ public class ChatMateDashboardElement extends ContainerElement {
         break;
       case DONATION:
         newElement = this.donationSection;
+        break;
+      case DEBUG:
+        newElement = this.debugSection;
         break;
       default:
         throw EnumHelpers.<SettingsPage>assertUnreachable(settingsPage);
