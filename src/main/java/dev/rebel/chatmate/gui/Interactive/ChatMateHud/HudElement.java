@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.Objects;
 
 import javax.annotation.Nonnull;
@@ -276,7 +277,7 @@ public abstract class HudElement extends ElementBase {
         y = alignUpper(vertical, position, size, screenSizeData);
         break;
       default:
-        throw new RuntimeException("Invalid anchor " + this.autoAnchor);
+        throw EnumHelpers.<Anchor>assertUnreachable(this.autoAnchor);
     }
 
     super.setBox(box.withPosition(new DimPoint(x, y)));
@@ -437,7 +438,7 @@ public abstract class HudElement extends ElementBase {
         break;
 
       default:
-        throw new RuntimeException("Invalid anchor: " + resizeAnchor);
+        throw EnumHelpers.<Anchor>assertUnreachable(resizeAnchor);
     }
 
     return new DimRect(x, y, newW, newH);
@@ -494,7 +495,7 @@ public abstract class HudElement extends ElementBase {
         break;
 
       default:
-        throw new RuntimeException("Invalid anchor: " + anchor);
+        throw EnumHelpers.<Anchor>assertUnreachable(anchor);
     }
 
     DimPoint newPosition = point.minus(new DimPoint(dx, dy));

@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.chat;
 import com.google.common.collect.Iterators;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
@@ -92,7 +93,7 @@ public class PrecisionChatComponent implements IChatComponent {
     } else if (layout.alignment == PrecisionAlignment.RIGHT) {
       effectivePosition = originalPosition.plus(maxWidth.minus(textWidth));
     } else {
-      throw new RuntimeException("Did not expect layout alignment " + layout.alignment);
+      throw EnumHelpers.<PrecisionAlignment>assertUnreachable(layout.alignment);
     }
 
     IChatComponent effectiveComponent;

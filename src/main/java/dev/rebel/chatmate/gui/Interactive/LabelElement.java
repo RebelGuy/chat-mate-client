@@ -183,7 +183,7 @@ public class LabelElement extends SingleElement {
       contentHeight = fontHeight.times(this.lines.size()).plus(this.linePadding.times(this.lines.size() - 1));
 
     } else {
-      throw new RuntimeException("Invalid Overflow setting " + this.overflow);
+      throw EnumHelpers.<TextOverflow>assertUnreachable(this.overflow);
     }
 
     return new DimPoint(this.getSizingMode() == SizingMode.FILL ? maxContentSize : contentWidth, contentHeight).scale(this.fontScale);
@@ -231,7 +231,7 @@ public class LabelElement extends SingleElement {
       } else if (this.alignment == TextAlignment.RIGHT) {
         x = box.getX().plus(box.getWidth()).minus(width);
       } else {
-        throw new RuntimeException("Invalid TextAlignment " + this.alignment);
+        throw EnumHelpers.<TextAlignment>assertUnreachable(this.alignment);
       }
 
       RendererHelpers.withMapping(new DimPoint(x, y), this.fontScale, () -> {

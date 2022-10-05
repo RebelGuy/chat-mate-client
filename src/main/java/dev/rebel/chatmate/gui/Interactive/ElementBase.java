@@ -10,6 +10,7 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;
@@ -164,14 +165,14 @@ public abstract class ElementBase implements IElement {
           this.onWindowResize((IEvent<ScreenSizeData>)event);
           break;
         default:
-          throw new RuntimeException("Invalid event type at TARGET phase: " + type);
+          throw EnumHelpers.<EventType>assertUnreachable(type);
       }
     } else if (event.getPhase() == EventPhase.CAPTURE) {
       this.onEventCapture(type, event);
     } else if (event.getPhase() == EventPhase.BUBBLE) {
       this.onEventBubble(type, event);
     } else {
-      throw new RuntimeException("Invalid event phase: " + event.getPhase());
+      throw EnumHelpers.<EventPhase>assertUnreachable(event.getPhase());
     }
   }
 
@@ -199,7 +200,7 @@ public abstract class ElementBase implements IElement {
         this.onCaptureKeyUp((IEvent<KeyboardEventData.In>)event);
         break;
       default:
-        throw new RuntimeException("fInvalid event type at CAPTURE phase: " + type);
+        throw EnumHelpers.<EventType>assertUnreachable(type);
     }
   }
 
@@ -224,7 +225,7 @@ public abstract class ElementBase implements IElement {
         this.onKeyUp((IEvent<KeyboardEventData.In>)event);
         break;
       default:
-        throw new RuntimeException("Invalid event type at BUBBLE phase: " + type);
+        throw EnumHelpers.<EventType>assertUnreachable(type);
     }
   }
 

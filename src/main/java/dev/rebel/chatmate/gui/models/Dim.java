@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.models;
 
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.TextHelpers;
 
 import java.util.List;
@@ -127,7 +128,7 @@ public class Dim {
     } else if (this.anchor == DimAnchor.GUI) {
       return other.getGui();
     } else {
-      throw new RuntimeException("Did not expect to get here");
+      throw EnumHelpers.<DimAnchor>assertUnreachable(this.anchor);
     }
   }
 
@@ -139,7 +140,7 @@ public class Dim {
     } else if (from == DimAnchor.GUI) {
       return this.scaleFactor.get();
     } else {
-      throw new RuntimeException("Did not expect to get here");
+      throw EnumHelpers.<DimAnchor>assertUnreachable(from);
     }
   }
 

@@ -4,6 +4,7 @@ import dev.rebel.chatmate.events.KeyboardEventService.Events;
 import dev.rebel.chatmate.events.models.KeyboardEventData.In;
 import dev.rebel.chatmate.events.models.KeyboardEventData.Out;
 import dev.rebel.chatmate.events.models.KeyboardEventData.Options;
+import dev.rebel.chatmate.util.EnumHelpers;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
@@ -42,7 +43,7 @@ public class KeyboardEventData extends EventData<In, Out, Options> {
         case ALT:
           return keys.contains(Keyboard.KEY_LMENU) || keys.contains(Keyboard.KEY_RMENU);
         default:
-          throw new RuntimeException("Did not expect to get here");
+          throw EnumHelpers.<KeyModifier>assertUnreachable(modifier);
       }
     }
 

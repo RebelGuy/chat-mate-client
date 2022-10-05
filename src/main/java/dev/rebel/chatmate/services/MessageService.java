@@ -296,7 +296,7 @@ public class MessageService {
         } else if (punishment.rank.name == PublicRank.RankName.BAN) {
           prefix = "☠ ";
         } else {
-          throw new RuntimeException("Invalid punishment rank " + punishment.rank.name);
+          throw EnumHelpers.<RankName>assertUnreachable(punishment.rank.name);
         }
 
         unstyledName = prefix + unstyledName;
