@@ -69,6 +69,12 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.19 - The Pre-Auth Update [8/10/2022]
+- The transform of HUD elements is now persisted
+- Added the ability to select multiple HUD elements by holding the left Shift key
+  - Dragging/scrolling applies to all currently selected items
+- Added Debug section in the ChatMate Dashboard
+- Bug fixes, some of which were caused by the new FontEngine
 
 ## v1.18 - The Quality Update [30/9/2022]
 - All ChatMate configuration has now been moved to the Dashboard
