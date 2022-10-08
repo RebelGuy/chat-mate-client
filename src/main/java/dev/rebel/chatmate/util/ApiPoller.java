@@ -1,11 +1,9 @@
 package dev.rebel.chatmate.util;
 
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.HttpException;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.api.HttpException;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.services.events.models.ConfigEventData;
-import dev.rebel.chatmate.services.util.EnumHelpers;
-import dev.rebel.chatmate.services.util.TaskWrapper;
+import dev.rebel.chatmate.events.models.ConfigEventData;
 
 import javax.annotation.Nullable;
 import java.net.ConnectException;
@@ -15,7 +13,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static dev.rebel.chatmate.services.util.Objects.ifClass;
+import static dev.rebel.chatmate.util.Objects.ifClass;
 
 public class ApiPoller<D> {
   private final LogService logService;

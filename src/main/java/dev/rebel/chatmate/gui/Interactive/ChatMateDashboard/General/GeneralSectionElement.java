@@ -2,16 +2,13 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General;
 
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.GeneralRoute;
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
-import dev.rebel.chatmate.gui.Interactive.CheckboxInputElement;
 import dev.rebel.chatmate.gui.Interactive.ContainerElement;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
 
 import javax.annotation.Nullable;
 
@@ -44,16 +41,18 @@ public class GeneralSectionElement extends ContainerElement implements ISectionE
 
     super.addElement(CHECKBOX_LIGHT.create(context, this)
         .setLabel("Enable Debug Mode")
-        .setChecked(config.getDebugModeEnabled().get())
-        .onCheckedChanged(config.getDebugModeEnabled()::set)
+        .setChecked(config.getDebugModeEnabledEmitter().get())
+        .onCheckedChanged(config.getDebugModeEnabledEmitter()::set)
         .setScale(0.75f)
     );
   }
 
+  @Override
   public void onShow() {
     this.livestreamElement.onShow();
   }
 
+  @Override
   public void onHide() {
     this.livestreamElement.onHide();
   }

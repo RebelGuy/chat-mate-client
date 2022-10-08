@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.Asset;
+import dev.rebel.chatmate.events.models.ConfigEventData;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
@@ -11,17 +12,19 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.In;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import scala.Tuple2;
 
 import java.net.URI;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class SidebarElement extends ContainerElement {
   private final DashboardStore store;
@@ -84,6 +87,8 @@ public class SidebarElement extends ContainerElement {
     private final LabelElement label;
     private final HorizontalDivider horizontalDivider;
 
+    private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
+
     public SidebarOption(InteractiveContext context, IElement parent, DashboardStore store, SettingsPage page, String name) {
       super(context, parent, LayoutMode.BLOCK);
       super.setSizingMode(SizingMode.FILL);
@@ -111,6 +116,10 @@ public class SidebarElement extends ContainerElement {
       super.addElement(this.horizontalDivider);
 
       this.setSelected(this.store.getSettingsPage() == this.page);
+
+      if (page == SettingsPage.DEBUG) {
+        context.config.getDebugModeEnabledEmitter().onChange(this._onChangeDebugModeEnabled, this, true);
+      }
     }
 
     private void onSettingsPageChange(SettingsPage settingsPage) {
@@ -120,6 +129,12 @@ public class SidebarElement extends ContainerElement {
     private void setSelected(boolean selected) {
       this.label.setColour(selected ? Colour.WHITE : Colour.GREY50);
       this.horizontalDivider.setVisible(selected);
+    }
+
+    private ConfigEventData.Out<Boolean> onChangeDebugModeEnabled(ConfigEventData.In<Boolean> eventIn) {
+      super.setVisible(eventIn.data);
+      this.setSelected(this.store.getSettingsPage() == this.page); // make sure the appearance is correct
+      return new ConfigEventData.Out<>();
     }
 
     @Override

@@ -22,6 +22,10 @@ public class Memoiser {
     }
   }
 
+  public void clear() {
+    this.memoised.clear();
+  }
+
   private static class MemoisedResult {
     public Input input;
     public Object output;

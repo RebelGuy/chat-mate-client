@@ -6,13 +6,11 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
-import dev.rebel.chatmate.gui.hud.Colour;
-import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
-import dev.rebel.chatmate.gui.hud.TitleComponent;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
-import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
 import java.util.Date;
@@ -99,7 +97,7 @@ public class TitleHudElement extends SimpleHudElementWrapper<BlockElement> {
   }
   
   @Override
-  protected void onRescaleContent(DimRect oldBox, float oldScale, float newScale) {
+  protected void onElementRescaled(float oldScale, float newScale) {
     this.titleElement.setFontScale(TITLE_SCALE * newScale);
     this.subTitleElement.setFontScale(SUB_TITLE_SCALE * newScale)
         .setMargin(new RectExtension(ZERO, ZERO, gui(DEFAULT_PADDING * newScale), ZERO));

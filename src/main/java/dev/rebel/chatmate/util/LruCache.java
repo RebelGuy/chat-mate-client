@@ -1,8 +1,5 @@
 package dev.rebel.chatmate.util;
 
-import dev.rebel.chatmate.services.util.Collections;
-import scala.Tuple2;
-
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -54,6 +51,11 @@ public class LruCache<TKey, TValue> {
 
   public void remove(List<TKey> keys) {
     keys.forEach(this::remove);
+  }
+
+  public void clear() {
+    this.keys.clear();
+    this.map.clear();
   }
 
   private void pruneCache() {

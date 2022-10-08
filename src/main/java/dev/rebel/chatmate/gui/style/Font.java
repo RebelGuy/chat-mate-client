@@ -1,6 +1,5 @@
 package dev.rebel.chatmate.gui.style;
 
-import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import net.minecraft.util.ChatStyle;
 
@@ -92,6 +91,10 @@ public class Font {
 
   public Font withColour(@Nonnull Colour colour) {
     return this.update(font -> font._colour = colour);
+  }
+
+  public Font withColour(Function<Colour, Colour> colourUpdater) {
+    return this.update(font -> font._colour = colourUpdater.apply(font._colour));
   }
 
   public Colour getColour() {

@@ -2,7 +2,6 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.Events;
 import dev.rebel.chatmate.gui.Interactive.IElement;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ElementFactory;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout;
@@ -10,12 +9,13 @@ import dev.rebel.chatmate.gui.Interactive.Layout.LayoutGroup;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ChatMateHudStore {
@@ -24,9 +24,28 @@ public class ChatMateHudStore {
   private final EmptyElement emptyElement = new EmptyElement();
   private boolean hudVisible = false;
   private List<HudElement> elements = new ArrayList<>();
+  private Set<HudElement> selectedElements = new HashSet<>();
 
   public ChatMateHudStore(InteractiveContext hudContext) {
     this.hudContext = hudContext;
+  }
+
+  public void setElementSelection(HudElement element, boolean selected) {
+    element.setSelected(selected);
+    if (selected) {
+      this.selectedElements.add(element);
+    } else {
+      this.selectedElements.remove(element);
+    }
+  }
+
+  public void clearSelectedElements() {
+    this.selectedElements.forEach(el -> el.setSelected(false));
+    this.selectedElements.clear();
+  }
+
+  public List<HudElement> getSelectedElements() {
+    return Collections.list(this.selectedElements);
   }
 
   /** Important: do NOT add elements before ChatMateHudScreen has been instantiated, otherwise you will get invalid parents. */

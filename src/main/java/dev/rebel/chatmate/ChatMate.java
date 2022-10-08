@@ -10,18 +10,19 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateHud.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.ConfigPersistorService;
-import dev.rebel.chatmate.models.configMigrations.SerialisedConfigV3;
-import dev.rebel.chatmate.proxy.*;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.ConfigPersistorService;
+import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
+import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
+import dev.rebel.chatmate.api.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
-import dev.rebel.chatmate.services.events.*;
-import dev.rebel.chatmate.services.util.FileHelpers;
+import dev.rebel.chatmate.events.*;
+import dev.rebel.chatmate.util.FileHelpers;
 import dev.rebel.chatmate.services.ApiRequestService;
-import dev.rebel.chatmate.store.DonationApiStore;
-import dev.rebel.chatmate.store.LivestreamApiStore;
-import dev.rebel.chatmate.store.RankApiStore;
+import dev.rebel.chatmate.stores.DonationApiStore;
+import dev.rebel.chatmate.stores.LivestreamApiStore;
+import dev.rebel.chatmate.stores.RankApiStore;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
@@ -38,8 +39,9 @@ public class ChatMate {
   // from https://forums.minecraftforge.net/topic/68571-1122-check-if-environment-is-deobfuscated/
   final boolean isDev = (boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment");
 
-  // must hold on to reference in this class, otherwise it will be garbage collected (wtf)
+  // must hold on to reference in these classes, otherwise they may be garbage collected (wtf)
   ChatMateChatService chatMateChatService;
+  DonationHudService donationHudService;
 
   @Mod.EventHandler
   public void onFMLInitialization(FMLInitializationEvent event) throws Exception {
@@ -65,8 +67,8 @@ public class ChatMate {
     IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
 
-    ConfigPersistorService<SerialisedConfigV3> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV3.class, logService, fileService);
-    Config config = new Config(logService, configPersistorService);
+    ConfigPersistorService<SerialisedConfigV4> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV4.class, logService, fileService);
+    Config config = new Config(logService, configPersistorService, dimFactory);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
@@ -74,6 +76,7 @@ public class ChatMate {
     Environment environment = Environment.parseEnvironmentFile(FileHelpers.readLines(environmentPath));
 
     String apiPath = environment.serverUrl + "/api";
+    DateTimeService dateTimeService = new DateTimeService();
     CursorService cursorService = new CursorService(minecraft, logService, forgeEventService);
     ApiRequestService apiRequestService = new ApiRequestService(cursorService);
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, apiPath);
@@ -95,7 +98,7 @@ public class ChatMate {
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
-    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory);
+    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory, config, dateTimeService);
 
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
@@ -114,8 +117,7 @@ public class ChatMate {
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService, customGuiNewChat);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
-    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory);
-    DateTimeService dateTimeService = new DateTimeService();
+    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory, config, dateTimeService);
     DonationService donationService = new DonationService(dateTimeService, donationApiStore, livestreamApiStore, rankApiStore, chatMateEventService);
     MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore);
     ImageService imageService = new ImageService(minecraft);
@@ -134,10 +136,8 @@ public class ChatMate {
         minecraftChatEventService);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory, livestreamApiStore);
 
-    RenderService renderService = new RenderService(minecraft, forgeEventService, fontEngine, dimFactory);
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
     ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
-    GuiChatMateHud guiChatMateHud = new GuiChatMateHud(minecraft, fontEngine, dimFactory, forgeEventService, statusService, config, serverLogEventService);
     ClipboardService clipboardService = new ClipboardService();
     UrlService urlService = new UrlService(logService);
     MinecraftChatService minecraftChatService = new MinecraftChatService(customGuiNewChat);
@@ -196,7 +196,7 @@ public class ChatMate {
         donationApiStore,
         customGuiNewChat,
         config);
-    ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config, guiChatMateHud);
+    ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
     ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
 
     CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
@@ -208,7 +208,6 @@ public class ChatMate {
         keyBindingService,
         minecraft,
         minecraftProxyService,
-        guiChatMateHud,
         soundService,
         dimFactory,
         contextMenuStore,
@@ -234,7 +233,7 @@ public class ChatMate {
         donationApiStore,
         rankApiStore,
         customGuiNewChat);
-    DonationHudService donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
+    this.donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),
@@ -250,9 +249,15 @@ public class ChatMate {
       }
     });
 
-    // to make our life easier, auto enable when in a dev environment
+    // to make our life easier, auto enable when in a dev environment or if a livestream is running
     if (this.isDev) {
       config.getChatMateEnabledEmitter().set(true);
+    } else {
+      chatMateEndpointProxy.getStatusAsync(res -> {
+        if (res.livestreamStatus != null && res.livestreamStatus.livestream.status == LivestreamStatus.Live) {
+          config.getChatMateEnabledEmitter().set(true);
+        }
+      }, e -> {}, false);
     }
   }
 }

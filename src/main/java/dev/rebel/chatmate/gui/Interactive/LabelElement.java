@@ -3,7 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -11,10 +11,10 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.CursorService;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.EnumHelpers;
-import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
+import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -183,7 +183,7 @@ public class LabelElement extends SingleElement {
       contentHeight = fontHeight.times(this.lines.size()).plus(this.linePadding.times(this.lines.size() - 1));
 
     } else {
-      throw new RuntimeException("Invalid Overflow setting " + this.overflow);
+      throw EnumHelpers.<TextOverflow>assertUnreachable(this.overflow);
     }
 
     return new DimPoint(this.getSizingMode() == SizingMode.FILL ? maxContentSize : contentWidth, contentHeight).scale(this.fontScale);
@@ -231,7 +231,7 @@ public class LabelElement extends SingleElement {
       } else if (this.alignment == TextAlignment.RIGHT) {
         x = box.getX().plus(box.getWidth()).minus(width);
       } else {
-        throw new RuntimeException("Invalid TextAlignment " + this.alignment);
+        throw EnumHelpers.<TextAlignment>assertUnreachable(this.alignment);
       }
 
       RendererHelpers.withMapping(new DimPoint(x, y), this.fontScale, () -> {

@@ -1,17 +1,17 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.services.util.TextHelpers;
-import dev.rebel.chatmate.services.util.TextHelpers.WordFilter;
-import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting.Format;
-import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
-import dev.rebel.chatmate.services.util.TextHelpers.StringMask;
+import dev.rebel.chatmate.util.TextHelpers;
+import dev.rebel.chatmate.util.TextHelpers.WordFilter;
+import dev.rebel.chatmate.util.TextHelpers.ExtractedFormatting.Format;
+import dev.rebel.chatmate.util.TextHelpers.ExtractedFormatting;
+import dev.rebel.chatmate.util.TextHelpers.StringMask;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-import static dev.rebel.chatmate.services.util.TextHelpers.getAllOccurrences;
+import static dev.rebel.chatmate.util.TextHelpers.getAllOccurrences;
 
 public class FilterService
 {

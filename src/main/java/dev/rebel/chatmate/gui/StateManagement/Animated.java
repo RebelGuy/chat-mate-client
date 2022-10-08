@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.StateManagement;
 
-import dev.rebel.chatmate.services.util.TaskWrapper;
+import dev.rebel.chatmate.util.TaskWrapper;
 
 import javax.annotation.Nullable;
 import java.util.Date;

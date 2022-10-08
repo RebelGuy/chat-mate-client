@@ -2,13 +2,12 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore.IDonationListener;
-import dev.rebel.chatmate.gui.hud.IHudComponent;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
+import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.services.GuiService;
 import dev.rebel.chatmate.services.SoundService;
-import dev.rebel.chatmate.services.events.ChatMateEventService;
-import dev.rebel.chatmate.services.events.models.DonationEventData;
+import dev.rebel.chatmate.events.ChatMateEventService;
+import dev.rebel.chatmate.events.models.DonationEventData;
 
 public class DonationHudService implements IDonationListener {
   private final DonationHudStore donationHudStore;
@@ -33,7 +32,7 @@ public class DonationHudService implements IDonationListener {
   @Override
   public void onNextDonation(PublicDonationData donation) {
     this.chatMateHudStore.addElement((context, parent) -> new DonationHudElement(context, parent, this.chatMateHudStore, this::onCloseDonation, this::onOpenDashboard, donation))
-        .setDefaultPosition(this.dimFactory.getMinecraftRect().getTopCentre(), IHudComponent.Anchor.TOP_CENTRE);
+        .setDefaultPosition(this.dimFactory.getMinecraftRect().getTopCentre(), HudElement.Anchor.TOP_CENTRE);
     this.soundService.playDragonKill(1.2f);
   }
 

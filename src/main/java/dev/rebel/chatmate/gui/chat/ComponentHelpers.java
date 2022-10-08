@@ -2,7 +2,7 @@ package dev.rebel.chatmate.gui.chat;
 
 import com.google.common.collect.Lists;
 import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.util.TextHelpers;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.EnumChatFormatting;

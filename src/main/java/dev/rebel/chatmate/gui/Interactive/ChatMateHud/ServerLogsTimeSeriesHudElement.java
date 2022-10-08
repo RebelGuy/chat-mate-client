@@ -1,34 +1,32 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.Asset;
+import dev.rebel.chatmate.config.Config.HudElementTransform;
 import dev.rebel.chatmate.gui.Interactive.IElement;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.Interactive.SingleElement;
-import dev.rebel.chatmate.gui.hud.Colour;
-import dev.rebel.chatmate.gui.hud.IHudComponent;
-import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
-import dev.rebel.chatmate.gui.hud.ServerLogsTimeSeriesComponent;
+import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.services.events.ServerLogEventService;
-import dev.rebel.chatmate.services.util.Collections;
-import net.minecraft.client.renderer.GlStateManager;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.events.ServerLogEventService;
+import dev.rebel.chatmate.util.Collections;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_ORANGE;
 import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_RED;
+import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper<ServerLogsTimeSeriesHudElement.TimeSeriesElement> {
+  private static final String NAME = "serverLogsTimeSeries";
+
   private final TimeSeriesElement timeSeriesElement;
   private final ServerLogEventService serverLogEventService;
   private final Config config;
@@ -37,7 +35,13 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
     super(context, parent);
     super.setCanDrag(true);
     super.setCanScale(true);
-    super.setDefaultPosition(context.dimFactory.getMinecraftRect().getTopRight().setAnchor(DimAnchor.SCREEN), Anchor.TOP_RIGHT);
+
+    DimPoint defaultPosition = context.dimFactory.getMinecraftRect().getTopRight().setAnchor(DimAnchor.SCREEN);
+    HudElementTransform transform = new HudElementTransform(defaultPosition.getX(), defaultPosition.getY(), 1);
+    super.setDefaultPosition(transform.getPosition(), Anchor.TOP_RIGHT);
+    super.setDefaultScale(transform.scale);
+    super.enablePersistTransform(NAME);
+
     this.serverLogEventService = serverLogEventService;
     this.config = config;
 
@@ -52,7 +56,7 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
 
   @Override
   public void onRenderElement() {
-    if (!this.config.getShowServerLogsTimeSeries().get() || !this.config.getDebugModeEnabled().get()) {
+    if (!this.config.getShowServerLogsTimeSeries().get() || !this.config.getDebugModeEnabledEmitter().get()) {
       return;
     }
 

@@ -1,36 +1,49 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.Events;
-import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractionEventBoundaryElement.IInteractionEventBoundaryListener;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
-import dev.rebel.chatmate.gui.Interactive.SingleElement;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 public class DropElement extends SingleElement implements IInteractionEventBoundaryListener {
   private final IDropElementListener listener;
-  private final boolean blockInteractionEvents;
-  private final @Nullable InteractionEventBoundaryElement interactionEventBoundaryElement;
 
-  public DropElement(InteractiveScreen.InteractiveContext context, IElement parent, boolean blockInteractionEvents, IDropElementListener listener) {
+  private boolean blockInteractionEvents;
+  private @Nullable InteractionEventBoundaryElement interactionEventBoundaryElement;
+  private @Nullable DimPoint mouseStart;
+  private @Nullable DimPoint prevPosition;
+  private @Nullable Dim totalDistanceTravelled;
+
+  public DropElement(InteractiveScreen.InteractiveContext context, IElement parent, IDropElementListener listener) {
     super(context, parent);
     super.setZIndex(1); // draw one layer above so we can block the interaction events
     this.listener = listener;
-    this.blockInteractionEvents = blockInteractionEvents;
 
-    if (this.blockInteractionEvents) {
-      this.interactionEventBoundaryElement = new InteractionEventBoundaryElement(context, this, this, null);
-    } else {
-      this.interactionEventBoundaryElement = null;
+    this.blockInteractionEvents = false;
+    this.interactionEventBoundaryElement = null;
+    this.mouseStart = context.mousePosition;
+    this.prevPosition = context.mousePosition;
+    this.totalDistanceTravelled = ZERO;
+  }
+
+  /** If true, no mouse events will reach other elements while the element is being dragged. False by default. */
+  public DropElement setBlockInteractionEvents(boolean blockInteractionEvents) {
+    if (this.blockInteractionEvents != blockInteractionEvents) {
+      if (blockInteractionEvents) {
+        this.interactionEventBoundaryElement = new InteractionEventBoundaryElement(context, this, this, null);
+      } else {
+        this.interactionEventBoundaryElement = null;
+      }
+      super.onInvalidateSize();
     }
+    return this;
   }
 
   @Override
@@ -62,6 +75,11 @@ public class DropElement extends SingleElement implements IInteractionEventBound
 
   @Override
   public void onMouseDown(Events.IEvent<MouseEventData.In> e) {
+    if (e.getData().mouseButtonData.pressedButtons.contains(MouseButton.LEFT_BUTTON)) {
+      this.mouseStart = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
+      this.prevPosition = this.mouseStart;
+    }
+
     if (this.blockInteractionEvents) {
       e.stopPropagation();
     }
@@ -69,9 +87,11 @@ public class DropElement extends SingleElement implements IInteractionEventBound
 
   @Override
   public void onMouseMove(Events.IEvent<MouseEventData.In> e) {
-    if (e.getData().mouseButtonData.pressedButtons.contains(MouseButton.LEFT_BUTTON)) {
-      this.listener.onDrag(e.getData().mousePositionData.point);
-      e.stopPropagation();
+    if (e.getData().mouseButtonData.pressedButtons.contains(MouseButton.LEFT_BUTTON) && this.prevPosition != null) {
+      DimPoint currentPosition = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
+      this.totalDistanceTravelled = this.totalDistanceTravelled.plus(currentPosition.distanceTo(this.prevPosition));
+      this.listener.onDrag(this.prevPosition, currentPosition);
+      this.prevPosition = currentPosition;
     }
 
     if (this.blockInteractionEvents) {
@@ -82,8 +102,10 @@ public class DropElement extends SingleElement implements IInteractionEventBound
   @Override
   public void onMouseUp(Events.IEvent<MouseEventData.In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
-      this.listener.onDrop(e.getData().mousePositionData.point);
-      e.stopPropagation();
+      this.listener.onDrop(this.mouseStart, e.getData().mousePositionData.point, this.totalDistanceTravelled);
+      this.mouseStart = null;
+      this.prevPosition = null;
+      this.totalDistanceTravelled = null;
     }
 
     if (this.blockInteractionEvents) {
@@ -114,8 +136,8 @@ public class DropElement extends SingleElement implements IInteractionEventBound
 
   public interface IDropElementListener {
     /** Called when the mouse button was dragged. */
-    void onDrag(DimPoint position);
+    void onDrag(DimPoint prevPosition, DimPoint currentPosition);
     /** Called when the mouse button was released. */
-    void onDrop(DimPoint position);
+    void onDrop(DimPoint startPosition, DimPoint endPosition, Dim totalDistanceTravelled);
   }
 }

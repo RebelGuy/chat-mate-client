@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import com.google.gson.Gson;
-import dev.rebel.chatmate.proxy.EndpointProxy.Method;
+import dev.rebel.chatmate.api.proxy.EndpointProxy.Method;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
@@ -10,8 +10,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.StringJoiner;
-import java.util.stream.Collectors;
 
 public class LogService {
   private final FileService fileService;

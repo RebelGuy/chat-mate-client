@@ -9,9 +9,9 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.MinecraftProxyService;
-import dev.rebel.chatmate.services.events.MinecraftChatEventService;
-import dev.rebel.chatmate.services.events.models.EventData;
-import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
+import dev.rebel.chatmate.events.MinecraftChatEventService;
+import dev.rebel.chatmate.events.models.EventData;
+import dev.rebel.chatmate.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import scala.Tuple2;
@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static dev.rebel.chatmate.models.Styles.*;
+import static dev.rebel.chatmate.gui.chat.Styles.*;
 
 public class ChatPagination<T> {
   private final LogService logService;

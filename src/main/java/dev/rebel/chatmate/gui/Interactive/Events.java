@@ -76,7 +76,7 @@ public class Events {
 
   public enum EventType {
     MOUSE_DOWN, MOUSE_MOVE, MOUSE_UP, MOUSE_SCROLL, MOUSE_ENTER, MOUSE_EXIT, // MouseEventData.In
-    KEY_DOWN, // KeyboardEventData.In
+    KEY_DOWN, KEY_UP, // KeyboardEventData.In
     FOCUS, BLUR, // FocusEventData
     WINDOW_RESIZE // SizeData, does not propagate. This will fire BEFORE layouts are recalculated and is sent to all elements from top to bottom.
     // if you add more events, be sure to update the onEvent handler of the ElementBase class

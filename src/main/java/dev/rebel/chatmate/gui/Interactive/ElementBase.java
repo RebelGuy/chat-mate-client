@@ -7,10 +7,10 @@ import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.KeyboardEventData;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;
@@ -165,14 +165,14 @@ public abstract class ElementBase implements IElement {
           this.onWindowResize((IEvent<ScreenSizeData>)event);
           break;
         default:
-          throw new RuntimeException("Invalid event type at TARGET phase: " + type);
+          throw EnumHelpers.<EventType>assertUnreachable(type);
       }
     } else if (event.getPhase() == EventPhase.CAPTURE) {
       this.onEventCapture(type, event);
     } else if (event.getPhase() == EventPhase.BUBBLE) {
       this.onEventBubble(type, event);
     } else {
-      throw new RuntimeException("Invalid event phase: " + event.getPhase());
+      throw EnumHelpers.<EventPhase>assertUnreachable(event.getPhase());
     }
   }
 
@@ -196,8 +196,11 @@ public abstract class ElementBase implements IElement {
       case KEY_DOWN:
         this.onCaptureKeyDown((IEvent<KeyboardEventData.In>)event);
         break;
+      case KEY_UP:
+        this.onCaptureKeyUp((IEvent<KeyboardEventData.In>)event);
+        break;
       default:
-        throw new RuntimeException("Invalid event type at CAPTURE phase: " + type);
+        throw EnumHelpers.<EventType>assertUnreachable(type);
     }
   }
 
@@ -218,8 +221,11 @@ public abstract class ElementBase implements IElement {
       case KEY_DOWN:
         this.onKeyDown((IEvent<KeyboardEventData.In>)event);
         break;
+      case KEY_UP:
+        this.onKeyUp((IEvent<KeyboardEventData.In>)event);
+        break;
       default:
-        throw new RuntimeException("Invalid event type at BUBBLE phase: " + type);
+        throw EnumHelpers.<EventType>assertUnreachable(type);
     }
   }
 
@@ -233,6 +239,8 @@ public abstract class ElementBase implements IElement {
   public void onCaptureMouseScroll(IEvent<MouseEventData.In> e) {}
   public void onKeyDown(IEvent<KeyboardEventData.In> e) {}
   public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {}
+  public void onKeyUp(IEvent<KeyboardEventData.In> e) {}
+  public void onCaptureKeyUp(IEvent<KeyboardEventData.In> e) {}
   public void onFocus(IEvent<FocusEventData> e) {}
   public void onBlur(IEvent<FocusEventData> e) {}
   /** Target-only - this cannot be cancelled. */

@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Asset.Texture;
-import dev.rebel.chatmate.gui.hud.ImageComponent;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import net.minecraft.client.Minecraft;
 

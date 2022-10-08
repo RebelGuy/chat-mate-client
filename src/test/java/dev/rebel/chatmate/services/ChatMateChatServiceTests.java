@@ -1,11 +1,11 @@
 package dev.rebel.chatmate.services;
 
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.Config.StatefulEmitter;
-import dev.rebel.chatmate.models.api.chat.GetChatResponse.GetChatResponseData;
-import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem;
-import dev.rebel.chatmate.proxy.ChatEndpointProxy;
-import dev.rebel.chatmate.services.events.ChatMateChatService;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.Config.StatefulEmitter;
+import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
+import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
+import dev.rebel.chatmate.events.ChatMateChatService;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,6 +26,9 @@ public class ChatMateChatServiceTests {
   @Mock LogService mockLogService;
   @Mock ChatEndpointProxy mockChatEndpointProxy;
   @Mock ApiPollerFactory mockApiPollerFactory;
+  @Mock Config mockConfig;
+  @Mock StatefulEmitter<Long> mockLastResponseEmitter;
+  @Mock DateTimeService mockDateTimeService;
 
   @Test
   public void newChatItem_dispatched() {
@@ -39,9 +42,11 @@ public class ChatMateChatServiceTests {
       chat = chatItems;
     }};
     Consumer<PublicChatItem[]> mockChatSubscriber = mock(Consumer.class);
+    when(this.mockConfig.getLastGetChatResponseEmitter()).thenReturn(this.mockLastResponseEmitter);
+    when(this.mockLastResponseEmitter.get()).thenReturn(0L);
 
     // act
-    ChatMateChatService chatService = new ChatMateChatService(this.mockLogService, this.mockChatEndpointProxy, this.mockApiPollerFactory);
+    ChatMateChatService chatService = new ChatMateChatService(this.mockLogService, this.mockChatEndpointProxy, this.mockApiPollerFactory, this.mockConfig, this.mockDateTimeService);
     chatService.onNewChat(mockChatSubscriber, this);
 
     // extract the onResponse and endpoint callbacks

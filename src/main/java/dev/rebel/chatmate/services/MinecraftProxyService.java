@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
-import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.models.RenderChatGameOverlay;
+import dev.rebel.chatmate.events.ForgeEventService;
+import dev.rebel.chatmate.events.models.RenderChatGameOverlay;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.gui.GuiScreen;

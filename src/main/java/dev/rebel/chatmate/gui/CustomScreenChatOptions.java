@@ -2,7 +2,7 @@ package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.builder.SliderLayout;
 import dev.rebel.chatmate.gui.builder.TableLayout;
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.settings.GameSettings;
 

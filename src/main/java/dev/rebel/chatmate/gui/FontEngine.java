@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.gui.StateManagement.State;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
@@ -194,8 +194,6 @@ public class FontEngine {
     withAttrib(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_DEPTH_BUFFER_BIT, () -> {
 
       GL11.glDepthMask(false); // enable writing to the depth buffer
-      GL11.glDisable(GL11.GL_DEPTH_TEST); // required to draw multiple on top
-      GL11.glDepthFunc(GL11.GL_LESS);
 
       GL11.glEnable(GL11.GL_ALPHA_TEST);
       GL11.glAlphaFunc(GL11.GL_ALWAYS, -1);
@@ -222,10 +220,10 @@ public class FontEngine {
         Dim shadowX = x.plus(shadow.getOffset().getX().times(offsetMultiplier));
         Dim shadowY = y.plus(shadow.getOffset().getX().times(offsetMultiplier));
         Dim shadowWidth = this.dimFactory.zeroGui();
-        shadowWidth = shadowWidth.plus(renderer.render(ch, font.getItalic(), shadowX, shadowY, -1));
+        shadowWidth = shadowWidth.plus(renderer.render(ch, font.getItalic(), shadowX, shadowY, 0));
 
         if (font.getBold()) {
-          renderer.render(ch, font.getItalic(), shadowX.plus(boldOffsetX), shadowY, -2);
+          renderer.render(ch, font.getItalic(), shadowX.plus(boldOffsetX), shadowY, 0);
           shadowWidth = shadowWidth.plus(boldOffsetX);
         }
 
@@ -234,10 +232,10 @@ public class FontEngine {
 
       GL11.glColor4f(fontColour.redf, fontColour.greenf, fontColour.bluef, fontColour.alphaf);
 
-      width.setState(w -> w.plus(renderer.render(ch, font.getItalic(), x, y, 2)));
+      width.setState(w -> w.plus(renderer.render(ch, font.getItalic(), x, y, 0)));
 
       if (font.getBold()) {
-        renderer.render(ch, font.getItalic(), x.plus(boldOffsetX), y, 1);
+        renderer.render(ch, font.getItalic(), x.plus(boldOffsetX), y, 0);
         width.setState(w -> w.plus(boldOffsetX));
       }
 

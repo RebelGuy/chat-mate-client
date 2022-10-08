@@ -6,13 +6,13 @@ import dev.rebel.chatmate.gui.Interactive.ImageElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedEvent;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.StatusService;
-import dev.rebel.chatmate.services.events.ServerLogEventService;
-import dev.rebel.chatmate.services.events.models.EventData;
+import dev.rebel.chatmate.events.ServerLogEventService;
+import dev.rebel.chatmate.events.models.EventData;
 import net.minecraft.util.Tuple;
 
 import java.util.HashMap;
@@ -93,7 +93,7 @@ public class IndicatorElement extends ImageElement implements SeparableHudElemen
     Asset.Texture texture = this.statusTextures.get(status);
     super.setImage(texture);
 
-    if (this.config.getShowServerLogsHeartbeat().get() && this.config.getDebugModeEnabled().get() && this.isMainIndicator) {
+    if (this.config.getShowServerLogsHeartbeat().get() && this.config.getDebugModeEnabledEmitter().get() && this.isMainIndicator) {
       for (Tuple<Asset.Texture, Float> logEvent : this.serverLogEvents.getAllFracs()) {
         Asset.Texture logTexture = logEvent.getFirst();
         float scale = logEvent.getSecond() * SERVER_LOG_ANIMATION_MAX_SCALE * super.scale;

@@ -1,13 +1,12 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.gui.hud.Colour;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
-import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.models.RenderGameOverlay;
-import dev.rebel.chatmate.services.events.models.RenderGameOverlay.Options;
+import dev.rebel.chatmate.events.ForgeEventService;
+import dev.rebel.chatmate.events.models.RenderGameOverlay;
+import dev.rebel.chatmate.events.models.RenderGameOverlay.Options;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;

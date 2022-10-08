@@ -4,7 +4,7 @@ import dev.rebel.chatmate.gui.builder.ButtonLayout;
 import dev.rebel.chatmate.gui.builder.ButtonLayout.ButtonAction.ButtonActionClickData;
 import dev.rebel.chatmate.gui.builder.Constants.Layout;
 import dev.rebel.chatmate.gui.builder.TableLayout;
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.GuiService;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiIngameMenu;

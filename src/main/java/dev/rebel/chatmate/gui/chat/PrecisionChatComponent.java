@@ -3,13 +3,12 @@ package dev.rebel.chatmate.gui.chat;
 import com.google.common.collect.Iterators;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.services.util.Objects;
+import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
 import scala.Tuple2;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,8 +16,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static dev.rebel.chatmate.services.util.Objects.casted;
-import static dev.rebel.chatmate.services.util.Objects.ifClass;
+import static dev.rebel.chatmate.util.Objects.casted;
+import static dev.rebel.chatmate.util.Objects.ifClass;
 import static net.minecraft.util.ChatComponentStyle.createDeepCopyIterator;
 
 /** A single-line chat component that is used to draw children components at precise x-values. When printing to chat,
@@ -94,7 +93,7 @@ public class PrecisionChatComponent implements IChatComponent {
     } else if (layout.alignment == PrecisionAlignment.RIGHT) {
       effectivePosition = originalPosition.plus(maxWidth.minus(textWidth));
     } else {
-      throw new RuntimeException("Did not expect layout alignment " + layout.alignment);
+      throw EnumHelpers.<PrecisionAlignment>assertUnreachable(layout.alignment);
     }
 
     IChatComponent effectiveComponent;

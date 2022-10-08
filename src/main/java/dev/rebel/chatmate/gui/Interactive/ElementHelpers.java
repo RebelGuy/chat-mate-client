@@ -4,7 +4,7 @@ import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -12,7 +12,8 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.models.Line;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -145,7 +146,7 @@ public class ElementHelpers {
         x = box.getRight().minus(size.getX());
         break;
       default:
-        throw new RuntimeException("Invalid HorizontalAlignment " + horizontalAlignment);
+        throw EnumHelpers.<HorizontalAlignment>assertUnreachable(horizontalAlignment);
     }
 
     Dim y;
@@ -160,7 +161,7 @@ public class ElementHelpers {
         y = box.getBottom().minus(size.getY());
         break;
       default:
-        throw new RuntimeException("Invalid VerticalAlignment " + verticalAlignment);
+        throw EnumHelpers.<VerticalAlignment>assertUnreachable(verticalAlignment);
     }
 
     return new DimRect(new DimPoint(x, y), size);

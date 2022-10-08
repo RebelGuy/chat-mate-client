@@ -4,7 +4,7 @@ import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
 import dev.rebel.chatmate.gui.chat.UserNameChatComponent;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimRect;

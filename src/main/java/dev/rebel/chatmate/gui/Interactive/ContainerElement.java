@@ -8,8 +8,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.EnumHelpers;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
 import scala.Tuple2;
 import scala.Tuple3;
 
@@ -97,7 +97,7 @@ public abstract class ContainerElement extends ElementBase {
     } else if (this.mode == LayoutMode.INLINE) {
       return this.calculateInlineSize(elementSizes, maxWidth);
     } else {
-      throw new RuntimeException("Invalid layout mode " + this.mode);
+      throw EnumHelpers.<LayoutMode>assertUnreachable(this.mode);
     }
   }
 
@@ -138,7 +138,7 @@ public abstract class ContainerElement extends ElementBase {
       } else if (element.getHorizontalAlignment() == HorizontalAlignment.RIGHT) {
         relX = containerWidth.minus(size.getX());
       } else {
-        throw new RuntimeException("Invalid horizontal layout " + element.getHorizontalAlignment());
+        throw EnumHelpers.<HorizontalAlignment>assertUnreachable(element.getHorizontalAlignment());
       }
 
       this.childrenRelBoxes.put(element, new DimRect(relX, offset, size.getX(), size.getY()));
@@ -282,7 +282,7 @@ public abstract class ContainerElement extends ElementBase {
         } else if (element.getHorizontalAlignment() == HorizontalAlignment.RIGHT) {
           xOffset = freeWidth;
         } else {
-          throw new RuntimeException("Invalid horizontal layout " + element.getHorizontalAlignment());
+          throw EnumHelpers.<HorizontalAlignment>assertUnreachable(element.getHorizontalAlignment());
         }
         freeWidth = freeWidth.minus(xOffset);
 
@@ -295,7 +295,7 @@ public abstract class ContainerElement extends ElementBase {
         } else if (element.getVerticalAlignment() == VerticalAlignment.BOTTOM) {
           yOffset = lineHeight.minus(size.getY());
         } else {
-          throw new RuntimeException("Invalid vertical layout " + element.getVerticalAlignment());
+          throw EnumHelpers.<VerticalAlignment>assertUnreachable(element.getVerticalAlignment());
         }
 
         Dim thisRelX = currentX.plus(xOffset);

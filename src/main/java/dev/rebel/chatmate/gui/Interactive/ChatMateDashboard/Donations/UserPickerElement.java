@@ -2,36 +2,36 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations;
 
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
-import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.AnchorBoxSizing;
-import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.VerticalPosition;
+import dev.rebel.chatmate.gui.Interactive.DropdownMenu.AnchorBoxSizing;
+import dev.rebel.chatmate.gui.Interactive.DropdownMenu.VerticalPosition;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.models.Styles;
-import dev.rebel.chatmate.models.api.user.SearchUserRequest;
-import dev.rebel.chatmate.models.api.user.SearchUserResponse.SearchUserResponseData;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
-import dev.rebel.chatmate.proxy.EndpointProxy;
-import dev.rebel.chatmate.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.gui.chat.Styles;
+import dev.rebel.chatmate.api.models.user.SearchUserRequest;
+import dev.rebel.chatmate.api.models.user.SearchUserResponse.SearchUserResponseData;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUserNames;
+import dev.rebel.chatmate.api.proxy.EndpointProxy;
+import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.MessageService;
-import dev.rebel.chatmate.services.events.models.KeyboardEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.Debouncer;
+import dev.rebel.chatmate.events.models.KeyboardEventData;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.Debouncer;
 import net.minecraft.util.IChatComponent;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
-import static dev.rebel.chatmate.models.Styles.getLevelStyle;
-import static dev.rebel.chatmate.models.Styles.styledText;
-import static dev.rebel.chatmate.services.util.ChatHelpers.joinComponents;
-import static dev.rebel.chatmate.services.util.TextHelpers.toSentenceCase;
+import static dev.rebel.chatmate.gui.chat.Styles.getLevelStyle;
+import static dev.rebel.chatmate.gui.chat.Styles.styledText;
+import static dev.rebel.chatmate.util.ChatHelpers.joinComponents;
+import static dev.rebel.chatmate.util.TextHelpers.toSentenceCase;
 
 public class UserPickerElement extends ContainerElement {
   private final UserEndpointProxy userEndpointProxy;
@@ -42,7 +42,7 @@ public class UserPickerElement extends ContainerElement {
   private final TextInputElement textInputElement;
   private final LoadingSpinnerElement loadingSpinnerElement;
   private final LabelElement errorLabel;
-  private final DropdownMenuV2 dropdownMenu;
+  private final DropdownMenu dropdownMenu;
 
   public UserPickerElement(InteractiveScreen.InteractiveContext context, IElement parent, @Nullable PublicUser defaultUser, Consumer<PublicUser> onUserSelected, UserEndpointProxy userEndpointProxy, MessageService messageService) {
     super(context, parent, LayoutMode.INLINE);
@@ -66,7 +66,7 @@ public class UserPickerElement extends ContainerElement {
     this.errorLabel = SharedElements.ERROR_LABEL.create(context, this)
         .setPadding(new RectExtension(ZERO, ZERO, gui(2), ZERO))
         .cast();
-    this.dropdownMenu = new DropdownMenuV2(context, this.textInputElement, AnchorBoxSizing.BORDER)
+    this.dropdownMenu = new DropdownMenu(context, this.textInputElement, AnchorBoxSizing.BORDER)
         .setSizingMode(SizingMode.FILL)
         .cast();
 

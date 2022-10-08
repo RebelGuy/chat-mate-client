@@ -7,18 +7,18 @@ import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionLayout;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
-import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem.ChatPlatform;
-import dev.rebel.chatmate.models.publicObjects.rank.PublicRank;
-import dev.rebel.chatmate.models.publicObjects.rank.PublicRank.RankName;
-import dev.rebel.chatmate.models.publicObjects.rank.PublicUserRank;
-import dev.rebel.chatmate.models.publicObjects.user.PublicRankedUser;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
-import dev.rebel.chatmate.services.util.ChatHelpers.ClickEventWithCallback;
-import dev.rebel.chatmate.services.util.EnumHelpers;
-import dev.rebel.chatmate.services.util.TextHelpers;
-import dev.rebel.chatmate.services.util.TextHelpers.ExtractedFormatting;
-import dev.rebel.chatmate.store.RankApiStore;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem.ChatPlatform;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
+import dev.rebel.chatmate.api.publicObjects.user.PublicRankedUser;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUserNames;
+import dev.rebel.chatmate.util.ChatHelpers.ClickEventWithCallback;
+import dev.rebel.chatmate.util.EnumHelpers;
+import dev.rebel.chatmate.util.TextHelpers;
+import dev.rebel.chatmate.util.TextHelpers.ExtractedFormatting;
+import dev.rebel.chatmate.stores.RankApiStore;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatStyle;
 import net.minecraft.util.IChatComponent;
@@ -28,8 +28,8 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.IntStream;
 
-import static dev.rebel.chatmate.models.Styles.*;
-import static dev.rebel.chatmate.services.util.ChatHelpers.*;
+import static dev.rebel.chatmate.gui.chat.Styles.*;
+import static dev.rebel.chatmate.util.ChatHelpers.*;
 
 public class MessageService {
   private static final IChatComponent INFO_PREFIX = styledText("ChatMate>", INFO_MSG_PREFIX_STYLE);
@@ -296,7 +296,7 @@ public class MessageService {
         } else if (punishment.rank.name == PublicRank.RankName.BAN) {
           prefix = "☠ ";
         } else {
-          throw new RuntimeException("Invalid punishment rank " + punishment.rank.name);
+          throw EnumHelpers.<RankName>assertUnreachable(punishment.rank.name);
         }
 
         unstyledName = prefix + unstyledName;
@@ -308,7 +308,7 @@ public class MessageService {
 
   public IChatComponent getRankComponent(List<PublicRank> activeRanks) {
     @Nullable RankName rankToShow = EnumHelpers.getFirst(
-        dev.rebel.chatmate.services.util.Collections.map(activeRanks, r -> r.name),
+        dev.rebel.chatmate.util.Collections.map(activeRanks, r -> r.name),
         RankName.OWNER,
         RankName.ADMIN,
         RankName.MOD,
@@ -317,7 +317,7 @@ public class MessageService {
         RankName.DONATOR,
         RankName.FAMOUS
     );
-    @Nullable PublicRank matchingRank = dev.rebel.chatmate.services.util.Collections.first(activeRanks, r -> r.name == rankToShow);
+    @Nullable PublicRank matchingRank = dev.rebel.chatmate.util.Collections.first(activeRanks, r -> r.name == rankToShow);
     String rankText = matchingRank == null ? "VIEWER" : matchingRank.displayNameNoun.toUpperCase();
     return styledText(rankText, VIEWER_RANK_STYLE);
   }

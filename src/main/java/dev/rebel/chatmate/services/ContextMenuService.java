@@ -18,18 +18,18 @@ import dev.rebel.chatmate.gui.Interactive.rank.RankAdapters;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.publicObjects.event.PublicDonationData;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.proxy.ExperienceEndpointProxy;
-import dev.rebel.chatmate.proxy.PunishmentEndpointProxy;
-import dev.rebel.chatmate.proxy.RankEndpointProxy;
-import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.KeyboardEventService;
-import dev.rebel.chatmate.services.events.MouseEventService;
-import dev.rebel.chatmate.store.DonationApiStore;
-import dev.rebel.chatmate.store.LivestreamApiStore;
-import dev.rebel.chatmate.store.RankApiStore;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.api.proxy.ExperienceEndpointProxy;
+import dev.rebel.chatmate.api.proxy.PunishmentEndpointProxy;
+import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.events.ForgeEventService;
+import dev.rebel.chatmate.events.KeyboardEventService;
+import dev.rebel.chatmate.events.MouseEventService;
+import dev.rebel.chatmate.stores.DonationApiStore;
+import dev.rebel.chatmate.stores.LivestreamApiStore;
+import dev.rebel.chatmate.stores.RankApiStore;
 import net.minecraft.client.Minecraft;
 
 import java.util.Date;
@@ -135,7 +135,7 @@ public class ContextMenuService {
     this.store.showContextMenu(x, y,
       new ContextMenuOption("Add countdown title", this::onCountdown),
       new ContextMenuOption("Add counter component", this::onCounter),
-      this.config.getDebugModeEnabled().get() ? new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation) : null
+      this.config.getDebugModeEnabledEmitter().get() ? new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation) : null
     );
   }
 

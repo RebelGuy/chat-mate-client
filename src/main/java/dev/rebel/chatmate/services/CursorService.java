@@ -1,8 +1,9 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Asset;
-import dev.rebel.chatmate.services.events.ForgeEventService;
-import dev.rebel.chatmate.services.events.models.Tick;
+import dev.rebel.chatmate.events.ForgeEventService;
+import dev.rebel.chatmate.events.models.Tick;
+import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
 import org.lwjgl.BufferUtils;
@@ -130,7 +131,7 @@ public class CursorService {
           cursorImage = Asset.CURSOR_CLICK;
           break;
         default:
-          throw new RuntimeException("No cursor image exists for type " + type);
+          throw EnumHelpers.<CursorType>assertUnreachable(type);
       }
 
       // from https://forums.minecraftforge.net/topic/38133-19solved-changing-cursor-icon-to-one-of-quotstandartquot-system-icons/

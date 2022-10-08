@@ -1,10 +1,10 @@
 package dev.rebel.chatmate.gui.chat;
 
 import dev.rebel.chatmate.gui.models.DimFactory;
-import dev.rebel.chatmate.models.Config;
-import dev.rebel.chatmate.models.Config.StatefulEmitter;
-import dev.rebel.chatmate.models.publicObjects.chat.PublicChatItem.ChatPlatform;
-import dev.rebel.chatmate.services.events.models.ConfigEventData;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.Config.StatefulEmitter;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem.ChatPlatform;
+import dev.rebel.chatmate.events.models.ConfigEventData;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

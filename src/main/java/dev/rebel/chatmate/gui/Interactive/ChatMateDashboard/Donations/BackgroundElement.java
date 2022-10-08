@@ -4,12 +4,12 @@ import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.Interactive.WrapperElement;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 
 import javax.annotation.Nullable;
 
-import static dev.rebel.chatmate.services.util.Objects.firstOrNull;
+import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class BackgroundElement extends WrapperElement {
   private @Nullable Colour colour = null;

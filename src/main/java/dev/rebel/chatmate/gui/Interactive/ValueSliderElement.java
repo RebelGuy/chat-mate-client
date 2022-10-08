@@ -4,21 +4,19 @@ import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
-import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
+import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -140,7 +138,8 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   public void onMouseDown(IEvent<MouseEventData.In> e) {
     DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.getSliderRect().checkCollision(position)) {
-      this.dropElement = new DropElement(context, this, true, this);
+      this.dropElement = new DropElement(context, this, this)
+          .setBlockInteractionEvents(true);
       this.dragPositionStart = position;
       this.dragValueStart = this.value;
       super.onInvalidateSize();
@@ -157,8 +156,8 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onDrag(DimPoint position) {
-    Dim deltaMouse = position.minus(this.dragPositionStart).getX();
+  public void onDrag(DimPoint prevPosition, DimPoint currentPosition) {
+    Dim deltaMouse = currentPosition.minus(this.dragPositionStart).getX();
     Dim sliderWidth = this.getSliderRect().getWidth();
     float deltaRatio = deltaMouse.over(super.getContentBox().getWidth().minus(sliderWidth));
     float deltaValue = deltaRatio * (this.maxValue - this.minValue);
@@ -171,7 +170,7 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onDrop(DimPoint position) {
+  public void onDrop(DimPoint startPosition, DimPoint currentPosition, Dim totalDistanceTravelled) {
     this.dropElement = null;
     this.dragPositionStart = null;
     this.dragValueStart = null;

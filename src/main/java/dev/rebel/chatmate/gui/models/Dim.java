@@ -1,7 +1,8 @@
 package dev.rebel.chatmate.gui.models;
 
-import dev.rebel.chatmate.services.util.Collections;
-import dev.rebel.chatmate.services.util.TextHelpers;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
+import dev.rebel.chatmate.util.TextHelpers;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,12 +20,21 @@ public class Dim {
     this.anchor = anchor;
   }
 
+  public Dim(Supplier<Integer> scaleFactor, DimAnchor anchor, float underlyingValue) {
+    this(scaleFactor, anchor);
+    this.value = underlyingValue;
+  }
+
   public float getScreen() {
     return this.value * this.getConversionFactor(this.anchor, DimAnchor.SCREEN);
   }
 
   public float getGui() {
     return this.value * this.getConversionFactor(this.anchor, DimAnchor.GUI);
+  }
+
+  public float getUnderlyingValue() {
+    return this.value;
   }
 
   public Dim setScreen(float screenValue) {
@@ -118,7 +128,7 @@ public class Dim {
     } else if (this.anchor == DimAnchor.GUI) {
       return other.getGui();
     } else {
-      throw new RuntimeException("Did not expect to get here");
+      throw EnumHelpers.<DimAnchor>assertUnreachable(this.anchor);
     }
   }
 
@@ -130,7 +140,7 @@ public class Dim {
     } else if (from == DimAnchor.GUI) {
       return this.scaleFactor.get();
     } else {
-      throw new RuntimeException("Did not expect to get here");
+      throw EnumHelpers.<DimAnchor>assertUnreachable(from);
     }
   }
 

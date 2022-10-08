@@ -3,9 +3,9 @@ package dev.rebel.chatmate.gui.chat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ChatPagination.PaginationRenderer;
 import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.models.publicObjects.user.PublicUserNames;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.services.MessageService;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.util.IChatComponent;
 
 import java.util.List;

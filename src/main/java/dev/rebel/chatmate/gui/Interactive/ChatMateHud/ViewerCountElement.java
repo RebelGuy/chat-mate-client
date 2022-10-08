@@ -5,16 +5,16 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.Interactive.SingleElement;
-import dev.rebel.chatmate.gui.hud.DigitReel;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
-import dev.rebel.chatmate.models.Config;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.StatusService;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Objects;
 
 public class ViewerCountElement extends SingleElement implements SeparableHudElement.ISeparableElement {
   private static final int MAX_REEL_VALUE = 99;
@@ -26,6 +26,7 @@ public class ViewerCountElement extends SingleElement implements SeparableHudEle
   private final Font indicatorFont;
 
   private float scale = 1;
+  private String prevText = "";
 
   public ViewerCountElement(InteractiveContext context, IElement parent, boolean isMainElement, Dim defaultHeight, StatusService statusService, Config config) {
     super(context, parent);
@@ -51,7 +52,14 @@ public class ViewerCountElement extends SingleElement implements SeparableHudEle
 
   private String getText() {
     @Nullable Integer viewerCount = this.getViewerCount();
-    return viewerCount == null ? "n/a" : String.format("%02d", viewerCount);
+    String text = viewerCount == null ? "n/a" : String.format("%02d", viewerCount);
+
+    if (!Objects.equals(this.prevText, text)) {
+      super.onInvalidateSize();
+      this.prevText = text;
+    }
+
+    return text;
   }
 
   @Override

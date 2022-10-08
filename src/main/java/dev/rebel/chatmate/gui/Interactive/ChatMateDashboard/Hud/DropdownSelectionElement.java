@@ -1,25 +1,25 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
-import dev.rebel.chatmate.gui.Interactive.DropdownMenuV2.AnchorBoxSizing;
+import dev.rebel.chatmate.gui.Interactive.DropdownMenu.AnchorBoxSizing;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
-import dev.rebel.chatmate.services.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.services.util.Collections;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.util.Collections;
 
 import java.util.List;
 
 public class DropdownSelectionElement extends InputElement {
   public final LabelElement label;
   public final HorizontalDivider line;
-  public final DropdownMenuV2 dropdownMenuV2;
+  public final DropdownMenu dropdownMenu;
   private final BlockElement container;
 
   private Colour enabledColour;
@@ -40,7 +40,7 @@ public class DropdownSelectionElement extends InputElement {
     this.line = new HorizontalDivider(context, this)
         .setColour(this.enabledColour)
         .setMode(HorizontalDivider.FillMode.PARENT_CONTENT);
-    this.dropdownMenuV2 = new DropdownMenuV2(context, this.container, AnchorBoxSizing.BORDER)
+    this.dropdownMenu = new DropdownMenu(context, this.container, AnchorBoxSizing.BORDER)
         .setSizingMode(SizingMode.FILL)
         .setMaxWidth(gui(100))
         .cast();
@@ -48,7 +48,7 @@ public class DropdownSelectionElement extends InputElement {
     this.container
         .addElement(this.label)
         .addElement(this.line)
-        .addElement(this.dropdownMenuV2);
+        .addElement(this.dropdownMenu);
   }
 
   @Override
@@ -75,8 +75,8 @@ public class DropdownSelectionElement extends InputElement {
 
   @Override
   public void onMouseDown(IEvent<MouseEventData.In> e) {
-    if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && (this.dropdownMenuV2.getVisible() || super.getEnabled())) {
-      this.dropdownMenuV2.toggleVisible();
+    if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && (this.dropdownMenu.getVisible() || super.getEnabled())) {
+      this.dropdownMenu.toggleVisible();
     }
   }
 

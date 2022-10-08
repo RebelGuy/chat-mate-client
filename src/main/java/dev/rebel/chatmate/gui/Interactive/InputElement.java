@@ -1,9 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
-import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.services.events.models.MouseEventData;
 
 import javax.annotation.Nullable;
 import java.util.*;

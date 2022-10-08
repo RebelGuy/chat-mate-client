@@ -2,12 +2,12 @@ package dev.rebel.chatmate.commands.handlers;
 
 import dev.rebel.chatmate.gui.CustomGuiChat;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.TransformedHudElementWrapper;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
-import dev.rebel.chatmate.gui.hud.IHudComponent.Anchor;
-import dev.rebel.chatmate.gui.hud.Observable;
+import dev.rebel.chatmate.gui.StateManagement.Observable;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
@@ -82,8 +82,8 @@ public class CounterHandler {
       this.hudElement = this.chatMateHudStore.addElement(TransformedHudElementWrapper::new)
           .setCanDrag(true)
           .setCanScale(true)
-          .setDefaultPosition(dimFactory.getMinecraftRect().getCentre(), Anchor.MIDDLE)
-          .setScrollResizeAnchor(Anchor.MIDDLE)
+          .setDefaultPosition(dimFactory.getMinecraftRect().getCentre(), HudElement.Anchor.MIDDLE)
+          .setScrollResizeAnchor(HudElement.Anchor.MIDDLE)
           .setHudElementFilter(
               new HudFilters.HudFilterWhitelistNoScreen(),
               new HudFilters.HudFilterScreenWhitelist(CustomGuiChat.class),

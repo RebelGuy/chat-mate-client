@@ -1,10 +1,11 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.hud.Colour;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.Line;
+import dev.rebel.chatmate.util.EnumHelpers;
 import org.lwjgl.util.Color;
 
 import java.util.List;
@@ -62,7 +63,7 @@ public class HorizontalDivider extends SingleElement {
       x1 = getFullBox(this.parent).getX();
       x2 = getFullBox(this.parent).getRight();
     } else {
-      throw new RuntimeException("Invalid SizingMode " + this.mode);
+      throw EnumHelpers.<FillMode>assertUnreachable(this.mode);
     }
 
     Line line = new Line(new DimPoint(x1, y), new DimPoint(x2, y));
