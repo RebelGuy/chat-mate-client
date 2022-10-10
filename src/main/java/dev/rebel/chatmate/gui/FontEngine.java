@@ -192,11 +192,7 @@ public class FontEngine {
     // for some reason we can't use the GlStateManager with pushAttrib(), so instead we have to use the raw GL11 API
     // https://www.cs.sfu.ca/~haoz/teaching/htmlman/pushattrib.html
     withAttrib(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_DEPTH_BUFFER_BIT, () -> {
-
-      GL11.glDepthMask(false); // enable writing to the depth buffer
-
       GL11.glEnable(GL11.GL_ALPHA_TEST);
-      GL11.glAlphaFunc(GL11.GL_ALWAYS, -1);
 
       GL11.glEnable(GL11.GL_BLEND);
       GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
