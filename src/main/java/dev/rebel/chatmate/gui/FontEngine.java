@@ -218,6 +218,8 @@ public class FontEngine {
         Dim shadowWidth = this.dimFactory.zeroGui();
         shadowWidth = shadowWidth.plus(renderer.render(ch, font.getItalic(), shadowX, shadowY, 0));
 
+        // todo: bold/shadows with partial transparency look weird because regions of the text where the multiple render passes overlap end up more opaque.
+        // workaround: https://stackoverflow.com/a/32656965
         if (font.getBold()) {
           renderer.render(ch, font.getItalic(), shadowX.plus(boldOffsetX), shadowY, 0);
           shadowWidth = shadowWidth.plus(boldOffsetX);
