@@ -40,6 +40,10 @@ public class MainContainer extends ElementBase implements IDropElementListener {
   }
 
   private boolean shouldRenderElement(HudElement element) {
+    if (!super.context.config.getChatMateEnabledEmitter().get() || !super.context.config.getHudEnabledEmitter().get()) {
+      return false;
+    }
+
     if (!ElementHelpers.isCompletelyVisible(element)) {
       return false;
     }

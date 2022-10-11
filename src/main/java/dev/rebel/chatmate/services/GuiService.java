@@ -232,7 +232,8 @@ public class GuiService {
   }
 
   private Boolean onOpenChatMateHud() {
-    if (this.config.getHudEnabledEmitter().get() && this.config.getChatMateEnabledEmitter().get()) {
+    // this intentionally still opens even if the HUD is disabled, because how else can we display the context menu?
+    if (this.config.getChatMateEnabledEmitter().get()) {
       this.minecraft.displayGuiScreen(this.chatMateHudScreen);
       return true;
     } else {
