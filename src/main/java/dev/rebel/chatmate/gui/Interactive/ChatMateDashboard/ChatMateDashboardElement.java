@@ -55,7 +55,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final DebugSectionElement debugSection;
 
   private final SidebarElement sidebar;
-  private final WrapperElement contentWrapper;
+  private final ScrollingElement contentWrapper;
   private final ElementReference content;
 
   public ChatMateDashboardElement(InteractiveContext context,
@@ -90,8 +90,8 @@ public class ChatMateDashboardElement extends ContainerElement {
         .setMaxWidth(this.sidebarMaxWidth)
         .cast();
     this.content = new ElementReference(context, this);
-    this.contentWrapper = new WrapperElement(context, this, this.content)
-        .cast();
+    this.contentWrapper = new ScrollingElement(context, this)
+        .setElement(this.content);
     this.setContentSizes(this.context.dimFactory.getMinecraftSize());
 
     super.addElement(this.sidebar);
@@ -135,7 +135,9 @@ public class ChatMateDashboardElement extends ContainerElement {
 
   private void setContentSizes(DimPoint windowSize) {
     Dim dashboardContentWidth = super.getContentBoxWidth(windowSize.getX());
+    Dim dashboardContentHeight = super.getContentBoxWidth(windowSize.getY());
     this.contentWrapper.setMaxWidth(dashboardContentWidth.minus(this.sidebarMaxWidth));
+    this.contentWrapper.setMaxHeight(dashboardContentHeight);
 
     Dim dashboardSidebarHeight = super.getContentBoxHeight(windowSize.getY());
     this.sidebar.setTargetHeight(dashboardSidebarHeight);
