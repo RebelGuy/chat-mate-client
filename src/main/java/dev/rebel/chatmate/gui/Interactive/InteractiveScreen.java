@@ -227,8 +227,21 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public void onGuiClosed() {
-    // it is very important that we remove the reference to the mainElement, otherwise
-    // this screen will never be garbage collected since mainElement holds a reference to it
+    // for some reason the InteractiveScreen isn't immediately garbage collected (until going back to the main menu)
+    // so let's just unsubscribe from events manually. this is probably how it should be done anyway. I accept defeat
+    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_DOWN, this);
+    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_MOVE, this);
+    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_UP, this);
+    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_SCROLL, this);
+    this.context.keyboardEventService.off(KeyboardEventService.Events.KEY_DOWN, this);
+    this.context.keyboardEventService.off(KeyboardEventService.Events.KEY_UP, this);
+    this.context.forgeEventService.off(ForgeEventService.Events.ScreenResize, this);
+    this.context.config.getDebugModeEnabledEmitter().off(this);
+
+    // it is very important that we remove the parent reference in the mainElement, otherwise
+    // this screen will never be garbage collected. I tried making parents a weak reference,
+    // but it didn't work for some reason so this will have to do.
+    this.mainElement.setParent(null);
     this.mainElement = null;
     this.context = null;
     this.elementsUnderCursor = null;
