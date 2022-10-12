@@ -19,8 +19,8 @@ public class ChatMateHudService {
 
     String mainIndicatorName = "mainIndicator";
     String secondaryIndicatorName = "secondaryIndicator";
-    HudElementTransform mainIndicatorTransform = new HudElementTransform(dimFactory.fromGui(10), dimFactory.fromGui(10), 1);
-    HudElementTransform secondaryIndicatorTransform = new HudElementTransform(dimFactory.fromGui(10), dimFactory.fromGui(23), 1);
+    HudElementTransform mainIndicatorTransform = new HudElementTransform(dimFactory.fromGui(10), dimFactory.fromGui(10), HudElement.Anchor.TOP_LEFT, dimFactory.getMinecraftRect(), dimFactory.getScaleFactor(), 1);
+    HudElementTransform secondaryIndicatorTransform = new HudElementTransform(dimFactory.fromGui(10), dimFactory.fromGui(23), HudElement.Anchor.TOP_LEFT, dimFactory.getMinecraftRect(), dimFactory.getScaleFactor(), 1);
 
     IndicatorElement.Factory statusIndicatorFactory = new IndicatorElement.Factory(config, statusService, serverLogEventService);
     this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, true, statusIndicatorFactory, config.getStatusIndicatorEmitter(), config.getHudTransformsEmitter(), mainIndicatorTransform, mainIndicatorName));
@@ -28,8 +28,8 @@ public class ChatMateHudService {
 
     String mainViewerCountName = "mainViewerCount";
     String secondaryViewerCountName = "secondaryViewerCount";
-    HudElementTransform mainViewerCountTransform = new HudElementTransform(dimFactory.fromGui(23), dimFactory.fromGui(10), 1);
-    HudElementTransform secondaryViewerCountTransform = new HudElementTransform(dimFactory.fromGui(23), dimFactory.fromGui(23), 1);
+    HudElementTransform mainViewerCountTransform = new HudElementTransform(dimFactory.fromGui(23), dimFactory.fromGui(10), HudElement.Anchor.TOP_LEFT, dimFactory.getMinecraftRect(), dimFactory.getScaleFactor(), 1);
+    HudElementTransform secondaryViewerCountTransform = new HudElementTransform(dimFactory.fromGui(23), dimFactory.fromGui(23), HudElement.Anchor.TOP_LEFT, dimFactory.getMinecraftRect(), dimFactory.getScaleFactor(), 1);
 
     ViewerCountElement.Factory viewerCountFactory = new ViewerCountElement.Factory(config, statusService);
     this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, true, viewerCountFactory, config.getViewerCountEmitter(), config.getHudTransformsEmitter(), mainViewerCountTransform, mainViewerCountName));

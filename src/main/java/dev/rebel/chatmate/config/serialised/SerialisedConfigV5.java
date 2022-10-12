@@ -2,14 +2,17 @@ package dev.rebel.chatmate.config.serialised;
 
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
-import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimFactory;
+import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.util.EnumHelpers;
 
 import java.util.Map;
 import java.util.Objects;
 
-public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
+public class SerialisedConfigV5 extends SerialisedConfigVersions.Version {
   public boolean soundEnabled;
   public int chatVerticalDisplacement;
   public boolean hudEnabled;
@@ -23,7 +26,7 @@ public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
   public final long lastGetChatMateEventsResponse;
   public final Map<String, SerialisedHudElementTransform> hudTransforms;
 
-  public SerialisedConfigV4(boolean soundEnabled,
+  public SerialisedConfigV5(boolean soundEnabled,
                             int chatVerticalDisplacement,
                             boolean hudEnabled,
                             boolean showServerLogsHeartbeat,
@@ -51,7 +54,7 @@ public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   public static class SerialisedSeparableHudElement {
@@ -94,14 +97,47 @@ public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
     public final String xAnchor;
     public final float y;
     public final String yAnchor;
+    public final String positionAnchor;
+    public final int screenWidth;
+    public final int screenHeight;
+    public final int screenScaleFactor;
     public final float scale;
 
-    public SerialisedHudElementTransform(float x, String xAnchor, float y, String yAnchor, float scale) {
+    public SerialisedHudElementTransform(float x, String xAnchor, float y, String yAnchor, String positionAnchor, int screenWidth, int screenHeight, int screenScaleFactor, float scale) {
       this.x = x;
       this.xAnchor = xAnchor;
       this.y = y;
       this.yAnchor = yAnchor;
+      this.positionAnchor = positionAnchor;
+      this.screenWidth = screenWidth;
+      this.screenHeight = screenHeight;
+      this.screenScaleFactor = screenScaleFactor;
       this.scale = scale;
+    }
+
+    public SerialisedHudElementTransform(Config.HudElementTransform transform) {
+      this(
+          transform.x.getUnderlyingValue(),
+          transform.x.anchor == DimAnchor.GUI ? "GUI" : "SCREEN",
+          transform.y.getUnderlyingValue(),
+          transform.y.anchor == DimAnchor.GUI ? "GUI" : "SCREEN",
+          transform.positionAnchor.name(),
+          (int)transform.screenRect.getWidth().getScreen(),
+          (int)transform.screenRect.getHeight().getScreen(),
+          transform.screenScaleFactor,
+          transform.scale
+      );
+    }
+
+    public Config.HudElementTransform deserialise(DimFactory dimFactory) {
+      return new Config.HudElementTransform(
+          dimFactory.fromValue(this.x, Objects.equals(this.xAnchor, "GUI") ? DimAnchor.GUI : DimAnchor.SCREEN),
+          dimFactory.fromValue(this.y, Objects.equals(this.yAnchor, "GUI") ? DimAnchor.GUI : DimAnchor.SCREEN),
+          EnumHelpers.fromStringOrDefault(HudElement.Anchor.class, this.positionAnchor, HudElement.Anchor.TOP_LEFT),
+          new DimRect(new DimPoint(dimFactory.fromScreen(0), dimFactory.fromScreen(0)), new DimPoint(dimFactory.fromScreen(this.screenWidth), dimFactory.fromScreen(this.screenHeight))),
+          this.screenScaleFactor,
+          this.scale
+      );
     }
   }
 }

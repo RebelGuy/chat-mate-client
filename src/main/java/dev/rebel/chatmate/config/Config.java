@@ -2,9 +2,12 @@ package dev.rebel.chatmate.config;
 
 import dev.rebel.chatmate.config.Config.ConfigType;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
+import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
+import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.events.EventHandler;
 import dev.rebel.chatmate.events.EventServiceBase;
@@ -31,7 +34,8 @@ public class Config extends EventServiceBase<ConfigType> {
   // 4. Add a new migration file in the `configMigrations` package
   // 5. Add the migration class from the previous step and the new serialised model to the arrays in `Migration.java`
   // 6. Change the type of the saved and loaded serialised config in this file
-  private final ConfigPersistorService<SerialisedConfigV4> configPersistorService;
+  private final ConfigPersistorService<SerialisedConfigV5> configPersistorService;
+  private final DimFactory dimFactory;
 
   // NOTE: DO **NOT** REMOVE THESE GETTERS. THEY ARE DISGUSTING BUT REQUIRED FOR TESTING
   private final StatefulEmitter<Boolean> chatMateEnabled;
@@ -81,9 +85,10 @@ public class Config extends EventServiceBase<ConfigType> {
 
   private final Debouncer saveDebouncer;
 
-  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV4> configPersistorService, DimFactory dimFactory) {
+  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV5> configPersistorService, DimFactory dimFactory) {
     super(ConfigType.class, logService);
     this.configPersistorService = configPersistorService;
+    this.dimFactory = dimFactory;
     this.saveDebouncer = new Debouncer(400, this::save); // has to be less than the API polling rate
     this.updateListeners = new ArrayList<>();
 
@@ -93,7 +98,7 @@ public class Config extends EventServiceBase<ConfigType> {
     }
 
     // if loading fails, the user will be left with the default settings which is fine
-    @Nullable SerialisedConfigV4 data = this.load();
+    @Nullable SerialisedConfigV5 data = this.load();
     this.chatMateEnabled = new StatefulEmitter<>(ConfigType.ENABLE_CHAT_MATE, false, this::onUpdate);
     this.soundEnabled = new StatefulEmitter<>(ConfigType.ENABLE_SOUND, data == null ? true : data.soundEnabled, this::onUpdate);
     this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, data == null ? 10 : data.chatVerticalDisplacement, this::onUpdate);
@@ -120,8 +125,8 @@ public class Config extends EventServiceBase<ConfigType> {
   }
 
   @Nullable
-  private SerialisedConfigV4 load() {
-    SerialisedConfigV4 loaded = this.configPersistorService.load();
+  private SerialisedConfigV5 load() {
+    SerialisedConfigV5 loaded = this.configPersistorService.load();
     if (loaded != null) {
       this.saveDebouncer.doDebounce();
     }
@@ -130,19 +135,19 @@ public class Config extends EventServiceBase<ConfigType> {
 
   private void save() {
     try {
-      SerialisedConfigV4 serialisedConfig = new SerialisedConfigV4(
+      SerialisedConfigV5 serialisedConfig = new SerialisedConfigV5(
           this.soundEnabled.get(),
           this.chatVerticalDisplacement.get(),
           this.hudEnabled.get(),
           this.showServerLogsHeartbeat.get(),
           this.showServerLogsTimeSeries.get(),
           this.showChatPlatformIcon.get(),
-          new SerialisedConfigV4.SerialisedSeparableHudElement(this.statusIndicator.get()),
-          new SerialisedConfigV4.SerialisedSeparableHudElement(this.viewerCount.get()),
+          new SerialisedConfigV5.SerialisedSeparableHudElement(this.statusIndicator.get()),
+          new SerialisedConfigV5.SerialisedSeparableHudElement(this.viewerCount.get()),
           this.debugModeEnabled.get(),
           this.lastGetChatResponse.get(),
           this.lastGetChatMateEventsResponse.get(),
-          dev.rebel.chatmate.util.Collections.map(this.hudTransforms.get(), SerialisedConfigV4.SerialisedHudElementTransform::new)); // no import aliasing in Java..
+          dev.rebel.chatmate.util.Collections.map(this.hudTransforms.get(), SerialisedConfigV5.SerialisedHudElementTransform::new)); // no import aliasing in Java..
       this.configPersistorService.save(serialisedConfig);
     } catch (Exception e) {
       this.logService.logError(this, "Failed to save config:", e);
@@ -280,31 +285,28 @@ public class Config extends EventServiceBase<ConfigType> {
     public enum PlatformIconPosition { LEFT, RIGHT, TOP, BOTTOM }
   }
 
+  // The (x, y) position is anchored to the current screen, it is not necessarily an absolute position.
+  // By holding on to the screen dimensions, we will be able to translate the position from the current screen
+  // context to another screen context in a natural way (and without the position ever going off screen).
   public static class HudElementTransform {
     public final Dim x;
     public final Dim y;
+    public final HudElement.Anchor positionAnchor;
+    public final DimRect screenRect;
+    public final int screenScaleFactor;
     public final float scale;
 
-    public HudElementTransform(Dim x, Dim y, float scale) {
+    public HudElementTransform(Dim x, Dim y, HudElement.Anchor positionAnchor, DimRect screenRect, int screenScaleFactor, float scale) {
       this.x = x;
       this.y = y;
+      this.positionAnchor = positionAnchor;
+      this.screenRect = screenRect;
+      this.screenScaleFactor = screenScaleFactor;
       this.scale = scale;
     }
 
     public DimPoint getPosition() {
       return new DimPoint(this.x, this.y);
-    }
-
-    public HudElementTransform withX(Dim x) {
-      return new HudElementTransform(x, this.y, this.scale);
-    }
-
-    public HudElementTransform withY(Dim y) {
-      return new HudElementTransform(this.x, y, this.scale);
-    }
-
-    public HudElementTransform withScale(float scale) {
-      return new HudElementTransform(this.x, this.y, scale);
     }
   }
 

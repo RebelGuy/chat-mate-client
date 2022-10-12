@@ -38,9 +38,8 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
     super.setCanScale(true);
 
     DimPoint defaultPosition = context.dimFactory.getMinecraftRect().getTopRight().setAnchor(DimAnchor.SCREEN);
-    HudElementTransform transform = new HudElementTransform(defaultPosition.getX(), defaultPosition.getY(), 1);
-    super.setDefaultPosition(transform.getPosition(), Anchor.TOP_RIGHT);
-    super.setDefaultScale(transform.scale);
+    super.setDefaultPosition(defaultPosition, Anchor.TOP_RIGHT);
+    super.setDefaultScale(1);
     super.enablePersistTransform(NAME);
 
     this.serverLogEventService = serverLogEventService;
