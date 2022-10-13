@@ -16,6 +16,7 @@ public class PublicDonation extends PublicObject {
   public String currency;
   public String name;
   public @Nullable String message;
+  public String linkIdentifier;
   public @Nullable PublicUser linkedUser;
   public @Nullable Long linkedAt;
 }

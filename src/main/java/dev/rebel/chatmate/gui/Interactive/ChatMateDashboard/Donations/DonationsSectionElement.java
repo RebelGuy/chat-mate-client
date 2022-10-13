@@ -327,6 +327,16 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
           this.onError.accept(e);
         } else {
           this.donations = Collections.replaceOne(this.donations, donation, d -> Objects.equals(d.id, donation.id));
+
+          // all donations that share the linkIdentifier have also been linked/unlinked - update these as well so we don't need to make another server request
+          for (PublicDonation linkedDonation : Collections.filter(this.donations, d -> Objects.equals(d.linkIdentifier, donation.linkIdentifier))) {
+            if (linkedDonation == donation) {
+              continue;
+            }
+
+            linkedDonation.linkedUser = donation.linkedUser;
+            linkedDonation.linkedAt = donation.linkedAt;
+          }
         }
         this.updateTable();
       });
