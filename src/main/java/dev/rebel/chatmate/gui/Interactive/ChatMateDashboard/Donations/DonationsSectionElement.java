@@ -225,13 +225,15 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       } else {
         Texture icon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_BIN_ICON;
         Runnable onClick = () -> this.onLinkOrUnlink(donation);
+        boolean disableButton = Collections.any(this.getDonationsWithLinkIdentifier(donation), d -> this.editingDonations.containsKey(d));
         actionElement = new IconButtonElement(super.context, this)
             .setImage(icon)
             .setOnClick(onClick)
+            .setEnabled(this, !disableButton)
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
-            .setTooltip(donation.linkedUser == null ? "Link donation to a user" : "Unlink current user from donation");
+            .setTooltip(disableButton ? null : donation.linkedUser == null ? "Link donation to a user" : "Unlink current user from donation");
         casted(IconButtonElement.class, actionElement, el -> el.image.setPadding(new RectExtension(ZERO)));
       }
 
@@ -243,15 +245,27 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         } else {
           Consumer<PublicUser> onUserSelected = newUser -> {
             this.editingDonations.put(donation, newUser);
-            this.table.updateItem(donation, this.getRow(donation, false));
+            this.updateDonation(donation);
           };
           userNameElement = new UserPickerElement(super.context, this, donation.linkedUser, onUserSelected, this.userEndpointProxy, this.messageService)
               .setFontScale(0.75f);
           this.editingElements.put(donation, userNameElement);
         }
       } else {
-        // if user hasn't been linked, or is to be unlinked, show the donation's default name
-        String user = donation.linkedUser == null || this.editingDonations.containsKey(donation) ? donation.name : donation.linkedUser.userInfo.channelName;
+
+        // if another donation with the same linkIdentifier is being edited, display that donation's user
+        PublicUser userToShow = donation.linkedUser;
+        if (!this.editingDonations.containsKey(donation)) {
+          for (PublicDonation editingDonation : this.editingDonations.keySet()) {
+            if (Objects.equals(editingDonation.linkIdentifier, donation.linkIdentifier)) {
+              userToShow = this.editingDonations.get(editingDonation);
+              break;
+            }
+          }
+        }
+
+        // when we are editing this donation, just fallback to the default name in all cases for simplicity (it might be overwritten by the text box)
+        String user = userToShow == null || this.editingDonations.containsKey(donation) ? donation.name : userToShow.userInfo.channelName;
         userNameElement = new LabelElement(super.context, this).setText(user).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT);
 
         // clean up, in case we are transitioning from editing to non-editing
@@ -294,7 +308,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     private void onLinkOrUnlink(PublicDonation donation) {
       // show the editing UI
       this.editingDonations.put(donation, null);
-      this.table.updateItem(donation, this.getRow(donation, false));
+      this.updateDonation(donation);
     }
 
     private void onConfirmLinkOrUnlink(PublicDonation donation) {
@@ -317,7 +331,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     private void onCancelLinkOrUnlink(PublicDonation donation) {
       // hide the editing UI
       this.editingDonations.remove(donation);
-      this.table.updateItem(donation, this.getRow(donation, false));
+      this.updateDonation(donation);
     }
 
     private void onResponse(int affectedUserId, PublicDonation donation, @Nullable Throwable e) {
@@ -326,10 +340,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         if (e != null) {
           this.onError.accept(e);
         } else {
+          this.editingDonations.keySet().removeIf(d -> Objects.equals(d.id, donation.id));
           this.donations = Collections.replaceOne(this.donations, donation, d -> Objects.equals(d.id, donation.id));
 
           // all donations that share the linkIdentifier have also been linked/unlinked - update these as well so we don't need to make another server request
-          for (PublicDonation linkedDonation : Collections.filter(this.donations, d -> Objects.equals(d.linkIdentifier, donation.linkIdentifier))) {
+          for (PublicDonation linkedDonation : this.getDonationsWithLinkIdentifier(donation)) {
             if (linkedDonation == donation) {
               continue;
             }
@@ -362,6 +377,15 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       boolean showTable = donationsToShow.size() > 0;
       this.table.setItems(donationsToShow).setVisible(showTable);
       this.nothingToShowLabel.setVisible(!showTable);
+    }
+
+    private List<PublicDonation> getDonationsWithLinkIdentifier(PublicDonation donation) {
+      return Collections.filter(this.donations, d -> Objects.equals(d.linkIdentifier, donation.linkIdentifier));
+    }
+
+    private void updateDonation(PublicDonation donation) {
+      this.table.updateItem(donation, this.getRow(donation, false));
+      this.getDonationsWithLinkIdentifier(donation).forEach(d -> this.table.updateItem(d, this.getRow(d, false)));
     }
   }
 }
