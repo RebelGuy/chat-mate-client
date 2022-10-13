@@ -81,8 +81,10 @@ public class DonationService {
         }
 
         // important: we are getting the ranks at the time the donation was linked (not at the time it was posted), because only
-        // at that time would the server have updated the user's ranks due to the donation
-        List<RankName> ranks = Collections.map(this.rankApiStore.getUserRanksAtTime(userId, donation.linkedAt), r -> r.rank.name);
+        // at that time would the server have updated the user's ranks due to the donation. a linked time that is before the donation
+        // was posted implies that the donation was auto-linked, and in that case we want to use the donation's time.
+        long time = Math.max(donation.time, donation.linkedAt);
+        List<RankName> ranks = Collections.map(this.rankApiStore.getUserRanksAtTime(userId, time), r -> r.rank.name);
         int minutesPerDollar;
         if (ranks.contains(RankName.MEMBER)) {
           minutesPerDollar = 15;
