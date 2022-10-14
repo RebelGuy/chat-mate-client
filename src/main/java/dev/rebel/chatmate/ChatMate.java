@@ -196,7 +196,8 @@ public class ChatMate {
         livestreamApiStore,
         donationApiStore,
         customGuiNewChat,
-        config);
+        config,
+        chatMateHudStore);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
     ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
 

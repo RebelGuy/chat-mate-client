@@ -17,8 +17,8 @@ public class DonationEndpointProxy extends EndpointProxy {
     super(logService, apiRequestService, basePath + "/donation");
   }
 
-  public void getDonationsAsync(Consumer<GetDonationsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
-    this.makeRequestAsync(Method.GET, "", GetDonationsResponse.class, callback, errorHandler, true);
+  public void getDonationsAsync(Consumer<GetDonationsResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
+    this.makeRequestAsync(Method.GET, "", GetDonationsResponse.class, callback, errorHandler, isActiveRequest);
   }
 
   public void linkUserAsync(int donationId, int userId, Consumer<LinkUserResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

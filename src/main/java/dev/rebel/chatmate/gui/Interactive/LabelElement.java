@@ -63,8 +63,10 @@ public class LabelElement extends SingleElement {
 
   /** For multi-line text, or where the sizing mode is FILL. To align the component itself within the parent, use the `setHorizontalAlignment` API. */
   public LabelElement setAlignment(TextAlignment alignment) {
-    this.alignment = alignment;
-    this.onInvalidateSize();
+    if (this.alignment != alignment) {
+      this.alignment = alignment;
+      this.onInvalidateSize();
+    }
     return this;
   }
 
@@ -194,6 +196,7 @@ public class LabelElement extends SingleElement {
   }
 
   private void addTextLinesForRendering(List<String> lines) {
+    lines = Collections.map(lines, String::trim);
     if (this.overflow == TextOverflow.SPLIT && this.maxLines != null) {
       this.lines = Collections.trim(lines, this.maxLines);
     } else {
