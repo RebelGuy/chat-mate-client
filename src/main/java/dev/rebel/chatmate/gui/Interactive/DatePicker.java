@@ -76,21 +76,27 @@ public class DatePicker extends InputElement {
     return new DatePickerModel(date.getTime());
   }
 
+  public boolean validate() {
+    return tryGetValidInteger(this.dayInput.getText(), 1, 31) != null
+        && tryGetValidInteger(this.monthInput.getText(), 1, 12) != null
+        && tryGetValidInteger(this.yearInput.getText(), 1, 9999) != null;
+  }
+
   private boolean onValidateDay(String day) {
-    return this.tryGetValidInteger(day, 1, 31) != null;
+    return isNullOrEmpty(day) || this.tryGetValidInteger(day, 1, 31) != null;
   }
 
   private boolean onValidateMonth(String month) {
-    return this.tryGetValidInteger(month, 1, 12) != null;
+    return isNullOrEmpty(month) || this.tryGetValidInteger(month, 1, 12) != null;
   }
 
   private boolean onValidateYear(String year) {
-    return this.tryGetValidInteger(year, 1, 9999) != null;
+    return isNullOrEmpty(year) || this.tryGetValidInteger(year, 1, 9999) != null;
   }
 
   private @Nullable Integer tryGetValidInteger(String maybeTime, int minValue, int maxValue) {
     if (isNullOrEmpty(maybeTime)) {
-      return minValue;
+      return null;
     }
 
     try {

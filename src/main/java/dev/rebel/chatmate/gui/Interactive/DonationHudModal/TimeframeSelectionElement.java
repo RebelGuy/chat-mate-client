@@ -14,7 +14,7 @@ public class TimeframeSelectionElement extends BlockElement {
   public TimeframeSelectionElement(InteractiveContext context, IElement parent) {
     super(context, parent);
 
-    IElement label = new LabelElement(context, this)
+    IElement headerLabel = new LabelElement(context, this)
         .setText("Select timeframe:");
 
     this.thisStreamOnlyCheckbox = new CheckboxInputElement(context, this)
@@ -40,7 +40,7 @@ public class TimeframeSelectionElement extends BlockElement {
         .addOption(this.sinceDateCheckbox)
         .validate();
 
-    super.addElement(label);
+    super.addElement(headerLabel);
     super.addElement(thisStreamOnlyCheckbox);
     super.addElement(new InlineElement(context, this)
         .addElement(this.sinceDateCheckbox)
@@ -53,6 +53,10 @@ public class TimeframeSelectionElement extends BlockElement {
   public TimeframeModel getModel() {
     DatePicker.DatePickerModel datePickerModel = this.datePicker.getModel();
     return new TimeframeModel(this.thisStreamOnlyCheckbox.getChecked(), datePickerModel == null ? 0 : datePickerModel.timestamp);
+  }
+
+  public boolean validate() {
+    return !this.sinceDateCheckbox.getChecked() || this.sinceDateCheckbox.getChecked() && this.datePicker.validate();
   }
 
   public static class TimeframeModel {

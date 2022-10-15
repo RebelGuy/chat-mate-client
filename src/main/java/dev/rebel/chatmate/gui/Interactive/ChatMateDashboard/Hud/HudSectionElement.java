@@ -110,8 +110,6 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     public final CheckboxInputElement showPlatformIconElement;
     public final DropdownSelectionElement<PlatformIconPosition> iconLocationDropdown;
 
-    private final List<Tuple2<PlatformIconPosition, LabelElement>> selectionLabels;
-
     public ExpandableElement(InteractiveContext context, IElement parent, StatefulEmitter<SeparableHudElement> emitter, String separatePlatformsLabel) {
       super(context, parent);
 
@@ -130,7 +128,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
           .setLabel("Display platform icons")
           .setScale(SCALE)
           .cast();
-      this.iconLocationDropdown = new DropdownSelectionElement(context, parent)
+      this.iconLocationDropdown = new DropdownSelectionElement<PlatformIconPosition>(context, parent)
           .setMargin(new RectExtension(gui(6), gui(2)))
           .setMaxWidth(gui(50))
           .cast();
@@ -139,7 +137,6 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
       this.iconLocationDropdown.dropdownMenu
           .setBackground(Colour.BLACK.withAlpha(0.8f));
 
-      this.selectionLabels = new ArrayList<>();
       for (PlatformIconPosition position : PlatformIconPosition.values()) {
         LabelElement label = new LabelElement(context, this)
             .setText(toSentenceCase(position.toString()))
@@ -147,7 +144,6 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
             .setPadding(new RectExtension(gui(3), gui(1)))
             .setSizingMode(SizingMode.FILL)
             .cast();
-        this.selectionLabels.add(new Tuple2<>(position, label));
         this.iconLocationDropdown.addOption(
             label,
             position,

@@ -70,10 +70,12 @@ public class DropdownSelectionElement<V> extends InputElement {
 
   /** `onSelect` is only triggered by user input, NOT when programmatically setting the current selection.
    * `applySelectStyle` can be used to style the option element based on its current selection. */
-  public <E extends IElement> DropdownSelectionElement<V> addOption(E element, V value, Consumer<V> onSelect, BiConsumer<E, Boolean> applySelectStyle, Function<V, String> stringRepresentation) {
+  public <E extends IElement> DropdownSelectionElement<V> addOption(E element, V value, @Nullable Consumer<V> onSelect, BiConsumer<E, Boolean> applySelectStyle, Function<V, String> stringRepresentation) {
     Runnable onSelectOption = () -> {
       this.onUserSelect(value);
-      onSelect.accept(value);
+      if (onSelect != null) {
+        onSelect.accept(value);
+      }
     };
     applySelectStyle.accept(element, this.currentSelection == value);
 
@@ -100,6 +102,11 @@ public class DropdownSelectionElement<V> extends InputElement {
     if (this.options.containsKey(value)) {
       this.label.setText(this.options.get(value).stringRepresentation.apply(value));
     }
+  }
+
+  /** Returns only null if the selection has never been initialised and no selection has been made by the user yet. */
+  public @Nullable V getSelection() {
+    return this.currentSelection;
   }
 
   public DropdownSelectionElement<V> setEnabledColour(Colour enabledColour) {
