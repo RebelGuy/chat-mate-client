@@ -68,6 +68,7 @@ public class ContextMenuService {
   private final CustomGuiNewChat customGuiNewChat;
   private final Config config;
   private final ChatMateHudStore chatMateHudStore;
+  private final StatusService statusService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -97,7 +98,8 @@ public class ContextMenuService {
                             DonationApiStore donationApiStore,
                             CustomGuiNewChat customGuiNewChat,
                             Config config,
-                            ChatMateHudStore chatMateHudStore) {
+                            ChatMateHudStore chatMateHudStore,
+                            StatusService statusService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -127,6 +129,7 @@ public class ContextMenuService {
     this.customGuiNewChat = customGuiNewChat;
     this.config = config;
     this.chatMateHudStore = chatMateHudStore;
+    this.statusService = statusService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -180,7 +183,7 @@ public class ContextMenuService {
   }
 
   private void onAddDonationElement() {
-    this.displayElementInScreen((context, screen) -> new DonationHudModal(context, screen, this.chatMateHudStore));
+    this.displayElementInScreen((context, screen) -> new DonationHudModal(context, screen, this.chatMateHudStore, this.statusService));
   }
 
   private void displayElementInScreen(BiFunction<InteractiveContext, InteractiveScreen, IElement> elementFactory) {

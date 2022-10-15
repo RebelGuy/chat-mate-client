@@ -60,8 +60,8 @@ public class TimeframeSelectionElement extends BlockElement {
   }
 
   public static class TimeframeModel {
-    final boolean thisStreamOnly;
-    final Long since;
+    public final boolean thisStreamOnly;
+    public final Long since;
 
     public TimeframeModel(boolean thisStreamOnly, Long since) {
       this.thisStreamOnly = thisStreamOnly;

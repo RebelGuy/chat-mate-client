@@ -59,7 +59,7 @@ public class AppearanceElement extends InlineElement {
   }
 
   public static class AppearanceModel {
-    final TextAlignment textAlignment;
+    public final TextAlignment textAlignment;
 
     public AppearanceModel(TextAlignment textAlignment) {
       this.textAlignment = textAlignment;

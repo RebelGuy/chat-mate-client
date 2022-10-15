@@ -13,7 +13,6 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.ConfigPersistorService;
-import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
 import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
 import dev.rebel.chatmate.api.proxy.*;
 import dev.rebel.chatmate.services.*;
@@ -197,7 +196,8 @@ public class ChatMate {
         donationApiStore,
         customGuiNewChat,
         config,
-        chatMateHudStore);
+        chatMateHudStore,
+        statusService);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
     ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
 

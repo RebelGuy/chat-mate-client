@@ -2,21 +2,30 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHud;
 
 import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.gui.Interactive.ContainerElement;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.TimeframeSelectionElement;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.TimeframeSelectionElement.TimeframeModel;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
+import dev.rebel.chatmate.gui.Interactive.Layout;
+import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+
+import java.util.function.Supplier;
 
 public class TotalDonationsElement extends ContainerElement {
   private final LabelElement totalDonationsElement;
-  private final Long startTime;
+  private final Supplier<Long> startTime;
 
-  public TotalDonationsElement(InteractiveContext context, IElement parent, Long startTime) {
+  public TotalDonationsElement(InteractiveContext context, IElement parent, Supplier<Long> startTime) {
     super(context, parent, LayoutMode.BLOCK);
+    super.setSizingMode(SizingMode.FILL);
     this.startTime = startTime;
 
     this.totalDonationsElement = new LabelElement(context, this)
         .setText(this.getTotalDonationText())
-        .setOverflow(LabelElement.TextOverflow.SPLIT);
+        .setOverflow(LabelElement.TextOverflow.SPLIT)
+        .setSizingMode(SizingMode.FILL)
+        .cast();
 
     super.addElement(this.totalDonationsElement);
   }
@@ -25,8 +34,9 @@ public class TotalDonationsElement extends ContainerElement {
     this.totalDonationsElement.setFontScale(scale);
   }
 
-  public void setTextAlignment(LabelElement.TextAlignment textAlignment) {
+  public TotalDonationsElement setTextAlignment(LabelElement.TextAlignment textAlignment) {
     this.totalDonationsElement.setAlignment(textAlignment);
+    return this;
   }
 
   @Override
@@ -41,7 +51,7 @@ public class TotalDonationsElement extends ContainerElement {
   private String getTotalDonationText() {
     float totalDonations = 0;
     for (PublicDonation donation : super.context.donationApiStore.getDonations()) {
-      if (donation.time > this.startTime) {
+      if (donation.time >= this.startTime.get()) {
         totalDonations += donation.amount;
       }
     }

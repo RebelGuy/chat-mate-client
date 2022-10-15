@@ -1,37 +1,112 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHud;
 
-import dev.rebel.chatmate.gui.Interactive.BlockElement;
+import dev.rebel.chatmate.api.publicObjects.status.PublicLivestreamStatus;
+import dev.rebel.chatmate.gui.CustomGuiChat;
+import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
-import dev.rebel.chatmate.gui.Interactive.IElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.AppearanceElement;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.AppearanceElement.AppearanceModel;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.ContentSelectionElement;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.ContentSelectionElement.ContentModel;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.TimeframeSelectionElement;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.TimeframeSelectionElement.TimeframeModel;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.LabelElement;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
+import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class DonationHudElement extends HudElement {
-  private final TotalDonationsElement totalDonationsElement;
+  private final @Nullable TotalDonationsElement totalDonationsElement;
+  private final @Nullable HighestDonationsElement highestDonationsElement;
+//  private final @Nullable LatestDonationsElement latestDonationsElement;
   private final IElement container;
+  private final TimeframeModel timeframeModel;
+  private final ContentModel contentModel;
+  private final AppearanceModel appearanceModel;
+  private final StatusService statusService;
 
-  public DonationHudElement(InteractiveContext context, IElement parent, long startTime) {
+  public DonationHudElement(InteractiveContext context, IElement parent, StatusService statusService, TimeframeModel timeframeModel, ContentModel contentModel, AppearanceModel appearanceModel) {
     super(context, parent);
-    super.setMaxWidth(gui(200));
+    super.setMaxWidth(gui(130));
     super.setCanDrag(true);
     super.setCanScale(true);
+    super.setHudElementFilter(
+        new HudFilters.HudFilterWhitelistNoScreen(),
+        new HudFilters.HudFilterScreenWhitelist(CustomGuiChat.class),
+        new HudFilters.HudFilterInteractiveScreenTypeBlacklist(InteractiveScreenType.DASHBOARD, InteractiveScreenType.MODAL)
+    );
 
-    this.totalDonationsElement = new TotalDonationsElement(context, this, startTime);
+    // set anchors to middle because the box size might change significantly when content changes, and this keeps it somewhat uniform
+    super.setContentResizeAnchor(Anchor.MIDDLE);
+    super.setScrollResizeAnchor(Anchor.MIDDLE);
+
+    this.statusService = statusService;
+    this.timeframeModel = timeframeModel;
+    this.contentModel = contentModel;
+    this.appearanceModel = appearanceModel;
+
+    this.totalDonationsElement = contentModel.showTotal
+        ? new TotalDonationsElement(context, this, this::getStartTime)
+            .setTextAlignment(this.getTextAlignment())
+            .setMargin(new RectExtension(ZERO, gui(4)))
+            .cast()
+        : null;
+    this.highestDonationsElement = contentModel.showHighest
+        ? new HighestDonationsElement(context, this, this::getStartTime, contentModel.highestN)
+        .setTextAlignment(this.getTextAlignment())
+        .setMargin(new RectExtension(ZERO, gui(4)))
+        .cast()
+        : null;
+//    this.latestDonationsElement = contentModel.showHighest ? new LatestDonationsElement(context, this, this::getStartTime, contentModel.highestN) : null;
 
     this.container = new BlockElement(context, this)
-        .addElement(this.totalDonationsElement);
+        .addElement(this.totalDonationsElement)
+        .addElement(this.highestDonationsElement);
+//        .addElement(this.latestDonationsElement);
+  }
+
+  private long getStartTime() {
+    if (this.timeframeModel.thisStreamOnly) {
+      @Nullable PublicLivestreamStatus status = this.statusService.getLivestreamStatus();
+      if (status == null || status.livestream.startTime == null) {
+        return Long.MAX_VALUE;
+      } else {
+        return status.livestream.startTime;
+      }
+    } else {
+      return this.timeframeModel.since;
+    }
+  }
+
+  private LabelElement.TextAlignment getTextAlignment() {
+    if (this.appearanceModel.textAlignment == AppearanceElement.TextAlignment.LEFT) {
+      return LabelElement.TextAlignment.LEFT;
+    } else if (this.appearanceModel.textAlignment == AppearanceElement.TextAlignment.CENTRE) {
+      return LabelElement.TextAlignment.CENTRE;
+    } else if (this.appearanceModel.textAlignment == AppearanceElement.TextAlignment.RIGHT) {
+      return LabelElement.TextAlignment.RIGHT;
+    }
+
+    return LabelElement.TextAlignment.LEFT;
   }
 
   @Override
   protected void onElementRescaled(float oldScale, float newScale) {
-    this.totalDonationsElement.setScale(newScale);
+    if (this.totalDonationsElement != null) {
+      this.totalDonationsElement.setScale(newScale);
+    }
+    if (this.highestDonationsElement != null) {
+      this.highestDonationsElement.setScale(newScale);
+    }
   }
 
   @Override
@@ -49,15 +124,22 @@ public class DonationHudElement extends HudElement {
     this.container.setBox(box);
 
     LabelElement.TextAlignment textAlignment;
-    if (super.autoAnchor == Anchor.TOP_LEFT || super.autoAnchor == Anchor.LEFT_CENTRE || super.autoAnchor == Anchor.BOTTOM_LEFT) {
-      textAlignment = LabelElement.TextAlignment.LEFT;
-    } else if (super.autoAnchor == Anchor.TOP_CENTRE || super.autoAnchor == Anchor.MIDDLE || super.autoAnchor == Anchor.BOTTOM_CENTRE) {
-      textAlignment = LabelElement.TextAlignment.CENTRE;
-    } else {
-      textAlignment = LabelElement.TextAlignment.RIGHT;
-    }
+    if (this.appearanceModel.textAlignment == AppearanceElement.TextAlignment.AUTO) {
+      if (super.autoAnchor == Anchor.TOP_LEFT || super.autoAnchor == Anchor.LEFT_CENTRE || super.autoAnchor == Anchor.BOTTOM_LEFT) {
+        textAlignment = LabelElement.TextAlignment.LEFT;
+      } else if (super.autoAnchor == Anchor.TOP_CENTRE || super.autoAnchor == Anchor.MIDDLE || super.autoAnchor == Anchor.BOTTOM_CENTRE) {
+        textAlignment = LabelElement.TextAlignment.CENTRE;
+      } else {
+        textAlignment = LabelElement.TextAlignment.RIGHT;
+      }
 
-    this.totalDonationsElement.setTextAlignment(textAlignment);
+      if (this.totalDonationsElement != null) {
+        this.totalDonationsElement.setTextAlignment(textAlignment);
+      }
+      if (this.highestDonationsElement != null) {
+        this.highestDonationsElement.setTextAlignment(textAlignment);
+      }
+    }
   }
 
   @Override
