@@ -143,7 +143,7 @@ public class LabelElement extends SingleElement {
   public void onMouseEnter(Events.IEvent<MouseEventData.In> e) {
     if (this.onClick != null) {
       e.stopPropagation();
-      super.context.cursorService.toggleCursor(CursorService.CursorType.CLICK, this);
+      super.context.cursorService.toggleCursor(CursorService.CursorType.CLICK, this, super.getDepth());
     }
   }
 

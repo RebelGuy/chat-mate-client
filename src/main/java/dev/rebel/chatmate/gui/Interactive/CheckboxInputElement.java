@@ -12,15 +12,22 @@ import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.In;
 import dev.rebel.chatmate.util.Collections;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
+
+import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class CheckboxInputElement extends InputElement {
   private final ContainerElement container;
@@ -31,8 +38,11 @@ public class CheckboxInputElement extends InputElement {
   private final AnimatedBool isChecked;
 
   private float scale;
-  private @Nullable Consumer<Boolean> onChange;
+  private List<Consumer<Boolean>> onChangeListeners;
   private Colour labelColour;
+  private @Nullable Colour checkColour;
+  private CheckboxAppearance checkboxAppearance;
+  private BiFunction<Boolean, Boolean, Boolean> willSetCheckedValidator;
 
   public CheckboxInputElement(InteractiveContext context, IElement parent) {
     super(context, parent);
@@ -52,8 +62,10 @@ public class CheckboxInputElement extends InputElement {
         .addElement(this.labelElement);
 
     this.scale = 1;
-    this.onChange = null;
+    this.onChangeListeners = new ArrayList<>();
     this.labelColour = Colour.WHITE;
+    this.checkColour = null;
+    this.checkboxAppearance = CheckboxAppearance.CROSS;
     this.isHovering = new AnimatedBool(200L, false);
     this.isFocused = new AnimatedBool(100L, false);
     this.isChecked = new AnimatedBool(100L, false);
@@ -61,12 +73,23 @@ public class CheckboxInputElement extends InputElement {
 
   /** Does not fire the onChange callback. */
   public CheckboxInputElement setChecked(boolean checked) {
-    this.isChecked.setImmediate(checked);
+    return this.setChecked(checked, false);
+  }
+
+  public CheckboxInputElement setChecked(boolean checked, boolean simulateClick) {
+    if (simulateClick) {
+      if (this.getChecked() != checked) {
+        this.onFlipChecked(false);
+      }
+    } else {
+      this.isChecked.setImmediate(checked);
+    }
+
     return this;
   }
 
   public CheckboxInputElement onCheckedChanged(Consumer<Boolean> onChange) {
-    this.onChange = onChange;
+    this.onChangeListeners.add(onChange);
     return this;
   }
 
@@ -91,6 +114,26 @@ public class CheckboxInputElement extends InputElement {
     return this;
   }
 
+  public CheckboxInputElement setCheckboxAppearance(CheckboxAppearance appearance) {
+    this.checkboxAppearance = appearance;
+    return this;
+  }
+
+  /** If null, falls back to the text colour. */
+  public CheckboxInputElement setCheckColour(@Nullable Colour colour) {
+    this.checkColour = colour;
+    return this;
+  }
+
+  /** Provide a callback that will be called when the checked state is about to change due to user input.
+   * The first argument is the updated check value. The second argument specifies whether we are changing the state
+   * due to user input (if false, implies programmatic user input).
+   * If the callback returns false, the input will be blocked and the checkbox state will not change. */
+  public CheckboxInputElement setValidator(BiFunction<Boolean, Boolean, Boolean> willSetCheckedValidator) {
+    this.willSetCheckedValidator = willSetCheckedValidator;
+    return this;
+  }
+
   @Override
   public List<IElement> getChildren() {
     return Collections.list(this.container);
@@ -108,7 +151,7 @@ public class CheckboxInputElement extends InputElement {
 
   @Override
   public void onMouseDown(IEvent<In> e) {
-    this.onFlipChecked();
+    this.onFlipChecked(true);
     e.stopPropagation();
   }
 
@@ -125,7 +168,7 @@ public class CheckboxInputElement extends InputElement {
   @Override
   public void onKeyDown(IEvent<KeyboardEventData.In> e) {
     if (e.getData().eventKey == Keyboard.KEY_SPACE) {
-      this.onFlipChecked();
+      this.onFlipChecked(true);
       e.stopPropagation();
     }
   }
@@ -141,15 +184,17 @@ public class CheckboxInputElement extends InputElement {
     return this;
   }
 
-  private void onFlipChecked() {
+  private void onFlipChecked(boolean isUserInput) {
     if (!super.getEnabled()) {
       return;
     }
 
-    boolean isChecked = this.isChecked.flip();
-    if (this.onChange != null) {
-      this.onChange.accept(isChecked);
+    if (this.willSetCheckedValidator != null && !this.willSetCheckedValidator.apply(!this.getChecked(), isUserInput)) {
+      return;
     }
+
+    boolean isChecked = this.isChecked.flip();
+    this.onChangeListeners.forEach(listener -> listener.accept(isChecked));
   }
 
   @Override
@@ -191,11 +236,12 @@ public class CheckboxInputElement extends InputElement {
 
     @Override
     protected void renderElement() {
-      Dim cornerRadius = gui(0);
+      Dim cornerRadius = CheckboxInputElement.this.checkboxAppearance == CheckboxAppearance.CROSS ? ZERO : this.boxSize.over(2);
       Dim shadowDistance = gui(1 + CheckboxInputElement.this.isFocused.getFrac());
       Colour shadowColour = Colour.lerp(Colour.BLACK, Colour.CYAN.withBrightness(0.5f), CheckboxInputElement.this.isFocused.getFrac());
       Colour borderColour = this.borderColour;
       Colour background = Colour.BLACK.withAlpha(CheckboxInputElement.this.isHovering.getFrac() * 0.4f);
+      Colour checkColour = firstOrNull(CheckboxInputElement.this.checkColour, CheckboxInputElement.this.labelElement.getFont().getColour());
 
       if (!CheckboxInputElement.super.getEnabled()) {
         background = Colour.TRANSPARENT;
@@ -204,14 +250,26 @@ public class CheckboxInputElement extends InputElement {
       }
 
       Dim borderWidth = super.getBorder().left;
+      GL11.glEnable(GL11.GL_POLYGON_SMOOTH);
       RendererHelpers.drawRect(0, super.getContentBox(), background, borderWidth, borderColour, cornerRadius, shadowDistance, shadowColour);
+      GL11.glDisable(GL11.GL_POLYGON_SMOOTH);
 
       RendererHelpers.withMapping(super.getContentBox().getCentre(), CheckboxInputElement.this.isChecked.getFrac() * CheckboxInputElement.this.scale, () -> {
-        FontEngine font = super.context.fontEngine;
-        Dim height = font.FONT_HEIGHT_DIM;
-        Dim width = font.getCharWidth('x');
-        font.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), CheckboxInputElement.this.labelElement.getFont());
+        if (CheckboxInputElement.this.checkboxAppearance == CheckboxAppearance.CROSS) {
+          FontEngine fontEngine = super.context.fontEngine;
+          Dim height = fontEngine.FONT_HEIGHT_DIM;
+          Dim width = fontEngine.getCharWidth('x');
+          Font font = CheckboxInputElement.this.labelElement.getFont().withColour(checkColour);
+          fontEngine.drawString("x", -width.over(2).minus(screen(1)).getGui(), -height.over(2).getGui(), font);
+        } else {
+          int zIndex = super.getEffectiveZIndex();
+          DimPoint centre = new DimPoint(ZERO, ZERO);
+          Dim radius = cornerRadius.minus(borderWidth).minus(gui(1)); // gap of 1 GUI
+          RendererHelpers.drawCircle(zIndex, centre, radius, checkColour);
+        }
       });
     }
   }
+
+  public enum CheckboxAppearance { CROSS, RADIO }
 }

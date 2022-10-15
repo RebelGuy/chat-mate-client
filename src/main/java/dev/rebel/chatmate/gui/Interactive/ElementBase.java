@@ -127,7 +127,7 @@ public abstract class ElementBase implements IElement {
     if (this.cursor == null || !this.shouldUseCursor()) {
       this.context.cursorService.untoggleCursor(this);
     } else {
-      this.context.cursorService.toggleCursor(this.cursor, this);
+      this.context.cursorService.toggleCursor(this.cursor, this, this.getDepth());
     }
   }
 
@@ -429,6 +429,11 @@ public abstract class ElementBase implements IElement {
       this.onInvalidateSize();
     }
     return this;
+  }
+
+  @Override
+  public int getDepth() {
+    return this.parent.getDepth() + 1;
   }
 
   @Override

@@ -200,6 +200,11 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public int getDepth() {
+      return 0;
+    }
+
+    @Override
     public @Nullable DimRect getVisibleBox() {
       return null;
     }

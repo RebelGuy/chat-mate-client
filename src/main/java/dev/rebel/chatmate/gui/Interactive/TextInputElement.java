@@ -88,6 +88,7 @@ public class TextInputElement extends InputElement {
       Dim relX = e.getData().mousePositionData.x.minus(this.getContentBox().getX());
       String textBeforeCursor = this.fontEngine.trimStringToWidth(this.getVisibleText(), (int)(relX.getGui() / this.textScale)); // i.e. do this operation at 100% scale
       this.setCursorIndex(this.scrollOffsetIndex + textBeforeCursor.length());
+      e.stopPropagation();
     }
   }
 
@@ -551,11 +552,12 @@ public class TextInputElement extends InputElement {
     GlStateManager.enableTexture2D();
   }
 
-  public void setMaxStringLength(int maxStringLength) {
+  public TextInputElement setMaxStringLength(int maxStringLength) {
     this.maxStringLength = maxStringLength;
     if (this.text.length() > maxStringLength) {
       this.text = this.text.substring(0, maxStringLength);
     }
+    return this;
   }
 
   public void setTextColor(Colour enabledColour) {

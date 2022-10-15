@@ -46,7 +46,6 @@ public abstract class InputElement extends SingleElement {
       return this;
     }
 
-    this.setFocusable(this.getEnabled());
     super.updateCursor();
 
     return this;

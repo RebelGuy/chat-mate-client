@@ -140,7 +140,7 @@ public class SidebarElement extends ContainerElement {
     @Override
     public void onMouseEnter(IEvent<In> e) {
       this.isHovering.set(true);
-      super.context.cursorService.toggleCursor(CursorType.CLICK, this);
+      super.context.cursorService.toggleCursor(CursorType.CLICK, this, super.getDepth());
     }
 
     @Override

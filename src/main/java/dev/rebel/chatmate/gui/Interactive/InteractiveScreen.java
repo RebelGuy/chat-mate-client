@@ -675,6 +675,9 @@ public class InteractiveScreen extends Screen implements IElement {
   public IElement setZIndex(int zIndex) { return this; }
 
   @Override
+  public int getDepth() { return 0; }
+
+  @Override
   public @Nullable DimRect getVisibleBox() { return null; }
 
   @Override

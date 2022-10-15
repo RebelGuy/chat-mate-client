@@ -108,7 +108,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
 
     public final CheckboxInputElement separatePlatformsElement;
     public final CheckboxInputElement showPlatformIconElement;
-    public final DropdownSelectionElement iconLocationDropdown;
+    public final DropdownSelectionElement<PlatformIconPosition> iconLocationDropdown;
 
     private final List<Tuple2<PlatformIconPosition, LabelElement>> selectionLabels;
 
@@ -144,16 +144,16 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
         LabelElement label = new LabelElement(context, this)
             .setText(toSentenceCase(position.toString()))
             .setFontScale(SCALE)
-            .setOnClick(() -> { this.onClickSelection(position); this.iconLocationDropdown.dropdownMenu.setVisible(false); })
             .setPadding(new RectExtension(gui(3), gui(1)))
             .setSizingMode(SizingMode.FILL)
             .cast();
         this.selectionLabels.add(new Tuple2<>(position, label));
-        this.iconLocationDropdown.dropdownMenu.addOption(new BackgroundElement(context, this, label)
-            .setCornerRadius(gui(2))
-            .setHoverColour(Colour.GREY75.withAlpha(0.2f))
-            .setMargin(new RectExtension(gui(1), gui(1)))
-        );
+        this.iconLocationDropdown.addOption(
+            label,
+            position,
+            this::onClickSelection,
+            (el, selected) -> el.setColour(selected ? Colour.LIGHT_YELLOW : Colour.WHITE),
+            pos -> toSentenceCase(pos.toString()));
       }
 
       super.setContent(new BlockElement(context, this)
@@ -171,8 +171,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
       this.setExpanded(eventIn.data.enabled);
       this.showPlatformIconElement.setEnabled(this, eventIn.data.separatePlatforms);
       this.iconLocationDropdown.setEnabled(this, eventIn.data.separatePlatforms && eventIn.data.showPlatformIcon);
-      this.iconLocationDropdown.label.setText(toSentenceCase(eventIn.data.platformIconPosition.toString()));
-      this.selectionLabels.forEach(pair -> pair._2.setColour(pair._1 == eventIn.data.platformIconPosition ? Colour.LIGHT_YELLOW : Colour.WHITE));
+      this.iconLocationDropdown.setSelection(eventIn.data.platformIconPosition);
 
       return new ConfigEventData.Out<>();
     }

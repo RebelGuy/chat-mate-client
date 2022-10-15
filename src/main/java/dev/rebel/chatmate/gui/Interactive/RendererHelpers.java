@@ -349,6 +349,39 @@ public class RendererHelpers {
     GlStateManager.popMatrix();
   }
 
+  public static void drawCircle(int zLevel, DimPoint centre, Dim radius, Colour colour) {
+    // to make it look smooth, draw as many lines as required so that the maximum line length does not exceed this value
+    float maxLength = 2; // pixels
+    float circumference = radius.times(2).getScreen() * (float)Math.PI;
+    float numLines = circumference / maxLength;
+    float increment = 2 * (float)Math.PI / numLines;
+
+    withTranslation(centre, () -> {
+      GlStateManager.disableTexture2D();
+      GlStateManager.enableBlend();
+      GlStateManager.disableAlpha();
+      GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+      GlStateManager.depthMask(false);
+      GL11.glEnable(GL11.GL_POLYGON_SMOOTH); // anti-aliasing
+
+      Tessellator tessellator = Tessellator.getInstance();
+      WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+      worldRenderer.begin(GL_POLYGON, DefaultVertexFormats.POSITION_COLOR); // the final shape is always a convex polygon, so we can draw it in one go
+
+      for (float theta = (float)Math.PI * 2; theta > 0; theta -= increment) { // counterclockwise
+        Dim x = radius.times((float)Math.cos(theta));
+        Dim y = radius.times((float)Math.sin(theta));
+        addVertex(worldRenderer, zLevel, new DimPoint(x, y), colour);
+      }
+      tessellator.draw();
+
+      GL11.glDisable(GL11.GL_POLYGON_SMOOTH);
+      GlStateManager.disableBlend();
+      GlStateManager.enableAlpha();
+      GlStateManager.enableTexture2D();
+    });
+  }
+
   /** Inner radius may be zero. Radians delta must be strictly positive. At the moment, attempting to draw a complete circle will result in undefined behaviour. */
   public static void drawPartialCircle(int zLevel, DimPoint centre, Dim innerRadius, Dim outerRadius, float radiansStart, float radiansEnd, Colour innerColour, Colour outerColour) {
     List<Line> outerLines = getPartialCircleArcLines(centre, outerRadius, radiansStart, radiansEnd, null); // counter-clockwise
@@ -416,7 +449,7 @@ public class RendererHelpers {
     Dim arcLength = radius.times(2).times(pi).times(radiansDelta / (2 * pi));
 
     // to make it look smooth, draw as many lines as required so that the maximum line length does not exceed this value
-    Dim maxLength = arcLength.setScreen(5);
+    Dim maxLength = arcLength.setScreen(2);
     int requiredLines = numLines == null ? (int)Math.ceil(arcLength.over(maxLength)) : numLines;
     float radiansPerLine = radiansDelta / requiredLines;
 

@@ -53,6 +53,8 @@ public interface IElement {
   int getEffectiveZIndex();
   IElement setZIndex(int zIndex);
 
+  int getDepth();
+
   // if defined, any and all visual content of this element, and all its children, will be clipped if exceeding this box
   @Nullable DimRect getVisibleBox();
   IElement setVisibleBox(@Nullable DimRect visibleBox);
