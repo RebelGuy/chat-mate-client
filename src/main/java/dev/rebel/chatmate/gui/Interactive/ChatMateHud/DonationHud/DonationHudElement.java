@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHud;
 
+import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.api.publicObjects.status.PublicLivestreamStatus;
 import dev.rebel.chatmate.gui.CustomGuiChat;
 import dev.rebel.chatmate.gui.Interactive.*;
@@ -7,9 +8,7 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters;
 import dev.rebel.chatmate.gui.Interactive.DonationHudModal.AppearanceElement;
 import dev.rebel.chatmate.gui.Interactive.DonationHudModal.AppearanceElement.AppearanceModel;
-import dev.rebel.chatmate.gui.Interactive.DonationHudModal.ContentSelectionElement;
 import dev.rebel.chatmate.gui.Interactive.DonationHudModal.ContentSelectionElement.ContentModel;
-import dev.rebel.chatmate.gui.Interactive.DonationHudModal.TimeframeSelectionElement;
 import dev.rebel.chatmate.gui.Interactive.DonationHudModal.TimeframeSelectionElement.TimeframeModel;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
@@ -22,12 +21,11 @@ import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.function.Supplier;
 
 public class DonationHudElement extends HudElement {
   private final @Nullable TotalDonationsElement totalDonationsElement;
-  private final @Nullable HighestDonationsElement highestDonationsElement;
-//  private final @Nullable LatestDonationsElement latestDonationsElement;
+  private final @Nullable DonationListElement highestDonationsElement;
+  private final @Nullable DonationListElement latestDonationsElement;
   private final IElement container;
   private final TimeframeModel timeframeModel;
   private final ContentModel contentModel;
@@ -44,8 +42,9 @@ public class DonationHudElement extends HudElement {
         new HudFilters.HudFilterScreenWhitelist(CustomGuiChat.class),
         new HudFilters.HudFilterInteractiveScreenTypeBlacklist(InteractiveScreenType.DASHBOARD, InteractiveScreenType.MODAL)
     );
+    super.setDefaultPosition(context.dimFactory.getMinecraftRect().getCentre(), HudElement.Anchor.MIDDLE);
 
-    // set anchors to middle because the box size might change significantly when content changes, and this keeps it somewhat uniform
+    // set anchors to middle because the box size might change significantly when content changes, and this keeps it somewhat uniform.
     super.setContentResizeAnchor(Anchor.MIDDLE);
     super.setScrollResizeAnchor(Anchor.MIDDLE);
 
@@ -61,17 +60,30 @@ public class DonationHudElement extends HudElement {
             .cast()
         : null;
     this.highestDonationsElement = contentModel.showHighest
-        ? new HighestDonationsElement(context, this, this::getStartTime, contentModel.highestN)
+        ? new DonationListElement(context, this, this::getStartTime, () -> super.currentScale, contentModel.highestN, "Highest donations:", this::sortDonationsByAmount)
         .setTextAlignment(this.getTextAlignment())
         .setMargin(new RectExtension(ZERO, gui(4)))
         .cast()
         : null;
-//    this.latestDonationsElement = contentModel.showHighest ? new LatestDonationsElement(context, this, this::getStartTime, contentModel.highestN) : null;
+    this.latestDonationsElement = contentModel.showLatest
+        ? new DonationListElement(context, this, this::getStartTime, () -> super.currentScale, contentModel.latestN, "Latest donations:", this::sortDonationsByTime)
+        .setTextAlignment(this.getTextAlignment())
+        .setMargin(new RectExtension(ZERO, gui(4)))
+        .cast()
+        : null;
 
     this.container = new BlockElement(context, this)
         .addElement(this.totalDonationsElement)
-        .addElement(this.highestDonationsElement);
-//        .addElement(this.latestDonationsElement);
+        .addElement(this.highestDonationsElement)
+        .addElement(this.latestDonationsElement);
+  }
+
+  private List<PublicDonation> sortDonationsByAmount(List<PublicDonation> donations) {
+    return Collections.reverse(Collections.orderBy(donations, d -> d.amount));
+  }
+
+  private List<PublicDonation> sortDonationsByTime(List<PublicDonation> donations) {
+    return Collections.reverse(Collections.orderBy(donations, d -> d.time));
   }
 
   private long getStartTime() {
@@ -107,6 +119,9 @@ public class DonationHudElement extends HudElement {
     if (this.highestDonationsElement != null) {
       this.highestDonationsElement.setScale(newScale);
     }
+    if (this.latestDonationsElement != null) {
+      this.latestDonationsElement.setScale(newScale);
+    }
   }
 
   @Override
@@ -138,6 +153,9 @@ public class DonationHudElement extends HudElement {
       }
       if (this.highestDonationsElement != null) {
         this.highestDonationsElement.setTextAlignment(textAlignment);
+      }
+      if (this.latestDonationsElement != null) {
+        this.latestDonationsElement.setTextAlignment(textAlignment);
       }
     }
   }
