@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -18,6 +19,7 @@ import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.opengl.GL11;
+import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.awt.image.BufferedImage;
@@ -346,6 +348,14 @@ public class FontEngine {
 
   public float drawString(String text, float x, float y, Font baseFont) {
     return this.drawString(text, this.dimFactory.fromGui(x), this.dimFactory.fromGui(y), baseFont).getGui();
+  }
+
+  /** Returns the new x-position of the cursor. */
+  public Dim drawString(List<Tuple2<String, Font>> formattedText, Dim x, Dim y) {
+    for (Tuple2<String, Font> text : formattedText) {
+      x = this.drawString(text._1, x, y, text._2);
+    }
+    return x;
   }
 
   /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor. */

@@ -71,6 +71,40 @@ public class Layout {
       );
     }
 
+    public RectExtension left(Dim left) {
+      return new RectExtension(left, this.right, this.top, this.bottom);
+    }
+
+    public RectExtension right(Dim right) {
+      return new RectExtension(this.left, right, this.top, this.bottom);
+    }
+
+    public RectExtension top(Dim top) {
+      return new RectExtension(this.left, this.right, top, this.bottom);
+    }
+
+    public RectExtension bottom(Dim bottom) {
+      return new RectExtension(this.left, this.right, this.top, bottom);
+    }
+
+    // the static method names cannot be the same as the instance method names :/
+
+    public static RectExtension fromLeft(Dim left) {
+      return new RectExtension(left, left.setGui(0), left.setGui(0), left.setGui(0));
+    }
+
+    public static RectExtension fromRight(Dim right) {
+      return new RectExtension(right.setGui(0), right, right.setGui(0), right.setGui(0));
+    }
+
+    public static RectExtension fromTop(Dim top) {
+      return new RectExtension(top.setGui(0), top.setGui(0), top, top.setGui(0));
+    }
+
+    public static RectExtension fromBottom(Dim bottom) {
+      return new RectExtension(bottom.setGui(0), bottom.setGui(0), bottom.setGui(0), bottom);
+    }
+
     @Override
     public String toString() {
       return String.format("l=%s, r=%s, t=%s, b=%s", this.left.toString(), this.right.toString(), this.top.toString(), this.bottom.toString());

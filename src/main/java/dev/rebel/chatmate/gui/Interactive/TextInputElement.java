@@ -14,6 +14,7 @@ import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.events.models.KeyboardEventData.In.KeyModifier;
 import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -22,12 +23,15 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.MathHelper;
 import org.lwjgl.input.Keyboard;
+import scala.Tuple2;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
@@ -45,6 +49,7 @@ public class TextInputElement extends InputElement {
   private Colour disabledColour = new Colour(112, 112, 112);
   private @Nullable Consumer<String> onTextChange;
   private Predicate<String> validator = text -> true;
+  private @Nullable Function<String, List<Tuple2<String, Font>>> textFormatter = null;
   private @Nullable String suffix = null;
   private @Nullable String placeholder = null;
 
@@ -165,6 +170,12 @@ public class TextInputElement extends InputElement {
 
   public TextInputElement setValidator(Predicate<String> validator) {
     this.validator = validator;
+    return this;
+  }
+
+  /** Allows formatting sections of the string. It is required that the total string obtained by concatenating the entries in the returned list is equivalent to the input string. */
+  public TextInputElement setTextFormatter(Function<String, List<Tuple2<String, Font>>> textFormatter) {
+    this.textFormatter = textFormatter;
     return this;
   }
 
@@ -446,26 +457,28 @@ public class TextInputElement extends InputElement {
     Dim bottom = this.getContentBox().getBottom();
     Dim right = left.plus(width);
 
-    Colour colour = super.getEnabled() ? this.enabledColour : this.disabledColour;
-    Font font = new Font().withColour(colour).withShadow(new Shadow(super.context.dimFactory));
+    String trimmedString = this.fontEngine.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), (int)(width.getGui() / this.textScale)); // i.e. perform this operation at 100% scale
+    int visibleStringLength = trimmedString.length();
+    int trimmedStringBegin = this.scrollOffsetIndex;
+    int trimmedStringEnd = trimmedStringBegin + visibleStringLength;
+
     int cursorStartIndex = this.cursorIndex - this.scrollOffsetIndex;
     int cursorEndIndex = this.selectionEndIndex - this.scrollOffsetIndex;
-    String string = this.fontEngine.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), (int)(width.getGui() / this.textScale)); // i.e. perform this operation at 100% scale
-    boolean cursorIsWithinRange = cursorStartIndex >= 0 && cursorStartIndex <= string.length();
+    boolean cursorIsWithinRange = cursorStartIndex >= 0 && cursorStartIndex <= visibleStringLength;
     boolean drawCursor = this.context.focusedElement == this && (new Date().getTime() % 1000 < 500) && cursorIsWithinRange;
     Dim currentX = left;
-    if (cursorEndIndex > string.length()) {
-      cursorEndIndex = string.length();
+    if (cursorEndIndex > visibleStringLength) {
+      cursorEndIndex = visibleStringLength;
     }
 
     // draw part before cursor
-    if (string.length() > 0) {
-      String visibleString = cursorIsWithinRange ? string.substring(0, cursorStartIndex) : string;
+    if (visibleStringLength > 0) {
+      List<Tuple2<String, Font>> visibleString = cursorIsWithinRange ? this.getFormattedString(0, cursorStartIndex) : this.getFormattedString(0, null);
 
       // thanks java
       State<Dim> newX = new State<>(ZERO);
       RendererHelpers.withMapping(new DimPoint(left, top), this.textScale, () -> {
-        Dim returnedValue = this.fontEngine.drawString(visibleString, ZERO, ZERO, font);
+        Dim returnedValue = this.fontEngine.drawString(visibleString, ZERO, ZERO);
         newX.setState(returnedValue.times(this.textScale));
       });
       currentX = currentX.plus(newX.getState());
@@ -480,9 +493,9 @@ public class TextInputElement extends InputElement {
     }
 
     // draw part after cursor
-    if (string.length() > 0 && cursorIsWithinRange && cursorStartIndex < string.length()) {
+    if (visibleStringLength > 0 && cursorIsWithinRange && cursorStartIndex < visibleStringLength) {
       RendererHelpers.withMapping(new DimPoint(currentX, top), this.textScale, () -> {
-        this.fontEngine.drawString(string.substring(cursorStartIndex), ZERO, ZERO, font);
+        this.fontEngine.drawString(this.getFormattedString(cursorStartIndex, null), ZERO, ZERO);
       });
     }
 
@@ -492,10 +505,51 @@ public class TextInputElement extends InputElement {
 
     // if there is a selection, invert the colours
     if (cursorEndIndex != cursorStartIndex) {
-      Dim leftPad = this.fontEngine.getStringWidthDim(string.substring(0, cursorEndIndex)).times(this.textScale);
+      Dim leftPad = this.fontEngine.getStringWidthDim(trimmedString.substring(0, cursorEndIndex)).times(this.textScale);
       Dim x2 = left.plus(leftPad);
       this.invertRegionColours(x1, top.minus(gui(1)), x2.minus(gui(1)), bottom.plus(gui(1)));
     }
+  }
+
+  /** endIndex is exclusive. */
+  private List<Tuple2<String, Font>> getFormattedString(int beginIndex, @Nullable Integer endIndex) {
+    String text = this.text;
+    if (endIndex == null) {
+      endIndex = text.length();
+    }
+
+    if (this.textFormatter == null) {
+      Colour colour = super.getEnabled() ? this.enabledColour : this.disabledColour;
+      Font font = new Font().withColour(colour).withShadow(new Shadow(super.context.dimFactory));
+      text = text.substring(beginIndex, endIndex);
+      return Collections.list(new Tuple2<>(text, font));
+    }
+
+    List<Tuple2<String, Font>> result = new ArrayList<>();
+    int i = 0;
+    for (Tuple2<String, Font> formattedText : this.textFormatter.apply(text)) {
+      String fullChunk = formattedText._1;
+      int chunkBegin = i;
+      int chunkEnd = i + fullChunk.length();
+
+      // set substring indices
+      if (chunkBegin < beginIndex) {
+        chunkBegin = beginIndex;
+      }
+      if (chunkEnd > endIndex) {
+        chunkEnd = endIndex;
+      }
+      if (chunkEnd <= chunkBegin) {
+        i += fullChunk.length();
+        continue;
+      }
+
+      String partialChunk = fullChunk.substring(chunkBegin - i, chunkEnd - i);
+      result.add(new Tuple2<>(partialChunk, formattedText._2));
+      i += fullChunk.length();
+    }
+
+    return result;
   }
 
   private void drawCursor(boolean interiorCursor, Dim left, Dim top) {

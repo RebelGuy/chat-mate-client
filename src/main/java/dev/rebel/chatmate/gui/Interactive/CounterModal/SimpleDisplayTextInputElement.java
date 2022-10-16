@@ -24,27 +24,23 @@ public class SimpleDisplayTextInputElement extends BlockElement {
         .setMinWidth(gui(10))
         .cast();
 
-    IElement titleElements = new SideBySideElement(context, this)
-        .setElementPadding(gui(10))
-        .addElement(1,
-            new LabelElement(context, this)
-                .setText("Text:")
-                .setOverflow(TextOverflow.TRUNCATE)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE)
-        )
-        .addElement(3,
-            new InlineElement(context, this)
-                .addElement(this.textInput)
-                .addElement(new IconButtonElement(context, this)
-                    .setImage(Asset.GUI_FX_ICON)
-                    .setOnClick(onSwitchToComplexMode)
-                    .setBorderCornerRadius(gui(2))
-                    .setMaxWidth(gui(12))
-                    .setPadding(new RectExtension(gui(1)))
-                    .setMargin(new RectExtension(gui(4), ZERO, ZERO, ZERO))
-                    .setHorizontalAlignment(HorizontalAlignment.RIGHT)
-                ).setAllowShrink(true) // should be able to put everything into a single inline element...
-        ).setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5)));
+    IElement titleElements = new InlineElement(context, this)
+        .addElement(new LabelElement(context, this)
+            .setText("Text:")
+            .setOverflow(TextOverflow.TRUNCATE)
+            .setVerticalAlignment(VerticalAlignment.MIDDLE)
+            .setMargin(RectExtension.fromRight(gui(10)))
+        ).addElement(this.textInput)
+        .addElement(new IconButtonElement(context, this)
+            .setImage(Asset.GUI_FX_ICON)
+            .setOnClick(onSwitchToComplexMode)
+            .setBorderCornerRadius(gui(2))
+            .setMaxWidth(gui(12))
+            .setPadding(new RectExtension(gui(1)))
+            .setMargin(new RectExtension(gui(4), ZERO, ZERO, ZERO))
+            .setHorizontalAlignment(HorizontalAlignment.RIGHT)
+        ).setAllowShrink(true)
+        .setMargin(RectExtension.fromBottom(gui(5)));
 
     super.addElement(titleElements);
   }
