@@ -473,7 +473,7 @@ public class TextInputElement extends InputElement {
 
     // draw part before cursor
     if (visibleStringLength > 0) {
-      List<Tuple2<String, Font>> visibleString = cursorIsWithinRange ? this.getFormattedString(0, cursorStartIndex) : this.getFormattedString(0, null);
+      List<Tuple2<String, Font>> visibleString = cursorIsWithinRange ? this.getFormattedString(trimmedStringBegin, trimmedStringBegin + cursorStartIndex) : this.getFormattedString(trimmedStringBegin, trimmedStringEnd);
 
       // thanks java
       State<Dim> newX = new State<>(ZERO);
@@ -494,8 +494,9 @@ public class TextInputElement extends InputElement {
 
     // draw part after cursor
     if (visibleStringLength > 0 && cursorIsWithinRange && cursorStartIndex < visibleStringLength) {
+      List<Tuple2<String, Font>> visibleString = this.getFormattedString(trimmedStringBegin + cursorStartIndex, trimmedStringEnd);
       RendererHelpers.withMapping(new DimPoint(currentX, top), this.textScale, () -> {
-        this.fontEngine.drawString(this.getFormattedString(cursorStartIndex, null), ZERO, ZERO);
+        this.fontEngine.drawString(visibleString, ZERO, ZERO);
       });
     }
 
