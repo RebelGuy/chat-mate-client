@@ -278,6 +278,16 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public IElement setMinWidth(@Nullable Dim minWidth) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setMinWidth(minWidth);
+  }
+
+  @Override
+  public @Nullable Dim getMinWidth() {
+    return this.underlyingElement == null ? null : this.underlyingElement.getMinWidth();
+  }
+
+  @Override
   public IElement setTargetHeight(@Nullable Dim height) {
     return this.underlyingElement == null ? this : this.underlyingElement.setTargetHeight(height);
   }

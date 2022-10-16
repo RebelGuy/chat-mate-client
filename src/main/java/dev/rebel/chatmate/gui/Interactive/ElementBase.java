@@ -53,6 +53,7 @@ public abstract class ElementBase implements IElement {
   private @Nullable String tooltip;
   private @Nullable Dim maxWidth;
   private @Nullable Dim maxContentWidth;
+  private @Nullable Dim minWidth;
   private @Nullable Dim targetFullHeight;
   private @Nullable CursorType cursor;
 
@@ -81,6 +82,7 @@ public abstract class ElementBase implements IElement {
     this.tooltip = null;
     this.maxWidth = null;
     this.maxContentWidth = null;
+    this.minWidth = null;
     this.targetFullHeight = null;
     this.cursor = null;
   }
@@ -548,6 +550,20 @@ public abstract class ElementBase implements IElement {
 
   public @Nullable Dim getMaxContentWidth() {
     return this.maxContentWidth;
+  }
+
+  @Override
+  public IElement setMinWidth(@Nullable Dim minWith) {
+    if (!Objects.equals(this.minWidth, minWith)) {
+      this.minWidth = minWith;
+      this.onInvalidateSize();
+    }
+    return this;
+  }
+
+  @Override
+  public @Nullable Dim getMinWidth() {
+    return this.minWidth;
   }
 
   @Override

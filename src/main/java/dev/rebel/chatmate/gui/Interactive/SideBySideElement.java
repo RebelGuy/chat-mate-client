@@ -105,6 +105,6 @@ public class SideBySideElement extends ContainerElement {
     // the last element to the next line.
     // note: don't add `totalPadding` because `elementSizes` includes the special empty elements already.
     Dim effectiveWidth = Dim.sum(Collections.map(elementSizes, el -> el._2.getX()));
-    return super.calculateInlineSize(elementSizes, effectiveWidth);
+    return super.calculateInlineSize(effectiveWidth, elementSizes);
   }
 }

@@ -44,7 +44,7 @@ public class AppearanceElement extends InlineElement {
           (el, selected) -> el.setColour(selected ? Colour.LIGHT_YELLOW : Colour.WHITE),
           alignment -> toSentenceCase(alignment.toString()));
     }
-    this.textAlignmentDropdown.setSelection(TextAlignment.AUTO);
+    this.textAlignmentDropdown.setSelection(TextAlignment.LEFT);
 
     super.addElement(this.label);
     super.addElement(this.textAlignmentDropdown);
@@ -67,6 +67,6 @@ public class AppearanceElement extends InlineElement {
   }
 
   public enum TextAlignment {
-    AUTO, LEFT, CENTRE, RIGHT
+    LEFT, CENTRE, RIGHT, AUTO
   }
 }

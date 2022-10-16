@@ -726,6 +726,12 @@ public class InteractiveScreen extends Screen implements IElement {
   public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) { return null; }
 
   @Override
+  public IElement setMinWidth(@Nullable Dim minWidth) { return this; }
+
+  @Override
+  public @Nullable Dim getMinWidth() { return null; }
+
+  @Override
   public IElement setTargetHeight(@Nullable Dim height) { return null; }
 
   @Override

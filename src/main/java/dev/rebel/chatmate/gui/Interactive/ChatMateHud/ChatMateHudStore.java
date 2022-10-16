@@ -281,6 +281,16 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public IElement setMinWidth(@Nullable Dim minWidth) {
+      return this;
+    }
+
+    @Override
+    public @Nullable Dim getMinWidth() {
+      return null;
+    }
+
+    @Override
     public IElement setTargetHeight(@Nullable Dim height) {
       return null;
     }

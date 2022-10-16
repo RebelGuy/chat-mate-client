@@ -83,6 +83,11 @@ public interface IElement {
   /** If set, the element's content width will never exceed this value. */
   IElement setMaxContentWidth(@Nullable Dim maxContentWidth);
 
+  /** If set (full width), signifies that the element is willing to shrink down up to this size. Not setting this implies that the element wants to take up as much space in the parent as possible. */
+  IElement setMinWidth(@Nullable Dim minWith);
+  /** Full width. */
+  @Nullable Dim getMinWidth();
+
   /** If set, attempts to lock the height of the element's full box. No guarantee can be made that the height won't exceed this value. */
   IElement setTargetHeight(@Nullable Dim height);
   @Nullable Dim getTargetHeight();

@@ -99,6 +99,10 @@ public class Dim {
 
   public static Dim min(Dim a, Dim b) { return a.lte(b) ? a : b; }
 
+  public static Dim min(List<Dim> items) {
+    return Collections.eliminate(items, Dim::min);
+  }
+
   public static Dim clamp(Dim x, Dim min, Dim max) {
     return Dim.min(Dim.max(x, min), max);
   }

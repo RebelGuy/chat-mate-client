@@ -1,6 +1,7 @@
-package dev.rebel.chatmate.gui.Interactive;
+package dev.rebel.chatmate.gui.Interactive.CounterModal;
 
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
+import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -14,9 +15,11 @@ import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
 public class CounterModal extends ModalElement {
   private final CounterHandler counterHandler;
 
-  private TextButtonElement deleteButton;
+  private final SimpleDisplayTextInputElement simpleDisplayTextInputElement;
+  private final ComplexDisplayTextInputElement complexDisplayTextInputElement;
+  private final IElement valueElements;
+  private final TextButtonElement deleteButton;
 
-  private @Nullable String text = null;
   private @Nullable Integer startValue = 0;
   private @Nullable Integer incrementValue = 1;
 
@@ -24,30 +27,13 @@ public class CounterModal extends ModalElement {
     super(context, parent);
     this.name = "CounterModal";
     this.counterHandler = counterHandler;
-  }
 
-  @Override
-  public void onInitialise() {
-    super.onInitialise();
+    this.simpleDisplayTextInputElement = new SimpleDisplayTextInputElement(context, this, () -> this.onSetInputMode(false));
+    this.complexDisplayTextInputElement = new ComplexDisplayTextInputElement(context, this, () -> this.onSetInputMode(true))
+        .setVisible(false)
+        .cast();
 
-    IElement titleElements = new SideBySideElement(context, this)
-        .setElementPadding(gui(10))
-        .addElement(1,
-            new LabelElement(context, this)
-                .setText("Text:")
-                .setOverflow(TextOverflow.TRUNCATE)
-                .setVerticalAlignment(VerticalAlignment.MIDDLE)
-            )
-        .addElement(3,
-            new TextInputElement(context, this)
-                .onTextChange(this::onTextChange)
-                .setTabIndex(0)
-                .setAutoFocus(true)
-            )
-        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
-    );
-
-    IElement valueElements = new SideBySideElement(context, this)
+    this.valueElements = new SideBySideElement(context, this)
         .setElementPadding(gui(40))
         .addElement(0.6f,
             new SideBySideElement(context, this)
@@ -63,7 +49,7 @@ public class CounterModal extends ModalElement {
                         .setTextUnsafe("0")
                         .setTabIndex(1)
                 ).setElementPadding(gui(5))
-            )
+        )
         .addElement(1,
             new SideBySideElement(context, this)
                 .addElement(1,
@@ -78,8 +64,9 @@ public class CounterModal extends ModalElement {
                         .setTextUnsafe("1")
                         .setTabIndex(2)
                 ).setElementPadding(gui(5))
-            )
-        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5)));
+        )
+        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
+    );
 
     this.deleteButton = new TextButtonElement(context, this)
         .setText("Delete existing counter")
@@ -89,12 +76,18 @@ public class CounterModal extends ModalElement {
         .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE)
         .cast();
 
-    super.setBody(new BlockElement(context, this).addElement(titleElements).addElement(valueElements).addElement(deleteButton));
     super.setTitle("Set up Counter");
+    super.setBody(new BlockElement(context, this)
+        .addElement(this.simpleDisplayTextInputElement)
+        .addElement(this.complexDisplayTextInputElement)
+        .addElement(this.valueElements)
+        .addElement(this.deleteButton)
+    );
   }
 
-  private void onTextChange(String newText) {
-    this.text = newText;
+  private void onSetInputMode(boolean isSimple) {
+    this.simpleDisplayTextInputElement.setVisible(isSimple);
+    this.complexDisplayTextInputElement.setVisible(!isSimple);
   }
 
   private void onStartValueChange(String maybeStartValue) {
@@ -152,7 +145,7 @@ public class CounterModal extends ModalElement {
   @Override
   protected void submit(Runnable onSuccess, Consumer<String> onError) {
     try {
-      this.counterHandler.createCounter(this.startValue, this.incrementValue, 1, this.text);
+      this.counterHandler.createCounter(this.startValue, this.incrementValue, 1, this.simpleDisplayTextInputElement.getText());
       onSuccess.run();
       super.onCloseScreen();
 

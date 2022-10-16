@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
+import dev.rebel.chatmate.gui.Interactive.CounterModal.CounterModal;
 import dev.rebel.chatmate.gui.Interactive.DonationHudModal.DonationHudModal;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
