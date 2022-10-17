@@ -58,14 +58,13 @@ public class ComplexDisplayTextInputElement extends BlockElement {
         .setMinWidth(gui(50))
         .cast();
 
-    IElement variablesElement = new InlineElement(context, this)
+    IElement variablesElement = new BlockElement(context, this)
         .addElement(new LabelElement(context, this)
             .setText("Variables:")
-            .setOverflow(TextOverflow.TRUNCATE)
-            .setMargin(RectExtension.fromRight(gui(4)).top(gui(3)))
-        ).addElement(this.userVariablesListElement)
-        .setAllowShrink(true)
-        .setMargin(RectExtension.fromBottom(gui(5)));
+        ).addElement(new ScrollingElement(context, this)
+            .setElement(this.userVariablesListElement)
+            .setMaxHeight(gui(100))
+        ).setMargin(RectExtension.fromBottom(gui(5)));
 
     super.addElement(textElement);
     super.addElement(variablesElement);

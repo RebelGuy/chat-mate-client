@@ -443,6 +443,14 @@ public class TextInputElement extends InputElement {
 
     // make sure the placeholder doesn't clip out of the text box
     DimRect box = super.getPaddingBox();
+    if (super.getVisibleBox() != null) {
+      box = super.getVisibleBox().clamp(box);
+    }
+
+    if (box.getAreaGui() <= 0) {
+      return;
+    }
+
     RendererHelpers.withScissor(box, super.context.dimFactory.getMinecraftSize(), () -> {
       RendererHelpers.withMapping(super.getContentBox().getPosition(), this.textScale, () -> {
         this.context.fontEngine.drawString(this.placeholder, ZERO, ZERO, new Font().withColour(this.disabledColour).withItalic(true));

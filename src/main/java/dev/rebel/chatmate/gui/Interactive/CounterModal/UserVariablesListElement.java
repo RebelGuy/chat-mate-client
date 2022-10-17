@@ -4,45 +4,52 @@ import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class UserVariablesListElement extends BlockElement {
-  private final List<UserVariableElement> userVariableElements;
+  private final List<Tuple2<UserVariable, UserVariableElement>> userVariables;
 
   public UserVariablesListElement(InteractiveContext context, IElement parent) {
     super(context, parent);
 
-    UserVariableElement standardVariable = this.createUserVariableElement(0);
+    UserVariable standardVariable = new UserVariable(0, "", "");
+    UserVariableElement standardVariableElement = this.createUserVariableElement(standardVariable);
 
-    this.userVariableElements = new ArrayList<>();
-    this.userVariableElements.add(standardVariable);
+    this.userVariables = new ArrayList<>();
+    this.userVariables.add(new Tuple2<>(standardVariable, standardVariableElement));
 
-    super.addElement(standardVariable);
+    super.addElement(standardVariableElement);
   }
 
-  private UserVariableElement createUserVariableElement(int index) {
-    return new UserVariableElement(super.context, this, index, this::onAddUserVariable, this::onRemoveUserVariable, this::onUpdate)
+  private UserVariableElement createUserVariableElement(UserVariable variable) {
+    return new UserVariableElement(super.context, this, variable, this::onAddUserVariable, this::onRemoveUserVariable, this::onUpdate)
         .setMargin(new RectExtension(ZERO, gui(2)))
         .cast();
   }
 
-  private void onAddUserVariable(int originatorIndex) {
-    int newIndex = originatorIndex + 1;
-    UserVariableElement newVariable = this.createUserVariableElement(newIndex);
-    this.userVariableElements.add(newIndex, newVariable);
+  private void onAddUserVariable(UserVariable originator) {
+    int newIndex = originator.index + 1;
+    this.userVariables.subList(newIndex, this.userVariables.size()).forEach(var -> var._1.index++);
+
+    UserVariable newVariable = new UserVariable(newIndex, "", "");
+    UserVariableElement newVariableElement = this.createUserVariableElement(newVariable);
+    this.userVariables.add(newIndex, new Tuple2<>(newVariable, newVariableElement));
 
     super.clear();
-    this.userVariableElements.forEach(super::addElement);
+    this.userVariables.forEach(var -> super.addElement(var._2));
   }
 
-  private void onRemoveUserVariable(int originatorIndex) {
-    this.userVariableElements.remove(originatorIndex);
+  private void onRemoveUserVariable(UserVariable originator) {
+    this.userVariables.remove(originator.index);
+    this.userVariables.subList(originator.index, this.userVariables.size()).forEach(var -> var._1.index--);
 
     super.clear();
-    this.userVariableElements.forEach(super::addElement);
+    this.userVariables.forEach(var -> super.addElement(var._2));
   }
 
   private void onUpdate(UserVariable updatedVariable) {
@@ -50,25 +57,22 @@ public class UserVariablesListElement extends BlockElement {
   }
 
   private static class UserVariableElement extends InlineElement {
-    private final int index;
-    private final Consumer<Integer> onAddUserVariable;
-    private final Consumer<Integer> onRemoveUserVariable;
+    private final UserVariable userVariable;
+    private final Consumer<UserVariable> onAddUserVariable;
+    private final Consumer<UserVariable> onRemoveUserVariable;
     private final Consumer<UserVariable> onUpdate;
 
     private final TextInputElement nameInput;
     private final TextInputElement valueInput;
 
-    private UserVariable userVariable;
-
-    public UserVariableElement(InteractiveContext context, IElement parent, int index, Consumer<Integer> onAddUserVariable, Consumer<Integer> onRemoveUserVariable, Consumer<UserVariable> onUpdate) {
+    public UserVariableElement(InteractiveContext context, IElement parent, UserVariable userVariable, Consumer<UserVariable> onAddUserVariable, Consumer<UserVariable> onRemoveUserVariable, Consumer<UserVariable> onUpdate) {
       super(context, parent);
-      this.index = index;
+      this.userVariable = userVariable;
       this.onAddUserVariable = onAddUserVariable;
       this.onRemoveUserVariable = onRemoveUserVariable;
       this.onUpdate = onUpdate;
 
-      this.userVariable = new UserVariable(index, "Var " + index, "0");
-
+      int index = userVariable.index;
       this.nameInput = new TextInputElement(context, this)
           .setPlaceholder(index == 0 ? "x" : null)
           .setEnabled(this, index > 0)
@@ -86,7 +90,7 @@ public class UserVariablesListElement extends BlockElement {
           .withLabelUpdated(label -> label
               .setFontScale(0.75f)
               .setPadding(new RectExtension(ZERO))
-          ).setOnClick(() -> onAddUserVariable.accept(index))
+          ).setOnClick(() -> onAddUserVariable.accept(this.userVariable))
           .setBorder(new RectExtension(gui(0)))
           .setPadding(new RectExtension(gui(0)))
           .cast();
@@ -95,7 +99,7 @@ public class UserVariablesListElement extends BlockElement {
           .withLabelUpdated(label -> label
               .setFontScale(0.75f)
               .setPadding(new RectExtension(ZERO))
-          ).setOnClick(() -> onRemoveUserVariable.accept(index))
+          ).setOnClick(() -> onRemoveUserVariable.accept(this.userVariable))
           .setEnabled(this, index > 0)
           .setBorder(new RectExtension(gui(0)))
           .setPadding(new RectExtension(gui(0)))
@@ -105,7 +109,8 @@ public class UserVariablesListElement extends BlockElement {
       super.addElement(this.nameInput);
       super.addElement(new LabelElement(context, this)
           .setText("=")
-          .setMargin(new RectExtension(gui(1.5f), gui(3)))
+          .setVerticalAlignment(VerticalAlignment.MIDDLE)
+          .setMargin(new RectExtension(gui(1.5f), ZERO))
       );
       super.addElement(this.valueInput);
       super.addElement(new BlockElement(context, this)
