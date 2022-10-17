@@ -28,8 +28,10 @@ public class CounterModal extends ModalElement {
     this.name = "CounterModal";
     this.counterHandler = counterHandler;
 
+    CounterModalController controller = new CounterModalController();
+
     this.simpleDisplayTextInputElement = new SimpleDisplayTextInputElement(context, this, () -> this.onSetInputMode(false));
-    this.complexDisplayTextInputElement = new ComplexDisplayTextInputElement(context, this, () -> this.onSetInputMode(true))
+    this.complexDisplayTextInputElement = new ComplexDisplayTextInputElement(context, this, controller, () -> this.onSetInputMode(true))
         .setVisible(false)
         .cast();
 
@@ -139,7 +141,7 @@ public class CounterModal extends ModalElement {
 
   @Override
   protected @Nullable Boolean validate() {
-    return this.incrementValue != null && this.startValue != null;
+    return this.incrementValue != null && this.startValue != null && (!this.complexDisplayTextInputElement.getVisible() || this.complexDisplayTextInputElement.validate());
   }
 
   @Override

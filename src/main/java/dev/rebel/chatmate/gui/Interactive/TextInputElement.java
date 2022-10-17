@@ -46,6 +46,7 @@ public class TextInputElement extends InputElement {
   private int cursorIndex;
   private int selectionEndIndex; // this may be before or after the cursor
   private Colour enabledColour = new Colour(224, 224, 224);
+  private boolean warning = false;
   private Colour disabledColour = new Colour(112, 112, 112);
   private @Nullable Consumer<String> onTextChange;
   private Predicate<String> validator = text -> true;
@@ -411,7 +412,7 @@ public class TextInputElement extends InputElement {
   }
 
   private void drawBorder() {
-    Colour borderColour = new Colour(-6250336);
+    Colour borderColour = this.warning ? Colour.RED : new Colour(-6250336);
     if (!this.getEnabled()) {
       borderColour = borderColour.withBrightness(0.5f);
     }
@@ -625,6 +626,11 @@ public class TextInputElement extends InputElement {
 
   public void setTextColor(Colour enabledColour) {
     this.enabledColour = enabledColour;
+  }
+
+  /** Draws a warning outline. */
+  public void setWarning(boolean warning) {
+    this.warning = warning;
   }
 
   public void setDisabledTextColour(Colour disabledColour) {
