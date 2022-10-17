@@ -177,10 +177,17 @@ public class InteractiveScreen extends Screen implements IElement {
     Dim maxX = factory.getMinecraftSize().getX();
     Dim maxY = factory.getMinecraftSize().getY();
 
-    // inspired by https://limpet.net/mbrubeck/2014/09/17/toy-layout-engine-6-block.html
-    // top-down: give the children a width so they can calculate their size and be positioned properly.
-    // bottom-up: once sizes and positions have been calculated, the total box will be passed back up
-    DimPoint mainSize = this.mainElement.calculateSize(maxX);
+    DimPoint mainSize;
+    try {
+      // inspired by https://limpet.net/mbrubeck/2014/09/17/toy-layout-engine-6-block.html
+      // top-down: give the children a width so they can calculate their size and be positioned properly.
+      // bottom-up: once sizes and positions have been calculated, the total box will be passed back up
+      mainSize = this.mainElement.calculateSize(maxX);
+    } catch (Exception e) {
+      context.logService.logError(this, "encountered an error during size calculation:", e);
+      this.onCloseScreen(); // bail out - it's going to be null-reference-exception-city
+      return;
+    }
 
     // now that we know our actual dimensions, pass the full rect down and let the children re-position (but they should
     // not do any resizing as that would invalidate the final box).

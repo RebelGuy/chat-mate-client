@@ -29,7 +29,7 @@ public class SimpleDisplayTextInputElement extends BlockElement {
             .setText("Text:")
             .setOverflow(TextOverflow.TRUNCATE)
             .setVerticalAlignment(VerticalAlignment.MIDDLE)
-            .setMargin(RectExtension.fromRight(gui(10)))
+            .setMargin(RectExtension.fromRight(gui(4)))
         ).addElement(this.textInput)
         .addElement(new IconButtonElement(context, this)
             .setImage(Asset.GUI_FX_ICON)
@@ -37,7 +37,7 @@ public class SimpleDisplayTextInputElement extends BlockElement {
             .setBorderCornerRadius(gui(2))
             .setMaxWidth(gui(12))
             .setPadding(new RectExtension(gui(1)))
-            .setMargin(new RectExtension(gui(4), ZERO, ZERO, ZERO))
+            .setMargin(RectExtension.fromLeft(gui(4)))
             .setHorizontalAlignment(HorizontalAlignment.RIGHT)
         ).setAllowShrink(true)
         .setMargin(RectExtension.fromBottom(gui(5)));

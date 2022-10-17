@@ -18,12 +18,16 @@ import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.function.Consumer;
+
+import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class ButtonElement extends InputElement {
   private Dim minSize;
   private @Nullable IElement childElement;
   private @Nullable Runnable onClick;
-  private Dim borderCornerRadius;
+  private Dim outerBorderCornerRadius;
+  private Dim innerBorderCornerRadius;
   private Colour borderColour;
 
   public ButtonElement(InteractiveScreen.InteractiveContext context, IElement parent) {
@@ -32,7 +36,8 @@ public class ButtonElement extends InputElement {
     this.minSize = ZERO;
     this.childElement = null;
     this.onClick = null;
-    this.borderCornerRadius = gui(3.5f);
+    this.outerBorderCornerRadius = gui(3.5f);
+    this.innerBorderCornerRadius = null;
     this.borderColour = Colour.BLACK;
 
     super.setCursor(CursorType.CLICK);
@@ -61,7 +66,13 @@ public class ButtonElement extends InputElement {
   }
 
   public ButtonElement setBorderCornerRadius(Dim cornerRadius) {
-    this.borderCornerRadius = cornerRadius;
+    this.outerBorderCornerRadius = cornerRadius;
+    return this;
+  }
+
+  /** If null, will be calculated automatically based on the outer border's corner radius. */
+  public ButtonElement setInnerBorderCornerRadius(@Nullable Dim cornerRadius) {
+    this.innerBorderCornerRadius = cornerRadius;
     return this;
   }
 
@@ -126,11 +137,11 @@ public class ButtonElement extends InputElement {
     // the inner border is drawn *around the content box*
 
     Dim borderWidth = super.getBorder().left;
-    RendererHelpers.drawRect(0, this.getPaddingBox(), Colour.TRANSPARENT, borderWidth, this.borderColour, this.borderCornerRadius);
+    RendererHelpers.drawRect(0, this.getPaddingBox(), Colour.TRANSPARENT, borderWidth, this.borderColour, this.outerBorderCornerRadius);
 
     if (super.isHovering() && this.getEnabled()) {
       Dim borderDistance = super.getPadding().left;
-      Dim innerCornerRadius = Dim.max(screen(6), this.borderCornerRadius.minus(borderDistance));
+      Dim innerCornerRadius = firstOrNull(this.innerBorderCornerRadius, Dim.max(screen(6), this.outerBorderCornerRadius.minus(borderDistance)));
       RendererHelpers.drawRect(0, this.getContentBox(), Colour.TRANSPARENT, borderWidth, Colour.GREY75, innerCornerRadius);
     }
 
@@ -164,6 +175,11 @@ public class ButtonElement extends InputElement {
 
     public TextButtonElement setTextScale(float scale) {
       this.label.setFontScale(scale);
+      return this;
+    }
+
+    public TextButtonElement withLabelUpdated(Consumer<LabelElement> labelUpdater) {
+      labelUpdater.accept(this.label);
       return this;
     }
 

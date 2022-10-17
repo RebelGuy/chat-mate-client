@@ -397,7 +397,9 @@ public abstract class ContainerElement extends ElementBase {
 
     // since we are constructing the widths from 0 below (as opposed to from the delta to the widths that are already taken account by remainingSpace),
     // subtract the widths here
-    remainingSpace = remainingSpace.plus(Dim.sum(Collections.map(expandableElementSizes, elSize -> elSize._2.getX())));
+    if (expandableElementSizes.size() > 0) {
+      remainingSpace = remainingSpace.plus(Dim.sum(Collections.map(expandableElementSizes, elSize -> elSize._2.getX())));
+    }
 
     // since the maximum width of elements may be different, we iteratively expand all elements until hitting one or more of the elements' maximum widths,
     // then do the same with the remaining elements, and so on, until either we have filled the line or no elements can expand anymore.

@@ -21,6 +21,7 @@ import java.util.List;
 public class ComplexDisplayTextInputElement extends BlockElement {
   private final Memoiser memoiser;
   private final TextInputElement textInput;
+  private final UserVariablesListElement userVariablesListElement;
 
   public ComplexDisplayTextInputElement(InteractiveContext context, IElement parent, Runnable onSwitchToSimpleMode) {
     super(context, parent);
@@ -35,12 +36,12 @@ public class ComplexDisplayTextInputElement extends BlockElement {
         .setMinWidth(gui(10))
         .cast();
 
-    IElement titleElements = new InlineElement(context, this)
+    IElement textElement = new InlineElement(context, this)
         .addElement(new LabelElement(context, this)
             .setText("Text:")
             .setOverflow(TextOverflow.TRUNCATE)
             .setVerticalAlignment(VerticalAlignment.MIDDLE)
-            .setMargin(RectExtension.fromRight(gui(10)))
+            .setMargin(RectExtension.fromRight(gui(4)))
         ).addElement(this.textInput)
         .addElement(new IconButtonElement(context, this)
             .setImage(Asset.GUI_TEXT_ICON)
@@ -48,12 +49,26 @@ public class ComplexDisplayTextInputElement extends BlockElement {
             .setBorderCornerRadius(gui(2))
             .setMaxWidth(gui(12))
             .setPadding(new RectExtension(gui(1)))
-            .setMargin(new RectExtension(gui(4), ZERO, ZERO, ZERO))
+            .setMargin(RectExtension.fromLeft(gui(4)))
             .setHorizontalAlignment(HorizontalAlignment.RIGHT)
         ).setAllowShrink(true)
         .setMargin(RectExtension.fromBottom(gui(5)));
 
-    super.addElement(titleElements);
+    this.userVariablesListElement = new UserVariablesListElement(context, this)
+        .setMinWidth(gui(50))
+        .cast();
+
+    IElement variablesElement = new InlineElement(context, this)
+        .addElement(new LabelElement(context, this)
+            .setText("Variables:")
+            .setOverflow(TextOverflow.TRUNCATE)
+            .setMargin(RectExtension.fromRight(gui(4)).top(gui(3)))
+        ).addElement(this.userVariablesListElement)
+        .setAllowShrink(true)
+        .setMargin(RectExtension.fromBottom(gui(5)));
+
+    super.addElement(textElement);
+    super.addElement(variablesElement);
   }
 
   // this highlights variables and the brackets surrounding them
