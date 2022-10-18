@@ -100,4 +100,8 @@ public class CounterModalController {
     }, text);
   }
 
+  public boolean usesInaccessibleVariables(String text, List<String> accessibleVariables) {
+    List<String> variablesUsed = Collections.map(this.extractUserVariables(text), var -> var._2);
+    return Collections.any(variablesUsed, var -> !accessibleVariables.contains(var));
+  }
 }

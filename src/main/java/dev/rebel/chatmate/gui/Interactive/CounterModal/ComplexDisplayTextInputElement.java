@@ -17,14 +17,14 @@ import java.util.List;
 public class ComplexDisplayTextInputElement extends BlockElement {
   private final CounterModalController controller;
 
-  private final TextInputElement textInput;
+  private final TextInputElement displayTextInput;
   private final UserVariablesListElement userVariablesListElement;
 
   public ComplexDisplayTextInputElement(InteractiveContext context, IElement parent, CounterModalController controller, Runnable onSwitchToSimpleMode) {
     super(context, parent);
     this.controller = controller;
 
-    this.textInput = new TextInputElement(context, this)
+    this.displayTextInput = new TextInputElement(context, this)
         .setTextUnsafe("Counter value: {{x}}")
         .setTextFormatter(this::formatText)
         .setTabIndex(0)
@@ -39,7 +39,7 @@ public class ComplexDisplayTextInputElement extends BlockElement {
             .setOverflow(TextOverflow.TRUNCATE)
             .setVerticalAlignment(VerticalAlignment.MIDDLE)
             .setMargin(RectExtension.fromRight(gui(4)))
-        ).addElement(this.textInput)
+        ).addElement(this.displayTextInput)
         .addElement(new IconButtonElement(context, this)
             .setImage(Asset.GUI_TEXT_ICON)
             .setOnClick(onSwitchToSimpleMode)
@@ -68,8 +68,8 @@ public class ComplexDisplayTextInputElement extends BlockElement {
   }
 
   public boolean validate() {
-    // todo: also validate that all variables in the display text are known
-    return this.userVariablesListElement.validate();
+    List<String> accessibleVariables = Collections.map(this.userVariablesListElement.getUserVariables(), var -> var.name);
+    return !this.controller.usesInaccessibleVariables(this.displayTextInput.getText(), accessibleVariables) && this.userVariablesListElement.validate();
   }
 
   private List<Tuple2<String, Font>> formatText(String text) {

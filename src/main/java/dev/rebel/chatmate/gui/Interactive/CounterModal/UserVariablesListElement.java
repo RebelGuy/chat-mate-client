@@ -85,12 +85,8 @@ public class UserVariablesListElement extends BlockElement {
       return true;
     }
 
-    // should only contain known variables that are also accessible to this variable
-    List<String> variablesUsed = Collections.map(this.controller.extractUserVariables(variable.value), var -> var._2);
     List<String> accessibleVariables = this.getAccessibleVariables(variable);
-    boolean usesInaccessibleVariables = Collections.any(variablesUsed, var -> !accessibleVariables.contains(var));
-
-    return variable.value.length() > 0 && !usesInaccessibleVariables;
+    return variable.value.length() > 0 && !this.controller.usesInaccessibleVariables(variable.value, accessibleVariables);
   }
 
   private List<String> getAccessibleVariables(UserVariable variable) {
@@ -189,12 +185,19 @@ public class UserVariablesListElement extends BlockElement {
 
     private void onNameChange(String newName) {
       this.userVariable.name = newName.trim();
-      this.nameInput.setWarning(!this.onValidateName.apply(this.userVariable));
     }
 
     private void onValueChange(String newValue) {
       this.userVariable.value = newValue.trim();
+    }
+
+    @Override
+    protected void renderElement() {
+      // update every frame because things might change outside this element that affect the validity
+      this.nameInput.setWarning(!this.onValidateName.apply(this.userVariable));
       this.valueInput.setWarning(!this.onValidateValue.apply(this.userVariable));
+
+      super.renderElement();
     }
   }
 }
