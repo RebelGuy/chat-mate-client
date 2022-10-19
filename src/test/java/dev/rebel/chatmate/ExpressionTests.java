@@ -79,9 +79,11 @@ public class ExpressionTests {
 
     @Parameterized.Parameters(name = "Expression `{1}` with `x`=`{2}` and `{3}` should result in `{0}`")
     public static Collection<Object[]> getTestExpressions() {
-      return Collections.list(
+      return Collections.<Object[]>list(
           makeDynamicExpression(5, "{{x}}", 5),
-          makeDynamicExpression(10, "{{x}} + {{x}}", 5)
+          makeDynamicExpression(10, "{{x}} + {{x}}", 5),
+          makeDynamicExpression(1, "{{x}} + 2 * {{y}}", 5, "y", "-2"),
+          makeDynamicExpression(11, "{{x}} + 2 * ({{y}} - {{z}})", 5, "y", "-2", "z", "{{x}} * {{y}} + 5")
       );
     }
 

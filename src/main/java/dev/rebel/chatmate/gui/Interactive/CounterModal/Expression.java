@@ -30,7 +30,8 @@ public class Expression {
 
     for (String variable : expandedVariables.keySet()) {
       String variableString = String.format("{{%s}}", variable);
-      text = text.replace(variableString, expandedVariables.get(variable));
+      String expandedVariable = String.format("(%s)", expandedVariables.get(variable));
+      text = text.replace(variableString, expandedVariable);
     }
 
     // at this point, there are no more variables.
