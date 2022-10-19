@@ -13,6 +13,8 @@ import dev.rebel.chatmate.util.Collections;
 import scala.Tuple2;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
 public class ComplexDisplayTextInputElement extends BlockElement {
   private final CounterModalController controller;
@@ -70,6 +72,11 @@ public class ComplexDisplayTextInputElement extends BlockElement {
   public boolean validate() {
     List<String> accessibleVariables = Collections.map(this.userVariablesListElement.getUserVariables(), var -> var.name);
     return !this.controller.usesInaccessibleVariables(this.displayTextInput.getText(), accessibleVariables) && this.userVariablesListElement.validate();
+  }
+
+  public Function<Integer, String> constructDisplayFunction() {
+    List<UserVariable> userVariables = Collections.filter(this.userVariablesListElement.getUserVariables(), var -> !Objects.equals(var.name, "x"));
+    return Expression.createDisplayFunction(this.displayTextInput.getText(), Collections.map(userVariables, var -> new Tuple2<>(var.name, var.value)));
   }
 
   private List<Tuple2<String, Font>> formatText(String text) {

@@ -10,9 +10,35 @@ import scala.Tuple2;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Function;
 
 public class Expression {
-  /** Assumes that a variable "x" is defined, whose value will be set when calling this function.
+  /** DisplayExpression should be a string template that can reference variables. */
+  public static Function<Integer, String> createDisplayFunction(String displayExpression, List<Tuple2<String, String>> variableDefinitions) {
+    return x -> {
+      String xString = String.format("%d", x);
+      String result = displayExpression.replace("{{x}}", xString);
+      List<Tuple2<String, String>> variableValues = new ArrayList<>();
+      variableValues.add(new Tuple2<>("x", xString));
+
+      int i = 0;
+      for (Tuple2<String, String> variable : variableDefinitions) {
+        String variableName = variable._1;
+        String variableExpression = variable._2;
+        int value = evaluateExpression(variableExpression, Collections.list(variableDefinitions.subList(0, i)), x);
+        variableValues.add(new Tuple2<>(variableName, String.format("%d", value)));
+
+        String variableString = String.format("{{%s}}", variableName);
+        String valueString = String.format("%d", value);
+        result = result.replace(variableString, valueString);
+        i++;
+      }
+
+      return result;
+    };
+  }
+
+  /** Assumes that a variable "x" is defined implicitly, whose value will be set when calling this function.
    * All other variables must be defined using valid expressions, and a variable's expression can only use variables that have already been defined beforehand in the provided list. */
   public static int evaluateExpression(String text, List<Tuple2<String, String>> variableDefinitions, int xValue) {
     variableDefinitions.add(0, new Tuple2<>("x", String.format("%d", xValue))); // inject x

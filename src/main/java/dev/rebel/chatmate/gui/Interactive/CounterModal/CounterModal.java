@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
 
@@ -147,11 +148,13 @@ public class CounterModal extends ModalElement {
   @Override
   protected void submit(Runnable onSuccess, Consumer<String> onError) {
     try {
-      this.counterHandler.createCounter(this.startValue, this.incrementValue, 1, this.simpleDisplayTextInputElement.getText());
+      Function<Integer, String> displayFunction = this.simpleDisplayTextInputElement.getVisible() ? this.simpleDisplayTextInputElement.constructDisplayFunction() : this.complexDisplayTextInputElement.constructDisplayFunction();
+      this.counterHandler.createCounter(this.startValue, this.incrementValue, 1, displayFunction);
       onSuccess.run();
       super.onCloseScreen();
 
     } catch (Exception e) {
+      super.context.logService.logError(this, e);
       onError.accept("Something went wrong: " + e.getMessage());
     }
   }

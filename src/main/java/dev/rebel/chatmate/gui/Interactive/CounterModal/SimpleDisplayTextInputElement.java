@@ -10,6 +10,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.function.Function;
 
 public class SimpleDisplayTextInputElement extends BlockElement {
   private final TextInputElement textInput;
@@ -45,7 +47,7 @@ public class SimpleDisplayTextInputElement extends BlockElement {
     super.addElement(titleElements);
   }
 
-  public String getText() {
-    return this.textInput.getText();
+  public Function<Integer, String> constructDisplayFunction() {
+    return Expression.createDisplayFunction(String.format("%s {{x}}", this.textInput.getText().trim()), new ArrayList<>());
   }
 }
