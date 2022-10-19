@@ -7,6 +7,7 @@ import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.world.chunk.Chunk;
 import scala.Tuple2;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 
@@ -14,6 +15,8 @@ public class Expression {
   /** Assumes that a variable "x" is defined, whose value will be set when calling this function.
    * All other variables must be defined using valid expressions, and a variable's expression can only use variables that have already been defined beforehand in the provided list. */
   public static int evaluateExpression(String text, List<Tuple2<String, String>> variableDefinitions, int xValue) {
+    variableDefinitions.add(0, new Tuple2<>("x", String.format("%d", xValue))); // inject x
+
     Map<String, String> expandedVariables = new HashMap<>();
     for (Tuple2<String, String> variable : Collections.reverse(variableDefinitions)) {
       for (String existingVariable : expandedVariables.keySet()) {
@@ -30,21 +33,13 @@ public class Expression {
       text = text.replace(variableString, expandedVariables.get(variable));
     }
 
-    // at this point, the expression is in terms of x.
-    text = text.replace("{{x}}", String.format("%d", xValue)).replace(" ", "");
+    // at this point, there are no more variables.
+
 
     List<Chunk> parsedChunks = parseChunks(text);
 
     // wrap multiplication inside brackets
-    for (Chunk chunk : Collections.list(parsedChunks)) {
-      if (Objects.equals(chunk.string, "*")) {
-        parsedChunks.add(new Chunk(ChunkType.GROUP_START, "("));
-        parsedChunks.add(chunk);
-        parsedChunks.add(new Chunk(ChunkType.GROUP_END, ")"));
-      } else {
-        parsedChunks.add(chunk);
-      }
-    }
+    parsedChunks = wrapMultiplications(parsedChunks);
 
     return evaluateNumericExpression(parsedChunks);
 
@@ -66,6 +61,62 @@ public class Expression {
     // for every variable (in order, from top to bottom of hierarchy list),
     // replace the variable string with the variable value wrapped in brackets (which may contain more variables, but they will all be expanded eventually)
     // then we have a variable-less expression that we can evaluate
+  }
+
+  /** Returns the next group, which is either a single number or a list of chunks wrapped in brackets. */
+  private static List<Chunk> getNextGroupedValue(List<Chunk> chunks) {
+    int bracketDepth = 0;
+    List<Chunk> result = new ArrayList<>();
+    for (Chunk chunk : chunks) {
+      result.add(chunk);
+      if (chunk.type == ChunkType.GROUP_START) {
+        bracketDepth++;
+      } else if (chunk.type == ChunkType.GROUP_END) {
+        bracketDepth--;
+      }
+
+      if (bracketDepth == 0) {
+        break;
+      }
+    }
+
+    if (bracketDepth > 0) {
+      throw new RuntimeException("Cannot get next grouped value because brackets in the given list of chunks were not balanced");
+    }
+
+    return result;
+  }
+
+  private static List<Chunk> wrapMultiplications(List<Chunk> chunks) {
+    List<Chunk> result = new ArrayList<>();
+    for (int i = 0; i < chunks.size(); i++) {
+      Chunk chunk = chunks.get(i);
+      if (Objects.equals(chunk.string, "*")) {
+        List<Chunk> leftGroup = reverse(getNextGroupedValue(reverse(result)));
+        List<Chunk> rightGroup = getNextGroupedValue(chunks.subList(i + 1, chunks.size()));
+        result.add(result.size() - leftGroup.size(), new Chunk(ChunkType.GROUP_START, "("));
+        result.add(chunk);
+        result.addAll(wrapMultiplications(rightGroup));
+        result.add(new Chunk(ChunkType.GROUP_END, ")"));
+        i += rightGroup.size();
+      } else {
+        result.add(chunk);
+      }
+    }
+
+    return result;
+  }
+
+  private static List<Chunk> reverse(List<Chunk> chunks) {
+    return Collections.reverse(Collections.map(chunks, c -> {
+      if (c.type == ChunkType.GROUP_START) {
+        return new Chunk(ChunkType.GROUP_END, c.string);
+      } else if (c.type == ChunkType.GROUP_END) {
+        return new Chunk(ChunkType.GROUP_START, c.string);
+      } else {
+        return c;
+      }
+    }));
   }
 
   private static int evaluateNumericExpression(List<Chunk> chunks) {
@@ -92,21 +143,29 @@ public class Expression {
       @Nullable Integer chunkNumber = null;
 
       // collect or evaluate brackets
-      if (bracketDepth > 0) {
-        currentBracketContents.add(chunk);
-        continue;
-      }
       if (chunk.type == ChunkType.GROUP_START) {
         bracketDepth++;
+        if (bracketDepth > 1) {
+          currentBracketContents.add(chunk);
+        }
+        continue;
       } else if (chunk.type == ChunkType.GROUP_END) {
         bracketDepth--;
         if (bracketDepth == 0) {
-          chunkNumber = evaluateNumericExpression(currentBracketContents);
+          // replace the chunk with the result of the group
+          chunk = new Chunk(ChunkType.NUMBER, String.format("%d", evaluateNumericExpression(currentBracketContents)));
           currentBracketContents.clear();
+        } else {
+          currentBracketContents.add(chunk);
+          continue;
         }
+      } else if (bracketDepth > 0) {
+        currentBracketContents.add(chunk);
+        continue;
+      }
 
       // set operator state
-      } else if (chunk.type == ChunkType.OPERATOR) {
+      if (chunk.type == ChunkType.OPERATOR) {
         if (operator != null) {
           throw new RuntimeException("Operator state was not reset before encountering the next operator");
         }
@@ -125,20 +184,22 @@ public class Expression {
           }
           chunkNumber = Integer.parseInt(chunk.string);
         }
-      } else {
-        throw EnumHelpers.<ChunkType>assertUnreachable(chunk.type);
       }
 
       // perform arithmetic
       if (chunkNumber != null) {
-        if (operator == "+") {
-          result += chunkNumber;
-        } else if (operator == "-") {
-          result -= chunkNumber;
-        } else if (operator == "*") {
-          result *= chunkNumber;
-        } else {
-          throw new RuntimeException("Invalid operator " + operator);
+        switch (operator) {
+          case "+":
+            result += chunkNumber;
+            break;
+          case "-":
+            result -= chunkNumber;
+            break;
+          case "*":
+            result *= chunkNumber;
+            break;
+          default:
+            throw new RuntimeException("Invalid operator " + operator);
         }
         operator = null;
       }
@@ -152,6 +213,11 @@ public class Expression {
 
   /** Does not handle variables. */
   private static List<Chunk> parseChunks(String text) {
+    text = text.replace(" ", "");
+    if (text.startsWith("-")) {
+      text = "0" + text;
+    }
+
     List<Chunk> chunks = new ArrayList<>();
     String currentChunk = "";
     ChunkType currentType = null;
@@ -162,7 +228,29 @@ public class Expression {
         continue;
       }
 
-      if (!Chunk.isCompatible(currentType, c)) {
+      if (!Chunk.isCompatible(currentType, currentChunk, c)) {
+        @Nullable Chunk prevChunk = Collections.last(chunks);
+        if (prevChunk != null && (prevChunk.type == ChunkType.OPERATOR || prevChunk.type == ChunkType.GROUP_START) && currentType == ChunkType.OPERATOR) {
+          if (currentChunk.equals("+") || currentChunk.equals("-")) {
+            // convert the operator into a number
+            if (Character.isDigit(c)) {
+              currentType = ChunkType.NUMBER;
+              currentChunk += c;
+              continue;
+
+            // multiply the group by -1 explicitly
+            } else if (c == '(') {
+              chunks.add(new Chunk(ChunkType.NUMBER, currentChunk + "1"));
+              chunks.add(new Chunk(ChunkType.OPERATOR, "*"));
+              currentChunk = "" + c;
+              currentType = Chunk.getType(c);
+              continue;
+            }
+          } else {
+            throw new RuntimeException("Cannot have two sequential operators");
+          }
+        }
+
         chunks.add(new Chunk(currentType, currentChunk));
         currentChunk = "";
         currentType = Chunk.getType(c);
@@ -182,7 +270,17 @@ public class Expression {
     public final ChunkType type;
     public final String string;
 
-    public Chunk(ChunkType type, String string) {
+    public Chunk(ChunkType type, @Nonnull String string) {
+      if (type == ChunkType.OPERATOR) {
+        if (string.equals("++") || string.equals("--")) {
+          string = "+";
+        } else if (string.equals("-+") || string.equals("+-")) {
+          string = "-";
+        } else if (string.length() > 1) {
+          throw new RuntimeException("Invalid operator string " + string);
+        }
+      }
+
       this.type = type;
       this.string = string;
     }
@@ -201,8 +299,8 @@ public class Expression {
       }
     }
 
-    public static boolean isCompatible(ChunkType chunkType, char c) {
-      switch (chunkType) {
+    public static boolean isCompatible(ChunkType currentType, String currentChunk, char c) {
+      switch (currentType) {
         case NUMBER:
           return Character.isDigit(c);
         case GROUP_START:
@@ -210,8 +308,13 @@ public class Expression {
         case OPERATOR:
           return false;
         default:
-          throw EnumHelpers.<ChunkType>assertUnreachable(chunkType);
+          throw EnumHelpers.<ChunkType>assertUnreachable(currentType);
       }
+    }
+
+    @Override
+    public String toString() {
+      return this.string;
     }
   }
 

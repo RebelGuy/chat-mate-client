@@ -33,9 +33,22 @@ public class ExpressionTests {
 
     @Parameterized.Parameters(name = "Expression `{1}` should result in `{0}`")
     public static Collection<Object[]> getTestExpressions() {
-      return Collections.list(
+      return Collections.<Object[]>list(
           makeStaticExpression(1, "1"),
-          makeStaticExpression(150, "150")
+          makeStaticExpression(150, "150"),
+          makeStaticExpression(5, "1 + 4"),
+          makeStaticExpression(3, "4 - 1"),
+          makeStaticExpression(-3, "1 - 4"),
+          makeStaticExpression(12, "4 * 3"),
+          makeStaticExpression(13, "4 * 3 + 1"),
+          makeStaticExpression(13, "1 + 4 * 3"),
+          makeStaticExpression(15, "(1 + 4) * 3"),
+          makeStaticExpression(0, "1 + 4 - (1 + 4)"),
+          makeStaticExpression(-5, "1 + 4 - (1 + 4) * 2"),
+          makeStaticExpression(-1, "-1"),
+          makeStaticExpression(3, "-1 - (4 * -1)"),
+          makeStaticExpression(24, "2 * 3 * 4"),
+          makeStaticExpression(-20, "-1 * -(-4 + (8 * -2))")
       );
     }
 
