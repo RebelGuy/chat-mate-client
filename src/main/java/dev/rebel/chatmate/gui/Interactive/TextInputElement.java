@@ -111,6 +111,9 @@ public class TextInputElement extends InputElement {
       // select all when we tab into the field
       this.cursorIndex = this.text.length();
       this.selectionEndIndex = 0;
+    } else if (e.getData().reason == Events.FocusReason.CODE) {
+      this.cursorIndex = this.text.length();
+      this.selectionEndIndex = this.text.length();
     }
   }
 

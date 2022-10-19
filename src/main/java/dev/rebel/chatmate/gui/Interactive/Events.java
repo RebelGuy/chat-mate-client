@@ -95,7 +95,8 @@ public class Events {
   }
 
   public enum FocusReason {
-    CLICK, TAB, // the focus was triggered by the  user
+    CLICK, TAB, // the focus was triggered by the user
+    CODE, // the focus was triggered programmatically
     AUTO // the focus was triggered by the InteractiveScreen
   }
 

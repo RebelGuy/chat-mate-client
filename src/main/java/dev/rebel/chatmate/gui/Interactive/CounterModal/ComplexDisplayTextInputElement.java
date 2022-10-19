@@ -35,7 +35,7 @@ public class ComplexDisplayTextInputElement extends BlockElement {
         .setMinWidth(gui(10))
         .cast();
 
-    IElement textElement = new InlineElement(context, this)
+    IElement textElement = new InlineElement(context, this) // todo: add tab indexes
         .addElement(new LabelElement(context, this)
             .setText("Text:")
             .setOverflow(TextOverflow.TRUNCATE)
@@ -77,6 +77,10 @@ public class ComplexDisplayTextInputElement extends BlockElement {
   public Function<Integer, String> constructDisplayFunction() {
     List<UserVariable> userVariables = Collections.filter(this.userVariablesListElement.getUserVariables(), var -> !Objects.equals(var.name, "x"));
     return Expression.createDisplayFunction(this.displayTextInput.getText(), Collections.map(userVariables, var -> new Tuple2<>(var.name, var.value)));
+  }
+
+  public void setFocus() {
+    super.context.onSetFocus(this.displayTextInput);
   }
 
   private List<Tuple2<String, Font>> formatText(String text) {

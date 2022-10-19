@@ -22,6 +22,7 @@ public class SimpleDisplayTextInputElement extends BlockElement {
     this.textInput = new TextInputElement(context, this)
         .setTabIndex(0)
         .setAutoFocus(true)
+        .setTabIndex(0)
         .setHorizontalAlignment(HorizontalAlignment.RIGHT)
         .setMinWidth(gui(10))
         .cast();
@@ -49,5 +50,9 @@ public class SimpleDisplayTextInputElement extends BlockElement {
 
   public Function<Integer, String> constructDisplayFunction() {
     return Expression.createDisplayFunction(String.format("%s {{x}}", this.textInput.getText().trim()), new ArrayList<>());
+  }
+
+  public void setFocus() {
+    super.context.onSetFocus(this.textInput);
   }
 }

@@ -38,7 +38,7 @@ import java.util.function.Function;
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
 // the correct way would have been to split IElement up into two interfaces, but it doesn't really matter.
-public class InteractiveScreen extends Screen implements IElement {
+public class InteractiveScreen extends Screen implements IElement, IFocusListener {
   public final InteractiveScreenType interactiveScreenType;
   protected InteractiveContext context;
   private final @Nullable GuiScreen parentScreen;
@@ -67,6 +67,8 @@ public class InteractiveScreen extends Screen implements IElement {
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen, InteractiveScreenType interactiveScreenType) {
     super();
+
+    context.addFocusListener(this);
 
     this.interactiveScreenType = interactiveScreenType;
     this.context = context;
@@ -195,6 +197,13 @@ public class InteractiveScreen extends Screen implements IElement {
     DimRect mainRect = ElementHelpers.alignElementInBox(mainSize, screenRect, this.mainElement.getHorizontalAlignment(), this.mainElement.getVerticalAlignment());
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
+
+    // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect
+    this.context.renderer.runSideEffect(() -> {
+      // if this causes any more side effects, those will be executed immediately as part of this cycle
+      this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
+    });
+
     this.context.renderer._executeSideEffects();
 
     // it is possible that running side effects (or calling calculateSize/setBox) changed the layout
@@ -215,15 +224,6 @@ public class InteractiveScreen extends Screen implements IElement {
     this.context.renderer.clear();
     this.mainElement.render(null);
     this.context.renderer._executeRender();
-
-    // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect
-    this.context.renderer.runSideEffect(() -> {
-      if (this.requiresRecalculation) {
-        // if this causes any more side effects, those will be executed immediately as part of this cycle
-        this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
-      }
-    });
-
     this.context.renderer._executeSideEffects();
     this.renderTooltip();
 
@@ -505,6 +505,12 @@ public class InteractiveScreen extends Screen implements IElement {
     return bubbleEvent.stoppedPropagation;
   }
 
+  // only called when an element wants to set the focus programmatically
+  @Override
+  public void onFocusSet(@Nullable InputElement element) {
+    this.setFocussedElement(element, FocusReason.CODE);
+  }
+
   /** Sets the new focussed element and fires appropriate events. */
   protected void setFocussedElement(@Nullable InputElement newFocus, FocusReason reason) {
     InputElement oldFocus = this.context.focusedElement;
@@ -753,6 +759,8 @@ public class InteractiveScreen extends Screen implements IElement {
   //endregion
 
   public static class InteractiveContext {
+    private List<IFocusListener> focusListeners = new ArrayList<>();
+
     public final ScreenRenderer renderer;
     public final MouseEventService mouseEventService;
     public final KeyboardEventService keyboardEventService;
@@ -824,6 +832,14 @@ public class InteractiveScreen extends Screen implements IElement {
       this.livestreamApiStore = livestreamApiStore;
       this.donationApiStore = donationApiStore;
       this.config = config;
+    }
+
+    public void addFocusListener(IFocusListener focusListener) {
+      this.focusListeners.add(focusListener);
+    }
+
+    public void onSetFocus(@Nullable InputElement element) {
+      this.focusListeners.forEach(l -> l.onFocusSet(element));
     }
   }
 
@@ -945,4 +961,8 @@ public class InteractiveScreen extends Screen implements IElement {
     DASHBOARD,
     HUD
   }
+}
+
+interface IFocusListener {
+  void onFocusSet(@Nullable InputElement element);
 }

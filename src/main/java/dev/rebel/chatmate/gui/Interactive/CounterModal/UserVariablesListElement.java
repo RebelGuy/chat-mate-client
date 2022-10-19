@@ -131,6 +131,7 @@ public class UserVariablesListElement extends BlockElement {
           .setTextUnsafe(userVariable.name)
           .onTextChange(this::onNameChange)
           .setEnabled(this, index > 0)
+          .setTabIndex(2 * userVariable.index + 1)
           .setMaxWidth(gui(30))
           .cast();
 
@@ -139,6 +140,7 @@ public class UserVariablesListElement extends BlockElement {
           .onTextChange(this::onValueChange)
           .setTextFormatter(text -> textFormatter.apply(userVariable))
           .setEnabled(this, index > 0)
+          .setTabIndex(2 * userVariable.index + 2)
           .setMinWidth(gui(50))
           .cast();
 
@@ -176,6 +178,8 @@ public class UserVariablesListElement extends BlockElement {
           .setMargin(RectExtension.fromLeft(gui(2)))
       );
       super.setAllowShrink(true);
+
+      context.onSetFocus(this.nameInput);
     }
 
     private void revalidate() {

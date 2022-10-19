@@ -50,7 +50,7 @@ public class CounterModal extends ModalElement {
                         .onTextChange(this::onStartValueChange)
                         .setValidator(this::onValidateStartValue)
                         .setTextUnsafe("0")
-                        .setTabIndex(1)
+                        .setTabIndex(100)
                 ).setElementPadding(gui(5))
         )
         .addElement(1,
@@ -65,7 +65,7 @@ public class CounterModal extends ModalElement {
                         .onTextChange(this::onIncrementChange)
                         .setValidator(this::onValidateIncrement)
                         .setTextUnsafe("1")
-                        .setTabIndex(2)
+                        .setTabIndex(101)
                 ).setElementPadding(gui(5))
         )
         .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(5))
@@ -91,6 +91,12 @@ public class CounterModal extends ModalElement {
   private void onSetInputMode(boolean isSimple) {
     this.simpleDisplayTextInputElement.setVisible(isSimple);
     this.complexDisplayTextInputElement.setVisible(!isSimple);
+
+    if (isSimple) {
+      this.simpleDisplayTextInputElement.setFocus();
+    } else {
+      this.complexDisplayTextInputElement.setFocus();
+    }
   }
 
   private void onStartValueChange(String maybeStartValue) {
