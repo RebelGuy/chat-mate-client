@@ -42,6 +42,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public final InteractiveScreenType interactiveScreenType;
   protected InteractiveContext context;
   private final @Nullable GuiScreen parentScreen;
+  private int recalculationCounter = 0;
 
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseDown = this::onMouseDown;
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseMove = this::onMouseMove;
@@ -174,6 +175,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       return;
     }
     this.requiresRecalculation = false;
+    this.recalculationCounter++;
 
     DimFactory factory = this.context.dimFactory;
     Dim maxX = factory.getMinecraftSize().getX();
@@ -198,14 +200,6 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
 
-    // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect
-    this.context.renderer.runSideEffect(() -> {
-      // if this causes any more side effects, those will be executed immediately as part of this cycle
-      this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
-    });
-
-    this.context.renderer._executeSideEffects();
-
     // it is possible that running side effects (or calling calculateSize/setBox) changed the layout
     this._recalculateLayout(depth + 1);
   }
@@ -224,6 +218,17 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     this.context.renderer.clear();
     this.mainElement.render(null);
     this.context.renderer._executeRender();
+
+    // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect.
+    // we have to check if there was an actual recalculation (can't just check `this.shouldRecalculateLayout` because that may have already been reset)
+    this.context.renderer.runSideEffect(() -> {
+      if (this.recalculationCounter > 0) {
+        // if this causes any more side effects, those will be executed immediately as part of this cycle
+        this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
+        this.recalculationCounter = 0;
+      }
+    });
+
     this.context.renderer._executeSideEffects();
     this.renderTooltip();
 

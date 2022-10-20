@@ -18,6 +18,7 @@ public class CounterModalController {
     return this.memoiser.memoise("formatText", () -> {
       Font normalFont = new Font();
       Font bracketFont = new Font().withColour(Colour.GREY50).withItalic(true);
+      Font newlineFont = new Font().withColour(Colour.GREY25);
       Font variableFontValid = new Font().withColour(Colour.GREEN).withItalic(true);
       Font variableFontInvalid = new Font().withColour(Colour.RED).withItalic(true);
 
@@ -35,17 +36,20 @@ public class CounterModalController {
       List<Integer> bracketsEnd = Collections.map(variablesEnd, i -> i + 2);
       List<Tuple2<String, Font>> result = new ArrayList<>();
 
+      boolean isWithinBrackets = false;
       String currentChunk = "";
       for (int i = 0; i <= text.length(); i++) {
         // the ordering of these branches is important - don't change it
         if (bracketsEnd.contains(i)) {
           result.add(new Tuple2<>(currentChunk, bracketFont));
           currentChunk = "";
+          isWithinBrackets = false;
         }
         if (bracketsStart.contains(i)) {
-          // this marks the end of the in-between-variables text (this may be an empty string, but that's fine!
+          // this marks the end of the in-between-variables text (this may be an empty string, but that's fine!)
           result.add(new Tuple2<>(currentChunk, normalFont));
           currentChunk = "";
+          isWithinBrackets = true;
         }
         if (variablesStart.contains(i)) {
           // this marks the end of the opening brackets
@@ -57,6 +61,12 @@ public class CounterModalController {
           currentChunk = "";
         }
 
+        if (!isWithinBrackets && currentChunk.endsWith("\\n")) {
+          result.add(new Tuple2<>(currentChunk.substring(0, currentChunk.length() - 2), normalFont));
+          result.add(new Tuple2<>(currentChunk.substring(currentChunk.length() - 2), newlineFont));
+          currentChunk = "";
+        }
+
         if (i < text.length()) {
           currentChunk += text.charAt(i);
         } else {
@@ -65,7 +75,7 @@ public class CounterModalController {
       }
 
       return Collections.filter(result, r -> r._1.length() > 0);
-    }, text); // todo: also memoise on the user variables
+    }, text, accessibleVariables);
   }
 
   /** E.g. from "a{{xy}}b" returns (3, "xy") */

@@ -62,7 +62,7 @@ public abstract class ModalElement extends ContainerElement {
         .setFontScale(0.75f)
         .setOverflow(TextOverflow.SPLIT)
         .setAlignment(TextAlignment.CENTRE)
-        .setMaxLines(5)
+        .setMaxOverflowLines(5)
         .setSizingMode(SizingMode.FILL)
         .setVisible(false)
         .setPadding(new RectExtension(ZERO, gui(4)));

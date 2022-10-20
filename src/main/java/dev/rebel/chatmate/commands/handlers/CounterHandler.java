@@ -95,7 +95,8 @@ public class CounterHandler {
           ).cast();
       this.hudElement.setElement(LabelElement::new)
           .setText(this.observableString.getValue())
-          .setFont(new Font().withShadow(new Shadow(dimFactory)));
+          .setFont(new Font().withShadow(new Shadow(dimFactory)))
+          .setProcessNewlineCharacters(true);
       this.observableString.listen(str -> this.hudElement.element.setText(str));
     }
 

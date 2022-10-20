@@ -166,7 +166,7 @@ public class ManageRanksModal extends ModalElement {
                 .setOverflow(TextOverflow.SPLIT)
                 .setColour(Colour.RED)
                 .setFontScale(0.75f)
-                .setMaxLines(5)
+                .setMaxOverflowLines(5)
                 .setAlignment(TextAlignment.CENTRE)
                 .setSizingMode(SizingMode.FILL)
         );
