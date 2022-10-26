@@ -13,6 +13,7 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
+import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
@@ -59,15 +60,22 @@ public class DonationCardElement extends ContainerElement {
         .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(4)))
     );
 
-    Font messageFont = new Font()
-        .withShadow(new Shadow(context.dimFactory))
-        .withItalic(this.donation.message == null);
-    super.addElement(new LabelElement(context, this)
-        .setText(TextHelpers.isNullOrEmpty(this.donation.message) ? "No message" : this.donation.message)
-        .setFont(messageFont)
-        .setFontScale(0.75f)
-        .setOverflow(TextOverflow.SPLIT)
-    );
+    if (this.donation.messageParts.length == 0) {
+      Font messageFont = new Font()
+          .withShadow(new Shadow(context.dimFactory))
+          .withItalic(this.donation.messageParts.length == 0);
+      super.addElement(new LabelElement(context, this)
+          .setText("No message")
+          .setFont(messageFont)
+          .setFontScale(0.75f)
+          .setOverflow(TextOverflow.SPLIT)
+      );
+    } else {
+      super.addElement(new MessagePartsElement(super.context, this)
+          .setMessageParts(Collections.list(donation.messageParts))
+          .setScale(0.75f)
+      );
+    }
   }
 
   @Override

@@ -56,9 +56,9 @@ public class ChatMateHudStore {
     return element;
   }
 
-  public void removeElement(HudElement elewment) {
-    this.elements.remove(elewment);
-    this.listeners.forEach(listener -> listener.onRemoveElement(elewment));
+  public void removeElement(HudElement element) {
+    this.elements.remove(element);
+    this.listeners.forEach(listener -> listener.onRemoveElement(element));
   }
 
   public List<HudElement> getElements() {

@@ -4,6 +4,7 @@ import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
@@ -65,6 +66,8 @@ public class GuiService {
   private final DonationApiStore donationApiStore;
   private final RankApiStore rankApiStore;
   private final CustomGuiNewChat customGuiNewChat;
+  private final ImageService imageService;
+  private final DonationHudStore donationHudStore;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -98,7 +101,9 @@ public class GuiService {
                     LivestreamApiStore livestreamApiStore,
                     DonationApiStore donationApiStore,
                     RankApiStore rankApiStore,
-                    CustomGuiNewChat customGuiNewChat) {
+                    CustomGuiNewChat customGuiNewChat,
+                    ImageService imageService,
+                    DonationHudStore donationHudStore) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -132,6 +137,8 @@ public class GuiService {
     this.donationApiStore = donationApiStore;
     this.rankApiStore = rankApiStore;
     this.customGuiNewChat = customGuiNewChat;
+    this.imageService = imageService;
+    this.donationHudStore = donationHudStore;
 
     this.addEventHandlers();
   }
@@ -261,6 +268,8 @@ public class GuiService {
         this.rankApiStore,
         this.livestreamApiStore,
         this.donationApiStore,
-        this.config);
+        this.config,
+        this.imageService,
+        this.donationHudStore);
   }
 }

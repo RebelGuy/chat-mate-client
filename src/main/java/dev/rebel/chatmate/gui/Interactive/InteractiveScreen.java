@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.Screen;
@@ -786,6 +787,8 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     public final LivestreamApiStore livestreamApiStore;
     public final DonationApiStore donationApiStore;
     public final Config config;
+    public final ImageService imageService;
+    public final DonationHudStore donationHudStore;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -816,7 +819,9 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
                               RankApiStore rankApiStore,
                               LivestreamApiStore livestreamApiStore,
                               DonationApiStore donationApiStore,
-                              Config config) {
+                              Config config,
+                              ImageService imageService,
+                              DonationHudStore donationHudStore) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -837,6 +842,8 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       this.livestreamApiStore = livestreamApiStore;
       this.donationApiStore = donationApiStore;
       this.config = config;
+      this.imageService = imageService;
+      this.donationHudStore = donationHudStore;
     }
 
     public void addFocusListener(IFocusListener focusListener) {

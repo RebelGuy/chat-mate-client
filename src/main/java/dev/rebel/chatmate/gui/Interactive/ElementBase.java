@@ -55,6 +55,7 @@ public abstract class ElementBase implements IElement {
   private @Nullable Dim maxContentWidth;
   private @Nullable Dim minWidth;
   private @Nullable Dim targetFullHeight;
+  private @Nullable Dim targetContentHeight;
   private @Nullable CursorType cursor;
 
   public ElementBase(InteractiveContext context, IElement parent) {
@@ -263,31 +264,41 @@ public abstract class ElementBase implements IElement {
     this.parent.onInvalidateSize();
   }
 
+  /** Called when a critical error occurs. Only do clean-up logic if overriding this. No guarantee is made about the initialisation of state. */
+  public void onError() {}
+
   /** Should return the full size. Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
   @Override
   public final DimPoint calculateSize(Dim maxFullWidth) {
     initialiseIfRequired();
 
-    if (this.maxWidth != null) {
-      maxFullWidth = Dim.min(this.maxWidth, maxFullWidth);
-    }
+    try {
+      if (this.maxWidth != null) {
+        maxFullWidth = Dim.min(this.maxWidth, maxFullWidth);
+      }
 
-    // add a wrapper around the calculation method so we can cache the calculated size and provide a context for working
-    // with content units (rather than full units).
-    Dim contentWidth = getContentBoxWidth(maxFullWidth);
-    if (this.maxContentWidth != null) {
-      contentWidth = Dim.min(this.maxContentWidth, maxContentWidth);
+      // add a wrapper around the calculation method so we can cache the calculated size and provide a context for working
+      // with content units (rather than full units).
+      Dim contentWidth = getContentBoxWidth(maxFullWidth);
+      if (this.maxContentWidth != null) {
+        contentWidth = Dim.min(this.maxContentWidth, maxContentWidth);
+      }
+      DimPoint size = this.calculateThisSize(contentWidth);
+      DimPoint fullSize = getFullBoxSize(size);
+      if (this.targetFullHeight != null) {
+        // overwrite the calculated height with the target height
+        // todo: this is fine, but elements would need some sort of overflow handling in the future (e.g. overflow, hide, scroll)
+        // todo: there should also be an implicit max height here to prevent contents from overflowing off the main window
+        fullSize = new DimPoint(fullSize.getX(), this.targetFullHeight);
+      } else if (this.targetContentHeight != null) {
+        fullSize = new DimPoint(fullSize.getX(), getFullBoxHeight(this.targetContentHeight));
+      }
+      this.lastCalculatedSize = fullSize;
+      return fullSize;
+    } catch (Exception e) {
+      this.onError();
+      throw e;
     }
-    DimPoint size = this.calculateThisSize(contentWidth);
-    DimPoint fullSize = getFullBoxSize(size);
-    if (this.targetFullHeight != null) {
-      // overwrite the calculated height with the target height
-      // todo: this is fine, but elements would need some sort of overflow handling in the future (e.g. overflow, hide, scroll)
-      // todo: there should also be an implicit max height here to prevent contents from overflowing off the main window
-      fullSize = new DimPoint(fullSize.getX(), this.targetFullHeight);
-    }
-    this.lastCalculatedSize = fullSize;
-    return fullSize;
   }
 
   /** Should return the content size. Call this method ONLY in the context of `super` or `this`. For other elements, call `element.calculateSize()`. */
@@ -577,33 +588,29 @@ public abstract class ElementBase implements IElement {
 
   @Override
   public @Nullable Dim getTargetHeight() {
-    return this.targetFullHeight;
+    if (this.targetFullHeight != null) {
+      return this.targetFullHeight;
+    } else if (this.targetContentHeight != null) {
+      return getFullBoxHeight(this.targetContentHeight);
+    } else {
+      return null;
+    }
   }
 
+  /** If `targetHeight` (i.e. the *full* height) is set for this element, it will take precedence over the content height. */
   @Override
   public IElement setTargetContentHeight(@Nullable Dim targetContentHeight) {
-    if (this.targetFullHeight == null && targetContentHeight == null) {
-      return this;
-    } else if (this.targetFullHeight == null && targetContentHeight != null) {
-      this.targetFullHeight = getFullBoxHeight(targetContentHeight);
+    if (!Objects.equals(this.targetContentHeight, targetContentHeight)) {
+      this.targetContentHeight = targetContentHeight;
       this.onInvalidateSize();
-      return this;
-    } else if (this.targetFullHeight != null && targetContentHeight == null) {
-      this.targetFullHeight = null;
-      this.onInvalidateSize();
-      return this;
-    } else if (!Objects.equals(this.targetFullHeight, targetContentHeight)) {
-      this.targetFullHeight = getFullBoxHeight(targetContentHeight);
-      this.onInvalidateSize();
-      return this;
-    } else {
-      return this;
     }
+    return this;
   }
 
   @Override
   public @Nullable Dim getTargetContentHeight() {
-    return this.targetFullHeight == null ? null : this.getContentBoxHeight(this.targetFullHeight);
+    @Nullable Dim targetFullHeight = this.getTargetHeight();
+    return targetFullHeight != null ? getContentBoxHeight(targetFullHeight) : null;
   }
 
   @Override

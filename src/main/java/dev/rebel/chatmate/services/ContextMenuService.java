@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Environment;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicMessageText;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
@@ -70,6 +72,7 @@ public class ContextMenuService {
   private final Config config;
   private final ChatMateHudStore chatMateHudStore;
   private final StatusService statusService;
+  private final ImageService imageService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -100,7 +103,8 @@ public class ContextMenuService {
                             CustomGuiNewChat customGuiNewChat,
                             Config config,
                             ChatMateHudStore chatMateHudStore,
-                            StatusService statusService) {
+                            StatusService statusService,
+                            ImageService imageService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -131,6 +135,7 @@ public class ContextMenuService {
     this.config = config;
     this.chatMateHudStore = chatMateHudStore;
     this.statusService = statusService;
+    this.imageService = imageService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -200,15 +205,22 @@ public class ContextMenuService {
   }
 
   private void onGenerateFakeDonation() {
-    float amount = (float)(Math.random() * 100);
     PublicDonationData donation = new PublicDonationData() {{
       time = new Date().getTime();
-      amount = amount;
+      amount = (float)(Math.random() * 100);
       formattedAmount = String.format("$%.2f", amount);
       currency = "USD";
       name = "A Donator's Name";
-      String msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a";
-      message = msg.substring(0, (int)(Math.random() * msg.length()));
+      messageParts = new PublicMessagePart[] { new PublicMessagePart() {{
+        type = MessagePartType.text;
+        textData = new PublicMessageText() {{
+          String msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a";
+          msg = msg.substring(0, (int)(Math.random() * msg.length()));
+          text = msg;
+          isBold = false;
+          isItalics = false;
+        }};
+      }}};
     }};
     this.donationHudStore.addDonation(donation);
   }
@@ -233,6 +245,8 @@ public class ContextMenuService {
         this.rankApiStore,
         this.livestreamApiStore,
         this.donationApiStore,
-        this.config);
+        this.config,
+        this.imageService,
+        this.donationHudStore);
   }
 }

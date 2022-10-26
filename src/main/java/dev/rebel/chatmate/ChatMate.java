@@ -142,6 +142,7 @@ public class ChatMate {
     UrlService urlService = new UrlService(logService);
     MinecraftChatService minecraftChatService = new MinecraftChatService(customGuiNewChat);
 
+    DonationHudStore donationHudStore = new DonationHudStore(config, logService);
     InteractiveContext hudContext = new InteractiveContext(
         new InteractiveScreen.ScreenRenderer(),
         mouseEventService,
@@ -162,12 +163,13 @@ public class ChatMate {
         rankApiStore,
         livestreamApiStore,
         donationApiStore,
-        config);
+        config,
+        imageService,
+        donationHudStore);
 
     ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, chatMateHudStore);
     CounterHandler counterHandler = new CounterHandler(keyBindingService, chatMateHudStore, dimFactory);
-    DonationHudStore donationHudStore = new DonationHudStore(config);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
@@ -197,7 +199,8 @@ public class ChatMate {
         customGuiNewChat,
         config,
         chatMateHudStore,
-        statusService);
+        statusService,
+        imageService);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
     ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
 
@@ -234,8 +237,16 @@ public class ChatMate {
         livestreamApiStore,
         donationApiStore,
         rankApiStore,
-        customGuiNewChat);
-    this.donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
+        customGuiNewChat,
+        imageService,
+        donationHudStore);
+    this.donationHudService = new DonationHudService(chatMateHudStore,
+        donationHudStore,
+        guiService,
+        dimFactory,
+        soundService,
+        chatMateEventService,
+        logService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

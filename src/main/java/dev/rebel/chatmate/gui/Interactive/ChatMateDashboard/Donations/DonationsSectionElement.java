@@ -276,7 +276,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
           new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f),
           userNameElement,
           new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setAlignment(TextAlignment.CENTRE),
-          new LabelElement(super.context, this).setText(donation.message).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT),
+          new MessagePartsElement(super.context, this).setMessageParts(Collections.list(donation.messageParts)).setScale(0.75f),
           actionElement
       );
     }

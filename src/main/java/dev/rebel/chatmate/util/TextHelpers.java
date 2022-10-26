@@ -182,6 +182,25 @@ public class TextHelpers {
     return String.format("%d %s%s", value, unit, value == 1 ? "" : "s");
   }
 
+  /** Like `String::split`, except it actually works as expected. */
+  public static List<String> split(String text, String splitAt) {
+    List<Integer> indexes = getAllOccurrences(text, new WordFilter(splitAt), false);
+
+    List<String> parts = new ArrayList<>();
+    int beginIndex = 0;
+    for (int i : indexes) {
+      parts.add(text.substring(beginIndex, i));
+      beginIndex = i + splitAt.length();
+    }
+
+    // add the remainder
+    if (beginIndex < text.length()) {
+      parts.add(text.substring(beginIndex));
+    }
+
+    return parts;
+  }
+
   private static boolean isEndOfWord(char[] text, int i) {
     return i == text.length - 1 || !isWordSeparator(text[i]) && isWordSeparator(text[i + 1]);
   }

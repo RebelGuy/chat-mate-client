@@ -44,6 +44,7 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
     super.context.rankApiStore.clear();
     super.context.donationApiStore.clear();
     super.context.livestreamApiStore.clear();
+    super.context.donationHudStore.clear();
     this.didClearStoresLabel.setVisible(true);
   }
 

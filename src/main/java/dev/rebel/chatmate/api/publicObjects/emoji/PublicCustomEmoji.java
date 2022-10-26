@@ -11,5 +11,8 @@ public class PublicCustomEmoji extends PublicObject {
   public String symbol;
   public String imageData;
   public Integer levelRequirement;
+  public Boolean canUseInDonationMessage;
+  public Integer version;
+  public Boolean isActive;
   public Integer[] whitelistedRanks;
 }

@@ -76,6 +76,13 @@ public class DonationHudElement extends HudElement {
   }
 
   @Override
+  public void onError() {
+    this.chatMateHudStore.removeElement(this);
+    super.onError();
+    this.onDone.run();
+  }
+
+  @Override
   public void onHudBoxSet(DimRect box) {
     Dim height = box.getHeight();
     Dim newY = height.times(this.getYFrac()).minus(height);
