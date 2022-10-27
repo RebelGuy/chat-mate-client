@@ -4,6 +4,7 @@ import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudService;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
@@ -68,6 +69,7 @@ public class GuiService {
   private final CustomGuiNewChat customGuiNewChat;
   private final ImageService imageService;
   private final DonationHudStore donationHudStore;
+  private final ChatMateHudService chatMateHudService;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -103,7 +105,8 @@ public class GuiService {
                     RankApiStore rankApiStore,
                     CustomGuiNewChat customGuiNewChat,
                     ImageService imageService,
-                    DonationHudStore donationHudStore) {
+                    DonationHudStore donationHudStore,
+                    ChatMateHudService chatMateHudService) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -139,6 +142,7 @@ public class GuiService {
     this.customGuiNewChat = customGuiNewChat;
     this.imageService = imageService;
     this.donationHudStore = donationHudStore;
+    this.chatMateHudService = chatMateHudService;
 
     this.addEventHandlers();
   }
@@ -163,7 +167,8 @@ public class GuiService {
         this.apiRequestService,
         this.userEndpointProxy,
         this.messageService,
-        this.config)
+        this.config,
+        this.chatMateHudService)
     );
     return screen;
   }

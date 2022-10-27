@@ -185,7 +185,7 @@ public class CheckboxInputElement extends InputElement {
   }
 
   private void onFlipChecked(boolean isUserInput) {
-    if (!super.getEnabled()) {
+    if (!super.getEnabled() && isUserInput) {
       return;
     }
 

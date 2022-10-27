@@ -239,7 +239,8 @@ public class ChatMate {
         rankApiStore,
         customGuiNewChat,
         imageService,
-        donationHudStore);
+        donationHudStore,
+        chatMateHudService);
     this.donationHudService = new DonationHudService(chatMateHudStore,
         donationHudStore,
         guiService,
