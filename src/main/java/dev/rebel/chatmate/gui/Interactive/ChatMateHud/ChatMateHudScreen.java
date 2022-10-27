@@ -177,7 +177,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   }
 
   private Tick.Out onRenderTick(Tick.In event) {
-    if (!super.context.minecraft.gameSettings.showDebugInfo) {
+    if (!super.context.minecraft.gameSettings.showDebugInfo || super.shouldCloseScreen) {
       super.drawScreen(0, 0, 0);
     }
     return new Tick.Out();
