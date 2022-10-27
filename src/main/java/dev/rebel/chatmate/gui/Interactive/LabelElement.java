@@ -202,7 +202,7 @@ public class LabelElement extends SingleElement {
         lines = addTextLinesForRendering(lines);
         Dim actualMaxWidth = Dim.max(Collections.map(lines, str -> fontEngine.getStringWidthDim(str, this.font)));
         contentWidth = actualMaxWidth;
-        contentHeight = fontHeight.times(this.lines.size()).plus(this.overflowLinePadding.times(this.lines.size() - 1));
+        contentHeight = fontHeight.times(lines.size()).plus(this.overflowLinePadding.times(lines.size() - 1));
 
       } else {
         throw EnumHelpers.<TextOverflow>assertUnreachable(this.overflow);
