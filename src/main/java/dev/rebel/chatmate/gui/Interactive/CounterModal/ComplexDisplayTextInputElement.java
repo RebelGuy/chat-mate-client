@@ -35,7 +35,7 @@ public class ComplexDisplayTextInputElement extends BlockElement {
         .setMinWidth(gui(10))
         .cast();
 
-    IElement textElement = new InlineElement(context, this) // todo: add tab indexes
+    IElement textElement = new InlineElement(context, this)
         .addElement(new LabelElement(context, this)
             .setText("Text:")
             .setOverflow(TextOverflow.TRUNCATE)

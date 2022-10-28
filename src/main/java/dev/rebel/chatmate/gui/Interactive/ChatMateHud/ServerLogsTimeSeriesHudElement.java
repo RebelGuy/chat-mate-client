@@ -130,7 +130,7 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
         } else {
           alpha = this.markerAlpha;
         }
-        GlStateManager.disableAlpha();
+        GlStateManager.disableAlpha(); // required for smooth alpha transitions
         RendererHelpers.drawTexture(super.context.minecraft.getTextureManager(), super.context.dimFactory, point.texture, pointTranslation, scale, Colour.WHITE.withAlpha(alpha));
         GlStateManager.enableAlpha();
       }

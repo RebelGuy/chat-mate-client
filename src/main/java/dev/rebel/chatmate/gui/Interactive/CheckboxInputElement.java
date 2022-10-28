@@ -127,7 +127,7 @@ public class CheckboxInputElement extends InputElement {
 
   /** Provide a callback that will be called when the checked state is about to change due to user input.
    * The first argument is the updated check value. The second argument specifies whether we are changing the state
-   * due to user input (if false, implies programmatic user input).
+   * due to user input (if false, implies programmatic input).
    * If the callback returns false, the input will be blocked and the checkbox state will not change. */
   public CheckboxInputElement setValidator(BiFunction<Boolean, Boolean, Boolean> willSetCheckedValidator) {
     this.willSetCheckedValidator = willSetCheckedValidator;
