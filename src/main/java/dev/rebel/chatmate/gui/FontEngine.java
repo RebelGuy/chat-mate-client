@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -18,6 +19,7 @@ import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.opengl.GL11;
+import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.awt.image.BufferedImage;
@@ -192,11 +194,7 @@ public class FontEngine {
     // for some reason we can't use the GlStateManager with pushAttrib(), so instead we have to use the raw GL11 API
     // https://www.cs.sfu.ca/~haoz/teaching/htmlman/pushattrib.html
     withAttrib(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_DEPTH_BUFFER_BIT, () -> {
-
-      GL11.glDepthMask(false); // enable writing to the depth buffer
-
       GL11.glEnable(GL11.GL_ALPHA_TEST);
-      GL11.glAlphaFunc(GL11.GL_ALWAYS, -1);
 
       GL11.glEnable(GL11.GL_BLEND);
       GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -222,6 +220,8 @@ public class FontEngine {
         Dim shadowWidth = this.dimFactory.zeroGui();
         shadowWidth = shadowWidth.plus(renderer.render(ch, font.getItalic(), shadowX, shadowY, 0));
 
+        // todo: bold/shadows with partial transparency look weird because regions of the text where the multiple render passes overlap end up more opaque.
+        // workaround: https://stackoverflow.com/a/32656965
         if (font.getBold()) {
           renderer.render(ch, font.getItalic(), shadowX.plus(boldOffsetX), shadowY, 0);
           shadowWidth = shadowWidth.plus(boldOffsetX);
@@ -348,6 +348,14 @@ public class FontEngine {
 
   public float drawString(String text, float x, float y, Font baseFont) {
     return this.drawString(text, this.dimFactory.fromGui(x), this.dimFactory.fromGui(y), baseFont).getGui();
+  }
+
+  /** Returns the new x-position of the cursor. */
+  public Dim drawString(List<Tuple2<String, Font>> formattedText, Dim x, Dim y) {
+    for (Tuple2<String, Font> text : formattedText) {
+      x = this.drawString(text._1, x, y, text._2);
+    }
+    return x;
   }
 
   /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor. */

@@ -14,10 +14,10 @@ import scala.Tuple2;
 import scala.Tuple3;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
+
+import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 /** An element that contains other elements and is responsible for their relative layout. */
 public abstract class ContainerElement extends ElementBase {
@@ -27,6 +27,8 @@ public abstract class ContainerElement extends ElementBase {
   protected final List<IElement> initialChildren;
   protected final List<IElement> children;
   protected final Map<IElement, DimRect> childrenRelBoxes;
+
+  private boolean allowShrink = false;
 
   public ContainerElement(InteractiveContext context, IElement parent, LayoutMode mode) {
     super(context, parent);
@@ -78,6 +80,17 @@ public abstract class ContainerElement extends ElementBase {
     return Collections.filter(this.children, IElement::getVisible);
   }
 
+  /** For INLINE elements, whether children should be shrunk (if a min size is set) to optimise the per-line layout.
+   * If false, elements are given the maximum width and wrapped to the next line if required.
+   * If true, elements with a set min size will be sized dynamically to fit the maximum number of elements onto a line while avoiding a gap. */
+  public ContainerElement setAllowShrink(boolean allowShrink) {
+    if (this.allowShrink != allowShrink) {
+      this.allowShrink = allowShrink;
+      super.onInvalidateSize();
+    }
+    return this;
+  }
+
   @Override
   public List<IElement> getChildren() {
     return this.children;
@@ -85,17 +98,17 @@ public abstract class ContainerElement extends ElementBase {
 
   @Override
   protected DimPoint calculateThisSize(Dim maxWidth) {
-    // note: the parent is responsible for the vertical/horizontal position of this container within itself.
-    // we only need to set the relative positions of elements within the box that will be provided to us.
-    List<Tuple2<IElement, DimPoint>> elementSizes = Collections.map(this.getVisibleChildren(), el -> new Tuple2<>(el, el.calculateSize(maxWidth)));
-    if (elementSizes.size() == 0) {
+    if (this.getVisibleChildren().size() == 0) {
       return new DimPoint(ZERO, ZERO);
     }
 
+    // note: the parent is responsible for the vertical/horizontal position of this container within itself.
+    // we only need to set the relative positions of elements within the box that will be provided to us.
     if (this.mode == LayoutMode.BLOCK) {
+      List<Tuple2<IElement, DimPoint>> elementSizes = Collections.map(this.getVisibleChildren(), el -> new Tuple2<>(el, el.calculateSize(maxWidth)));
       return this.calculateBlockSize(elementSizes, maxWidth);
     } else if (this.mode == LayoutMode.INLINE) {
-      return this.calculateInlineSize(elementSizes, maxWidth);
+      return this.calculateInlineSize(maxWidth, null);
     } else {
       throw EnumHelpers.<LayoutMode>assertUnreachable(this.mode);
     }
@@ -225,32 +238,21 @@ public abstract class ContainerElement extends ElementBase {
     return verticalOffsets;
   }
 
-  /** Given the children's box sizes, calculates this container size using the INLINE layout model. */
-  protected final DimPoint calculateInlineSize(List<Tuple2<IElement, DimPoint>> elementSizes, Dim maxWidth) {
+  /** Calculates this container size using the INLINE layout model. Uses the sizes provided, or calculates them using the container's settings. */
+  protected final DimPoint calculateInlineSize(Dim maxWidth, @Nullable List<Tuple2<IElement, DimPoint>> elementSizes) {
     // place one or more elements per line.
     // similar to the BLOCK calculation, except we also position elements vertically within their line.
 
     // first pass: group into lines
-    List<List<Tuple2<IElement, DimPoint>>> lines = new ArrayList<>();
-    List<Tuple2<IElement, DimPoint>> currentLine = new ArrayList<>();
-    Dim lineX = ZERO;
-    for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
-      boolean participatesInLayout = elementSize._1.getLayoutGroup() == LayoutGroup.ALL;
-      DimPoint size = elementSize._2;
-
-      // non-participating elements may clip the right side - that's what they signed up for
-      if (currentLine.size() > 0 && participatesInLayout && lineX.plus(size.getX()).gt(maxWidth)) {
-        // doesn't fit on line
-        lines.add(currentLine);
-        currentLine = Collections.list(elementSize);
-        lineX = participatesInLayout ? size.getX() : ZERO;
-      } else {
-        // add to line
-        currentLine.add(elementSize);
-        lineX = participatesInLayout ? lineX.plus(size.getX()) : lineX;
+    List<List<Tuple2<IElement, DimPoint>>> lines;
+    if (this.allowShrink && elementSizes == null) { // don't shrink if element sizes are provided
+      lines = calculateDynamicLinesForInline(maxWidth);
+    } else {
+      if (elementSizes == null) {
+        elementSizes = Collections.map(this.getVisibleChildren(), el -> new Tuple2<>(el, el.calculateSize(maxWidth)));
       }
+      lines = calculateStaticLinesForInline(maxWidth, elementSizes);
     }
-    lines.add(currentLine);
 
     // second pass: lay out elements within their lines. similar to the BLOCK layout algorithm
     Dim currentY = ZERO;
@@ -320,6 +322,128 @@ public abstract class ContainerElement extends ElementBase {
     }
 
     return new DimPoint(containerWidth, currentY);
+  }
+
+  /** Uses the provided sizes for each element, and wraps them to the next line if they don't fit on the current one. */
+  private List<List<Tuple2<IElement, DimPoint>>> calculateStaticLinesForInline(Dim maxWidth, List<Tuple2<IElement, DimPoint>> elementSizes) {
+    List<List<Tuple2<IElement, DimPoint>>> lines = new ArrayList<>();
+    List<Tuple2<IElement, DimPoint>> currentLine = new ArrayList<>();
+    Dim lineX = ZERO;
+    for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
+      IElement element = elementSize._1;
+      DimPoint size = elementSize._2;
+      boolean participatesInLayout = element.getLayoutGroup() == LayoutGroup.ALL;
+
+      // non-participating elements may clip the right side - that's what they signed up for
+      if (currentLine.size() > 0 && participatesInLayout && lineX.plus(size.getX()).gt(maxWidth)) {
+        // doesn't fit on line
+        lines.add(currentLine);
+        currentLine = Collections.list(elementSize);
+        lineX = participatesInLayout ? size.getX() : ZERO;
+      } else {
+        // add to line
+        currentLine.add(elementSize);
+        lineX = participatesInLayout ? lineX.plus(size.getX()) : lineX;
+      }
+    }
+    lines.add(currentLine);
+
+    return lines;
+  }
+
+  /** For elements that have a minWidth set, will shrink those elements (up to the minWidth) to fill lines and fit as many elements on each line as possible. */
+  private List<List<Tuple2<IElement, DimPoint>>> calculateDynamicLinesForInline(Dim maxWidth) {
+    List<List<Tuple2<IElement, DimPoint>>> lines = new ArrayList<>();
+    List<Tuple2<IElement, DimPoint>> currentLine = new ArrayList<>();
+    Dim lineX = ZERO;
+    for (IElement element : this.getVisibleChildren()) {
+      boolean participatesInLayout = element.getLayoutGroup() == LayoutGroup.ALL;
+      DimPoint size = element.calculateSize(firstOrNull(element.getMinWidth(), maxWidth)); // use the minimum size
+      Tuple2<IElement, DimPoint> elementSize = new Tuple2<>(element, size);
+
+      // non-participating elements may clip the right side - that's what they signed up for
+      if (currentLine.size() > 0 && participatesInLayout && lineX.plus(size.getX()).gt(maxWidth)) {
+        // doesn't fit on line
+        lines.add(this.expandItemsInLine(currentLine, maxWidth));
+        currentLine = Collections.list(elementSize);
+        lineX = participatesInLayout ? size.getX() : ZERO;
+      } else {
+        // add to line
+        currentLine.add(elementSize);
+        lineX = participatesInLayout ? lineX.plus(size.getX()) : lineX;
+      }
+    }
+    lines.add(this.expandItemsInLine(currentLine, maxWidth));
+
+    return lines;
+  }
+
+  /** Tries to proportionally expand elements which have the minWidth set until they fill the line. */
+  private List<Tuple2<IElement, DimPoint>> expandItemsInLine(List<Tuple2<IElement, DimPoint>> minimisedLine, Dim desiredWidth) {
+    Dim remainingSpace = desiredWidth.minus(Dim.sum(Collections.map(minimisedLine, line -> line._2.getX())));
+    if (remainingSpace.lte(ZERO)) {
+      return minimisedLine;
+    }
+
+    List<Tuple2<IElement, DimPoint>> expandableElementSizes = Collections.filter(minimisedLine, el -> el._1.getMinWidth() != null);
+    Map<IElement, Dim> maxWidths = new HashMap<>();
+    for (Tuple2<IElement, DimPoint> elementSize : expandableElementSizes) {
+      Dim minWidth = elementSize._2.getX();
+      Dim maxWidth = elementSize._1.calculateSize(minWidth.plus(remainingSpace)).getX();
+      if (maxWidth.gt(minWidth)) {
+        maxWidths.put(elementSize._1, maxWidth);
+      }
+    }
+
+    // since we are constructing the widths from 0 below (as opposed to from the delta to the widths that are already taken account by remainingSpace),
+    // subtract the widths here
+    if (expandableElementSizes.size() > 0) {
+      remainingSpace = remainingSpace.plus(Dim.sum(Collections.map(expandableElementSizes, elSize -> elSize._2.getX())));
+    }
+
+    // since the maximum width of elements may be different, we iteratively expand all elements until hitting one or more of the elements' maximum widths,
+    // then do the same with the remaining elements, and so on, until either we have filled the line or no elements can expand anymore.
+    Set<IElement> canExpand = new HashSet<>(maxWidths.keySet());
+    Map<IElement, Dim> newWidths = new HashMap<>();
+    Dim addedWidth = ZERO;
+    while (canExpand.size() > 0 && remainingSpace.gt(screen(0.5f))) { // sub-pixel fill is good enough
+      // smallest common width of expandable elements, minus the width we have already added to those
+      Dim widthToAdd = Dim.min(Collections.map(Collections.list(canExpand), maxWidths::get)).minus(addedWidth);
+
+      Dim totalAddedWidth = widthToAdd.times(canExpand.size());
+      if (totalAddedWidth.gt(remainingSpace)) {
+        // scale down - this will be the last pass
+        // note: at the moment, we scale everything uniformly, but in the future we could add biases to each element
+        widthToAdd = remainingSpace.over(canExpand.size());
+      }
+
+      // add onto the widths of elements that can still expand
+      for (IElement element : canExpand) {
+        if (newWidths.containsKey(element)) {
+          newWidths.put(element, newWidths.get(element).plus(widthToAdd));
+        } else {
+          newWidths.put(element, widthToAdd);
+        }
+
+        // this element has reached its maximum expansion
+        if (newWidths.get(element).gte(maxWidths.get(element))) {
+          canExpand.remove(element);
+        }
+      }
+
+      remainingSpace = remainingSpace.minus(totalAddedWidth);
+      addedWidth = addedWidth.plus(widthToAdd);
+    }
+
+    // replace sizes in line
+    return Collections.map(minimisedLine, line -> {
+      IElement element = line._1;
+      DimPoint size = line._2;
+      if (newWidths.containsKey(element)) {
+        size = element.calculateSize(newWidths.get(element));
+      }
+      return new Tuple2<>(element, size);
+    });
   }
 
   @Override

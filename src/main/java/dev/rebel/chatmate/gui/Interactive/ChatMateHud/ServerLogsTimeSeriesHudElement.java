@@ -14,6 +14,7 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.events.ServerLogEventService;
 import dev.rebel.chatmate.util.Collections;
+import net.minecraft.client.renderer.GlStateManager;
 import org.lwjgl.opengl.GL11;
 
 import javax.annotation.Nullable;
@@ -37,9 +38,8 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
     super.setCanScale(true);
 
     DimPoint defaultPosition = context.dimFactory.getMinecraftRect().getTopRight().setAnchor(DimAnchor.SCREEN);
-    HudElementTransform transform = new HudElementTransform(defaultPosition.getX(), defaultPosition.getY(), 1);
-    super.setDefaultPosition(transform.getPosition(), Anchor.TOP_RIGHT);
-    super.setDefaultScale(transform.scale);
+    super.setDefaultPosition(defaultPosition, Anchor.TOP_RIGHT);
+    super.setDefaultScale(1);
     super.enablePersistTransform(NAME);
 
     this.serverLogEventService = serverLogEventService;
@@ -130,9 +130,9 @@ public class ServerLogsTimeSeriesHudElement extends TransformedHudElementWrapper
         } else {
           alpha = this.markerAlpha;
         }
-        GL11.glDisable(GL11.GL_ALPHA_TEST); // required for smooth alpha transitions
+        GlStateManager.disableAlpha(); // required for smooth alpha transitions
         RendererHelpers.drawTexture(super.context.minecraft.getTextureManager(), super.context.dimFactory, point.texture, pointTranslation, scale, Colour.WHITE.withAlpha(alpha));
-        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GlStateManager.enableAlpha();
       }
     }
 

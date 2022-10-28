@@ -1,12 +1,15 @@
 package dev.rebel.chatmate.commands;
 
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
+import dev.rebel.chatmate.gui.Interactive.CounterModal.Expression;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.util.BlockPos;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 public class CounterCommand extends ChatMateSubCommand {
   private static final String usage = "<create[> <startValue> <incrementValue> <scale>( <title>)]|delete>";
@@ -60,7 +63,8 @@ public class CounterCommand extends ChatMateSubCommand {
       }
 
       String title = args.length == 4 ? null : String.join(" ", Arrays.stream(args).skip(4).toArray(String[]::new));
-      this.counterHandler.createCounter(startValue, incrementValue, scale, title);
+      Function<Integer, String> displayFunction = Expression.createDisplayFunction(String.format("%s: {{x}}", title), new ArrayList<>());
+      this.counterHandler.createCounter(startValue, incrementValue, scale, displayFunction);
       return;
     }
 

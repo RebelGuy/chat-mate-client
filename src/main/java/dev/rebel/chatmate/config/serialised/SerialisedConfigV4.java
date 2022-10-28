@@ -103,23 +103,5 @@ public class SerialisedConfigV4 extends SerialisedConfigVersions.Version {
       this.yAnchor = yAnchor;
       this.scale = scale;
     }
-
-    public SerialisedHudElementTransform(Config.HudElementTransform transform) {
-      this(
-          transform.x.getUnderlyingValue(),
-          transform.x.anchor == DimAnchor.GUI ? "GUI" : "SCREEN",
-          transform.y.getUnderlyingValue(),
-          transform.y.anchor == DimAnchor.GUI ? "GUI" : "SCREEN",
-          transform.scale
-      );
-    }
-
-    public Config.HudElementTransform deserialise(DimFactory dimFactory) {
-      return new Config.HudElementTransform(
-          dimFactory.fromValue(this.x, Objects.equals(this.xAnchor, "GUI") ? DimAnchor.GUI : DimAnchor.SCREEN),
-          dimFactory.fromValue(this.y, Objects.equals(this.yAnchor, "GUI") ? DimAnchor.GUI : DimAnchor.SCREEN),
-          this.scale
-      );
-    }
   }
 }

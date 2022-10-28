@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.events;
 
+import dev.rebel.chatmate.api.ChatMateApiException;
+import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.publicObjects.event.PublicChatMateEvent.ChatMateEventType;
 import dev.rebel.chatmate.api.models.chatMate.GetEventsResponse.GetEventsResponseData;
@@ -17,6 +19,7 @@ import dev.rebel.chatmate.events.models.NewTwitchFollowerEventData;
 import dev.rebel.chatmate.util.ApiPoller;
 import dev.rebel.chatmate.util.ApiPoller.PollType;
 import dev.rebel.chatmate.util.ApiPollerFactory;
+import dev.rebel.chatmate.util.Objects;
 
 import javax.annotation.Nullable;
 import java.util.Date;
@@ -36,7 +39,7 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
     super(ChatMateEventType.class, logService);
     this.chatMateEndpointProxy = chatMateEndpointProxy;
     this.logService = logService;
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, null, this::onMakeRequest, 1000L, PollType.CONSTANT_PADDING, TIMEOUT_WAIT);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 1000L, PollType.CONSTANT_PADDING, TIMEOUT_WAIT);
     this.config = config;
     this.dateTimeService = dateTimeService;
   }
@@ -93,6 +96,15 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
       } else {
         this.logService.logError("Invalid ChatMate event of type " + event.type);
       }
+    }
+  }
+
+  private void onApiError(Throwable error) {
+    // if there was a 500 error, we can assume that sending the same request will result in the same error.
+    // avoid this by resetting the timestamp from which to get events - this might mean that we miss events, but that's ok.
+    if (Objects.ifClass(ChatMateApiException.class, error, e -> e.apiResponseError.errorCode == 500)) {
+      this.config.getLastGetChatMateEventsResponseEmitter().set(new Date().getTime());
+      this.logService.logWarning(this, "API status code was 500. To prevent further issues, the timestamp for the next request has been reset.");
     }
   }
 }

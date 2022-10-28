@@ -116,7 +116,14 @@ public abstract class HudElement extends ElementBase {
       return;
     }
 
-    HudElementTransform transform = new HudElementTransform(super.getBox().getX(), super.getBox().getY(), this.currentScale);
+    HudElementTransform transform = new HudElementTransform(
+        super.getBox().getX(),
+        super.getBox().getY(),
+        this.autoAnchor,
+        super.context.dimFactory.getMinecraftRect(),
+        super.context.dimFactory.getScaleFactor(),
+        this.currentScale
+    );
     super.context.config.getHudTransformsEmitter().set(prev -> {
       Map<String, HudElementTransform> current = new HashMap<>(prev);
       current.put(this.persistName, transform);
@@ -168,21 +175,41 @@ public abstract class HudElement extends ElementBase {
   public final void setBox(DimRect box) {
     // the box provided here will be incorrect, we handle our own sizing functionality.
     if (super.getBox() == null) {
+      // this branch is only run once to set the initial box
       @Nullable HudElementTransform persistedTransform = this.getPersistedTransform();
       if (persistedTransform != null) {
-        this.defaultPosition = persistedTransform.getPosition();
-        this.defaultPositionAnchor = Anchor.TOP_LEFT;
-        this.defaultScale = persistedTransform.scale;
-      }
+        // if there is persisted scaling, apply this first and come back after the next recalculation to set the box
+        float scale = persistedTransform.scale;
+        if (scale != this.currentScale) {
+          float oldScale = this.currentScale;
+          this.currentScale = scale;
+          this.onElementRescaled(oldScale, scale);
+          super.onInvalidateSize();
+          return;
+        }
 
-      box = setBoxPositionAtAnchor(new DimRect(this.defaultPosition, this.lastCalculatedSize), this.defaultPosition, this.defaultPositionAnchor);
-      this.setBoxUnsafe(box);
+        // e.g. if we persisted the element to be 2 pixels from the right of the window and 5 pixels from the top, then we should retain that position relative to the current window
+        DimRect persistedBox = new DimRect(new DimPoint(persistedTransform.x, persistedTransform.y), super.lastCalculatedSize);
+        Events.ScreenSizeData persistedScreenSizeData = new Events.ScreenSizeData(
+            persistedTransform.screenRect.getSize(),
+            persistedTransform.screenScaleFactor,
+            super.context.dimFactory.getMinecraftSize(),
+            super.context.dimFactory.getScaleFactor()
+        );
+        DimPoint position = repositionInResizedWindow(persistedTransform.positionAnchor, persistedBox, persistedScreenSizeData);
+        box = box.withPosition(position);
+        this.setBoxUnsafe(box);
+      } else {
+        // no persistence - use defaults
+        box = setBoxPositionAtAnchor(new DimRect(this.defaultPosition, super.lastCalculatedSize), this.defaultPosition, this.defaultPositionAnchor);
+        this.setBoxUnsafe(box);
 
-      // since elements start off with a scale of 1, we have to notify listeners of the resizing so they can handle it as required
-      if (this.defaultScale != this.currentScale) {
-        float oldScale = this.currentScale;
-        this.currentScale = this.defaultScale;
-        this.onElementRescaled(oldScale, this.defaultScale);
+        // since elements start off with a scale of 1, we have to notify listeners of the resizing so they can handle it as required
+        if (this.defaultScale != this.currentScale) {
+          float oldScale = this.currentScale;
+          this.currentScale = this.defaultScale;
+          this.onElementRescaled(oldScale, this.defaultScale);
+        }
       }
     } else {
       // infer why we are resizing the box
@@ -228,18 +255,22 @@ public abstract class HudElement extends ElementBase {
 
   @Override
   public void onWindowResize(IEvent<Events.ScreenSizeData> e) {
-    // we want to keep the element's GUI position relative to the window the same. use the anchor to determine how we should change the box.
-    // note that we take into consideration whether the box's position is anchored to the GUI or screen when working out the new position.
-    Events.ScreenSizeData screenSizeData = e.getData();
     DimRect box = super.getBox();
-    DimPoint position = box.getPosition();
-    DimPoint size = box.getSize();
+    DimPoint newPosition = repositionInResizedWindow(this.autoAnchor, box, e.getData());
+    super.setBox(box.withPosition(newPosition));
+  }
+
+  private static DimPoint repositionInResizedWindow(Anchor resizeAnchor, DimRect box, Events.ScreenSizeData screenSizeData) {
     Function<DimPoint, Dim> horizontal = DimPoint::getX;
     Function<DimPoint, Dim> vertical = DimPoint::getY;
+    DimPoint position = box.getPosition();
+    DimPoint size = box.getSize();
 
+    // we want to keep the element's GUI position relative to the window the same. use the anchor to determine how we should change the box.
+    // note that we take into consideration whether the box's position is anchored to the GUI or screen when working out the new position.
     Dim x;
     Dim y;
-    switch (this.autoAnchor) {
+    switch (resizeAnchor) {
       case TOP_LEFT:
         x = alignLower(horizontal, position, size, screenSizeData);
         y = alignLower(vertical, position, size, screenSizeData);
@@ -277,10 +308,10 @@ public abstract class HudElement extends ElementBase {
         y = alignUpper(vertical, position, size, screenSizeData);
         break;
       default:
-        throw EnumHelpers.<Anchor>assertUnreachable(this.autoAnchor);
+        throw EnumHelpers.<Anchor>assertUnreachable(resizeAnchor);
     }
 
-    super.setBox(box.withPosition(new DimPoint(x, y)));
+    return new DimPoint(x, y);
   }
 
   private static Dim alignLower(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, Events.ScreenSizeData screenSizeData) {

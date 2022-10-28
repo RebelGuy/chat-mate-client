@@ -53,6 +53,8 @@ public interface IElement {
   int getEffectiveZIndex();
   IElement setZIndex(int zIndex);
 
+  int getDepth();
+
   // if defined, any and all visual content of this element, and all its children, will be clipped if exceeding this box
   @Nullable DimRect getVisibleBox();
   IElement setVisibleBox(@Nullable DimRect visibleBox);
@@ -80,6 +82,11 @@ public interface IElement {
   IElement setMaxWidth(@Nullable Dim maxWidth);
   /** If set, the element's content width will never exceed this value. */
   IElement setMaxContentWidth(@Nullable Dim maxContentWidth);
+
+  /** If set (full width), signifies that the element is willing to shrink down up to this size. Not setting this implies that the element wants to take up as much space in the parent as possible. */
+  IElement setMinWidth(@Nullable Dim minWith);
+  /** Full width. */
+  @Nullable Dim getMinWidth();
 
   /** If set, attempts to lock the height of the element's full box. No guarantee can be made that the height won't exceed this value. */
   IElement setTargetHeight(@Nullable Dim height);

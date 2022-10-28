@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.util;
 
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
+
 import javax.annotation.Nullable;
 import java.util.List;
 
@@ -29,5 +31,13 @@ public class EnumHelpers {
 
     // none of the ordered items were found in the list
     return null;
+  }
+
+  public static <T extends Enum<T>> T fromStringOrDefault(Class<T> anchorClass, String stringValue, T defaultValue) {
+    try {
+      return T.valueOf(anchorClass, stringValue);
+    } catch (IllegalArgumentException e) {
+      return defaultValue;
+    }
   }
 }

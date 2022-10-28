@@ -26,13 +26,13 @@ public abstract class ModalElement extends ContainerElement {
   private final Dim cornerRadius;
   private final Dim shadowDistance;
 
-  private LabelElement title;
-  private ElementReference bodyElement;
-  private LabelElement errorLabel;
-  private HorizontalDivider divider;
-  private TextButtonElement closeButton;
-  private TextButtonElement submitButton;
-  private SideBySideElement footer;
+  private final LabelElement title;
+  private final ElementReference bodyElement;
+  private final LabelElement errorLabel;
+  private final HorizontalDivider divider;
+  private final TextButtonElement closeButton;
+  private final TextButtonElement submitButton;
+  private final SideBySideElement footer;
 
   private boolean loading = false;
 
@@ -42,11 +42,61 @@ public abstract class ModalElement extends ContainerElement {
     this.borderSize = gui(1);
     this.cornerRadius = gui(5);
     this.shadowDistance = gui(3);
-    this.setPadding(new Layout.RectExtension(context.dimFactory.fromGui(10)));
-    this.setBorder(new RectExtension(this.borderSize));
-    this.setHorizontalAlignment(HorizontalAlignment.CENTRE);
-    this.setVerticalAlignment(VerticalAlignment.MIDDLE);
-    this.setSizingMode(SizingMode.FILL);
+    super.setPadding(new Layout.RectExtension(context.dimFactory.fromGui(10)));
+    super.setBorder(new RectExtension(this.borderSize));
+    super.setHorizontalAlignment(HorizontalAlignment.CENTRE);
+    super.setVerticalAlignment(VerticalAlignment.MIDDLE);
+    super.setSizingMode(SizingMode.FILL);
+
+    this.title = (LabelElement)new LabelElement(context, this)
+        .setAlignment(LabelElement.TextAlignment.CENTRE)
+        .setOverflow(LabelElement.TextOverflow.SPLIT)
+        .setSizingMode(SizingMode.FILL)
+        .setMargin(new Layout.RectExtension(ZERO, ZERO, ZERO, context.dimFactory.fromGui(15)))
+        .setVisible(true);
+
+    this.bodyElement = new ElementReference(context, this);
+
+    this.errorLabel = (LabelElement)new LabelElement(context, this)
+        .setColour(Colour.RED)
+        .setFontScale(0.75f)
+        .setOverflow(TextOverflow.SPLIT)
+        .setAlignment(TextAlignment.CENTRE)
+        .setMaxOverflowLines(5)
+        .setSizingMode(SizingMode.FILL)
+        .setVisible(false)
+        .setPadding(new RectExtension(ZERO, gui(4)));
+
+    this.divider = new HorizontalDivider(context, this)
+        .setMode(FillMode.PARENT_FULL);
+
+    this.closeButton = new TextButtonElement(context, this)
+        .setText("Close")
+        .setOnClick(this::onClose)
+        .setMinSize(this.width.over(4))
+        .setHorizontalAlignment(HorizontalAlignment.LEFT)
+        .cast();
+    this.submitButton = new TextButtonElement(context, this)
+        .setText("Submit")
+        .setOnClick(this::onSubmit)
+        .setMinSize(this.width.over(4))
+        .setVisible(this.validate() != null)
+        .setHorizontalAlignment(HorizontalAlignment.RIGHT)
+        .cast();
+    this.footer = new SideBySideElement(context, this)
+        .setElementPadding(gui(8))
+        .addElement(1, new WrapperElement(context, this, this.closeButton))
+        .addElement(1, new WrapperElement(context, this, this.submitButton))
+        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO))
+        .cast();
+
+    super.addElement(this.title);
+
+    super.addElement(this.bodyElement);
+    super.addElement(this.errorLabel);
+
+    super.addElement(this.divider);
+    super.addElement(this.footer);
   }
 
   /** Do not call this from the constructor. */
@@ -128,61 +178,6 @@ public abstract class ModalElement extends ContainerElement {
     if (e.getData().eventKey == Keyboard.KEY_RETURN && this.validate()) {
       this.onSubmit();
     }
-  }
-
-  @Override
-  public void onInitialise() {
-    super.onInitialise();
-
-    this.title = (LabelElement)new LabelElement(context, this)
-        .setAlignment(LabelElement.TextAlignment.CENTRE)
-        .setOverflow(LabelElement.TextOverflow.SPLIT)
-        .setSizingMode(SizingMode.FILL)
-        .setMargin(new Layout.RectExtension(ZERO, ZERO, ZERO, context.dimFactory.fromGui(15)))
-        .setVisible(true);
-
-    this.bodyElement = new ElementReference(context, this);
-
-    this.errorLabel = (LabelElement)new LabelElement(context, this)
-        .setColour(Colour.RED)
-        .setFontScale(0.75f)
-        .setOverflow(TextOverflow.SPLIT)
-        .setAlignment(TextAlignment.CENTRE)
-        .setMaxLines(5)
-        .setSizingMode(SizingMode.FILL)
-        .setVisible(false)
-        .setPadding(new RectExtension(ZERO, gui(4)));
-
-    this.divider = new HorizontalDivider(context, this)
-        .setMode(FillMode.PARENT_FULL);
-
-    this.closeButton = new TextButtonElement(context, this)
-        .setText("Close")
-        .setOnClick(this::onClose)
-        .setMinSize(this.width.over(4))
-        .setHorizontalAlignment(HorizontalAlignment.LEFT)
-        .cast();
-    this.submitButton = new TextButtonElement(context, this)
-        .setText("Submit")
-        .setOnClick(this::onSubmit)
-        .setMinSize(this.width.over(4))
-        .setVisible(this.validate() != null)
-        .setHorizontalAlignment(HorizontalAlignment.RIGHT)
-        .cast();
-    this.footer = new SideBySideElement(context, this)
-        .setElementPadding(gui(8))
-        .addElement(1, new WrapperElement(context, this, this.closeButton))
-        .addElement(1, new WrapperElement(context, this, this.submitButton))
-        .setPadding(new Layout.RectExtension(ZERO, ZERO, context.dimFactory.fromGui(10), ZERO))
-        .cast();
-
-    this.addElement(this.title);
-
-    this.addElement(this.bodyElement);
-    this.addElement(this.errorLabel);
-
-    this.addElement(this.divider);
-    this.addElement(this.footer);
   }
 
   @Override

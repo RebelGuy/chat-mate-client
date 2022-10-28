@@ -39,9 +39,10 @@ public abstract class EventServiceBase<Events extends Enum<Events>> {
   protected final <In extends EventIn, Out extends EventOut, Options extends EventOptions> void addListener(Events event, Function<In, Out> handler, Options options, Object key) {
     synchronized (this.listeners.get(event)) {
       if (this.listeners.get(event).stream().anyMatch(eh -> eh.isHandlerForKey(key))) {
-        throw new RuntimeException("Key already exists for event " + event);
+        this.logService.logError(this, new RuntimeException("Key already exists for event " + event));
+      } else {
+        this.listeners.get(event).add(new EventHandler<>(handler, options, key));
       }
-      this.listeners.get(event).add(new EventHandler<>(handler, options, key));
     }
     this.removeDeadHandlers(event);
   }

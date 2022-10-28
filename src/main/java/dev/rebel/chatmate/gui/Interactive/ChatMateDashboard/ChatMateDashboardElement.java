@@ -8,6 +8,7 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Debug.DebugSectionEl
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.DonationsSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General.GeneralSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud.HudSectionElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudService;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
 import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -44,6 +45,7 @@ public class ChatMateDashboardElement extends ContainerElement {
 
   private final DashboardStore store;
   private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final ChatMateHudService chatMateHudService;
 
   private final Dim sidebarMaxWidth;
   private final AnimatedBool backgroundFadeIn;
@@ -55,7 +57,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final DebugSectionElement debugSection;
 
   private final SidebarElement sidebar;
-  private final WrapperElement contentWrapper;
+  private final ScrollingElement contentWrapper;
   private final ElementReference content;
 
   public ChatMateDashboardElement(InteractiveContext context,
@@ -66,7 +68,8 @@ public class ChatMateDashboardElement extends ContainerElement {
                                   ApiRequestService apiRequestService,
                                   UserEndpointProxy userEndpointProxy,
                                   MessageService messageService,
-                                  Config config) {
+                                  Config config,
+                                  ChatMateHudService chatMateHudService) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
@@ -74,13 +77,14 @@ public class ChatMateDashboardElement extends ContainerElement {
 
     this.store = new DashboardStore();
     this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.chatMateHudService = chatMateHudService;
 
     this.sidebarMaxWidth = gui(80);
     this.backgroundFadeIn = new AnimatedBool(500L, false);
     this.backgroundFadeIn.set(true);
 
     this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy, config);
-    this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config);
+    this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
     this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route));
@@ -90,8 +94,8 @@ public class ChatMateDashboardElement extends ContainerElement {
         .setMaxWidth(this.sidebarMaxWidth)
         .cast();
     this.content = new ElementReference(context, this);
-    this.contentWrapper = new WrapperElement(context, this, this.content)
-        .cast();
+    this.contentWrapper = new ScrollingElement(context, this)
+        .setElement(this.content);
     this.setContentSizes(this.context.dimFactory.getMinecraftSize());
 
     super.addElement(this.sidebar);
@@ -135,7 +139,9 @@ public class ChatMateDashboardElement extends ContainerElement {
 
   private void setContentSizes(DimPoint windowSize) {
     Dim dashboardContentWidth = super.getContentBoxWidth(windowSize.getX());
+    Dim dashboardContentHeight = super.getContentBoxWidth(windowSize.getY());
     this.contentWrapper.setMaxWidth(dashboardContentWidth.minus(this.sidebarMaxWidth));
+    this.contentWrapper.setMaxHeight(dashboardContentHeight);
 
     Dim dashboardSidebarHeight = super.getContentBoxHeight(windowSize.getY());
     this.sidebar.setTargetHeight(dashboardSidebarHeight);

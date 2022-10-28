@@ -27,8 +27,6 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   private final ContextMenuService contextMenuService;
   private final Config config;
 
-  private boolean shown;
-
   public ChatMateHudScreen(ChatMateHudStore chatMateHudStore, ContextMenuService contextMenuService, InteractiveContext context, Config config) {
     super(context, null, InteractiveScreenType.HUD);
     this.chatMateHudStore = chatMateHudStore;
@@ -47,12 +45,10 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   }
 
   public void show() {
-    this.shown = true;
     this.initialise();
   }
 
   public void hide() {
-    this.shown = false;
     super.context.renderer.runSideEffect(() -> {
       this.cleanUp();
     });
@@ -75,7 +71,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
 
   @Override
   public void onSetVisible(boolean visible) {
-    if (!visible) {
+    if (visible) {
       this.show();
     } else {
       this.hide();
@@ -181,22 +177,18 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   }
 
   private Tick.Out onRenderTick(Tick.In event) {
-    if (this.shown && !super.context.minecraft.gameSettings.showDebugInfo) {
+    if (!super.context.minecraft.gameSettings.showDebugInfo || super.shouldCloseScreen) {
       super.drawScreen(0, 0, 0);
     }
     return new Tick.Out();
   }
 
   private boolean isInteractivityDisabled() {
-    return super.context.minecraft.currentScreen != this || !this.shown;
+    return super.context.minecraft.currentScreen != this;
   }
 
   private void updateVisibility() {
-    boolean enabled = this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get();
-    if (enabled) {
-      this.show();
-    } else {
-      this.hide();
-    }
+    boolean visible = this.config.getChatMateEnabledEmitter().get() && this.config.getHudEnabledEmitter().get();
+    this.onSetVisible(visible);
   }
 }

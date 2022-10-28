@@ -21,7 +21,7 @@ public class SharedElements {
 
   public static ElementFactory<LabelElement> ERROR_LABEL = (context, parent) -> new LabelElement(context, parent)
       .setOverflow(TextOverflow.SPLIT)
-      .setMaxLines(4)
+      .setMaxOverflowLines(4)
       .setColour(Colour.RED)
       .setAlignment(TextAlignment.LEFT)
       .setFontScale(0.75f)

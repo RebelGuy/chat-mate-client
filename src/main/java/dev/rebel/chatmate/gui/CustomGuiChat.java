@@ -109,7 +109,7 @@ public class CustomGuiChat extends GuiChat {
     }
 
     if (this.contextMenuStore.isShowingContextMenu()) {
-      this.cursorService.setCursorType(CursorType.DEFAULT);
+      this.cursorService.setCursorType(CursorType.DEFAULT, 0);
       return new Tick.Out();
     }
 
@@ -119,11 +119,11 @@ public class CustomGuiChat extends GuiChat {
     ComponentActionType action = this.getComponentActionType(component);
 
     if (action == ComponentActionType.CLICK) {
-      this.cursorService.setCursorType(CursorType.CLICK);
+      this.cursorService.setCursorType(CursorType.CLICK, 0);
     } else if (action == ComponentActionType.CONTEXT) {
-      this.cursorService.setCursorType(CursorType.TIP);
+      this.cursorService.setCursorType(CursorType.TIP, 0);
     } else {
-      this.cursorService.setCursorType(CursorType.DEFAULT);
+      this.cursorService.setCursorType(CursorType.DEFAULT, 0);
     }
 
     return new Tick.Out();

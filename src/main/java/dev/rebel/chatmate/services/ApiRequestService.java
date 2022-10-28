@@ -19,7 +19,7 @@ public class ApiRequestService {
 
   /** Call this when dispatching manual API requests, and run the provided Runnable once the request is complete. */
   public Runnable onNewRequest() {
-    int cursorId = this.cursorService.toggleCursor(CursorType.WAIT);
+    int cursorId = this.cursorService.toggleCursor(CursorType.WAIT, 0);
 
     // we must ensure that the listeners receive ordered data, else it may corrupt their state.
     synchronized (this.lock) {

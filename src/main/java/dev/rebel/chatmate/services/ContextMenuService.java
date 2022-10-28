@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Environment;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicMessageText;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
@@ -9,7 +11,11 @@ import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
+import dev.rebel.chatmate.gui.Interactive.CounterModal.CounterModal;
+import dev.rebel.chatmate.gui.Interactive.DonationHudModal.DonationHudModal;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.rank.ManageRanksModal;
@@ -33,6 +39,7 @@ import dev.rebel.chatmate.stores.RankApiStore;
 import net.minecraft.client.Minecraft;
 
 import java.util.Date;
+import java.util.function.BiFunction;
 
 public class ContextMenuService {
   private final Minecraft minecraft;
@@ -63,6 +70,9 @@ public class ContextMenuService {
   private final DonationApiStore donationApiStore;
   private final CustomGuiNewChat customGuiNewChat;
   private final Config config;
+  private final ChatMateHudStore chatMateHudStore;
+  private final StatusService statusService;
+  private final ImageService imageService;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -91,7 +101,10 @@ public class ContextMenuService {
                             LivestreamApiStore livestreamApiStore,
                             DonationApiStore donationApiStore,
                             CustomGuiNewChat customGuiNewChat,
-                            Config config) {
+                            Config config,
+                            ChatMateHudStore chatMateHudStore,
+                            StatusService statusService,
+                            ImageService imageService) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -120,6 +133,9 @@ public class ContextMenuService {
     this.donationApiStore = donationApiStore;
     this.customGuiNewChat = customGuiNewChat;
     this.config = config;
+    this.chatMateHudStore = chatMateHudStore;
+    this.statusService = statusService;
+    this.imageService = imageService;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -133,8 +149,9 @@ public class ContextMenuService {
 
   public void showHudContext(Dim x, Dim y) {
     this.store.showContextMenu(x, y,
-      new ContextMenuOption("Add countdown title", this::onCountdown),
-      new ContextMenuOption("Add counter component", this::onCounter),
+      new ContextMenuOption("Add countdown title", this::onAddCountdownTitle),
+      new ContextMenuOption("Add counter element", this::onAddCounterElement),
+      new ContextMenuOption("Add donation element", this::onAddDonationElement),
       this.config.getDebugModeEnabledEmitter().get() ? new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation) : null
     );
   }
@@ -150,44 +167,36 @@ public class ContextMenuService {
   }
 
   private void onModifyExperience(PublicUser user) {
-    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
-    IElement modal = new ManageExperienceModal(context, screen, user, this.experienceEndpointProxy, this.mcChatService);
-    screen.setMainElement(modal);
-    this.minecraft.displayGuiScreen(screen);
+    this.displayElementInScreen((context, screen) -> new ManageExperienceModal(context, screen, user, this.experienceEndpointProxy, this.mcChatService));
   }
 
   private void onManageRanks(PublicUser user) {
-    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     RankAdapters rankAdapters = new RankAdapters(this.rankEndpointProxy, this.rankApiStore);
-    IElement modal = new ManageRanksModal(context, screen, user, rankAdapters);
-    screen.setMainElement(modal);
-    this.minecraft.displayGuiScreen(screen);
+    this.displayElementInScreen((context, screen) -> new ManageRanksModal(context, screen, user, rankAdapters));
   }
 
   private void onManagePunishments(PublicUser user) {
-    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
     PunishmentAdapters punishmentAdapters = new PunishmentAdapters(this.rankEndpointProxy, this.punishmentEndpointProxy, this.rankApiStore);
-    IElement modal = new ManageRanksModal(context, screen, user, punishmentAdapters);
-    screen.setMainElement(modal);
-    this.minecraft.displayGuiScreen(screen);
+    this.displayElementInScreen((context, screen) -> new ManageRanksModal(context, screen, user, punishmentAdapters));
   }
 
-  private void onCountdown() {
-    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
-    InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
-    IElement modal = new CountdownModal(context, screen, this.countdownHandler);
-    screen.setMainElement(modal);
-    this.minecraft.displayGuiScreen(screen);
+  private void onAddCountdownTitle() {
+    this.displayElementInScreen((context, screen) -> new CountdownModal(context, screen, this.countdownHandler));
   }
 
-  private void onCounter() {
-    InteractiveScreen.InteractiveContext context = this.createInteractiveContext();
+  private void onAddCounterElement() {
+    this.displayElementInScreen((context, screen) -> new CounterModal(context, screen, this.counterHandler));
+  }
+
+  private void onAddDonationElement() {
+    this.displayElementInScreen((context, screen) -> new DonationHudModal(context, screen, this.chatMateHudStore, this.statusService));
+  }
+
+  private void displayElementInScreen(BiFunction<InteractiveContext, InteractiveScreen, IElement> elementFactory) {
+    InteractiveContext context = this.createInteractiveContext();
     InteractiveScreen screen = new InteractiveScreen(context, this.minecraft.currentScreen, InteractiveScreenType.MODAL);
-    IElement modal = new CounterModal(context, screen, this.counterHandler);
-    screen.setMainElement(modal);
+    IElement element = elementFactory.apply(context, screen);
+    screen.setMainElement(element);
     this.minecraft.displayGuiScreen(screen);
   }
 
@@ -196,21 +205,28 @@ public class ContextMenuService {
   }
 
   private void onGenerateFakeDonation() {
-    float amount = (float)(Math.random() * 100);
     PublicDonationData donation = new PublicDonationData() {{
       time = new Date().getTime();
-      amount = amount;
+      amount = (float)(Math.random() * 100);
       formattedAmount = String.format("$%.2f", amount);
       currency = "USD";
       name = "A Donator's Name";
-      String msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a";
-      message = msg.substring(0, (int)(Math.random() * msg.length()));
+      messageParts = new PublicMessagePart[] { new PublicMessagePart() {{
+        type = MessagePartType.text;
+        textData = new PublicMessageText() {{
+          String msg = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut a";
+          msg = msg.substring(0, (int)(Math.random() * msg.length()));
+          text = msg;
+          isBold = false;
+          isItalics = false;
+        }};
+      }}};
     }};
     this.donationHudStore.addDonation(donation);
   }
 
-  private InteractiveScreen.InteractiveContext createInteractiveContext() {
-    return new InteractiveScreen.InteractiveContext(new ScreenRenderer(),
+  private InteractiveContext createInteractiveContext() {
+    return new InteractiveContext(new ScreenRenderer(),
         this.mouseEventService,
         this.keyboardEventService,
         this.dimFactory,
@@ -229,6 +245,8 @@ public class ContextMenuService {
         this.rankApiStore,
         this.livestreamApiStore,
         this.donationApiStore,
-        this.config);
+        this.config,
+        this.imageService,
+        this.donationHudStore);
   }
 }

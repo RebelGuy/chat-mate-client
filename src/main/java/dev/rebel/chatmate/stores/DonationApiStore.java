@@ -55,7 +55,7 @@ public class DonationApiStore {
       this.getDonationsError = EndpointProxy.getApiErrorMessage(err);
       this.loading = false;
       errorHandler.accept(err);
-    });
+    }, forceLoad);
   }
 
   /** Gets loaded donations, sorted by time in ascending order. */

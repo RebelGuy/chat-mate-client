@@ -91,6 +91,10 @@ public class ForgeEventService extends EventServiceBase<Events> {
     this.addListener(Events.ScreenResize, handler, options, key);
   }
 
+  public void off(Events event, Object key) {
+    this.removeListener(event, key);
+  }
+
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
   public void forgeEventSubscriber(GuiOpenEvent event) {

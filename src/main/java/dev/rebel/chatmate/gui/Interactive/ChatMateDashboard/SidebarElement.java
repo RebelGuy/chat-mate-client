@@ -23,7 +23,6 @@ import scala.Tuple2;
 
 import java.net.URI;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class SidebarElement extends ContainerElement {
@@ -105,7 +104,7 @@ public class SidebarElement extends ContainerElement {
       this.label = new LabelElement(context, this)
           .setText(this.name)
           .setOverflow(TextOverflow.SPLIT)
-          .setMaxLines(3);
+          .setMaxOverflowLines(3);
       this.horizontalDivider = new HorizontalDivider(context, this)
           .setColour(Colour.WHITE)
           .setMode(FillMode.PARENT_CONTENT)
@@ -140,7 +139,7 @@ public class SidebarElement extends ContainerElement {
     @Override
     public void onMouseEnter(IEvent<In> e) {
       this.isHovering.set(true);
-      super.context.cursorService.toggleCursor(CursorType.CLICK, this);
+      super.context.cursorService.toggleCursor(CursorType.CLICK, this, super.getDepth());
     }
 
     @Override

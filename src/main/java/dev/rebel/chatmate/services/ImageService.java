@@ -24,7 +24,7 @@ public class ImageService {
     this.minecraft = minecraft;
   }
 
-  /** Creates a texture from the base64 image data. */
+  /** Creates a texture from the base64 image data. IMPORTANT: MUST BE RUN ON THE MAIN RENDER THREAD. */
   public @Nullable Texture createTexture(String imageData) {
     byte[] encodedBytes = imageData.getBytes(StandardCharsets.UTF_8);
     byte[] decodedBytes = Base64.getDecoder().decode(encodedBytes);

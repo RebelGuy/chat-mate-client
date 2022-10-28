@@ -3,7 +3,7 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.BackgroundElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudService;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
@@ -17,40 +17,43 @@ import dev.rebel.chatmate.config.Config.SeparableHudElement;
 import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
 import dev.rebel.chatmate.config.Config.StatefulEmitter;
 import dev.rebel.chatmate.events.models.ConfigEventData;
-import scala.Tuple2;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.CHECKBOX_LIGHT;
-import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.CHECKBOX_WITH_CONFIG;
+import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.*;
 import static dev.rebel.chatmate.util.TextHelpers.toSentenceCase;
 
 public class HudSectionElement extends ContainerElement implements ISectionElement {
   private final static float SCALE = 0.75f;
 
   private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeHudEnabled = this::onChangeHudEnabled;
-  private final InputElement showStatusIndicatorCheckbox;
+  private final Function<ConfigEventData.In<SeparableHudElement>, ConfigEventData.Out<SeparableHudElement>> _onChangeStatusIndicator = this::onChangeStatusIndicator;
+  private final Function<ConfigEventData.In<SeparableHudElement>, ConfigEventData.Out<SeparableHudElement>> _onChangeViewerCount = this::onChangeViewerCount;
+
+  private final CheckboxInputElement enableHudCheckbox;
+  private final CheckboxInputElement showStatusIndicatorCheckbox;
   private final ExpandableElement statusIndicatorSubElement;
-  private final InputElement showViewerCountCheckbox;
+  private final CheckboxInputElement showViewerCountCheckbox;
   private final ExpandableElement viewerCountSubElement;
+  private final IElement didResetHudLabel;
 
   private final StatefulEmitter<SeparableHudElement> statusIndicatorEmitter;
   private final StatefulEmitter<SeparableHudElement> viewerCountEmitter;
+  private final ChatMateHudService chatMateHudService;
 
-  public HudSectionElement(InteractiveContext context, IElement parent, @Nullable HudRoute route, Config config) {
+  public HudSectionElement(InteractiveContext context, IElement parent, @Nullable HudRoute route, Config config, ChatMateHudService chatMateHudService) {
     super(context, parent, LayoutMode.BLOCK);
 
     this.statusIndicatorEmitter = config.getStatusIndicatorEmitter();
     this.viewerCountEmitter = config.getViewerCountEmitter();
+    this.chatMateHudService = chatMateHudService;
 
     // special: if this is not checked, none of the other checkboxes will be enabled
-    super.addElement(CHECKBOX_WITH_CONFIG.apply(config.getHudEnabledEmitter(), CHECKBOX_LIGHT.create(context, this)
+    this.enableHudCheckbox = CHECKBOX_WITH_CONFIG.apply(config.getHudEnabledEmitter(), CHECKBOX_LIGHT.create(context, this)
         .setLabel("Enable ChatMate HUD")
-    ));
+    );
+    super.addElement(this.enableHudCheckbox);
 
     this.showStatusIndicatorCheckbox = CHECKBOX_LIGHT.create(context, this)
         .setChecked(this.statusIndicatorEmitter.get().enabled)
@@ -75,7 +78,24 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     super.addElement(this.showViewerCountCheckbox);
     super.addElement(this.viewerCountSubElement);
 
+    super.addElement(TEXT_BUTTON_LIGHT.create(context, this)
+        .setText("Reset HUD")
+        .setTextScale(0.75f)
+        .setOnClick(this::onResetHud)
+    );
+
+    this.didResetHudLabel = new LabelElement(context, this)
+        .setText("HUD has been reset!")
+        .setFontScale(0.5f)
+        .setColour(Colour.DARK_GREEN)
+        .setMargin(new RectExtension(gui(3), gui(2)))
+        .setVisible(false)
+        .cast();
+    super.addElement(this.didResetHudLabel);
+
     config.getHudEnabledEmitter().onChange(this._onChangeHudEnabled, this, true);
+    config.getStatusIndicatorEmitter().onChange(this._onChangeStatusIndicator, this, false);
+    config.getViewerCountEmitter().onChange(this._onChangeViewerCount, this, false);
   }
 
   @Override
@@ -85,11 +105,17 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
 
   @Override
   public void onHide() {
+    this.didResetHudLabel.setVisible(false);
+  }
 
+  private void onResetHud() {
+    this.chatMateHudService.resetHud();
+    this.didResetHudLabel.setVisible(true);
   }
 
   private ConfigEventData.Out<Boolean> onChangeHudEnabled(ConfigEventData.In<Boolean> in) {
     boolean enabled = in.data;
+    this.enableHudCheckbox.setChecked(enabled, true);
     this.showStatusIndicatorCheckbox.setEnabled(this, enabled);
     this.statusIndicatorSubElement.separatePlatformsElement.setEnabled(this, enabled); // nice use of the key functionality of setEnabled!
     this.statusIndicatorSubElement.showPlatformIconElement.setEnabled(this, enabled);
@@ -101,6 +127,16 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     return new ConfigEventData.Out<>();
   }
 
+  private ConfigEventData.Out<SeparableHudElement> onChangeStatusIndicator(ConfigEventData.In<SeparableHudElement> in) {
+    this.showStatusIndicatorCheckbox.setChecked(in.data.enabled, true);
+    return new ConfigEventData.Out<>();
+  }
+
+  private ConfigEventData.Out<SeparableHudElement> onChangeViewerCount(ConfigEventData.In<SeparableHudElement> in) {
+    this.showViewerCountCheckbox.setChecked(in.data.enabled, true);
+    return new ConfigEventData.Out<>();
+  }
+
   private static class ExpandableElement extends WrapperElement {
     private final AnimatedBool expanded;
     private final StatefulEmitter<SeparableHudElement> emitter;
@@ -108,9 +144,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
 
     public final CheckboxInputElement separatePlatformsElement;
     public final CheckboxInputElement showPlatformIconElement;
-    public final DropdownSelectionElement iconLocationDropdown;
-
-    private final List<Tuple2<PlatformIconPosition, LabelElement>> selectionLabels;
+    public final DropdownSelectionElement<PlatformIconPosition> iconLocationDropdown;
 
     public ExpandableElement(InteractiveContext context, IElement parent, StatefulEmitter<SeparableHudElement> emitter, String separatePlatformsLabel) {
       super(context, parent);
@@ -130,7 +164,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
           .setLabel("Display platform icons")
           .setScale(SCALE)
           .cast();
-      this.iconLocationDropdown = new DropdownSelectionElement(context, parent)
+      this.iconLocationDropdown = new DropdownSelectionElement<PlatformIconPosition>(context, parent)
           .setMargin(new RectExtension(gui(6), gui(2)))
           .setMaxWidth(gui(50))
           .cast();
@@ -139,21 +173,19 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
       this.iconLocationDropdown.dropdownMenu
           .setBackground(Colour.BLACK.withAlpha(0.8f));
 
-      this.selectionLabels = new ArrayList<>();
       for (PlatformIconPosition position : PlatformIconPosition.values()) {
         LabelElement label = new LabelElement(context, this)
             .setText(toSentenceCase(position.toString()))
             .setFontScale(SCALE)
-            .setOnClick(() -> { this.onClickSelection(position); this.iconLocationDropdown.dropdownMenu.setVisible(false); })
             .setPadding(new RectExtension(gui(3), gui(1)))
             .setSizingMode(SizingMode.FILL)
             .cast();
-        this.selectionLabels.add(new Tuple2<>(position, label));
-        this.iconLocationDropdown.dropdownMenu.addOption(new BackgroundElement(context, this, label)
-            .setCornerRadius(gui(2))
-            .setHoverColour(Colour.GREY75.withAlpha(0.2f))
-            .setMargin(new RectExtension(gui(1), gui(1)))
-        );
+        this.iconLocationDropdown.addOption(
+            label,
+            position,
+            this::onClickSelection,
+            (el, selected) -> el.setColour(selected ? Colour.LIGHT_YELLOW : Colour.WHITE),
+            pos -> toSentenceCase(pos.toString()));
       }
 
       super.setContent(new BlockElement(context, this)
@@ -169,10 +201,11 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
 
     private ConfigEventData.Out<SeparableHudElement> onChangeConfig(ConfigEventData.In<SeparableHudElement> eventIn) {
       this.setExpanded(eventIn.data.enabled);
+      this.separatePlatformsElement.setChecked(eventIn.data.separatePlatforms, true);
+      this.showPlatformIconElement.setChecked(eventIn.data.showPlatformIcon, true);
       this.showPlatformIconElement.setEnabled(this, eventIn.data.separatePlatforms);
       this.iconLocationDropdown.setEnabled(this, eventIn.data.separatePlatforms && eventIn.data.showPlatformIcon);
-      this.iconLocationDropdown.label.setText(toSentenceCase(eventIn.data.platformIconPosition.toString()));
-      this.selectionLabels.forEach(pair -> pair._2.setColour(pair._1 == eventIn.data.platformIconPosition ? Colour.LIGHT_YELLOW : Colour.WHITE));
+      this.iconLocationDropdown.setSelection(eventIn.data.platformIconPosition);
 
       return new ConfigEventData.Out<>();
     }

@@ -100,7 +100,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
       return;
     }
 
-    float strength = super.context.keyboardEventService.isHeldDown(Keyboard.KEY_LSHIFT) ? 1.5f : 12;
+    float strength = super.context.keyboardEventService.isHeldDown(Keyboard.KEY_LSHIFT) ? 3f : 20;
 
     ScrollDirection scrollDirection = e.getData().mouseScrollData.scrollDirection;
     Dim delta = gui(strength).times(scrollDirection == ScrollDirection.DOWN ? 1 : -1);

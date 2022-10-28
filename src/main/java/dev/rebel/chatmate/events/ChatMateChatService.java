@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.events;
 
+import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
@@ -12,8 +13,10 @@ import dev.rebel.chatmate.events.models.NewChatEventData;
 import dev.rebel.chatmate.util.ApiPoller;
 import dev.rebel.chatmate.util.ApiPoller.PollType;
 import dev.rebel.chatmate.util.ApiPollerFactory;
+import dev.rebel.chatmate.util.Objects;
 import jline.internal.Nullable;
 
+import java.util.Date;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -29,7 +32,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     super(EventType.class, logService);
 
     this.chatEndpointProxy = chatEndpointProxy;
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, null, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT);
     this.config = config;
     this.dateTimeService = dateTimeService;
   }
@@ -59,6 +62,15 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     for (EventHandler<NewChatEventData.In, NewChatEventData.Out, NewChatEventData.Options> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
       NewChatEventData.In eventIn = new NewChatEventData.In(response.chat);
       super.safeDispatch(EventType.NEW_CHAT, handler, eventIn);
+    }
+  }
+
+  private void onApiError(Throwable error) {
+    // if there was a 500 error, we can assume that sending the same request will result in the same error.
+    // avoid this by resetting the timestamp from which to get events - this might mean that we miss events, but that's ok.
+    if (Objects.ifClass(ChatMateApiException.class, error, e -> e.apiResponseError.errorCode == 500)) {
+      this.config.getLastGetChatResponseEmitter().set(new Date().getTime());
+      this.logService.logWarning(this, "API status code was 500. To prevent further issues, the timestamp for the next request has been reset.");
     }
   }
 

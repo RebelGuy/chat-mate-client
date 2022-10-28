@@ -5,6 +5,7 @@ import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
+import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
@@ -12,7 +13,6 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.ConfigPersistorService;
-import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
 import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
 import dev.rebel.chatmate.api.proxy.*;
 import dev.rebel.chatmate.services.*;
@@ -67,7 +67,7 @@ public class ChatMate {
     IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
 
-    ConfigPersistorService<SerialisedConfigV4> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV4.class, logService, fileService);
+    ConfigPersistorService<SerialisedConfigV5> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV5.class, logService, fileService);
     Config config = new Config(logService, configPersistorService, dimFactory);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
@@ -142,6 +142,7 @@ public class ChatMate {
     UrlService urlService = new UrlService(logService);
     MinecraftChatService minecraftChatService = new MinecraftChatService(customGuiNewChat);
 
+    DonationHudStore donationHudStore = new DonationHudStore(config, logService);
     InteractiveContext hudContext = new InteractiveContext(
         new InteractiveScreen.ScreenRenderer(),
         mouseEventService,
@@ -162,12 +163,13 @@ public class ChatMate {
         rankApiStore,
         livestreamApiStore,
         donationApiStore,
-        config);
+        config,
+        imageService,
+        donationHudStore);
 
     ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, chatMateHudStore);
     CounterHandler counterHandler = new CounterHandler(keyBindingService, chatMateHudStore, dimFactory);
-    DonationHudStore donationHudStore = new DonationHudStore();
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
@@ -195,7 +197,10 @@ public class ChatMate {
         livestreamApiStore,
         donationApiStore,
         customGuiNewChat,
-        config);
+        config,
+        chatMateHudStore,
+        statusService,
+        imageService);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
     ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
 
@@ -232,8 +237,17 @@ public class ChatMate {
         livestreamApiStore,
         donationApiStore,
         rankApiStore,
-        customGuiNewChat);
-    this.donationHudService = new DonationHudService(chatMateHudStore, donationHudStore, guiService, dimFactory, soundService, chatMateEventService);
+        customGuiNewChat,
+        imageService,
+        donationHudStore,
+        chatMateHudService);
+    this.donationHudService = new DonationHudService(chatMateHudStore,
+        donationHudStore,
+        guiService,
+        dimFactory,
+        soundService,
+        chatMateEventService,
+        logService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

@@ -22,7 +22,7 @@ public class DonationHudElement extends HudElement {
   private final Runnable onDone;
   private final Consumer<PublicDonationData> onOpenDashboard;
   private final PublicDonationData donation;
-  private final DonationElement donationElement;
+  private final DonationCardElement donationCardElement;
   private AnimatedBool animation;
 
   public DonationHudElement(InteractiveContext context, IElement parent, ChatMateHudStore chatMateHudStore, Runnable onDone, Consumer<PublicDonationData> onOpenDashboard, PublicDonationData donation) {
@@ -37,7 +37,7 @@ public class DonationHudElement extends HudElement {
     this.onDone = onDone;
     this.onOpenDashboard = onOpenDashboard;
     this.donation = donation;
-    this.donationElement = new DonationElement(context, this, donation, this::onClickLink, this::onClose);
+    this.donationCardElement = new DonationCardElement(context, this, donation, this::onClickLink, this::onClose);
     this.animation = null; // only start the animation once the object is first shown
   }
 
@@ -72,7 +72,14 @@ public class DonationHudElement extends HudElement {
 
   @Override
   public @Nullable List<IElement> getChildren() {
-    return Collections.list(this.donationElement);
+    return Collections.list(this.donationCardElement);
+  }
+
+  @Override
+  public void onError() {
+    this.chatMateHudStore.removeElement(this);
+    super.onError();
+    this.onDone.run();
   }
 
   @Override
@@ -81,12 +88,12 @@ public class DonationHudElement extends HudElement {
     Dim newY = height.times(this.getYFrac()).minus(height);
     box = box.withTop(newY);
     super.setBoxUnsafe(box);
-    this.donationElement.setBox(box);
+    this.donationCardElement.setBox(box);
   }
 
   @Override
   protected DimPoint calculateThisSize(Dim maxContentSize) {
-    return this.donationElement.calculateSize(maxContentSize);
+    return this.donationCardElement.calculateSize(maxContentSize);
   }
 
   @Override
@@ -102,6 +109,6 @@ public class DonationHudElement extends HudElement {
       this.onInvalidateSize();
     }
 
-    this.donationElement.renderElement();
+    this.donationCardElement.renderElement();
   }
 }

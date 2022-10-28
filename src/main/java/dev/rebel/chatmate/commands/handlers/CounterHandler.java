@@ -13,8 +13,10 @@ import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.KeyBindingService;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
+import dev.rebel.chatmate.util.Memoiser;
 
 import javax.annotation.Nullable;
+import java.util.function.Function;
 
 public class CounterHandler {
   private final KeyBindingService keyBindingService;
@@ -31,9 +33,9 @@ public class CounterHandler {
     this.keyBindingService.on(ChatMateKeyEvent.INCREMENT_COUNTER, this::incrementCounter);
   }
 
-  public void createCounter(int startValue, int incrementValue, float scale, @Nullable String title) {
+  public void createCounter(int startValue, int incrementValue, float scale, Function<Integer, String> displayFunction) {
     this.deleteCounter();
-    this.counter = new Counter(this.chatMateHudStore, this.dimFactory, startValue, incrementValue, title);
+    this.counter = new Counter(this.chatMateHudStore, this.dimFactory, startValue, incrementValue, displayFunction);
   }
 
   public void deleteCounter() {
@@ -64,19 +66,21 @@ public class CounterHandler {
   }
 
   private static class Counter {
+    private final Memoiser memoiser;
     private final ChatMateHudStore chatMateHudStore;
     private final TransformedHudElementWrapper<LabelElement> hudElement;
     private final int incrementValue;
 
-    private final String title;
+    private final Function<Integer, String> displayFunction;
     private final Observable<String> observableString;
     private int value;
 
-    public Counter(ChatMateHudStore chatMateHudStore, DimFactory dimFactory, int startValue, int incrementValue, @Nullable String title) {
+    public Counter(ChatMateHudStore chatMateHudStore, DimFactory dimFactory, int startValue, int incrementValue, Function<Integer, String> displayFunction) {
+      this.memoiser = new Memoiser();
       this.chatMateHudStore = chatMateHudStore;
       this.value = startValue;
       this.incrementValue = incrementValue;
-      this.title = title == null ? "" : title + " ";
+      this.displayFunction = displayFunction;
       this.observableString = new Observable<>(this.getStringToRender());
 
       this.hudElement = this.chatMateHudStore.addElement(TransformedHudElementWrapper::new)
@@ -91,7 +95,8 @@ public class CounterHandler {
           ).cast();
       this.hudElement.setElement(LabelElement::new)
           .setText(this.observableString.getValue())
-          .setFont(new Font().withShadow(new Shadow(dimFactory)));
+          .setFont(new Font().withShadow(new Shadow(dimFactory)))
+          .setProcessNewlineCharacters(true);
       this.observableString.listen(str -> this.hudElement.element.setText(str));
     }
 
@@ -122,7 +127,7 @@ public class CounterHandler {
     }
 
     private String getStringToRender() {
-      return this.title + this.value;
+      return this.memoiser.memoise("getStringToRender", () -> this.displayFunction.apply(this.value), this.value);
     }
   }
 }

@@ -69,6 +69,22 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.20 - The Donation Update v2 [28/10/2022]
+- Added new HUD element for displaying donation data. It has 3 optional data sources, filtered for this stream or since a custom date:
+  - Total donation amount
+  - Latest N donations (username and amount)
+  - Highest N donations (username and amount)
+- Custom emojis are now rendered within donation messages
+- Linking donations now respects the linkIdentifier, so that multiple donations may be affected by a single action
+- Added "advanced mode" to the counter
+  - Allows customising the counter text by accepting variables
+  - Variables are defined in a list using a name-value pair
+    - The value is a mathematical expression that may depend on other variables
+  - Supports multiple lines using "\n"
+  - Fancy syntax highlighting and validation
+- Added a button in the Dashboard's HUD section for resetting the HUD
+- Graphical bug fixes
+
 ## v1.19 - The Pre-Auth Update [8/10/2022]
 - The transform of HUD elements is now persisted
 - Added the ability to select multiple HUD elements by holding the left Shift key

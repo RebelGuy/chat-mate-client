@@ -13,12 +13,13 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
+import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
 import java.util.Date;
 
-public class DonationElement extends ContainerElement {
+public class DonationCardElement extends ContainerElement {
   private final static Colour BACKGROUND = new Colour(32, 32, 32);
   private final static Colour BORDER_COLOUR = BACKGROUND.withBrightness(4);
 
@@ -32,7 +33,7 @@ public class DonationElement extends ContainerElement {
   private long lastTime;
   private long remaining;
 
-  public DonationElement(InteractiveContext context, IElement parent, PublicDonationData donation, Runnable onClickLink, Runnable onDone) {
+  public DonationCardElement(InteractiveContext context, IElement parent, PublicDonationData donation, Runnable onClickLink, Runnable onDone) {
     super(context, parent, LayoutMode.BLOCK);
     super.setPadding(new RectExtension(gui(8)));
     super.setBorder(new RectExtension(gui(2)));
@@ -44,29 +45,37 @@ public class DonationElement extends ContainerElement {
     this.lastTime = new Date().getTime();
     this.remaining = LIFETIME;
 
-    super.addElement(new DonationButtonsElement(context, this, onDone, onClickLink)
+    super.addElement(new DonationButtonsElement(context, this, donation, onDone, onClickLink)
         .setMargin(new RectExtension(ZERO, gui(-4), gui(-8), ZERO)) // move above and to the right of the main content
     );
 
-    String title = String.format("%s has donated %s!", this.donation.name, this.donation.formattedAmount);
+    String name = this.donation.linkedUser != null ? this.donation.linkedUser.userInfo.channelName : this.donation.name;
+    String title = String.format("%s has donated %s!", name, this.donation.formattedAmount);
     Font titleFont = new Font().withBold(true).withColour(Colour.YELLOW).withShadow(new Shadow(context.dimFactory));
     super.addElement(new LabelElement(context, this)
         .setText(title)
         .setFont(titleFont)
         .setOverflow(TextOverflow.SPLIT)
         .setAlignment(TextAlignment.CENTRE)
-        .setPadding(new RectExtension(ZERO, ZERO, ZERO, this.donation.message == null ? ZERO : gui(4)))
+        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(4)))
     );
 
-    Font messageFont = new Font()
-        .withShadow(new Shadow(context.dimFactory))
-        .withItalic(this.donation.message == null);
-    super.addElement(new LabelElement(context, this)
-        .setText(TextHelpers.isNullOrEmpty(this.donation.message) ? "No message" : this.donation.message)
-        .setFont(messageFont)
-        .setFontScale(0.75f)
-        .setOverflow(TextOverflow.SPLIT)
-    );
+    if (this.donation.messageParts.length == 0) {
+      Font messageFont = new Font()
+          .withShadow(new Shadow(context.dimFactory))
+          .withItalic(this.donation.messageParts.length == 0);
+      super.addElement(new LabelElement(context, this)
+          .setText("No message")
+          .setFont(messageFont)
+          .setFontScale(0.75f)
+          .setOverflow(TextOverflow.SPLIT)
+      );
+    } else {
+      super.addElement(new MessagePartsElement(super.context, this)
+          .setMessageParts(Collections.list(donation.messageParts))
+          .setScale(0.75f)
+      );
+    }
   }
 
   @Override
@@ -118,7 +127,7 @@ public class DonationElement extends ContainerElement {
   }
 
   private static class DonationButtonsElement extends ContainerElement {
-    public DonationButtonsElement(InteractiveContext context, IElement parent, Runnable onClickClose, Runnable onClickLink) {
+    public DonationButtonsElement(InteractiveContext context, IElement parent, PublicDonationData donation, Runnable onClickClose, Runnable onClickLink) {
       super(context, parent, LayoutMode.INLINE);
 
       super.setHorizontalAlignment(Layout.HorizontalAlignment.RIGHT);
@@ -130,6 +139,7 @@ public class DonationElement extends ContainerElement {
           .setBorder(new RectExtension(ZERO))
           .setPadding(new RectExtension(ZERO))
           .setMargin(new RectExtension(gui(2)))
+          .setVisible(donation.linkedUser == null)
           .cast();
       linkButton.image.setPadding(new RectExtension(ZERO));
 

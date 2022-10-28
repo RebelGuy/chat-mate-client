@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
 import dev.rebel.chatmate.gui.Interactive.Events.*;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.Screen;
@@ -38,10 +39,11 @@ import java.util.function.Function;
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
 // the correct way would have been to split IElement up into two interfaces, but it doesn't really matter.
-public class InteractiveScreen extends Screen implements IElement {
+public class InteractiveScreen extends Screen implements IElement, IFocusListener {
   public final InteractiveScreenType interactiveScreenType;
   protected InteractiveContext context;
   private final @Nullable GuiScreen parentScreen;
+  private int recalculationCounter = 0;
 
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseDown = this::onMouseDown;
   private final Function<MouseEventData.In, MouseEventData.Out> _onMouseMove = this::onMouseMove;
@@ -67,6 +69,8 @@ public class InteractiveScreen extends Screen implements IElement {
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen, InteractiveScreenType interactiveScreenType) {
     super();
+
+    context.addFocusListener(this);
 
     this.interactiveScreenType = interactiveScreenType;
     this.context = context;
@@ -172,15 +176,23 @@ public class InteractiveScreen extends Screen implements IElement {
       return;
     }
     this.requiresRecalculation = false;
+    this.recalculationCounter++;
 
     DimFactory factory = this.context.dimFactory;
     Dim maxX = factory.getMinecraftSize().getX();
     Dim maxY = factory.getMinecraftSize().getY();
 
-    // inspired by https://limpet.net/mbrubeck/2014/09/17/toy-layout-engine-6-block.html
-    // top-down: give the children a width so they can calculate their size and be positioned properly.
-    // bottom-up: once sizes and positions have been calculated, the total box will be passed back up
-    DimPoint mainSize = this.mainElement.calculateSize(maxX);
+    DimPoint mainSize;
+    try {
+      // inspired by https://limpet.net/mbrubeck/2014/09/17/toy-layout-engine-6-block.html
+      // top-down: give the children a width so they can calculate their size and be positioned properly.
+      // bottom-up: once sizes and positions have been calculated, the total box will be passed back up
+      mainSize = this.mainElement.calculateSize(maxX);
+    } catch (Exception e) {
+      context.logService.logError(this, "encountered an error during size calculation:", e);
+      this.onCloseScreen(); // bail out - it's going to be null-reference-exception-city
+      return;
+    }
 
     // now that we know our actual dimensions, pass the full rect down and let the children re-position (but they should
     // not do any resizing as that would invalidate the final box).
@@ -188,7 +200,6 @@ public class InteractiveScreen extends Screen implements IElement {
     DimRect mainRect = ElementHelpers.alignElementInBox(mainSize, screenRect, this.mainElement.getHorizontalAlignment(), this.mainElement.getVerticalAlignment());
     mainRect = mainRect.clamp(screenRect);
     this.mainElement.setBox(mainRect);
-    this.context.renderer._executeSideEffects();
 
     // it is possible that running side effects (or calling calculateSize/setBox) changed the layout
     this._recalculateLayout(depth + 1);
@@ -209,11 +220,13 @@ public class InteractiveScreen extends Screen implements IElement {
     this.mainElement.render(null);
     this.context.renderer._executeRender();
 
-    // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect
+    // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect.
+    // we have to check if there was an actual recalculation (can't just check `this.shouldRecalculateLayout` because that may have already been reset)
     this.context.renderer.runSideEffect(() -> {
-      if (this.requiresRecalculation) {
+      if (this.recalculationCounter > 0) {
         // if this causes any more side effects, those will be executed immediately as part of this cycle
         this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
+        this.recalculationCounter = 0;
       }
     });
 
@@ -227,8 +240,21 @@ public class InteractiveScreen extends Screen implements IElement {
 
   @Override
   public void onGuiClosed() {
-    // it is very important that we remove the reference to the mainElement, otherwise
-    // this screen will never be garbage collected since mainElement holds a reference to it
+    // for some reason the InteractiveScreen isn't immediately garbage collected (until going back to the main menu)
+    // so let's just unsubscribe from events manually. this is probably how it should be done anyway. I accept defeat
+    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_DOWN, this);
+    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_MOVE, this);
+    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_UP, this);
+    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_SCROLL, this);
+    this.context.keyboardEventService.off(KeyboardEventService.Events.KEY_DOWN, this);
+    this.context.keyboardEventService.off(KeyboardEventService.Events.KEY_UP, this);
+    this.context.forgeEventService.off(ForgeEventService.Events.ScreenResize, this);
+    this.context.config.getDebugModeEnabledEmitter().off(this);
+
+    // it is very important that we remove the parent reference in the mainElement, otherwise
+    // this screen will never be garbage collected. I tried making parents a weak reference,
+    // but it didn't work for some reason so this will have to do.
+    this.mainElement.setParent(null);
     this.mainElement = null;
     this.context = null;
     this.elementsUnderCursor = null;
@@ -485,6 +511,12 @@ public class InteractiveScreen extends Screen implements IElement {
     return bubbleEvent.stoppedPropagation;
   }
 
+  // only called when an element wants to set the focus programmatically
+  @Override
+  public void onFocusSet(@Nullable InputElement element) {
+    this.setFocussedElement(element, FocusReason.CODE);
+  }
+
   /** Sets the new focussed element and fires appropriate events. */
   protected void setFocussedElement(@Nullable InputElement newFocus, FocusReason reason) {
     InputElement oldFocus = this.context.focusedElement;
@@ -662,6 +694,9 @@ public class InteractiveScreen extends Screen implements IElement {
   public IElement setZIndex(int zIndex) { return this; }
 
   @Override
+  public int getDepth() { return 0; }
+
+  @Override
   public @Nullable DimRect getVisibleBox() { return null; }
 
   @Override
@@ -710,6 +745,12 @@ public class InteractiveScreen extends Screen implements IElement {
   public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) { return null; }
 
   @Override
+  public IElement setMinWidth(@Nullable Dim minWidth) { return this; }
+
+  @Override
+  public @Nullable Dim getMinWidth() { return null; }
+
+  @Override
   public IElement setTargetHeight(@Nullable Dim height) { return null; }
 
   @Override
@@ -724,6 +765,8 @@ public class InteractiveScreen extends Screen implements IElement {
   //endregion
 
   public static class InteractiveContext {
+    private List<IFocusListener> focusListeners = new ArrayList<>();
+
     public final ScreenRenderer renderer;
     public final MouseEventService mouseEventService;
     public final KeyboardEventService keyboardEventService;
@@ -744,6 +787,8 @@ public class InteractiveScreen extends Screen implements IElement {
     public final LivestreamApiStore livestreamApiStore;
     public final DonationApiStore donationApiStore;
     public final Config config;
+    public final ImageService imageService;
+    public final DonationHudStore donationHudStore;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -774,7 +819,9 @@ public class InteractiveScreen extends Screen implements IElement {
                               RankApiStore rankApiStore,
                               LivestreamApiStore livestreamApiStore,
                               DonationApiStore donationApiStore,
-                              Config config) {
+                              Config config,
+                              ImageService imageService,
+                              DonationHudStore donationHudStore) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -795,6 +842,16 @@ public class InteractiveScreen extends Screen implements IElement {
       this.livestreamApiStore = livestreamApiStore;
       this.donationApiStore = donationApiStore;
       this.config = config;
+      this.imageService = imageService;
+      this.donationHudStore = donationHudStore;
+    }
+
+    public void addFocusListener(IFocusListener focusListener) {
+      this.focusListeners.add(focusListener);
+    }
+
+    public void onSetFocus(@Nullable InputElement element) {
+      this.focusListeners.forEach(l -> l.onFocusSet(element));
     }
   }
 
@@ -916,4 +973,8 @@ public class InteractiveScreen extends Screen implements IElement {
     DASHBOARD,
     HUD
   }
+}
+
+interface IFocusListener {
+  void onFocusSet(@Nullable InputElement element);
 }

@@ -247,6 +247,7 @@ public class RendererHelpers {
     GlStateManager.pushMatrix();
     GlStateManager.scale(scaleX, scaleY, 1);
     GlStateManager.enableBlend();
+    GlStateManager.depthMask(false); // this ensures we can draw multiple transparent things on top of each other
 
     // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
     GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -261,6 +262,7 @@ public class RendererHelpers {
     int zIndex = 0;
     drawTexturedModalRect(rect, zIndex, u, v);
 
+    GlStateManager.depthMask(true);
     GlStateManager.popMatrix();
   }
 
@@ -347,6 +349,39 @@ public class RendererHelpers {
     GlStateManager.popMatrix();
   }
 
+  public static void drawCircle(int zLevel, DimPoint centre, Dim radius, Colour colour) {
+    // to make it look smooth, draw as many lines as required so that the maximum line length does not exceed this value
+    float maxLength = 2; // pixels
+    float circumference = radius.times(2).getScreen() * (float)Math.PI;
+    float numLines = circumference / maxLength;
+    float increment = 2 * (float)Math.PI / numLines;
+
+    withTranslation(centre, () -> {
+      GlStateManager.disableTexture2D();
+      GlStateManager.enableBlend();
+      GlStateManager.disableAlpha();
+      GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+      GlStateManager.depthMask(false);
+      GL11.glEnable(GL11.GL_POLYGON_SMOOTH); // anti-aliasing
+
+      Tessellator tessellator = Tessellator.getInstance();
+      WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+      worldRenderer.begin(GL_POLYGON, DefaultVertexFormats.POSITION_COLOR); // the final shape is always a convex polygon, so we can draw it in one go
+
+      for (float theta = (float)Math.PI * 2; theta > 0; theta -= increment) { // counterclockwise
+        Dim x = radius.times((float)Math.cos(theta));
+        Dim y = radius.times((float)Math.sin(theta));
+        addVertex(worldRenderer, zLevel, new DimPoint(x, y), colour);
+      }
+      tessellator.draw();
+
+      GL11.glDisable(GL11.GL_POLYGON_SMOOTH);
+      GlStateManager.disableBlend();
+      GlStateManager.enableAlpha();
+      GlStateManager.enableTexture2D();
+    });
+  }
+
   /** Inner radius may be zero. Radians delta must be strictly positive. At the moment, attempting to draw a complete circle will result in undefined behaviour. */
   public static void drawPartialCircle(int zLevel, DimPoint centre, Dim innerRadius, Dim outerRadius, float radiansStart, float radiansEnd, Colour innerColour, Colour outerColour) {
     List<Line> outerLines = getPartialCircleArcLines(centre, outerRadius, radiansStart, radiansEnd, null); // counter-clockwise
@@ -414,7 +449,7 @@ public class RendererHelpers {
     Dim arcLength = radius.times(2).times(pi).times(radiansDelta / (2 * pi));
 
     // to make it look smooth, draw as many lines as required so that the maximum line length does not exceed this value
-    Dim maxLength = arcLength.setScreen(5);
+    Dim maxLength = arcLength.setScreen(2);
     int requiredLines = numLines == null ? (int)Math.ceil(arcLength.over(maxLength)) : numLines;
     float radiansPerLine = radiansDelta / requiredLines;
 
@@ -453,56 +488,53 @@ public class RendererHelpers {
     Colour colour4 = endColour;
 
     GlStateManager.pushMatrix();
-    GlStateManager.enableBlend();
-    GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-    GlStateManager.disableAlpha();
-    GlStateManager.disableTexture2D();
-    GlStateManager.depthMask(false); // this ensures we can draw multiple transparent things on top of each other
-    GlStateManager.shadeModel(GL11.GL_SMOOTH); // for being able to draw colour gradients
+    withAttrib(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_CURRENT_BIT | GL11.GL_ENABLE_BIT | GL11.GL_DEPTH_BUFFER_BIT, () -> {
+      GL11.glEnable(GL11.GL_BLEND);
+      GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+      GL11.glDisable(GL11.GL_ALPHA_TEST); // disable so we get better alpha rendering (wtf)
+      GL11.glDisable(GL_TEXTURE_2D); // if this is disabled, partially transparent rects won't draw
+      GL11.glDepthMask(false); // this ensures we can draw multiple transparent things on top of each other
+      GL11.glDisable(GL11.GL_DEPTH_TEST);
+      GL11.glShadeModel(GL11.GL_SMOOTH); // for being able to draw colour gradients
 
-    Tessellator tessellator = Tessellator.getInstance();
-    WorldRenderer worldRenderer = tessellator.getWorldRenderer();
-    worldRenderer.begin(GL_POLYGON, DefaultVertexFormats.POSITION_COLOR); // the final shape is always a convex polygon, so we can draw it in one go
+      Tessellator tessellator = Tessellator.getInstance();
+      WorldRenderer worldRenderer = tessellator.getWorldRenderer();
+      worldRenderer.begin(GL_POLYGON, DefaultVertexFormats.POSITION_COLOR); // the final shape is always a convex polygon, so we can draw it in one go
 
-    if (cornerRadius == null || cornerRadius.getGui() <= 0) {
-      addVertex(worldRenderer, zLevel, rect.getTopRight(), colour1);
-      addVertex(worldRenderer, zLevel, rect.getTopLeft(), colour2);
-      addVertex(worldRenderer, zLevel, rect.getBottomLeft(), colour3);
-      addVertex(worldRenderer, zLevel, rect.getBottomRight(), colour4);
-    } else {
-      // almost too easy - just concatenate all the partial circles!
-      // the colour gradient is not 100% correct, but for small corner radii it shouldn't be noticeable.
-      // if this becomes a problem in the future, will need to do some colour lerping.
-      DimRect innerRect = new RectExtension(cornerRadius).applySubtractive(rect);
-      float radians = 0;
-      float piOver2 = (float)Math.PI / 2;
+      if (cornerRadius == null || cornerRadius.getGui() <= 0) {
+        addVertex(worldRenderer, zLevel, rect.getTopRight(), colour1);
+        addVertex(worldRenderer, zLevel, rect.getTopLeft(), colour2);
+        addVertex(worldRenderer, zLevel, rect.getBottomLeft(), colour3);
+        addVertex(worldRenderer, zLevel, rect.getBottomRight(), colour4);
+      } else {
+        // almost too easy - just concatenate all the partial circles!
+        // the colour gradient is not 100% correct, but for small corner radii it shouldn't be noticeable.
+        // if this becomes a problem in the future, will need to do some colour lerping.
+        DimRect innerRect = new RectExtension(cornerRadius).applySubtractive(rect);
+        float radians = 0;
+        float piOver2 = (float)Math.PI / 2;
 
-      List<DimPoint> centres = Collections.list(innerRect.getTopRight(), innerRect.getTopLeft(), innerRect.getBottomLeft(), innerRect.getBottomRight());
-      List<Colour> colours = Collections.list(colour1, colour2, colour3, colour4);
-      for (int c = 0; c < centres.size(); c++) {
-        Colour colour = colours.get(c);
+        List<DimPoint> centres = Collections.list(innerRect.getTopRight(), innerRect.getTopLeft(), innerRect.getBottomLeft(), innerRect.getBottomRight());
+        List<Colour> colours = Collections.list(colour1, colour2, colour3, colour4);
+        for (int c = 0; c < centres.size(); c++) {
+          Colour colour = colours.get(c);
 
-        Line prevLine = null;
-        for (Line line : getPartialCircleArcLines(centres.get(c), cornerRadius, radians, radians + piOver2, null)) {
-          if (prevLine == null) {
-            // also draw the "from" point only for the first time
-            addVertex(worldRenderer, zLevel, line.from, colour);
+          Line prevLine = null;
+          for (Line line : getPartialCircleArcLines(centres.get(c), cornerRadius, radians, radians + piOver2, null)) {
+            if (prevLine == null) {
+              // also draw the "from" point only for the first time
+              addVertex(worldRenderer, zLevel, line.from, colour);
+            }
+            addVertex(worldRenderer, zLevel, line.to, colour);
+            prevLine = line;
           }
-          addVertex(worldRenderer, zLevel, line.to, colour);
-          prevLine = line;
+
+          radians += piOver2;
         }
-
-        radians += piOver2;
       }
-    }
 
-    tessellator.draw();
-
-    GlStateManager.disableBlend();
-    GlStateManager.enableAlpha();
-    GlStateManager.enableTexture2D();
-    GlStateManager.depthMask(true);
-    GlStateManager.shadeModel(GL11.GL_FLAT);
+      tessellator.draw();
+    });
     GlStateManager.popMatrix();
   }
 

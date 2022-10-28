@@ -56,9 +56,9 @@ public class ChatMateHudStore {
     return element;
   }
 
-  public void removeElement(HudElement elewment) {
-    this.elements.remove(elewment);
-    this.listeners.forEach(listener -> listener.onRemoveElement(elewment));
+  public void removeElement(HudElement element) {
+    this.elements.remove(element);
+    this.listeners.forEach(listener -> listener.onRemoveElement(element));
   }
 
   public List<HudElement> getElements() {
@@ -200,6 +200,11 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public int getDepth() {
+      return 0;
+    }
+
+    @Override
     public @Nullable DimRect getVisibleBox() {
       return null;
     }
@@ -272,6 +277,16 @@ public class ChatMateHudStore {
 
     @Override
     public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) {
+      return null;
+    }
+
+    @Override
+    public IElement setMinWidth(@Nullable Dim minWidth) {
+      return this;
+    }
+
+    @Override
+    public @Nullable Dim getMinWidth() {
       return null;
     }
 

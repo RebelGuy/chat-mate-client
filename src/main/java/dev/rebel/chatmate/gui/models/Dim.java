@@ -90,6 +90,11 @@ public class Dim {
   public static Dim max(Dim a, Dim b) { return a.gte(b) ? a : b; }
 
   public static Dim max(List<Dim> items) {
+    if (items.size() == 0) {
+      throw new RuntimeException("Cannot get max of an empty list");
+    } else if (items.size() == 1) {
+      return items.get(0);
+    }
     return Collections.eliminate(items, Dim::max);
   }
 
@@ -99,11 +104,23 @@ public class Dim {
 
   public static Dim min(Dim a, Dim b) { return a.lte(b) ? a : b; }
 
+  public static Dim min(List<Dim> items) {
+    if (items.size() == 0) {
+      throw new RuntimeException("Cannot get min of an empty list");
+    } else if (items.size() == 1) {
+      return items.get(0);
+    }
+    return Collections.eliminate(items, Dim::min);
+  }
+
   public static Dim clamp(Dim x, Dim min, Dim max) {
     return Dim.min(Dim.max(x, min), max);
   }
 
   public static Dim sum(List<Dim> items) {
+    if (items.size() == 0) {
+      throw new RuntimeException("Cannot sum an empty list");
+    }
     return Collections.eliminate(items, Dim::plus);
   }
 

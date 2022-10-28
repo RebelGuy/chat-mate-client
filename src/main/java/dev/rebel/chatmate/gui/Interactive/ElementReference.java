@@ -198,6 +198,11 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public int getDepth() {
+    return this.underlyingElement == null ? this.parent.getDepth() + 1 : this.underlyingElement.getDepth();
+  }
+
+  @Override
   public @Nullable DimRect getVisibleBox() {
     return this.underlyingElement == null ? null : this.underlyingElement.getVisibleBox();
   }
@@ -270,6 +275,16 @@ public class ElementReference implements IElement {
   @Override
   public IElement setMaxContentWidth(@Nullable Dim maxContentWidth) {
     return this.underlyingElement == null ? this : this.underlyingElement.setMaxWidth(maxContentWidth);
+  }
+
+  @Override
+  public IElement setMinWidth(@Nullable Dim minWidth) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setMinWidth(minWidth);
+  }
+
+  @Override
+  public @Nullable Dim getMinWidth() {
+    return this.underlyingElement == null ? null : this.underlyingElement.getMinWidth();
   }
 
   @Override
