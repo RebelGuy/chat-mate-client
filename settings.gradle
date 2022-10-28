@@ -17,9 +17,10 @@ pluginManagement {
     }
     resolutionStrategy {
         eachPlugin {
-            // If the "net.minecraftforge.gradle.forge" plugin is requested we redirect it to asbyth's ForgeGradle fork
+            // If the "net.minecraftforge.gradle.forge" plugin is requested we redirect it to hard2make1name's ForgeGradle fork
+            // (used to be asbyth, but no longer available. fix copied from https://github.com/NotEnoughCoins/NotEnoughCoins/commit/625e82897ccddc68137dbda5283270045da4d47d)
             if (requested.id.id == "net.minecraftforge.gradle.forge") {
-                useModule("com.github.asbyth:ForgeGradle:${requested.version}")
+                useModule("com.github.hard2make1name:ForgeGradle:e682169")
             }
         }
     }
