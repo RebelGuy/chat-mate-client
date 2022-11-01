@@ -11,7 +11,9 @@ import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.Interactive.TextInputElement.InputType;
 import dev.rebel.chatmate.util.Objects;
+import dev.rebel.chatmate.util.TextHelpers;
 
 import java.util.function.Function;
 
@@ -46,6 +48,7 @@ public class LoginElement extends BlockElement {
     this.passwordInput = new TextInputElement(context, this)
         .setOnSubmit(this::onRequestLogin)
         .setPlaceholder("Password")
+        .setType(InputType.PASSWORD)
         .setTextScale(SCALE)
         .onTextChange(this::onPasswordChange)
         .setTabIndex(1)
@@ -114,7 +117,7 @@ public class LoginElement extends BlockElement {
   }
 
   private void onPasswordChange(String password) {
-    this.loginButton.setEnabled(this.passwordInput, !isNullOrEmpty(password));
+    this.loginButton.setEnabled(this.passwordInput, password.length() > 0);
   }
 
   private void onRequestLogin() {

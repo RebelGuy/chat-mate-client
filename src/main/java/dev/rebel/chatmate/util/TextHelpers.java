@@ -19,6 +19,8 @@ import net.minecraft.util.IChatComponent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import static java.util.Collections.nCopies;
+
 public class TextHelpers {
   // custom implementation of String.indexOf that allows for a custom matching filter
   public static int indexOf(String text, WordFilter word, int startAt) {
@@ -147,6 +149,10 @@ public class TextHelpers {
     }
 
     return "";
+  }
+
+  public static String copy(String str, int N) {
+    return String.join("", nCopies(N, str));
   }
 
   public static String toSentenceCase(String str) {
