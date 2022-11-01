@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.config;
 
 import dev.rebel.chatmate.config.Config.ConfigType;
-import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
+import dev.rebel.chatmate.config.serialised.SerialisedConfigV6;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -34,7 +34,7 @@ public class Config extends EventServiceBase<ConfigType> {
   // 4. Add a new migration file in the `configMigrations` package
   // 5. Add the migration class from the previous step and the new serialised model to the arrays in `Migration.java`
   // 6. Change the type of the saved and loaded serialised config in this file
-  private final ConfigPersistorService<SerialisedConfigV5> configPersistorService;
+  private final ConfigPersistorService<SerialisedConfigV6> configPersistorService;
   private final DimFactory dimFactory;
 
   // NOTE: DO **NOT** REMOVE THESE GETTERS. THEY ARE DISGUSTING BUT REQUIRED FOR TESTING
@@ -77,6 +77,9 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Map<String, HudElementTransform>> hudTransforms;
   public StatefulEmitter<Map<String, HudElementTransform>> getHudTransformsEmitter() { return this.hudTransforms; }
 
+  private final StatefulEmitter<LoginInfo> loginInfo;
+  public StatefulEmitter<LoginInfo> getLoginInfoEmitter() { return this.loginInfo; }
+
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
 
@@ -85,7 +88,7 @@ public class Config extends EventServiceBase<ConfigType> {
 
   private final Debouncer saveDebouncer;
 
-  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV5> configPersistorService, DimFactory dimFactory) {
+  public Config(LogService logService, ConfigPersistorService<SerialisedConfigV6> configPersistorService, DimFactory dimFactory) {
     super(ConfigType.class, logService);
     this.configPersistorService = configPersistorService;
     this.dimFactory = dimFactory;
@@ -98,7 +101,7 @@ public class Config extends EventServiceBase<ConfigType> {
     }
 
     // if loading fails, the user will be left with the default settings which is fine
-    @Nullable SerialisedConfigV5 data = this.load();
+    @Nullable SerialisedConfigV6 data = this.load();
     this.chatMateEnabled = new StatefulEmitter<>(ConfigType.ENABLE_CHAT_MATE, false, this::onUpdate);
     this.soundEnabled = new StatefulEmitter<>(ConfigType.ENABLE_SOUND, data == null ? true : data.soundEnabled, this::onUpdate);
     this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, data == null ? 10 : data.chatVerticalDisplacement, this::onUpdate);
@@ -112,6 +115,7 @@ public class Config extends EventServiceBase<ConfigType> {
     this.lastGetChatResponse = new StatefulEmitter<>(ConfigType.LAST_GET_CHAT_RESPONSE, data == null ? 0L : data.lastGetChatResponse, this::onUpdate);
     this.lastGetChatMateEventsResponse = new StatefulEmitter<>(ConfigType.LAST_GET_CHAT_MATE_EVENTS_RESPONSE, data == null ? 0L : data.lastGetChatMateEventsResponse, this::onUpdate);
     this.hudTransforms = new StatefulEmitter<>(ConfigType.HUD_TRANSFORMS, data == null ? new HashMap<>() : dev.rebel.chatmate.util.Collections.map(data.hudTransforms, s -> s.deserialise(dimFactory)), this::onUpdate);
+    this.loginInfo = new StatefulEmitter<>(ConfigType.LOGIN_INFO, data == null ? new LoginInfo(null, null) : data.loginInfo.deserialise(), this::onUpdate);
   }
 
   public void listenAny(Callback callback) {
@@ -125,8 +129,8 @@ public class Config extends EventServiceBase<ConfigType> {
   }
 
   @Nullable
-  private SerialisedConfigV5 load() {
-    SerialisedConfigV5 loaded = this.configPersistorService.load();
+  private SerialisedConfigV6 load() {
+    SerialisedConfigV6 loaded = this.configPersistorService.load();
     if (loaded != null) {
       this.saveDebouncer.doDebounce();
     }
@@ -135,19 +139,21 @@ public class Config extends EventServiceBase<ConfigType> {
 
   private void save() {
     try {
-      SerialisedConfigV5 serialisedConfig = new SerialisedConfigV5(
+      SerialisedConfigV6 serialisedConfig = new SerialisedConfigV6(
           this.soundEnabled.get(),
           this.chatVerticalDisplacement.get(),
           this.hudEnabled.get(),
           this.showServerLogsHeartbeat.get(),
           this.showServerLogsTimeSeries.get(),
           this.showChatPlatformIcon.get(),
-          new SerialisedConfigV5.SerialisedSeparableHudElement(this.statusIndicator.get()),
-          new SerialisedConfigV5.SerialisedSeparableHudElement(this.viewerCount.get()),
+          new SerialisedConfigV6.SerialisedSeparableHudElement(this.statusIndicator.get()),
+          new SerialisedConfigV6.SerialisedSeparableHudElement(this.viewerCount.get()),
           this.debugModeEnabled.get(),
           this.lastGetChatResponse.get(),
           this.lastGetChatMateEventsResponse.get(),
-          dev.rebel.chatmate.util.Collections.map(this.hudTransforms.get(), SerialisedConfigV5.SerialisedHudElementTransform::new)); // no import aliasing in Java..
+          dev.rebel.chatmate.util.Collections.map(this.hudTransforms.get(), SerialisedConfigV6.SerialisedHudElementTransform::new), // no import aliasing in Java..
+          new SerialisedConfigV6.SerialisedLoginInfo(this.loginInfo.get())
+      );
       this.configPersistorService.save(serialisedConfig);
     } catch (Exception e) {
       this.logService.logError(this, "Failed to save config:", e);
@@ -310,6 +316,16 @@ public class Config extends EventServiceBase<ConfigType> {
     }
   }
 
+  public static class LoginInfo {
+    public final @Nullable String username;
+    public final @Nullable String loginToken;
+
+    public LoginInfo(@Nullable String username, @Nullable String loginToken) {
+      this.username = username;
+      this.loginToken = loginToken;
+    }
+  }
+
   public enum ConfigType {
     ENABLE_CHAT_MATE,
     ENABLE_SOUND,
@@ -323,6 +339,7 @@ public class Config extends EventServiceBase<ConfigType> {
     DEBUG_MODE_ENABLED,
     LAST_GET_CHAT_RESPONSE,
     LAST_GET_CHAT_MATE_EVENTS_RESPONSE,
-    HUD_TRANSFORMS
+    HUD_TRANSFORMS,
+    LOGIN_INFO
   }
 }

@@ -6,6 +6,7 @@ import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
+import dev.rebel.chatmate.config.serialised.SerialisedConfigV6;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
@@ -67,7 +68,7 @@ public class ChatMate {
     IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
 
-    ConfigPersistorService<SerialisedConfigV5> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV5.class, logService, fileService);
+    ConfigPersistorService<SerialisedConfigV6> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV6.class, logService, fileService);
     Config config = new Config(logService, configPersistorService, dimFactory);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
@@ -80,6 +81,7 @@ public class ChatMate {
     CursorService cursorService = new CursorService(minecraft, logService, forgeEventService);
     ApiRequestService apiRequestService = new ApiRequestService(cursorService);
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, apiPath);
+    AccountEndpointProxy accountEndpointProxy = new AccountEndpointProxy(logService, apiRequestService, apiPath);
     ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, apiRequestService, apiPath);
     UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, apiPath);
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, apiPath);
@@ -240,7 +242,8 @@ public class ChatMate {
         customGuiNewChat,
         imageService,
         donationHudStore,
-        chatMateHudService);
+        chatMateHudService,
+        accountEndpointProxy);
     this.donationHudService = new DonationHudService(chatMateHudStore,
         donationHudStore,
         guiService,

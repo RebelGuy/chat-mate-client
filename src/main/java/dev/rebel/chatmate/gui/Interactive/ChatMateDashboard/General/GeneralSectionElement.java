@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General;
 
+import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.GeneralRoute;
 import dev.rebel.chatmate.gui.Interactive.ContainerElement;
@@ -17,8 +18,12 @@ import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElement
 public class GeneralSectionElement extends ContainerElement implements ISectionElement {
   private final GeneralSectionLivestreamElement livestreamElement;
 
-  public GeneralSectionElement(InteractiveContext context, IElement parent, @Nullable GeneralRoute route, ChatMateEndpointProxy chatMateEndpointProxy, Config config) {
+  public GeneralSectionElement(InteractiveContext context, IElement parent, @Nullable GeneralRoute route, ChatMateEndpointProxy chatMateEndpointProxy, Config config, AccountEndpointProxy accountEndpointProxy) {
     super(context, parent, LayoutMode.BLOCK);
+
+    super.addElement(new LoginElement(context, this, accountEndpointProxy)
+        .setMargin(RectExtension.fromBottom(gui(4)))
+    );
 
     super.addElement(CHECKBOX_LIGHT.create(context, this)
         .setLabel("Enable ChatMate")

@@ -53,6 +53,7 @@ public class TextInputElement extends InputElement {
   private @Nullable Function<String, List<Tuple2<String, Font>>> textFormatter = null;
   private @Nullable String suffix = null;
   private @Nullable String placeholder = null;
+  private @Nullable Runnable onSubmit = null;
 
   private Dim textHeight;
   private float textScale = 1;
@@ -174,6 +175,12 @@ public class TextInputElement extends InputElement {
 
   public TextInputElement setValidator(Predicate<String> validator) {
     this.validator = validator;
+    return this;
+  }
+
+  /** Called when the user presses the enter key. */
+  public TextInputElement setOnSubmit(Runnable onSubmit) {
+    this.onSubmit = onSubmit;
     return this;
   }
 
@@ -389,6 +396,16 @@ public class TextInputElement extends InputElement {
           }
 
           return true;
+
+        case Keyboard.KEY_RETURN:
+        case Keyboard.KEY_NUMPADENTER:
+          if (this.onSubmit == null) {
+            return false;
+          } else {
+            this.onSubmit.run();
+            return true;
+          }
+
         default:
           if (ChatAllowedCharacters.isAllowedCharacter(data.eventCharacter)) {
             this.writeText(Character.toString(data.eventCharacter));

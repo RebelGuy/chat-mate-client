@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 import java.util.Timer;
 
 public class ConfigPersistorService<SerialisedConfig extends Version> {
-  private final static int CURRENT_SCHEMA = 5;
+  private final static int CURRENT_SCHEMA = 6;
 
   private final Class<SerialisedConfig> currentSerialisedVersion;
   private final LogService logService;
