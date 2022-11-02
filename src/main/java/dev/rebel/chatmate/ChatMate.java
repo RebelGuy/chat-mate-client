@@ -1,13 +1,11 @@
 package dev.rebel.chatmate;
 
 import dev.rebel.chatmate.api.ChatMateApiException;
-import dev.rebel.chatmate.api.models.account.AuthenticateRequest;
 import dev.rebel.chatmate.commands.*;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
-import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV6;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.*;
@@ -85,7 +83,7 @@ public class ChatMate {
     String apiPath = environment.serverUrl + "/api";
     DateTimeService dateTimeService = new DateTimeService();
     CursorService cursorService = new CursorService(minecraft, logService, forgeEventService);
-    ApiRequestService apiRequestService = new ApiRequestService(cursorService);
+    ApiRequestService apiRequestService = new ApiRequestService(cursorService, config);
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, apiPath);
     this.accountEndpointProxy = new AccountEndpointProxy(logService, apiRequestService, apiPath);
     this.validateLoginDetails();
@@ -294,7 +292,6 @@ public class ChatMate {
 
     // check whether the login token is still valid - if it isn't, we set it to null
     this.accountEndpointProxy.authenticateAsync(
-        new AuthenticateRequest(loginToken),
         r -> this.config.getLoginInfoEmitter().set(new Config.LoginInfo(r.username, loginToken)),
         e -> {
           if (Objects.ifClass(ChatMateApiException.class, e, ex -> ex.apiResponseError.errorCode == 401)) {

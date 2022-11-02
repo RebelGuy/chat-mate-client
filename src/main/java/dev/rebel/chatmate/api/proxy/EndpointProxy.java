@@ -110,7 +110,7 @@ public class EndpointProxy {
       Res parsed = this.parseResponse(result.responseBody, returnClass);
       parsed.assertIntegrity();
       if (!parsed.success) {
-        throw new ChatMateApiException(parsed.error);
+        throw new ChatMateApiException(parsed.error, result.loginToken);
       } else {
         return parsed.data;
       }
@@ -128,6 +128,12 @@ public class EndpointProxy {
     URL url = new URL(this.basePath + path);
     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
     conn.setRequestMethod(method.toString());
+
+    // some requests don't require a login token, but if we have it we might as well add it all the time
+    @Nullable String loginToken = this.apiRequestService.getLoginToken();
+    if (loginToken != null) {
+      conn.setRequestProperty("X-Login-Token", loginToken);
+    }
 
     if (method != Method.GET && data != null) {
       String json = this.gson.toJson(data);
@@ -157,7 +163,7 @@ public class EndpointProxy {
 
     // the stream can be null if there is no response body
     if (stream == null) {
-      return new ApiResponse(success, statusCode, "");
+      return new ApiResponse(success, statusCode, "", loginToken);
     }
 
     // https://stackoverflow.com/a/1826995
@@ -169,7 +175,7 @@ public class EndpointProxy {
         result.append(line);
       }
     }
-    return new ApiResponse(success, statusCode, result.toString());
+    return new ApiResponse(success, statusCode, result.toString(), loginToken);
   }
 
   private <T extends ApiResponseBase<?>> T parseResponse(String response, Class<T> returnClass) throws Exception {
@@ -182,7 +188,8 @@ public class EndpointProxy {
     if (parsed.schema == null) {
       error = "The response's `schema` property is null - is the JSON conversion implemented correctly?";
     } else if (parsed.schema.intValue() != parsed.GetExpectedSchema().intValue()) {
-      error = "Schema mismatch - expected " + parsed.GetExpectedSchema() + " but received " + parsed.schema + " from server.";
+      // todo: remove schema versions. they are not helpful
+      // error = "Schema mismatch - expected " + parsed.GetExpectedSchema() + " but received " + parsed.schema + " from server.";
     }
 
     if (error != null) {
@@ -237,11 +244,13 @@ public class EndpointProxy {
     public final boolean success;
     public final int statusCode;
     public final String responseBody;
+    public final @Nullable String loginToken;
 
-    public ApiResponse(boolean success, @Nullable Integer statusCode, String responseBody) {
+    public ApiResponse(boolean success, @Nullable Integer statusCode, String responseBody, @Nullable String loginToken) {
       this.success = success;
       this.statusCode = statusCode;
       this.responseBody = responseBody;
+      this.loginToken = loginToken;
     }
   }
 

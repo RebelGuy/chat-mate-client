@@ -23,8 +23,8 @@ public class AccountEndpointProxy extends EndpointProxy {
     super(logService, apiRequestService, basePath + "/account");
   }
 
-  public void authenticateAsync(@Nonnull AuthenticateRequest request, Consumer<AuthenticateResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
-    this.makeRequestAsync(Method.POST, "/authenticate", request, AuthenticateResponse.class, callback, errorHandler);
+  public void authenticateAsync(Consumer<AuthenticateResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(Method.POST, "/authenticate", AuthenticateResponse.class, callback, errorHandler);
   }
 
   public void loginAsync(@Nonnull LoginRequest request, Consumer<LoginResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
