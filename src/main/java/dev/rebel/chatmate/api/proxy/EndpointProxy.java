@@ -129,10 +129,15 @@ public class EndpointProxy {
     HttpURLConnection conn = (HttpURLConnection)url.openConnection();
     conn.setRequestMethod(method.toString());
 
-    // some requests don't require a login token, but if we have it we might as well add it all the time
+    // some requests don't require these headers, but if we have it we might as well add it all the time
     @Nullable String loginToken = this.apiRequestService.getLoginToken();
     if (loginToken != null) {
       conn.setRequestProperty("X-Login-Token", loginToken);
+    }
+
+    @Nullable String streamer = this.apiRequestService.getStreamer();
+    if (streamer != null) {
+      conn.setRequestProperty("X-Streamer", streamer);
     }
 
     if (method != Method.GET && data != null) {

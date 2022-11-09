@@ -9,6 +9,7 @@ public class PublicUserRank extends PublicObject {
   public Integer GetExpectedSchema() { return 1; }
 
   public Integer id;
+  public @Nullable String streamer;
   public PublicRank rank;
   public Long issuedAt;
   public Boolean isActive;

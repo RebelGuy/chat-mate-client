@@ -49,6 +49,11 @@ public class ApiRequestService {
     return this.config.getLoginInfoEmitter().get().loginToken;
   }
 
+  public @Nullable String getStreamer() {
+    // at the moment, we assume that the logged-in user is also the streamer. if we ever distribute the mod to non-streamers, this assumption no longer holds.
+    return this.config.getLoginInfoEmitter().get().username;
+  }
+
   private void updateListeners(int delta) {
     // only notify listeners when the active state has changed
     if (this.activeRequests > 1 || this.activeRequests == 1 && delta == -1) {
