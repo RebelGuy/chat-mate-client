@@ -69,6 +69,11 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.21 - The Auth Update [20/11/2022]
+- Added the ability to log in/out. It is assumed that the logged-in user is also a Streamer
+  - Login info is stored in the Config file, and ChatMate attempts to automatically log the user in at startup
+- API requests now include the loginToken and Streamer name, if available
+
 ## v1.20 - The Donation Update v2 [28/10/2022]
 - Added new HUD element for displaying donation data. It has 3 optional data sources, filtered for this stream or since a custom date:
   - Total donation amount
