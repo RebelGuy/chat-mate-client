@@ -11,7 +11,8 @@ public abstract class Migration<FromModel extends Version, ToModel extends Versi
       v1v2.class,
       v2v3.class,
       v3v4.class,
-      v4v5.class
+      v4v5.class,
+      v5v6.class,
   };
   private final static Class<Version>[] versions = new Class[] {
       SerialisedConfigV0.class,
@@ -19,7 +20,8 @@ public abstract class Migration<FromModel extends Version, ToModel extends Versi
       SerialisedConfigV2.class,
       SerialisedConfigV3.class,
       SerialisedConfigV4.class,
-      SerialisedConfigV5.class
+      SerialisedConfigV5.class,
+      SerialisedConfigV6.class
   };
 
   abstract ToModel up(FromModel data);

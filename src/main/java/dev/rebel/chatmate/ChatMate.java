@@ -1,11 +1,12 @@
 package dev.rebel.chatmate;
 
+import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.commands.*;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
 import dev.rebel.chatmate.commands.handlers.RanksHandler;
 import dev.rebel.chatmate.commands.handlers.SearchHandler;
-import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
+import dev.rebel.chatmate.config.serialised.SerialisedConfigV6;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
@@ -24,6 +25,7 @@ import dev.rebel.chatmate.stores.DonationApiStore;
 import dev.rebel.chatmate.stores.LivestreamApiStore;
 import dev.rebel.chatmate.stores.RankApiStore;
 import dev.rebel.chatmate.util.ApiPollerFactory;
+import dev.rebel.chatmate.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.launchwrapper.Launch;
@@ -42,6 +44,9 @@ public class ChatMate {
   // must hold on to reference in these classes, otherwise they may be garbage collected (wtf)
   ChatMateChatService chatMateChatService;
   DonationHudService donationHudService;
+
+  AccountEndpointProxy accountEndpointProxy;
+  Config config;
 
   @Mod.EventHandler
   public void onFMLInitialization(FMLInitializationEvent event) throws Exception {
@@ -67,8 +72,8 @@ public class ChatMate {
     IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
 
-    ConfigPersistorService<SerialisedConfigV5> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV5.class, logService, fileService);
-    Config config = new Config(logService, configPersistorService, dimFactory);
+    ConfigPersistorService<SerialisedConfigV6> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV6.class, logService, fileService);
+    this.config = new Config(logService, configPersistorService, dimFactory);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
@@ -78,8 +83,11 @@ public class ChatMate {
     String apiPath = environment.serverUrl + "/api";
     DateTimeService dateTimeService = new DateTimeService();
     CursorService cursorService = new CursorService(minecraft, logService, forgeEventService);
-    ApiRequestService apiRequestService = new ApiRequestService(cursorService);
+    ApiRequestService apiRequestService = new ApiRequestService(cursorService, config);
     ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, apiPath);
+    this.accountEndpointProxy = new AccountEndpointProxy(logService, apiRequestService, apiPath);
+    this.validateLoginDetails();
+
     ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, apiRequestService, apiPath);
     UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, apiPath);
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, apiPath);
@@ -240,7 +248,8 @@ public class ChatMate {
         customGuiNewChat,
         imageService,
         donationHudStore,
-        chatMateHudService);
+        chatMateHudService,
+        accountEndpointProxy);
     this.donationHudService = new DonationHudService(chatMateHudStore,
         donationHudStore,
         guiService,
@@ -273,5 +282,22 @@ public class ChatMate {
         }
       }, e -> {}, false);
     }
+  }
+
+  private void validateLoginDetails() {
+    String loginToken = this.config.getLoginInfoEmitter().get().loginToken;
+    if (loginToken == null) {
+      return;
+    }
+
+    // check whether the login token is still valid - if it isn't, we set it to null
+    this.accountEndpointProxy.authenticateAsync(
+        r -> this.config.getLoginInfoEmitter().set(new Config.LoginInfo(r.username, loginToken)),
+        e -> {
+          if (Objects.ifClass(ChatMateApiException.class, e, ex -> ex.apiResponseError.errorCode == 401)) {
+            this.config.getLoginInfoEmitter().set(new Config.LoginInfo(null, null));
+          }
+        }
+    );
   }
 }

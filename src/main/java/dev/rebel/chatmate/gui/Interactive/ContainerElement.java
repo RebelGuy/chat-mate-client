@@ -418,6 +418,7 @@ public abstract class ContainerElement extends ElementBase {
       }
 
       // add onto the widths of elements that can still expand
+      Set<IElement> canNoLongerExpand = new HashSet<>();
       for (IElement element : canExpand) {
         if (newWidths.containsKey(element)) {
           newWidths.put(element, newWidths.get(element).plus(widthToAdd));
@@ -427,9 +428,11 @@ public abstract class ContainerElement extends ElementBase {
 
         // this element has reached its maximum expansion
         if (newWidths.get(element).gte(maxWidths.get(element))) {
-          canExpand.remove(element);
+          canNoLongerExpand.add(element);
         }
       }
+
+      canExpand.removeAll(canNoLongerExpand);
 
       remainingSpace = remainingSpace.minus(totalAddedWidth);
       addedWidth = addedWidth.plus(widthToAdd);

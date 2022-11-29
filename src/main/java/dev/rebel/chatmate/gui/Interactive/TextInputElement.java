@@ -15,6 +15,8 @@ import dev.rebel.chatmate.events.models.KeyboardEventData.In.KeyModifier;
 import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
+import dev.rebel.chatmate.util.TextHelpers;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -22,6 +24,7 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.MathHelper;
+import org.graalvm.compiler.nodeinfo.InputType;
 import org.lwjgl.input.Keyboard;
 import scala.Tuple2;
 
@@ -53,6 +56,8 @@ public class TextInputElement extends InputElement {
   private @Nullable Function<String, List<Tuple2<String, Font>>> textFormatter = null;
   private @Nullable String suffix = null;
   private @Nullable String placeholder = null;
+  private @Nullable Runnable onSubmit = null;
+  private InputType inputType = InputType.TEXT;
 
   private Dim textHeight;
   private float textScale = 1;
@@ -149,6 +154,11 @@ public class TextInputElement extends InputElement {
     return this;
   }
 
+  public TextInputElement setType(InputType type) {
+    this.inputType = type;
+    return this;
+  }
+
   public String getText() {
     return this.text;
   }
@@ -174,6 +184,12 @@ public class TextInputElement extends InputElement {
 
   public TextInputElement setValidator(Predicate<String> validator) {
     this.validator = validator;
+    return this;
+  }
+
+  /** Called when the user presses the enter key. */
+  public TextInputElement setOnSubmit(Runnable onSubmit) {
+    this.onSubmit = onSubmit;
     return this;
   }
 
@@ -389,6 +405,16 @@ public class TextInputElement extends InputElement {
           }
 
           return true;
+
+        case Keyboard.KEY_RETURN:
+        case Keyboard.KEY_NUMPADENTER:
+          if (this.onSubmit == null) {
+            return false;
+          } else {
+            this.onSubmit.run();
+            return true;
+          }
+
         default:
           if (ChatAllowedCharacters.isAllowedCharacter(data.eventCharacter)) {
             this.writeText(Character.toString(data.eventCharacter));
@@ -462,6 +488,16 @@ public class TextInputElement extends InputElement {
     });
   }
 
+  private String getTextToRender() {
+    if (this.inputType == InputType.TEXT) {
+      return this.text;
+    } else if (this.inputType == InputType.PASSWORD) {
+      return TextHelpers.copy("*", this.text.length());
+    } else {
+      throw EnumHelpers.<InputType>assertUnreachable(this.inputType);
+    }
+  }
+
   private void drawEditableText() {
     Dim left = this.getContentBox().getX();
     Dim top = this.getContentBox().getY();
@@ -469,7 +505,8 @@ public class TextInputElement extends InputElement {
     Dim bottom = this.getContentBox().getBottom();
     Dim right = left.plus(width);
 
-    String trimmedString = this.fontEngine.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), (int)(width.getGui() / this.textScale)); // i.e. perform this operation at 100% scale
+    String textToRender = this.getTextToRender();
+    String trimmedString = this.fontEngine.trimStringToWidth(textToRender.substring(this.scrollOffsetIndex), (int)(width.getGui() / this.textScale)); // i.e. perform this operation at 100% scale
     int visibleStringLength = trimmedString.length();
     int trimmedStringBegin = this.scrollOffsetIndex;
     int trimmedStringEnd = trimmedStringBegin + visibleStringLength;
@@ -526,7 +563,7 @@ public class TextInputElement extends InputElement {
 
   /** endIndex is exclusive. */
   private List<Tuple2<String, Font>> getFormattedString(int beginIndex, @Nullable Integer endIndex) {
-    String text = this.text;
+    String text = this.getTextToRender();
     if (endIndex == null) {
       endIndex = text.length();
     }
@@ -675,20 +712,20 @@ public class TextInputElement extends InputElement {
   /** Gets the text that fits into the text box. */
   private String getVisibleText() {
     int width = (int)(this.getEditableWidth().getGui() / this.textScale);
-    return this.fontEngine.trimStringToWidth(this.text.substring(this.scrollOffsetIndex), width);
+    return this.fontEngine.trimStringToWidth(this.getTextToRender().substring(this.scrollOffsetIndex), width);
   }
 
   /** Gets the tail-end of the text that fits into the text box. */
   private String getVisibleTextReverse() {
     int width = (int)(this.getContentBox().getWidth().getGui() / this.textScale);
-    return this.fontEngine.trimStringToWidth(this.text, width, true);
+    return this.fontEngine.trimStringToWidth(this.getTextToRender(), width, true);
   }
 
   /** Empty string if nothing is selected. */
   private String getSelectedText() {
     int indexStart = Math.min(this.cursorIndex, this.selectionEndIndex);
     int indexEnd = Math.max(this.cursorIndex, this.selectionEndIndex);
-    return this.text.substring(indexStart, indexEnd);
+    return this.getTextToRender().substring(indexStart, indexEnd);
   }
 
   private void moveCursorBy(int delta) {
@@ -713,5 +750,9 @@ public class TextInputElement extends InputElement {
 
   private Dim getEditableWidth() {
     return this.getContentBox().getWidth().minus(gui(this.fontEngine.getStringWidth(this.suffix) * this.textScale));
+  }
+
+  public enum InputType {
+      TEXT, PASSWORD
   }
 }

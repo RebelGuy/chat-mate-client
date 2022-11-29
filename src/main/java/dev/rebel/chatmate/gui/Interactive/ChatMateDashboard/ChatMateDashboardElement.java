@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
+import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Chat.ChatSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.*;
@@ -59,6 +60,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final SidebarElement sidebar;
   private final ScrollingElement contentWrapper;
   private final ElementReference content;
+  private final AccountEndpointProxy accountEndpointProxy;
 
   public ChatMateDashboardElement(InteractiveContext context,
                                   IElement parent,
@@ -69,7 +71,8 @@ public class ChatMateDashboardElement extends ContainerElement {
                                   UserEndpointProxy userEndpointProxy,
                                   MessageService messageService,
                                   Config config,
-                                  ChatMateHudService chatMateHudService) {
+                                  ChatMateHudService chatMateHudService,
+                                  AccountEndpointProxy accountEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
@@ -78,12 +81,13 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.store = new DashboardStore();
     this.chatMateEndpointProxy = chatMateEndpointProxy;
     this.chatMateHudService = chatMateHudService;
+    this.accountEndpointProxy = accountEndpointProxy;
 
     this.sidebarMaxWidth = gui(80);
     this.backgroundFadeIn = new AnimatedBool(500L, false);
     this.backgroundFadeIn.set(true);
 
-    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy, config);
+    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy, config, this.accountEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);

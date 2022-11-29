@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Environment;
+import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
@@ -70,6 +71,7 @@ public class GuiService {
   private final ImageService imageService;
   private final DonationHudStore donationHudStore;
   private final ChatMateHudService chatMateHudService;
+  private final AccountEndpointProxy accountEndpointProxy;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -106,7 +108,8 @@ public class GuiService {
                     CustomGuiNewChat customGuiNewChat,
                     ImageService imageService,
                     DonationHudStore donationHudStore,
-                    ChatMateHudService chatMateHudService) {
+                    ChatMateHudService chatMateHudService,
+                    AccountEndpointProxy accountEndpointProxy) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -143,6 +146,7 @@ public class GuiService {
     this.imageService = imageService;
     this.donationHudStore = donationHudStore;
     this.chatMateHudService = chatMateHudService;
+    this.accountEndpointProxy = accountEndpointProxy;
 
     this.addEventHandlers();
   }
@@ -168,7 +172,8 @@ public class GuiService {
         this.userEndpointProxy,
         this.messageService,
         this.config,
-        this.chatMateHudService)
+        this.chatMateHudService,
+        this.accountEndpointProxy)
     );
     return screen;
   }

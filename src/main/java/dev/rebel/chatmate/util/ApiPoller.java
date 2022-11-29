@@ -1,7 +1,9 @@
 package dev.rebel.chatmate.util;
 
+import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.HttpException;
+import dev.rebel.chatmate.config.Config.LoginInfo;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.events.models.ConfigEventData;
 
@@ -13,6 +15,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static dev.rebel.chatmate.util.Objects.casted;
 import static dev.rebel.chatmate.util.Objects.ifClass;
 
 public class ApiPoller<D> {
@@ -26,7 +29,12 @@ public class ApiPoller<D> {
   private final Long timeoutWaitTime;
   private boolean requestInProgress;
 
+  // if unauthorised, we pause the poller until the login token has been changed
+  private boolean isUnauthorised;
+  private @Nullable String unauthorisedLoginToken;
+
   private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChatMateEnabledChanged = this::onChatMateEnabledChanged;
+  private final Function<ConfigEventData.In<LoginInfo>, ConfigEventData.Out<LoginInfo>> _onLoginInfoChanged = this::onLoginInfoChanged;
 
   private @Nullable Timer timer;
   private @Nullable Long pauseUntil;
@@ -52,31 +60,53 @@ public class ApiPoller<D> {
     this.pauseUntil = null;
     this.requestInProgress = false;
 
+    this.isUnauthorised = false;
+    this.unauthorisedLoginToken = null;
+
     this.config.getChatMateEnabledEmitter().onChange(this._onChatMateEnabledChanged, this, true);
+    this.config.getLoginInfoEmitter().onChange(this._onLoginInfoChanged, this, false);
   }
 
   private ConfigEventData.Out<Boolean> onChatMateEnabledChanged(ConfigEventData.In<Boolean> in) {
     boolean enabled = in.data;
     if (enabled) {
-      if (this.timer == null) {
-        this.pauseUntil = null;
-        this.timer = new Timer();
-        if (this.type == PollType.CONSTANT_PADDING) {
-          this.timer.schedule(new TaskWrapper(this::pollApi), 0);
-        } else if (this.type == PollType.CONSTANT_INTERVAL) {
-          this.timer.scheduleAtFixedRate(new TaskWrapper(this::pollApi), 0, 5000);
-        } else {
-          throw EnumHelpers.<PollType>assertUnreachable(this.type);
-        }
-      }
+      this.resumePoller();
     } else {
-      if (this.timer != null) {
-        this.timer.cancel();
-        this.timer = null;
-      }
+      this.pausePoller();
     }
 
     return new ConfigEventData.Out<>();
+  }
+
+  private ConfigEventData.Out<LoginInfo> onLoginInfoChanged(ConfigEventData.In<LoginInfo> in) {
+    LoginInfo data = in.data;
+
+    if (this.isUnauthorised && !java.util.Objects.equals(data.loginToken, this.unauthorisedLoginToken)) {
+      this.resumePoller();
+    }
+
+    return new ConfigEventData.Out<>();
+  }
+
+  private void resumePoller() {
+    if (this.timer == null) {
+      this.pauseUntil = null;
+      this.timer = new Timer();
+      if (this.type == PollType.CONSTANT_PADDING) {
+        this.timer.schedule(new TaskWrapper(this::pollApi), 0);
+      } else if (this.type == PollType.CONSTANT_INTERVAL) {
+        this.timer.scheduleAtFixedRate(new TaskWrapper(this::pollApi), 0, 5000);
+      } else {
+        throw EnumHelpers.<PollType>assertUnreachable(this.type);
+      }
+    }
+  }
+
+  private void pausePoller() {
+    if (this.timer != null) {
+      this.timer.cancel();
+      this.timer = null;
+    }
   }
 
   private void pollApi() {
@@ -89,6 +119,9 @@ public class ApiPoller<D> {
   }
 
   private void onApiResponse(D data) {
+    this.isUnauthorised = false;
+    this.unauthorisedLoginToken = null;
+
     this.onHandleCallback(data, this.callback);
   }
 
@@ -102,6 +135,17 @@ public class ApiPoller<D> {
       // we could retry the request, but in the interest of avoiding additional complexity we will leave it for now.
       this.onHandleCallback(error, null);
       return;
+
+    } else if (ifClass(ChatMateApiException.class, error, e -> e.apiResponseError.errorCode == 401)) {
+      // if we aren't authorised to make the request, there's little point in trying the same request again until the
+      // loginToken has been updated. the poller will be resumed automatically when the loginToken has been changed.
+      this.isUnauthorised = true;
+      this.unauthorisedLoginToken = casted(ChatMateApiException.class, error, e -> e.loginToken);
+      this.pausePoller();
+
+    } else {
+      this.isUnauthorised = false;
+      this.unauthorisedLoginToken = null;
     }
 
     this.onHandleCallback(error, this.errorHandler);

@@ -26,6 +26,8 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Timer;
 
+import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
+
 public class GeneralSectionLivestreamElement extends ContainerElement {
   private final ChatMateEndpointProxy chatMateEndpointProxy;
 
@@ -48,14 +50,14 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
     this.label = new LabelElement(context, this)
         .setText("Active livestream:")
-        .setFontScale(0.75f)
+        .setFontScale(SCALE)
         .setMaxWidth(gui(200))
         .setSizingMode(SizingMode.MINIMISE)
         .setPadding(new RectExtension(ZERO, gui(4), ZERO, ZERO))
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .cast();
     this.livestreamInputField = new TextInputElement(context, this)
-        .setTextScale(0.75f)
+        .setTextScale(SCALE)
         .onTextChange(this::onChange)
         .setPlaceholder("No active livestream")
         .setEnabled(this, false)

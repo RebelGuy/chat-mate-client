@@ -1,15 +1,17 @@
 package dev.rebel.chatmate.services;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import dev.rebel.chatmate.api.proxy.EndpointProxy.Method;
+import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.TextHelpers;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.annotation.Nullable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 
 public class LogService {
   private final FileService fileService;
@@ -23,7 +25,9 @@ public class LogService {
     String timestamp = timeFormat.format(new Date());
     this.fileName = String.format("log_%s.log", timestamp);
 
-    this.gson = new Gson();
+    this.gson = new GsonBuilder()
+        .serializeNulls()
+        .create();
   }
 
   public void logDebug(Object logger, Object... args) {
@@ -80,7 +84,7 @@ public class LogService {
             ExceptionUtils.getMessage(e),
             ExceptionUtils.getStackTrace(e));
       } else if (obj instanceof String) {
-        return (String) obj;
+        return this.maskString((String)obj);
       } else if (ClassUtils.isPrimitiveOrWrapper(obj.getClass())) {
         return obj.toString();
       } else {
@@ -89,5 +93,52 @@ public class LogService {
     } catch (Exception e) {
       return String.format("[Unable to stringify exception object of type %s. Exception message: %s]", obj.getClass().getName(), e.getMessage());
     }
+  }
+
+  /** Assuming the string is in JSON format, redacts string values of properties that may hold sensitive information. */
+  private String maskString(String string) {
+    // e.g. "{\"password\":\"test1\\\"23456\"}" is turned into "{\"password\":\"<redacted>\"}"
+
+    String originalString = string;
+    try {
+      Set<String> maskedProperties = new HashSet<>();
+      maskedProperties.add("password");
+      maskedProperties.add("loginToken");
+      maskedProperties.add("X-Login-Token");
+
+      for (String maskedProperty : maskedProperties) {
+        String property = String.format("\"%s\":", maskedProperty.toLowerCase());
+        ArrayList<Integer> occurrences = TextHelpers.getAllOccurrences(string.toLowerCase(), new TextHelpers.WordFilter(property), false);
+        for (int occurrence : Collections.reverse(occurrences)) {
+          // it is assumed that the masked value is a string
+          int valueStart = occurrence + property.length();
+          if (string.charAt(valueStart) != '"') {
+            continue;
+          }
+
+          valueStart++;
+          boolean escapeNextChar = false;
+          String value = "";
+          for (int i = valueStart; i < string.length(); i++) {
+            char c = string.charAt(i);
+
+            if (c == '"' && !escapeNextChar) {
+              break;
+            }
+
+            escapeNextChar = c == '\\';
+            value += c;
+          }
+
+          string = string.substring(0, valueStart) + "<redacted>" + string.substring(valueStart + value.length());
+        }
+      }
+    } catch (Exception e) {
+      System.out.println(e.getMessage());
+      e.printStackTrace();
+      return originalString;
+    }
+
+    return string;
   }
 }
