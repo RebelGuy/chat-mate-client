@@ -11,6 +11,7 @@ public class PublicUser extends PublicObject {
   public Integer GetExpectedSchema() { return 3; }
 
   public Integer id;
+  public Boolean isRegistered;
   public PublicChannelInfo userInfo;
   public PublicLevelInfo levelInfo;
   public PublicUserRank[] activeRanks;
