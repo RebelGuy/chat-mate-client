@@ -59,9 +59,9 @@ public class LoginElement extends BlockElement {
     this.loginButton = new TextButtonElement(context, this)
         .setText("Login")
         .setTextScale(SCALE)
-        .setOnClick(this::onRequestLogin)
         .setEnabled(this.usernameInput, false)
         .setEnabled(this.passwordInput, false)
+        .setOnClick(this::onRequestLogin)
         .setMargin(new RectExtension(gui(4), ZERO))
         .cast();
     this.loggedInLabel = new LabelElement(context, this)

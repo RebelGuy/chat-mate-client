@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations;
 
+import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.AnchorBoxSizing;
@@ -155,27 +156,45 @@ public class UserPickerElement extends ContainerElement {
       this.dropdownMenu.setVisible(true);
       for (PublicUserNames userNames : response.results) {
         boolean hasRanks = userNames.user.activeRanks.length > 0;
-        BlockElement container = new BlockElement(super.context, this);
+
         LabelElement nameElement = new LabelElement(super.context, this)
             .setText(this.userToString(userNames.user))
             .setOverflow(TextOverflow.SPLIT)
             .setFontScale(0.75f)
-            .setOnClick(() -> this.onSelection(userNames.user))
             .setFont(Styles.VIEWER_NAME_FONT.create(super.context.dimFactory))
+            .setMinWidth(gui(10))
             .setPadding(new RectExtension(gui(1), gui(1), gui(1), hasRanks ? ZERO : gui(1)))
+            .cast();
+        InlineElement nameContainer = new InlineElement(super.context, this)
+            .setAllowShrink(true)
+            .addElement(nameElement)
             .setSizingMode(SizingMode.FILL)
             .cast();
+
+        if (userNames.user.isRegistered) {
+            ImageElement verificationElement = new ImageElement(super.context, this)
+                .setImage(Asset.GUI_VERIFICATION_ICON)
+                .setMaxContentWidth(super.fontEngine.FONT_HEIGHT_DIM.times(0.667f))
+                .setMargin(RectExtension.fromLeft(gui(-1.5f)).top(gui(-0.5f)))
+                .cast();
+            nameContainer.addElement(verificationElement);
+        }
+
         LabelElement ranksElement = !hasRanks ? null : new LabelElement(super.context, this)
             .setText(String.join(", ", Collections.map(Collections.list(userNames.user.activeRanks), r -> toSentenceCase(r.rank.displayNameNoun))))
             .setOverflow(TextOverflow.SPLIT)
             .setFontScale(0.5f)
-            .setOnClick(() -> this.onSelection(userNames.user))
             .setColour(Colour.GREY50)
             .setPadding(new RectExtension(gui(1), gui(1), ZERO, gui(1)))
             .setSizingMode(SizingMode.FILL)
             .cast();
-        container.addElement(nameElement).addElement(ranksElement);
-        this.dropdownMenu.addOption(new BackgroundElement(super.context, this, container)
+
+        BlockElement menuItemContainer = new BlockElement(super.context, this)
+            .addElement(nameContainer)
+            .addElement(ranksElement)
+            .setOnClick(() -> this.onSelection(userNames.user))
+            .cast();
+        this.dropdownMenu.addOption(new BackgroundElement(super.context, this, menuItemContainer)
             .setCornerRadius(gui(2))
             .setHoverColour(Colour.GREY75.withAlpha(0.2f))
             .setMargin(new RectExtension(gui(1), gui(1)))

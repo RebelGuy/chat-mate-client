@@ -32,7 +32,6 @@ public class LabelElement extends SingleElement {
   private @Nullable Font hoverFont;
   private float fontScale;
   private @Nullable Integer maxOverflowLines;
-  private @Nullable Runnable onClick;
 
   /** Inner list: overflow line breaks. Outer list: user-defined lines */
   private List<List<String>> lines;
@@ -50,7 +49,6 @@ public class LabelElement extends SingleElement {
     this.fontScale = 1.0f;
     this.maxOverflowLines = null;
     this.processNewlineCharacters = false;
-    this.onClick = null;
   }
 
   public LabelElement setText(String text) {
@@ -129,12 +127,6 @@ public class LabelElement extends SingleElement {
     return this;
   }
 
-  /** If set, this element will handle mouse events. */
-  public LabelElement setOnClick(@Nullable Runnable onClick) {
-    this.onClick = onClick;
-    return this;
-  }
-
   @Override
   public List<IElement> getChildren() {
     return null;
@@ -145,27 +137,6 @@ public class LabelElement extends SingleElement {
     List<Dim> widths = Collections.map(Collections.list(this.text.split(" ")), str -> this.context.fontEngine.getStringWidthDim(str, this.font));
     Dim maxWidth = Dim.max(widths).times(this.fontScale);
     return super.getFullBoxWidth(maxWidth);
-  }
-
-  @Override
-  public void onMouseDown(Events.IEvent<MouseEventData.In> e) {
-    if (this.onClick != null) {
-      e.stopPropagation();
-      this.onClick.run();
-    }
-  }
-
-  @Override
-  public void onMouseEnter(Events.IEvent<MouseEventData.In> e) {
-    if (this.onClick != null) {
-      e.stopPropagation();
-      super.context.cursorService.toggleCursor(CursorService.CursorType.CLICK, this, super.getDepth());
-    }
-  }
-
-  @Override
-  public void onMouseExit(Events.IEvent<MouseEventData.In> e) {
-    super.context.cursorService.untoggleCursor(this);
   }
 
   @Override

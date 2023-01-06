@@ -72,14 +72,14 @@ public abstract class ModalElement extends ContainerElement {
 
     this.closeButton = new TextButtonElement(context, this)
         .setText("Close")
-        .setOnClick(this::onClose)
         .setMinSize(this.width.over(4))
+        .setOnClick(this::onClose)
         .setHorizontalAlignment(HorizontalAlignment.LEFT)
         .cast();
     this.submitButton = new TextButtonElement(context, this)
         .setText("Submit")
-        .setOnClick(this::onSubmit)
         .setMinSize(this.width.over(4))
+        .setOnClick(this::onSubmit)
         .setVisible(this.validate() != null)
         .setHorizontalAlignment(HorizontalAlignment.RIGHT)
         .cast();

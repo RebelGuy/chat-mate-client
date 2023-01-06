@@ -51,6 +51,7 @@ public abstract class ElementBase implements IElement {
   private boolean isHovering;
   protected boolean visible;
   private @Nullable String tooltip;
+  private @Nullable Runnable onClick;
   private @Nullable Dim maxWidth;
   private @Nullable Dim maxContentWidth;
   private @Nullable Dim minWidth;
@@ -81,6 +82,7 @@ public abstract class ElementBase implements IElement {
     this.visible = true;
 
     this.tooltip = null;
+    this.onClick = null;
     this.maxWidth = null;
     this.maxContentWidth = null;
     this.minWidth = null;
@@ -210,6 +212,10 @@ public abstract class ElementBase implements IElement {
   private void onEventBubble(EventType type, IEvent<?> event) {
     switch (type) {
       case MOUSE_DOWN:
+        if (this.onClick != null && this.onClickHook((IEvent<MouseEventData.In>)event)) {
+          event.stopPropagation();
+          this.onClick.run();
+        }
         this.onMouseDown((IEvent<MouseEventData.In>)event);
         break;
       case MOUSE_MOVE:
@@ -266,6 +272,12 @@ public abstract class ElementBase implements IElement {
 
   /** Called when a critical error occurs. Only do clean-up logic if overriding this. No guarantee is made about the initialisation of state. */
   public void onError() {}
+
+  /** Called when the user clicks the element and an onClick handler exists. Return true to allow the click (default), or false to block the click.
+   * If returning true, the onClick handler is guaranteed to be called. */
+  protected boolean onClickHook(IEvent<MouseEventData.In> e) {
+    return true;
+  }
 
   /** Should return the full size. Do NOT call this method in the context of `super` or `this`, only on other elements. Instead, call `this.onCalculateSize`. */
   @Override
@@ -381,6 +393,15 @@ public abstract class ElementBase implements IElement {
   @Override
   public final @Nullable String getTooltip() {
     return this.tooltip;
+  }
+
+  @Override
+  public final IElement setOnClick(@Nullable Runnable onClick) {
+    if (this.onClick != onClick) {
+      this.onClick = onClick;
+      this.setCursor(CursorType.CLICK);
+    }
+    return this;
   }
 
   @Override

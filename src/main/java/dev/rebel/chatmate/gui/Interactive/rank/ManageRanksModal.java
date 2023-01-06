@@ -181,8 +181,8 @@ public class ManageRanksModal extends ModalElement {
             LabelElement option = new LabelElement(super.context, this)
                 .setText(toSentenceCase(accessibleRank.displayNameNoun))
                 .setOverflow(TextOverflow.SPLIT)
-                .setOnClick(() -> this.onCreateNewRank(accessibleRank))
                 .setHoverFont(new Font().withColour(Colour.ACTION_HOVER).withUnderlined(true))
+                .setOnClick(() -> this.onCreateNewRank(accessibleRank))
                 .setPadding(new RectExtension(gui(2), ZERO))
                 .setMargin(new RectExtension(ZERO, gui(2)))
                 .cast();
