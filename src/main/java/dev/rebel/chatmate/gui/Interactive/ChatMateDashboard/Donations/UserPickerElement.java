@@ -17,6 +17,7 @@ import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.events.models.MouseEventData;
@@ -157,11 +158,12 @@ public class UserPickerElement extends ContainerElement {
       for (PublicUserNames userNames : response.results) {
         boolean hasRanks = userNames.user.activeRanks.length > 0;
 
+        Font font = Styles.VIEWER_NAME_FONT.create(super.context.dimFactory);
         LabelElement nameElement = new LabelElement(super.context, this)
             .setText(this.userToString(userNames.user))
             .setOverflow(TextOverflow.SPLIT)
             .setFontScale(0.75f)
-            .setFont(Styles.VIEWER_NAME_FONT.create(super.context.dimFactory))
+            .setFont(font)
             .setMinWidth(gui(10))
             .setPadding(new RectExtension(gui(1), gui(1), gui(1), hasRanks ? ZERO : gui(1)))
             .cast();
@@ -172,12 +174,13 @@ public class UserPickerElement extends ContainerElement {
             .cast();
 
         if (userNames.user.isRegistered) {
-            ImageElement verificationElement = new ImageElement(super.context, this)
-                .setImage(Asset.GUI_VERIFICATION_ICON)
-                .setMaxContentWidth(super.fontEngine.FONT_HEIGHT_DIM.times(0.667f))
-                .setMargin(RectExtension.fromLeft(gui(-1.5f)).top(gui(-0.5f)))
+            ImageElement verificationBadgeElement = new ImageElement(super.context, this)
+                .setImage(Asset.GUI_VERIFICATION_ICON_WHITE_SMALL)
+                .setColour(font.getColour())
+                .setMaxContentWidth(super.fontEngine.FONT_HEIGHT_DIM.times(0.75f / 2))
+                .setMargin(RectExtension.fromLeft(gui(-1.5f)))
                 .cast();
-            nameContainer.addElement(verificationElement);
+            nameContainer.addElement(verificationBadgeElement);
         }
 
         LabelElement ranksElement = !hasRanks ? null : new LabelElement(super.context, this)

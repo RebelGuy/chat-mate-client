@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.chat;
 
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem.ChatPlatform;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ChatPagination.PaginationRenderer;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -20,8 +22,12 @@ public class UserNameRenderer extends PaginationRenderer<PublicUserNames> {
   @Override
   public IChatComponent renderItem(PublicUserNames item, PublicUserNames[] allItemsOnPage, FontEngine fontEngine, Dim chatWidth, Dim effectiveChatWidth) {
     List<Dim> allNameWidths = Collections.map(Collections.list(allItemsOnPage), userNames -> fontEngine.getStringWidthDim(userNames.user.userInfo.channelName));
-    Dim width = Dim.max(effectiveChatWidth.over(2), Dim.max(allNameWidths));
+    Dim width = Dim.max(effectiveChatWidth.over(2), Dim.max(allNameWidths)); // why was it done this way??
 
-    return this.messageService.getChannelNamesMessage(item, width);
+    return this.messageService.getChannelNamesMessage(chatWidth,
+        item.user,
+        item.youtubeChannelNames.length > 0 ? item.youtubeChannelNames[0] : item.twitchChannelNames[0],
+        item.youtubeChannelNames.length > 0 ? ChatPlatform.Youtube : ChatPlatform.Twitch,
+        false);
   }
 }

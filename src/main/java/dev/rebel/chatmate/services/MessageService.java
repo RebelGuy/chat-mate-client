@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionAlignment;
@@ -40,13 +41,15 @@ public class MessageService {
   private final DimFactory dimFactory;
   private final DonationService donationService;
   private final RankApiStore rankApiStore;
+  private final ChatComponentRenderer chatComponentRenderer;
 
-  public MessageService(LogService logService, FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore) {
+  public MessageService(LogService logService, FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore, ChatComponentRenderer chatComponentRenderer) {
     this.logService = logService;
     this.fontEngine = fontEngine;
     this.dimFactory = dimFactory;
     this.donationService = donationService;
     this.rankApiStore = rankApiStore;
+    this.chatComponentRenderer = chatComponentRenderer;
   }
 
   public IChatComponent getErrorMessage(String msg) {
@@ -129,7 +132,7 @@ public class MessageService {
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
-    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, this.dimFactory), entry.user.userInfo.channelName, true, !deEmphasise)));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, this.dimFactory), entry.user.userInfo.channelName, true, !deEmphasise, false)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
@@ -139,27 +142,25 @@ public class MessageService {
     return new PrecisionChatComponent(list);
   }
 
-  public IChatComponent getChannelNamesMessage(PublicUserNames userNames, Dim messageWidth) {
-    Dim four = this.dimFactory.fromGui(4);
+  public IChatComponent getChannelNamesMessage(Dim messageWidth, PublicUser user, String displayName, ChatPlatform channelPlatform, boolean addExtraIndentation) {
+    Dim left = this.dimFactory.fromGui(addExtraIndentation ? 8 : 4);
 
     // since different users may share the same channel name, it is helpful to also show each user's current level
-    String level = String.valueOf(userNames.user.levelInfo.level);
+    String level = String.valueOf(user.levelInfo.level);
     Dim levelNumberWidth = this.fontEngine.getStringWidthDim("444");
-    PrecisionLayout levelLayout = new PrecisionLayout(four, levelNumberWidth, PrecisionAlignment.RIGHT);
+    PrecisionLayout levelLayout = new PrecisionLayout(left, levelNumberWidth, PrecisionAlignment.RIGHT);
 
-    PlatformViewerTagComponent platform = new PlatformViewerTagComponent(this.dimFactory, userNames.youtubeChannelNames.length > 0 ? ChatPlatform.Youtube : ChatPlatform.Twitch);
+    PlatformViewerTagComponent platform = new PlatformViewerTagComponent(this.dimFactory, channelPlatform);
     ImageChatComponent imageChatComponent = (ImageChatComponent)platform.getComponent();
     Dim platformWidth = imageChatComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT_DIM);
-    PrecisionLayout platformLayout = new PrecisionLayout(four.plus(levelNumberWidth), platformWidth, PrecisionAlignment.LEFT);
+    PrecisionLayout platformLayout = new PrecisionLayout(left.plus(levelNumberWidth), platformWidth, PrecisionAlignment.LEFT);
 
-    // todo CHAT-270: at the moment we are only showing the default channel name, but in the future it is possible that a single user
-    // has multiple channels so then we must print a list
-    PrecisionLayout nameLayout = new PrecisionLayout(four.plus(levelNumberWidth).plus(platformWidth).plus(four), messageWidth, PrecisionAlignment.LEFT);
+    PrecisionLayout nameLayout = new PrecisionLayout(left.plus(levelNumberWidth).plus(platformWidth).plus(left), messageWidth, PrecisionAlignment.LEFT);
     Font font = Font.fromChatStyle(VIEWER_NAME_STYLE, this.dimFactory);
-    IChatComponent component = this.getUserComponent(userNames.user, font, userNames.user.userInfo.channelName, true, true);
+    IChatComponent component = this.getUserComponent(user, font, displayName, true, true, false);
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
-    list.add(new Tuple2<>(levelLayout, styledText(level, getLevelStyle(userNames.user.levelInfo.level))));
+    list.add(new Tuple2<>(levelLayout, styledText(level, getLevelStyle(user.levelInfo.level))));
     list.add(new Tuple2<>(platformLayout, platform));
     list.add(new Tuple2<>(nameLayout, component));
     return new PrecisionChatComponent(list);
@@ -274,11 +275,11 @@ public class MessageService {
   }
 
   public IChatComponent getUserComponent(PublicUser user) {
-    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), user.userInfo.channelName, true, true);
+    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), user.userInfo.channelName, true, true, false);
   }
 
-  public IChatComponent getUserComponent(PublicUser user, Font font, String channelName, boolean showPunishmentPrefix, boolean useEffects) {
-    ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(channelName);
+  public IChatComponent getUserComponent(PublicUser user, Font font, String displayName, boolean showPunishmentPrefix, boolean useEffects, boolean hideVerificationBadge) {
+    ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(displayName);
     String unstyledName = extractedFormatting.unformattedText.trim();
 
     // make sure we don't try to print an empty user name
@@ -303,7 +304,8 @@ public class MessageService {
       }
     }
 
-    return new ContainerChatComponent(new UserNameChatComponent(this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, user.id, font, unstyledName, useEffects), user);
+    boolean showVerificationBadge = !hideVerificationBadge && user.isRegistered;
+    return new ContainerChatComponent(new UserNameChatComponent(this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer, user.id, font, unstyledName, useEffects, showVerificationBadge), user);
   }
 
   public IChatComponent getRankComponent(List<PublicRank> activeRanks) {

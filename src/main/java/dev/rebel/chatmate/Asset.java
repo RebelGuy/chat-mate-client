@@ -20,6 +20,7 @@ public class Asset {
   public static Texture GUI_FX_ICON = new Texture(128, 128, "textures/gui/fx_icon.png");
   public static Texture GUI_TEXT_ICON = new Texture(128, 128, "textures/gui/text_icon.png");
   public static Texture GUI_VERIFICATION_ICON = new Texture(128, 128, "textures/gui/verification_icon.png");
+  public static Texture GUI_VERIFICATION_ICON_WHITE_SMALL = new Texture(32, 32, "textures/gui/verification_icon_white_small.png"); // use this when recolouring the icon
 
   public static Texture LOGO_YOUTUBE = new Texture(320, 320, "textures/logo_youtube.png");
   public static Texture LOGO_TWITCH = new Texture(320, 320, "textures/logo_twitch.png");
