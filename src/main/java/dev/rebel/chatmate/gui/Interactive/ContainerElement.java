@@ -135,8 +135,9 @@ public abstract class ContainerElement extends ElementBase {
       containerHeight = Dim.max(targetHeight, contentHeight);
     }
 
-    List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> verticalGroups = this.getVerticalGroups(elementSizes);
-    List<Dim> elementOffsets = this.getVerticalOffsetsOfElements(verticalGroups, containerHeight);
+    List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> verticalGroups = this.getAlignmentGroups(elementSizes, IElement::getVerticalAlignment);
+    OffsetResult offsetResult = this.getElementOffsets(verticalGroups, containerHeight, DimPoint::getY, algn -> algn == VerticalAlignment.TOP ? 1 : algn == VerticalAlignment.MIDDLE ? 2 : 3);
+    List<Dim> elementOffsets = offsetResult.offsets;
 
     for (Tuple3<IElement, DimPoint, Dim> elementSize : Collections.map(elementSizes, (el, i) -> new Tuple3<>(el._1, el._2, elementOffsets.get(i)))) {
       IElement element = elementSize._1();
@@ -157,17 +158,18 @@ public abstract class ContainerElement extends ElementBase {
       this.childrenRelBoxes.put(element, new DimRect(relX, offset, size.getX(), size.getY()));
     }
 
+    // we always keep the height the same, so don't need to worry about `offsetResult.keepContainerSize`.
     return new DimPoint(containerWidth, containerHeight);
   }
 
-  /** Gets the ordered list of vertically grouped elements. Each group is made up of successive elements of the provided list that have a matching vertical alignment. */
-  private List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> getVerticalGroups(List<Tuple2<IElement, DimPoint>> elementSizes) {
-    List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> groups = new ArrayList<>();
+  /** Gets the ordered list of alignment-grouped elements. Each group is made up of successive elements of the provided list that have a matching alignment. */
+  private <TAlignment> List<Tuple2<List<Tuple2<IElement, DimPoint>>, TAlignment>> getAlignmentGroups(List<Tuple2<IElement, DimPoint>> elementSizes, Function<IElement, TAlignment> getAlignment) {
+    List<Tuple2<List<Tuple2<IElement, DimPoint>>, TAlignment>> groups = new ArrayList<>();
 
-    @Nullable VerticalAlignment currentAlignment = null;
+    @Nullable TAlignment currentAlignment = null;
     List<Tuple2<IElement, DimPoint>> currentGroup = new ArrayList<>();
     for (Tuple2<IElement, DimPoint> elementSize : elementSizes) {
-      VerticalAlignment thisAlignment = elementSize._1.getVerticalAlignment();
+      TAlignment thisAlignment = getAlignment.apply(elementSize._1);
       boolean includedInLayout = elementSize._1.getLayoutGroup() == LayoutGroup.ALL;
 
       // new group
@@ -189,53 +191,59 @@ public abstract class ContainerElement extends ElementBase {
     return groups;
   }
 
-  /** Assuming each element is on its own line (BLOCK layout), returns the ordered y-offsets for the elements.
-   * This works best with three (or less) groups, ordered as TOP -> MIDDLE -> BOTTOM. Adding more groups may result in undesired layouts. */
-  private List<Dim> getVerticalOffsetsOfElements(List<Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment>> groups, Dim height) {
-    List<Dim> verticalOffsets = new ArrayList<>();
+  /** Returns the ordered offsets for the elements such that each group is aligned correctly in the available space..
+   * This works best with three (or less) groups, ordered as NEAR SIDE -> CENTRE -> FAR SIDE. Adding more groups may result in undesired layouts.
+   *
+   * `getAlignmentOrder` should return either 1, 2, or 3. */
+  private <TAlignment> OffsetResult getElementOffsets(List<Tuple2<List<Tuple2<IElement, DimPoint>>, TAlignment>> groups, Dim containerSize, Function<DimPoint, Dim> getSize, Function<TAlignment, Integer> getAlignmentOrder) {
+    List<Dim> elementOffsets = new ArrayList<>();
 
     // oof
-    Dim remainingContentHeight = Dim.sum(
+    Dim remainingContentSize = Dim.sum(
         Collections.map(
             groups,
             g -> Dim.sum(
                 Collections.map(
                     Collections.filter(g._1, el -> el._1.getLayoutGroup() == LayoutGroup.ALL),
-                    el -> el._2.getY()
+                    el -> getSize.apply(el._2)
                 )
             )
         )
     );
 
-    Dim currentY = ZERO;
-    for (Tuple2<List<Tuple2<IElement, DimPoint>>, VerticalAlignment> group : groups) {
+    Dim currentPos = ZERO;
+    boolean requiresContainerSize = false;
+    for (Tuple2<List<Tuple2<IElement, DimPoint>>, TAlignment> group : groups) {
       // all elements in the group will be placed directly after one another, and the group itself will be placed according to its alignment
-      VerticalAlignment groupAlignment = group._2;
-      Dim groupHeight = Dim.sum(Collections.map(Collections.filter(group._1, el -> el._1.getLayoutGroup() == LayoutGroup.ALL), el -> el._2.getY()));
+      int alignmentOrder = getAlignmentOrder.apply(group._2);
+      Dim groupSize = Dim.sum(Collections.map(Collections.filter(group._1, el -> el._1.getLayoutGroup() == LayoutGroup.ALL), el -> getSize.apply(el._2)));
 
-      if (groupAlignment == VerticalAlignment.TOP) {
-        currentY = currentY;
-      } else if (groupAlignment == VerticalAlignment.MIDDLE) {
+      if (alignmentOrder == 1) {
+        currentPos = currentPos;
+      } else if (alignmentOrder == 2) {
         // align the group in the middle of the space
-        currentY = currentY.plus(remainingContentHeight.minus(groupHeight).over(2));
-      } else if (groupAlignment == VerticalAlignment.BOTTOM) {
-        // every group hereafter will effectively also be aligned at the bottom
-        currentY = height.minus(remainingContentHeight);
+        currentPos = currentPos.plus(containerSize.minus(groupSize).over(2));
+
+        // if the container size were to change, then the calculated position may no longer be centred. therefore, the final container size should be the same size passed into this method.
+        requiresContainerSize = true;
+      } else if (alignmentOrder == 3) {
+        // every group hereafter will effectively also be aligned at the far side
+        currentPos = containerSize.minus(remainingContentSize);
       } else {
-        throw EnumHelpers.<VerticalAlignment>assertUnreachable(groupAlignment);
+        throw new RuntimeException("Invalid alignment order " + alignmentOrder);
       }
 
       for (Tuple2<IElement, DimPoint> elementSize : group._1) {
-        verticalOffsets.add(currentY);
+        elementOffsets.add(currentPos);
         if (elementSize._1.getLayoutGroup() == LayoutGroup.ALL) {
-          currentY = currentY.plus(elementSize._2.getY());
+          currentPos = currentPos.plus(getSize.apply(elementSize._2));
         }
       }
 
-      remainingContentHeight = remainingContentHeight.minus(groupHeight);
+      remainingContentSize = remainingContentSize.minus(groupSize);
     }
 
-    return verticalOffsets;
+    return new OffsetResult(elementOffsets, requiresContainerSize);
   }
 
   /** Calculates this container size using the INLINE layout model. Uses the sizes provided, or calculates them using the container's settings. */
@@ -257,57 +265,46 @@ public abstract class ContainerElement extends ElementBase {
     // second pass: lay out elements within their lines. similar to the BLOCK layout algorithm
     Dim currentY = ZERO;
     Dim right = ZERO;
+    boolean requiresMaxWidth = false;
     for (List<Tuple2<IElement, DimPoint>> line : lines) {
       List<Tuple2<IElement, DimPoint>> participatingItems = Collections.filter(line, l -> l._1.getLayoutGroup() == LayoutGroup.ALL);
 
       Dim lineHeight = ZERO;
-      Dim lineContentWidth = ZERO;
       if (participatingItems.size() > 0) {
         lineHeight = Dim.max(Collections.map(participatingItems, l -> l._2.getY()));
-        lineContentWidth = Dim.sum(Collections.map(participatingItems, l -> l._2.getX()));
       }
-      Dim freeWidth = maxWidth.minus(lineContentWidth); // horizontal wiggle room
+
+      List<Tuple2<List<Tuple2<IElement, DimPoint>>, HorizontalAlignment>> horizontalGroups = this.getAlignmentGroups(line, IElement::getHorizontalAlignment);
+      OffsetResult offsetResult = this.getElementOffsets(horizontalGroups, maxWidth, DimPoint::getX, algn -> algn == HorizontalAlignment.LEFT ? 1 : algn == HorizontalAlignment.CENTRE ? 2 : 3);
+      List<Dim> elementOffsets = offsetResult.offsets;
+      if (offsetResult.requiresContainerSize) {
+        requiresMaxWidth = true;
+      }
 
       // the line elements' horizontal alignment is prioritised from left to right.
       // so, if the first element is right-aligned, it will "squish over" all other element to the right.
-      Dim currentX = ZERO;
-      for (Tuple2<IElement, DimPoint> elementSize : line) {
-        IElement element = elementSize._1;
-        DimPoint size = elementSize._2;
+      for (Tuple3<IElement, DimPoint, Dim> elementSize : Collections.map(line, (el, i) -> new Tuple3<>(el._1, el._2, elementOffsets.get(i)))) {
+        IElement element = elementSize._1();
+        DimPoint size = elementSize._2();
+        Dim xOffset = elementSize._3();
 
-        // calculate offset from currentX
-        Dim xOffset;
-        if (element.getHorizontalAlignment() == HorizontalAlignment.LEFT) {
-          xOffset = ZERO;
-        } else if (element.getHorizontalAlignment() == HorizontalAlignment.CENTRE) {
-          xOffset = freeWidth.over(2);
-        } else if (element.getHorizontalAlignment() == HorizontalAlignment.RIGHT) {
-          xOffset = freeWidth;
-        } else {
-          throw EnumHelpers.<HorizontalAlignment>assertUnreachable(element.getHorizontalAlignment());
-        }
-        freeWidth = freeWidth.minus(xOffset);
-
-        // calculate offset form currentY
-        Dim yOffset;
+        // calculate offset from currentY
+        Dim yOffsetRel;
         if (element.getVerticalAlignment() == VerticalAlignment.TOP) {
-          yOffset = ZERO;
+          yOffsetRel = ZERO;
         } else if (element.getVerticalAlignment() == VerticalAlignment.MIDDLE) {
-          yOffset = lineHeight.minus(size.getY()).over(2);
+          yOffsetRel = lineHeight.minus(size.getY()).over(2);
         } else if (element.getVerticalAlignment() == VerticalAlignment.BOTTOM) {
-          yOffset = lineHeight.minus(size.getY());
+          yOffsetRel = lineHeight.minus(size.getY());
         } else {
           throw EnumHelpers.<VerticalAlignment>assertUnreachable(element.getVerticalAlignment());
         }
 
-        Dim thisRelX = currentX.plus(xOffset);
-        Dim thisRelY = currentY.plus(yOffset);
         boolean isParticipating = element.getLayoutGroup() == LayoutGroup.ALL;
-        this.childrenRelBoxes.put(element, new DimRect(thisRelX, thisRelY, size.getX(), size.getY()));
+        this.childrenRelBoxes.put(element, new DimRect(xOffset, currentY.plus(yOffsetRel), size.getX(), size.getY()));
 
         if (isParticipating) {
-          currentX = thisRelX.plus(size.getX());
-          right = Dim.max(right, currentX);
+          right = Dim.max(right, xOffset.plus(size.getX()));
         }
       }
 
@@ -315,7 +312,7 @@ public abstract class ContainerElement extends ElementBase {
     }
 
     Dim containerWidth;
-    if (this.getSizingMode() == SizingMode.FILL) {
+    if (this.getSizingMode() == SizingMode.FILL || requiresMaxWidth) {
       containerWidth = maxWidth;
     } else {
       containerWidth = right;
@@ -484,5 +481,17 @@ public abstract class ContainerElement extends ElementBase {
   public enum LayoutMode {
     INLINE, // try to render multiple elements per line. vertical positioning of elements is done according to the total height of the row of elements they are part of
     BLOCK // only one element per line. vertical positioning of elements is done according to the `targetHeight`, if set. Note that `FILL` layout mode does not affect the vertical size.
+  }
+
+  private class OffsetResult {
+    public final List<Dim> offsets;
+
+    /** True if the alignment is only valid if the reported container size is adhered to. */
+    public final boolean requiresContainerSize;
+
+    private OffsetResult(List<Dim> offsets, boolean requiresContainerSize) {
+      this.offsets = offsets;
+      this.requiresContainerSize = requiresContainerSize;
+    }
   }
 }
