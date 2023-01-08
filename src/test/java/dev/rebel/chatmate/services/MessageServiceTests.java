@@ -75,6 +75,7 @@ public class MessageServiceTests {
       userInfo = new PublicChannelInfo() {{
         channelName = " Test channel ! ";
         activeRanks = new PublicUserRank[0];
+        isRegistered = false;
       }};
     }};
 
@@ -91,6 +92,7 @@ public class MessageServiceTests {
       userInfo = new PublicChannelInfo() {{
         channelName = "x";
         activeRanks = new PublicUserRank[0];
+        isRegistered = false;
       }};
     }};
 
