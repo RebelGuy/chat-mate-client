@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations;
 
 import dev.rebel.chatmate.Asset;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUserSearchResults;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.AnchorBoxSizing;
@@ -14,7 +15,6 @@ import dev.rebel.chatmate.gui.chat.Styles;
 import dev.rebel.chatmate.api.models.user.SearchUserRequest;
 import dev.rebel.chatmate.api.models.user.SearchUserResponse.SearchUserResponseData;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.api.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.gui.style.Font;
@@ -53,7 +53,7 @@ public class UserPickerElement extends ContainerElement {
     this.searchUsersDebouncer = new Debouncer(500, () -> context.renderer.runSideEffect(this::onSearchUser));
     this.messageService = messageService;
 
-    this.textInputElement = new TextInputElement(context, this, this.userToString(defaultUser))
+    this.textInputElement = new TextInputElement(context, this, this.userToString(defaultUser, defaultUser.channelInfo.channelName))
         .setPlaceholder("Start typing a name")
         .onTextChange(this::onTextChange);
     this.loadingSpinnerElement = new LoadingSpinnerElement(context, this)
@@ -121,8 +121,8 @@ public class UserPickerElement extends ContainerElement {
     }
   }
 
-  private void onSelection(PublicUser user) {
-    this.textInputElement.setTextUnsafe(user.userInfo.channelName);
+  private void onSelection(PublicUser user, String displayName) {
+    this.textInputElement.setTextUnsafe(displayName);
     this.dropdownMenu.setVisible(false);
     this.onUserSelected.accept(user);
   }
@@ -155,12 +155,12 @@ public class UserPickerElement extends ContainerElement {
           .setVisible(true);
     } else {
       this.dropdownMenu.setVisible(true);
-      for (PublicUserNames userNames : response.results) {
-        boolean hasRanks = userNames.user.activeRanks.length > 0;
+      for (PublicUserSearchResults result : Collections.orderBy(Collections.list(response.results), r -> r.user.levelInfo.level)) {
+        boolean hasRanks = result.user.activeRanks.length > 0;
 
         Font font = Styles.VIEWER_NAME_FONT.create(super.context.dimFactory);
         LabelElement nameElement = new LabelElement(super.context, this)
-            .setText(this.userToString(userNames.user))
+            .setText(this.userToString(result.user, result.matchedChannel.displayName))
             .setOverflow(TextOverflow.SPLIT)
             .setFontScale(0.75f)
             .setFont(font)
@@ -173,7 +173,7 @@ public class UserPickerElement extends ContainerElement {
             .setSizingMode(SizingMode.FILL)
             .cast();
 
-        if (userNames.user.isRegistered) {
+        if (result.user.registeredUser != null) {
             ImageElement verificationBadgeElement = new ImageElement(super.context, this)
                 .setImage(Asset.GUI_VERIFICATION_ICON_WHITE_SMALL)
                 .setColour(font.getColour())
@@ -184,7 +184,7 @@ public class UserPickerElement extends ContainerElement {
         }
 
         LabelElement ranksElement = !hasRanks ? null : new LabelElement(super.context, this)
-            .setText(String.join(", ", Collections.map(Collections.list(userNames.user.activeRanks), r -> toSentenceCase(r.rank.displayNameNoun))))
+            .setText(String.join(", ", Collections.map(Collections.list(result.user.activeRanks), r -> toSentenceCase(r.rank.displayNameNoun))))
             .setOverflow(TextOverflow.SPLIT)
             .setFontScale(0.5f)
             .setColour(Colour.GREY50)
@@ -195,7 +195,7 @@ public class UserPickerElement extends ContainerElement {
         BlockElement menuItemContainer = new BlockElement(super.context, this)
             .addElement(nameContainer)
             .addElement(ranksElement)
-            .setOnClick(() -> this.onSelection(userNames.user))
+            .setOnClick(() -> this.onSelection(result.user, result.matchedChannel.displayName))
             .cast();
         this.dropdownMenu.addOption(new BackgroundElement(super.context, this, menuItemContainer)
             .setCornerRadius(gui(2))
@@ -206,14 +206,14 @@ public class UserPickerElement extends ContainerElement {
     }
   }
 
-  private String userToString(PublicUser user) {
+  private String userToString(PublicUser user, String displayName) {
     if (user == null) {
       return "";
     }
 
     Integer level = user.levelInfo.level;
     IChatComponent levelComponent = styledText(level.toString(), getLevelStyle(level));
-    IChatComponent nameComponent = this.messageService.getUserComponent(user);
+    IChatComponent nameComponent = this.messageService.getUserComponent(user, displayName);
     return joinComponents(" ", Collections.list(levelComponent, nameComponent)).getFormattedText();
   }
 }

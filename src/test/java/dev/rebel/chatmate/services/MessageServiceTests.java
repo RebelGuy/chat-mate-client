@@ -71,11 +71,11 @@ public class MessageServiceTests {
   @Test
   public void getUserComponent_UsesTrimmedName() {
     PublicUser user = new PublicUser() {{
-      id = 1;
-      userInfo = new PublicChannelInfo() {{
+      primaryUserId = 1;
+      channelInfo = new PublicChannelInfo() {{
         channelName = " Test channel ! ";
         activeRanks = new PublicUserRank[0];
-        isRegistered = false;
+        registeredUser = null;
       }};
     }};
 
@@ -88,11 +88,11 @@ public class MessageServiceTests {
   public void getUserComponent_UnrenderableName_ReplacesWithPlaceholder() {
     when(this.fontEngine.getStringWidth("x")).thenReturn(0);
     PublicUser user = new PublicUser() {{
-      id = 5;
-      userInfo = new PublicChannelInfo() {{
+      primaryUserId = 5;
+      channelInfo = new PublicChannelInfo() {{
         channelName = "x";
         activeRanks = new PublicUserRank[0];
-        isRegistered = false;
+        registeredUser = null;
       }};
     }};
 

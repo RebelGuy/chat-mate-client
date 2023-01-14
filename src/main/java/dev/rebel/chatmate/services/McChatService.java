@@ -10,7 +10,7 @@ import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart.MessagePartType;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicRankedUser;
-import dev.rebel.chatmate.api.publicObjects.user.PublicUserNames;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUserSearchResults;
 import dev.rebel.chatmate.events.ChatMateChatService;
 import dev.rebel.chatmate.events.ChatMateEventService;
 import dev.rebel.chatmate.events.MinecraftChatEventService;
@@ -85,7 +85,7 @@ public class McChatService {
   public void printStreamChatItem(PublicChatItem item) {
     PublicUserRank[] activePunishments = item.author.getActivePunishments();
     if (activePunishments.length > 0) {
-      String name = item.author.userInfo.channelName;
+      String name = item.author.channelInfo.channelName;
       String punishments = String.join(",", Collections.map(Collections.list(activePunishments), p -> p.rank.name.toString()));
       this.logService.logDebug(this, String.format("Ignoring chat message from user '%s' because of the following active punishments: %s", name, punishments));
       return;
@@ -168,14 +168,14 @@ public class McChatService {
     pagination.render();
   }
 
-  public void printUserList(PublicUserNames[] users) {
+  public void printUserList(PublicUserSearchResults[] users) {
     if (users.length == 0) {
       this.minecraftProxyService.printChatMessage("UserList", this.messageService.getInfoMessage("No items to show."));
       return;
     }
 
     UserNameRenderer renderer = new UserNameRenderer(this.messageService);
-    ChatPagination<PublicUserNames> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, users, 10, "Search Results");
+    ChatPagination<PublicUserSearchResults> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, users, 10, "Search Results");
     pagination.render();
   }
 

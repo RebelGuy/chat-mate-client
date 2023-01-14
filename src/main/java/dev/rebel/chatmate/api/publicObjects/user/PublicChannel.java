@@ -3,14 +3,13 @@ package dev.rebel.chatmate.api.publicObjects.user;
 import com.google.gson.annotations.SerializedName;
 import dev.rebel.chatmate.api.publicObjects.PublicObject;
 
-public class PublicChannelInfo extends PublicObject {
+public class PublicChannel extends PublicObject {
   @Override
   public Integer GetExpectedSchema() { return 1; }
 
-  public Integer defaultUserId;
-  public String externalIdOrUserName;
+  public Integer channelId;
   public Platform platform;
-  public String channelName;
+  public String displayName;
 
   public enum Platform {
     @SerializedName("youtube") Youtube,

@@ -14,7 +14,6 @@ import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.api.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.util.ChatHelpers.ClickEventWithCallback;
 import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.TextHelpers;
@@ -31,6 +30,7 @@ import java.util.stream.IntStream;
 
 import static dev.rebel.chatmate.gui.chat.Styles.*;
 import static dev.rebel.chatmate.util.ChatHelpers.*;
+import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class MessageService {
   private static final IChatComponent INFO_PREFIX = styledText("ChatMate>", INFO_MSG_PREFIX_STYLE);
@@ -132,7 +132,7 @@ public class MessageService {
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
-    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, this.dimFactory), entry.user.userInfo.channelName, true, !deEmphasise, false)));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, this.dimFactory), entry.user.channelInfo.channelName, true, !deEmphasise, false)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
@@ -270,12 +270,16 @@ public class MessageService {
         "Level " + (newLevel + 1) + " is within reach!",
         "Congratulations!",
         styledText("Say 123 if you respect ", INFO_MSG_STYLE).appendSibling(this.getUserComponent(user)).appendSibling(styledText(".", INFO_MSG_STYLE)),
-        styledText("Subscribe to ", INFO_MSG_STYLE).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.userInfo.channelName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE))
+        styledText("Subscribe to ", INFO_MSG_STYLE).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.channelInfo.channelName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE))
       );
   }
 
   public IChatComponent getUserComponent(PublicUser user) {
-    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), user.userInfo.channelName, true, true, false);
+    return this.getUserComponent(user, null);
+  }
+
+  public IChatComponent getUserComponent(PublicUser user, @Nullable String displayName) {
+    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), firstOrNull(displayName, user.channelInfo.channelName), true, true, false);
   }
 
   public IChatComponent getUserComponent(PublicUser user, Font font, String displayName, boolean showPunishmentPrefix, boolean useEffects, boolean hideVerificationBadge) {
@@ -284,7 +288,7 @@ public class MessageService {
 
     // make sure we don't try to print an empty user name
     if (this.fontEngine.getStringWidth(unstyledName) == 0) {
-      unstyledName = "User " + user.id;
+      unstyledName = "User " + user.primaryUserId;
     }
 
     if (showPunishmentPrefix) {
@@ -304,8 +308,8 @@ public class MessageService {
       }
     }
 
-    boolean showVerificationBadge = !hideVerificationBadge && user.isRegistered;
-    return new ContainerChatComponent(new UserNameChatComponent(this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer, user.id, font, unstyledName, useEffects, showVerificationBadge), user);
+    boolean showVerificationBadge = !hideVerificationBadge && user.registeredUser != null;
+    return new ContainerChatComponent(new UserNameChatComponent(this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer, user.primaryUserId, font, unstyledName, useEffects, showVerificationBadge), user);
   }
 
   public IChatComponent getRankComponent(List<PublicRank> activeRanks) {

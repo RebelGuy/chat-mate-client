@@ -163,7 +163,7 @@ public class ContextMenuService {
   }
 
   private void onRevealOnLeaderboard(PublicUser user) {
-    this.experienceEndpointProxy.getRankAsync(user.id, res -> this.mcChatService.printLeaderboard(res.rankedUsers, res.relevantIndex), this.mcChatService::printError);
+    this.experienceEndpointProxy.getRankAsync(user.primaryUserId, res -> this.mcChatService.printLeaderboard(res.rankedUsers, res.relevantIndex), this.mcChatService::printError);
   }
 
   private void onModifyExperience(PublicUser user) {

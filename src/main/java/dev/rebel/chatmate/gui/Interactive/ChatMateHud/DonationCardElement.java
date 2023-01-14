@@ -56,8 +56,8 @@ public class DonationCardElement extends ContainerElement {
     );
 
     Font titleFont = new Font().withBold(true);
-    String titleName = this.donation.linkedUser != null ? this.donation.linkedUser.userInfo.channelName : this.donation.name;
-    boolean showVerificationBadge = this.donation.linkedUser != null && this.donation.linkedUser.isRegistered;
+    String titleName = this.donation.linkedUser != null ? this.donation.linkedUser.channelInfo.channelName : this.donation.name;
+    boolean showVerificationBadge = this.donation.linkedUser != null && this.donation.linkedUser.registeredUser != null;
     String titleRemaining = String.format("has donated %s!", this.donation.formattedAmount);
 
     List<IPart> titleParts = Collections.list(new TextPart(titleName, titleFont));

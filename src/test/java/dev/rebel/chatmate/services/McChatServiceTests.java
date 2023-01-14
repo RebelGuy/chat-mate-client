@@ -68,7 +68,7 @@ public class McChatServiceTests {
 
     when(this.mockMessageService.getUserComponent(ArgumentMatchers.any())).thenAnswer(i -> {
       PublicUser user = i.getArgument(0);
-      return new ContainerChatComponent(new ChatComponentText(user.userInfo.channelName), user);
+      return new ContainerChatComponent(new ChatComponentText(user.channelInfo.channelName), user);
     });
 
     // this is for the ViewerTagComponent
@@ -186,7 +186,7 @@ public class McChatServiceTests {
   }
 
   private static String getExpectedChatText(PublicUser author, String text) {
-    return author.levelInfo.level + " VIEWER " + author.userInfo.channelName + " " + text;
+    return author.levelInfo.level + " VIEWER " + author.channelInfo.channelName + " " + text;
   }
 
   private McChatService setupService() {
@@ -221,7 +221,7 @@ public class McChatServiceTests {
 
   public static PublicUser createAuthor(String authorName) {
     return new PublicUser() {{
-      userInfo = new PublicChannelInfo() {{ channelName = authorName; }};
+      channelInfo = new PublicChannelInfo() {{ channelName = authorName; }};
       levelInfo = new PublicLevelInfo() {{ level = 0; levelProgress = 0.0f; }};
       activeRanks = new PublicUserRank[0];
     }};

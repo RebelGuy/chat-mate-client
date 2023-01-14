@@ -143,7 +143,7 @@ public class ManageRanksModal extends ModalElement {
           .setMargin(new RectExtension(ZERO, gui(6)))
           .cast();
 
-      this.endpointAdapter.getRanks(this.user.id, this::onRanksLoaded, this::onRanksLoadError);
+      this.endpointAdapter.getRanks(this.user.primaryUserId, this::onRanksLoaded, this::onRanksLoadError);
     }
 
     @Override
@@ -474,7 +474,7 @@ public class ManageRanksModal extends ModalElement {
     }
 
     private void onRevokeRank(Runnable onSuccess, Consumer<String> onError) {
-      int userId = this.user.id;
+      int userId = this.user.primaryUserId;
       @Nullable String message = this.revokeRankTextInputElement.getText();
       this.endpointAdapter.revokeRank(userId, this.underlyingRank.name, message, result -> this.onRankUpdated(result, onSuccess), e -> this.onRevokeRankFailed(e, onError));
     }
@@ -677,7 +677,7 @@ public class ManageRanksModal extends ModalElement {
     private void onCreateRank(Runnable onSuccess, Consumer<String> onError) {
       // always valid, since the submit button is disabled if it's invalid
       @Nullable Integer durationSeconds = this.createAdapter.allowExpiration(this.rank.name) ? this.getTotalSeconds() : null;
-      int userId = this.user.id;
+      int userId = this.user.primaryUserId;
       @Nullable String message = this.createMessageInputElement.getText();
       this.endpointAdapter.createRank(userId, this.rank.name, message, durationSeconds, r -> this.onRankCreated(r, onSuccess), e -> this.onCreateRankFailed(e, onError));
     }

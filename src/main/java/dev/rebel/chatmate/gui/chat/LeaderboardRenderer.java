@@ -28,7 +28,7 @@ public class LeaderboardRenderer extends PaginationRenderer<PublicRankedUser> {
   public IChatComponent renderItem(PublicRankedUser item, PublicRankedUser[] allItemsOnPage, FontEngine fontEngine, Dim chatWidth, Dim effectiveChatWidth) {
     int rankDigits = String.valueOf(allItemsOnPage[allItemsOnPage.length - 1].rank).length();
     int levelDigits = String.valueOf(allItemsOnPage[0].user.levelInfo.level + 1).length();
-    List<Dim> allNameWidths = Arrays.stream(allItemsOnPage).map(entry -> fontEngine.getStringWidthDim(entry.user.userInfo.channelName)).collect(Collectors.toList());
+    List<Dim> allNameWidths = Arrays.stream(allItemsOnPage).map(entry -> fontEngine.getStringWidthDim(entry.user.channelInfo.channelName)).collect(Collectors.toList());
     Dim nameWidth = Dim.min(chatWidth.minus(this.dimFactory.fromGui(5)).over(3), Dim.max(allNameWidths));
 
     boolean anyHighlighting = highlightUser != null;

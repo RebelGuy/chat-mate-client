@@ -483,7 +483,7 @@ public abstract class ContainerElement extends ElementBase {
     BLOCK // only one element per line. vertical positioning of elements is done according to the `targetHeight`, if set. Note that `FILL` layout mode does not affect the vertical size.
   }
 
-  private class OffsetResult {
+  private static class OffsetResult {
     public final List<Dim> offsets;
 
     /** True if the alignment is only valid if the reported container size is adhered to. */
