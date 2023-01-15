@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.*;
@@ -142,28 +143,40 @@ public class MessageService {
     return new PrecisionChatComponent(list);
   }
 
-  public IChatComponent getChannelNamesMessage(Dim messageWidth, PublicUser user, String displayName, ChatPlatform channelPlatform, boolean addExtraIndentation) {
-    Dim left = this.dimFactory.fromGui(addExtraIndentation ? 8 : 4);
+  public IChatComponent getChannelSearchResultMessage(Dim messageWidth, PublicUser user, @Nullable PublicChannel channel, boolean deEmphasise) {
+    // if there is no registered user, we know that this is the only channel attached to the user and thus we are returning the main message including all details
+    boolean isMainMessage = channel == null || user.registeredUser == null;
+    String displayName = channel == null ? user.registeredUser.displayName : channel.displayName;
+    Dim left = this.dimFactory.fromGui(4);
 
-    // since different users may share the same channel name, it is helpful to also show each user's current level
-    String level = String.valueOf(user.levelInfo.level);
+    List<Tuple2<PrecisionLayout, IChatComponent>> layouts = new ArrayList<>();
+
+    // level - only for the primary user
     Dim levelNumberWidth = this.fontEngine.getStringWidthDim("444");
-    PrecisionLayout levelLayout = new PrecisionLayout(left, levelNumberWidth, PrecisionAlignment.RIGHT);
+    if (isMainMessage) {
+      String level = String.valueOf(user.levelInfo.level);
+      PrecisionLayout levelLayout = new PrecisionLayout(left, levelNumberWidth, PrecisionAlignment.RIGHT);
+      layouts.add(new Tuple2<>(levelLayout, styledText(level, getLevelStyle(user.levelInfo.level))));
+    }
+    left = left.plus(levelNumberWidth);
 
-    PlatformViewerTagComponent platform = new PlatformViewerTagComponent(this.dimFactory, channelPlatform);
-    ImageChatComponent imageChatComponent = (ImageChatComponent)platform.getComponent();
-    Dim platformWidth = imageChatComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT_DIM);
-    PrecisionLayout platformLayout = new PrecisionLayout(left.plus(levelNumberWidth), platformWidth, PrecisionAlignment.LEFT);
+    // platform - only for channels
+    if (channel != null) {
+      PlatformViewerTagComponent platform = new PlatformViewerTagComponent(this.dimFactory, channel.platform == PublicChannel.Platform.Youtube ? ChatPlatform.Youtube : ChatPlatform.Twitch);
+      ImageChatComponent imageChatComponent = (ImageChatComponent) platform.getComponent();
+      Dim platformWidth = imageChatComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT_DIM);
+      PrecisionLayout platformLayout = new PrecisionLayout(left, platformWidth, PrecisionAlignment.LEFT);
+      left = left.plus(platformWidth);
+      layouts.add(new Tuple2<>(platformLayout, platform));
+    }
 
-    PrecisionLayout nameLayout = new PrecisionLayout(left.plus(levelNumberWidth).plus(platformWidth).plus(left), messageWidth, PrecisionAlignment.LEFT);
-    Font font = Font.fromChatStyle(VIEWER_NAME_STYLE, this.dimFactory);
-    IChatComponent component = this.getUserComponent(user, font, displayName, true, true, false);
+    // name
+    PrecisionLayout nameLayout = new PrecisionLayout(left.plus(this.dimFactory.fromGui(4)), messageWidth, PrecisionAlignment.LEFT);
+    Font font = Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, this.dimFactory);
+    IChatComponent component = this.getUserComponent(user, font, displayName, true, true, !isMainMessage);
+    layouts.add(new Tuple2<>(nameLayout, component));
 
-    List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
-    list.add(new Tuple2<>(levelLayout, styledText(level, getLevelStyle(user.levelInfo.level))));
-    list.add(new Tuple2<>(platformLayout, platform));
-    list.add(new Tuple2<>(nameLayout, component));
-    return new PrecisionChatComponent(list);
+    return new PrecisionChatComponent(layouts);
   }
 
   public IChatComponent getPaginationFooterMessage(Dim messageWidth, int currentPage, int maxPage, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {

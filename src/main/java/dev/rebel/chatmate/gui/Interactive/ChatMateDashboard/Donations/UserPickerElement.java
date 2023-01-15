@@ -53,7 +53,7 @@ public class UserPickerElement extends ContainerElement {
     this.searchUsersDebouncer = new Debouncer(500, () -> context.renderer.runSideEffect(this::onSearchUser));
     this.messageService = messageService;
 
-    this.textInputElement = new TextInputElement(context, this, this.userToString(defaultUser, defaultUser.channelInfo.channelName))
+    this.textInputElement = new TextInputElement(context, this, this.userToString(defaultUser, null))
         .setPlaceholder("Start typing a name")
         .onTextChange(this::onTextChange);
     this.loadingSpinnerElement = new LoadingSpinnerElement(context, this)
@@ -155,7 +155,7 @@ public class UserPickerElement extends ContainerElement {
           .setVisible(true);
     } else {
       this.dropdownMenu.setVisible(true);
-      for (PublicUserSearchResults result : Collections.orderBy(Collections.list(response.results), r -> r.user.levelInfo.level)) {
+      for (PublicUserSearchResults result : Collections.reverse(Collections.orderBy(Collections.list(response.results), r -> r.user.levelInfo.level + r.user.levelInfo.levelProgress))) {
         boolean hasRanks = result.user.activeRanks.length > 0;
 
         Font font = Styles.VIEWER_NAME_FONT.create(super.context.dimFactory);
@@ -206,7 +206,7 @@ public class UserPickerElement extends ContainerElement {
     }
   }
 
-  private String userToString(PublicUser user, String displayName) {
+  private String userToString(PublicUser user, @Nullable String displayName) {
     if (user == null) {
       return "";
     }

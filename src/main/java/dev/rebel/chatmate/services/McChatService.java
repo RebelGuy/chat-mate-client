@@ -1,8 +1,10 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.*;
+import dev.rebel.chatmate.gui.chat.UserSearchResultRowRenderer.AggregatedUserSearchResult;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
@@ -25,6 +27,7 @@ import net.minecraft.util.*;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static dev.rebel.chatmate.gui.chat.Styles.*;
 import static dev.rebel.chatmate.api.proxy.EndpointProxy.getApiErrorMessage;
@@ -163,19 +166,19 @@ public class McChatService {
     }
 
     PublicRankedUser highlightUser = highlightIndex == null ? null : users[highlightIndex];
-    LeaderboardRenderer renderer = new LeaderboardRenderer(this.dimFactory, this.messageService, highlightUser);
-    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, users, 10, "Experience Leaderboard");
+    LeaderboardRowRenderer renderer = new LeaderboardRowRenderer(this.dimFactory, this.messageService, highlightUser);
+    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, Collections.list(users), 10, "Experience Leaderboard");
     pagination.render();
   }
 
-  public void printUserList(PublicUserSearchResults[] users) {
-    if (users.length == 0) {
+  public void printUserSearchResults(List<AggregatedUserSearchResult> results) {
+    if (results.size() == 0) {
       this.minecraftProxyService.printChatMessage("UserList", this.messageService.getInfoMessage("No items to show."));
       return;
     }
 
-    UserNameRenderer renderer = new UserNameRenderer(this.messageService);
-    ChatPagination<PublicUserSearchResults> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, users, 10, "Search Results");
+    UserSearchResultRowRenderer renderer = new UserSearchResultRowRenderer(this.messageService);
+    ChatPagination<AggregatedUserSearchResult> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, results, 10, "Search Results");
     pagination.render();
   }
 
