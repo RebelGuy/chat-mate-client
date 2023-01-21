@@ -8,6 +8,7 @@ public class PublicChannel extends PublicObject {
   public Integer GetExpectedSchema() { return 1; }
 
   public Integer channelId;
+  public Integer defaultUserId;
   public Platform platform;
   public String displayName;
 
