@@ -16,17 +16,19 @@ public class ImageChatComponent extends ChatComponentBase {
   private @Nullable Texture texture;
   private Colour colour;
   private final Supplier<Texture> textureSupplier;
+  private final boolean greyScale;
 
-  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight) {
-    this(textureSupplier, paddingGuiLeft, paddingGuiRight, null);
+  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale) {
+    this(textureSupplier, paddingGuiLeft, paddingGuiRight, greyScale, null);
   }
 
-  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight, @Nullable Dim maxHeight) {
+  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale, @Nullable Dim maxHeight) {
     super();
     this.textureSupplier = textureSupplier;
     this.paddingGuiLeft = paddingGuiLeft;
     this.paddingGuiRight = paddingGuiRight;
     this.maxHeight = maxHeight;
+    this.greyScale = greyScale;
     this.colour = new Colour(1.0f, 1.0f, 1.0f);
   }
 
@@ -69,6 +71,10 @@ public class ImageChatComponent extends ChatComponentBase {
 
   public Colour getColour() {
     return this.colour;
+  }
+
+  public boolean getGreyScale() {
+    return this.greyScale;
   }
 
   @Override

@@ -16,6 +16,7 @@ import java.util.Objects;
 public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
   public boolean soundEnabled;
   public int chatVerticalDisplacement;
+  public final String commandMessageChatVisibility;
   public boolean hudEnabled;
   public boolean showServerLogsHeartbeat;
   public boolean showServerLogsTimeSeries;
@@ -30,6 +31,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
 
   public SerialisedConfigV6(boolean soundEnabled,
                             int chatVerticalDisplacement,
+                            String commandMessageChatVisibility,
                             boolean hudEnabled,
                             boolean showServerLogsHeartbeat,
                             boolean showServerLogsTimeSeries,
@@ -43,6 +45,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
                             SerialisedLoginInfo loginInfo) {
     this.soundEnabled = soundEnabled;
     this.chatVerticalDisplacement = chatVerticalDisplacement;
+    this.commandMessageChatVisibility = commandMessageChatVisibility;
     this.hudEnabled = hudEnabled;
     this.showServerLogsHeartbeat = showServerLogsHeartbeat;
     this.showServerLogsTimeSeries = showServerLogsTimeSeries;

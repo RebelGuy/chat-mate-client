@@ -34,7 +34,7 @@ import static dev.rebel.chatmate.util.ChatHelpers.*;
 import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class MessageService {
-  private static final IChatComponent INFO_PREFIX = styledText("ChatMate>", INFO_MSG_PREFIX_STYLE);
+  private static final IChatComponent INFO_PREFIX = styledText("ChatMate>", INFO_MSG_PREFIX_STYLE.get());
 
   private final Random random = new Random();
   private final LogService logService;
@@ -56,23 +56,23 @@ public class MessageService {
   public IChatComponent getErrorMessage(String msg) {
     List<IChatComponent> list = new ArrayList<>();
     list.add(INFO_PREFIX);
-    list.add(styledText(msg, ERROR_MSG_STYLE));
+    list.add(styledText(msg, ERROR_MSG_STYLE.get()));
     return joinComponents(" ", list);
   }
 
   public IChatComponent getInfoMessage(String msg) {
     List<IChatComponent> list = new ArrayList<>();
     list.add(INFO_PREFIX);
-    list.add(styledText(msg, INFO_MSG_STYLE));
+    list.add(styledText(msg, INFO_MSG_STYLE.get()));
     return joinComponents(" ", list);
   }
 
   public IChatComponent getSmallLevelUpMessage(PublicUser user, int newLevel) {
     List<IChatComponent> list = new ArrayList<>();
     list.add(INFO_PREFIX);
-    list.add(styledText(" ", INFO_MSG_STYLE));
+    list.add(styledText(" ", INFO_MSG_STYLE.get()));
     list.add(this.getUserComponent(user));
-    list.add(styledText(" has just reached level " + newLevel + "!", INFO_MSG_STYLE));
+    list.add(styledText(" has just reached level " + newLevel + "!", INFO_MSG_STYLE.get()));
     return joinComponents("", list);
   }
 
@@ -132,14 +132,14 @@ public class MessageService {
     String levelEnd = String.valueOf(entry.user.levelInfo.level + 1);
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
-    list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE : GOOD_MSG_STYLE)));
-    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, this.dimFactory), entry.user.channelInfo.channelName, true, !deEmphasise, false)));
-    list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level))));
-    list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE)));
-    list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE)));
-    list.add(new Tuple2<>(emptyBarLayout, styledText(emptyBar, INFO_MSG_STYLE)));
-    list.add(new Tuple2<>(barEndLayout, styledText(barEnd, INFO_MSG_STYLE)));
-    list.add(new Tuple2<>(levelEndLayout, styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE : getLevelStyle(entry.user.levelInfo.level + 1))));
+    list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE.get() : GOOD_MSG_STYLE.get())));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory), entry.user.channelInfo.channelName, true, !deEmphasise, false)));
+    list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE.get() : getLevelStyle(entry.user.levelInfo.level))));
+    list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE.get())));
+    list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE.get())));
+    list.add(new Tuple2<>(emptyBarLayout, styledText(emptyBar, INFO_MSG_STYLE.get())));
+    list.add(new Tuple2<>(barEndLayout, styledText(barEnd, INFO_MSG_STYLE.get())));
+    list.add(new Tuple2<>(levelEndLayout, styledText(levelEnd, deEmphasise ? INFO_MSG_STYLE.get() : getLevelStyle(entry.user.levelInfo.level + 1))));
     return new PrecisionChatComponent(list);
   }
 
@@ -172,7 +172,7 @@ public class MessageService {
 
     // name
     PrecisionLayout nameLayout = new PrecisionLayout(left.plus(this.dimFactory.fromGui(4)), messageWidth, PrecisionAlignment.LEFT);
-    Font font = Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE : VIEWER_NAME_STYLE, this.dimFactory);
+    Font font = Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory);
     IChatComponent component = this.getUserComponent(user, font, displayName, true, true, !isMainMessage);
     layouts.add(new Tuple2<>(nameLayout, component));
 
@@ -181,7 +181,7 @@ public class MessageService {
 
   public IChatComponent getPaginationFooterMessage(Dim messageWidth, int currentPage, int maxPage, @Nullable Runnable onPrevPage, @Nullable Runnable onNextPage) {
     if (onPrevPage == null && onNextPage == null) {
-      IChatComponent footer = styledText(stringWithWidthDim(this.fontEngine, "", "", '-', messageWidth), INFO_MSG_STYLE);
+      IChatComponent footer = styledText(stringWithWidthDim(this.fontEngine, "", "", '-', messageWidth), INFO_MSG_STYLE.get());
       PrecisionLayout footerLayout = new PrecisionLayout(this.dimFactory.zeroGui(), messageWidth, PrecisionAlignment.CENTRE);
       return new PrecisionChatComponent(Arrays.asList(new Tuple2<>(footerLayout, footer)));
     }
@@ -231,7 +231,7 @@ public class MessageService {
     ClickEventWithCallback onNextClick = new ClickEventWithCallback(this.logService, onNextPage, true);
 
     ChatComponentText prevComponent = styledText(prevPageMsg, onPrevClick.bind(onPrevPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get()));
-    ChatComponentText interiorComponent = styledText(interior, INFO_MSG_STYLE);
+    ChatComponentText interiorComponent = styledText(interior, INFO_MSG_STYLE.get());
     ChatComponentText nextComponent = styledText(nextPageMsg, onNextClick.bind(onNextPage == null ? INTERACTIVE_STYLE_DISABLED.get() : INTERACTIVE_STYLE.get()));
     return new PrecisionChatComponent(Arrays.asList(
         new Tuple2<>(prevPageLayout, prevComponent),
@@ -243,13 +243,13 @@ public class MessageService {
   public IChatComponent getNewFollowerMessage(String displayName) {
     List<IChatComponent> list = new ArrayList<>();
     list.add(INFO_PREFIX);
-    list.add(styledText(displayName, VIEWER_NAME_STYLE));
-    list.add(styledText("has just followed on Twitch!", INFO_MSG_STYLE));
+    list.add(styledText(displayName, VIEWER_NAME_STYLE.get()));
+    list.add(styledText("has just followed on Twitch!", INFO_MSG_STYLE.get()));
     return joinComponents(" ", list);
   }
 
   private IChatComponent getLargeLevelUpIntro(PublicUser user, int newLevel) {
-    return pickRandom(INFO_MSG_STYLE,
+    return pickRandom(INFO_MSG_STYLE.get(),
         "My little rebels... I have news for you.",
         "You won't believe what just happened.",
         "Unbelievable!",
@@ -263,14 +263,14 @@ public class MessageService {
   private IChatComponent getLargeLevelUpBody(PublicUser user, int newLevel) {
     List<IChatComponent> list = new ArrayList<>();
     list.add(this.getUserComponent(user));
-    list.add(styledText(" has reached level ", INFO_MSG_STYLE));
+    list.add(styledText(" has reached level ", INFO_MSG_STYLE.get()));
     list.add(styledText(String.valueOf(newLevel), getLevelStyle(newLevel)));
-    list.add(styledText("!", INFO_MSG_STYLE));
+    list.add(styledText("!", INFO_MSG_STYLE.get()));
     return joinComponents("", list);
   }
 
   private IChatComponent getLargeLevelUpOutro(PublicUser user, int newLevel) {
-    return pickRandom(INFO_MSG_STYLE,
+    return pickRandom(INFO_MSG_STYLE.get(),
         "Let's celebrate this incredible achievement!",
         "No one would believe it if it wasn't livestreamed!",
         "We respect you.",
@@ -282,8 +282,8 @@ public class MessageService {
         "Level 100 is within reach!",
         "Level " + (newLevel + 1) + " is within reach!",
         "Congratulations!",
-        styledText("Say 123 if you respect ", INFO_MSG_STYLE).appendSibling(this.getUserComponent(user)).appendSibling(styledText(".", INFO_MSG_STYLE)),
-        styledText("Subscribe to ", INFO_MSG_STYLE).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.channelInfo.channelName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE))
+        styledText("Say 123 if you respect ", INFO_MSG_STYLE.get()).appendSibling(this.getUserComponent(user)).appendSibling(styledText(".", INFO_MSG_STYLE.get())),
+        styledText("Subscribe to ", INFO_MSG_STYLE.get()).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.channelInfo.channelName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE.get()))
       );
   }
 
@@ -291,6 +291,7 @@ public class MessageService {
     return this.getUserComponent(user, null);
   }
 
+  /** Uses the default channel name if no display name is provided. */
   public IChatComponent getUserComponent(PublicUser user, @Nullable String displayName) {
     return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), firstOrNull(displayName, user.channelInfo.channelName), true, true, false);
   }
@@ -338,7 +339,7 @@ public class MessageService {
     );
     @Nullable PublicRank matchingRank = dev.rebel.chatmate.util.Collections.first(activeRanks, r -> r.name == rankToShow);
     String rankText = matchingRank == null ? "VIEWER" : matchingRank.displayNameNoun.toUpperCase();
-    return styledText(rankText, VIEWER_RANK_STYLE);
+    return styledText(rankText, VIEWER_RANK_STYLE.get());
   }
 
   /** Ensures the component can be displayed in chat, otherwise replaces it with the provided message. */
@@ -355,7 +356,7 @@ public class MessageService {
 
     String text = sb.toString().trim();
     if (this.fontEngine.getStringWidth(text) == 0) {
-      return styledText(msgIfEmpty, INFO_SUBTLE_MSG_STYLE);
+      return styledText(msgIfEmpty, INFO_SUBTLE_MSG_STYLE.get());
     } else {
       return component;
     }

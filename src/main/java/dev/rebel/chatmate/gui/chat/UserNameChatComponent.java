@@ -61,7 +61,7 @@ public class UserNameChatComponent extends ChatComponentBase {
     this.tOffset = userId * 22 / 7.0;
     this.lastT = 0;
     this.particles = new ArrayList<>();
-    this.verificationBadgeComponent = showVerificationBadge ? new ImageChatComponent(() -> Asset.GUI_VERIFICATION_ICON_WHITE_SMALL, dimFactory.fromGui(0), dimFactory.fromGui(0), this.fontEngine.FONT_HEIGHT_DIM.times(0.5f)) : null;
+    this.verificationBadgeComponent = showVerificationBadge ? new ImageChatComponent(() -> Asset.GUI_VERIFICATION_ICON_WHITE_SMALL, dimFactory.fromGui(0), dimFactory.fromGui(0), false, this.fontEngine.FONT_HEIGHT_DIM.times(0.5f)) : null;
   }
 
   public void setDisplayName(String formattedName) {

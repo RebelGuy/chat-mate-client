@@ -62,6 +62,15 @@ public class ChatComponentRenderer extends Gui {
       float scaleX = aspectRatio * scaleY;
       Colour colour = imageComponent.getColour();
 
+      // works alright i guess...
+      // todo: figure out how shaders work and write a shader that does this properly
+      // see https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter04/chapter4.html for more help on shaders
+      // and https://gist.github.com/Volcanoscar/4a9500d240497d3c0228f663593d167a for an example of a greyscale shader
+      boolean greyScale = imageComponent.getGreyScale();
+      if (greyScale) {
+        colour = Colour.GREY33;
+      }
+
       GlStateManager.pushMatrix();
       GlStateManager.scale(scaleX, scaleY, 1);
       GlStateManager.enableBlend();
