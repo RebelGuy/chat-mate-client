@@ -217,7 +217,7 @@ public class ChatPagination<T> {
   }
 
   // todo: if performance ever becomes a problem (rendering the last page requires all other pages to be calculated),
-  //  we could pre-load or cache the content on each page
+  // we could pre-load or cache the content on each page
   private List<PartiallyVisibleItem<T>> getVisibleItems() {
     int from = this.getVisibleStartIndex();
     int to = this.getVisibleEndIndex();

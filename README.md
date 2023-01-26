@@ -69,6 +69,14 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.22 - The Link Update [26/1/2023]
+- Added verification badges to users that are linked with a registered account
+- Command messages can be hidden, greyed out, or shown as normal messages
+- Chat pagination now allows multiple rows per item
+- Improvements to the Interactive GUI System
+  - Any element can now easily listen for onClick events
+  - Generalisation of vertical/horizontal layout of elements in a Container
+
 ## v1.21 - The Auth Update [20/11/2022]
 - Added the ability to log in/out. It is assumed that the logged-in user is also a Streamer
   - Login info is stored in the Config file, and ChatMate attempts to automatically log the user in at startup

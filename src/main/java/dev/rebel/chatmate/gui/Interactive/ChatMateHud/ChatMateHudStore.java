@@ -259,14 +259,16 @@ public class ChatMateHudStore {
     public String getTooltip() {
       return null;
     }
+
     @Override
     public IElement setTooltip(@Nullable String text) {
       return null;
     }
 
     @Override
-    public IElement setOnClick(@Nullable Runnable onClick) { return null; }
-
+    public IElement setOnClick(@Nullable Runnable onClick) {
+      return null;
+    }
 
     @Override
     public IElement setName(String name) {
