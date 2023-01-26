@@ -158,8 +158,8 @@ public class UserVariablesListElement extends BlockElement {
           .withLabelUpdated(label -> label
               .setFontScale(0.75f)
               .setPadding(new RectExtension(ZERO))
-          ).setOnClick(() -> onRemoveUserVariable.accept(this.userVariable))
-          .setEnabled(this, index > 0)
+          ).setEnabled(this, index > 0)
+          .setOnClick(() -> onRemoveUserVariable.accept(this.userVariable))
           .setBorder(new RectExtension(gui(0)))
           .setPadding(new RectExtension(gui(0)))
           .setMargin(RectExtension.fromTop(gui(1)))

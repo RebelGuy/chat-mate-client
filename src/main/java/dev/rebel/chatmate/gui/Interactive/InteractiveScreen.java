@@ -736,6 +736,9 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public IElement setTooltip(@Nullable String text) { return null; }
 
   @Override
+  public IElement setOnClick(@Nullable Runnable onClick) { return null; }
+
+  @Override
   public IElement setName(String name) { return null; }
 
   @Override

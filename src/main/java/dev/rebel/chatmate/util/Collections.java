@@ -119,6 +119,16 @@ public class Collections {
     return result;
   }
 
+  public static <T, R> List<R> flatMap(List<T> items, Function<T, Iterable<R>> mapper) {
+    ArrayList<R> result = new ArrayList<>();
+    for (T item : items) {
+      for (R inner : mapper.apply(item)) {
+        result.add(inner);
+      }
+    }
+    return result;
+  }
+
   public static <T> List<T> filter(List<T> list, Predicate<T> filter) {
     if (list == null) {
       return new ArrayList<>();

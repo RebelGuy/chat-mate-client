@@ -202,8 +202,8 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         IconButtonElement confirmIconButton = new IconButtonElement(super.context, this)
             .setImage(Asset.GUI_TICK_ICON)
             .setEnabledColour(Colour.GREEN)
-            .setOnClick(() -> this.onConfirmLinkOrUnlink(donation))
             .setEnabled(this, valid)
+            .setOnClick(() -> this.onConfirmLinkOrUnlink(donation))
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
@@ -228,8 +228,8 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         boolean disableButton = Collections.any(this.getDonationsWithLinkIdentifier(donation), d -> this.editingDonations.containsKey(d));
         actionElement = new IconButtonElement(super.context, this)
             .setImage(icon)
-            .setOnClick(onClick)
             .setEnabled(this, !disableButton)
+            .setOnClick(onClick)
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
@@ -265,7 +265,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         }
 
         // when we are editing this donation, just fallback to the default name in all cases for simplicity (it might be overwritten by the text box)
-        String user = userToShow == null || this.editingDonations.containsKey(donation) ? donation.name : userToShow.userInfo.channelName;
+        String user = userToShow == null || this.editingDonations.containsKey(donation) ? donation.name : userToShow.channelInfo.channelName;
         userNameElement = new LabelElement(super.context, this).setText(user).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT);
 
         // clean up, in case we are transitioning from editing to non-editing
@@ -319,9 +319,18 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
           this.onError.accept(new Exception("No user selected"));
           return;
         }
-        super.context.donationApiStore.linkUser(donation.id, userToLink.id, r -> this.onResponse(userToLink.id, r.updatedDonation, null), e -> this.onResponse(userToLink.id, donation, e));
+        super.context.donationApiStore.linkUser(
+            donation.id,
+            userToLink.primaryUserId,
+            r -> this.onResponse(userToLink.primaryUserId, r.updatedDonation, null),
+            e -> this.onResponse(userToLink.primaryUserId, donation, e)
+        );
       } else {
-        super.context.donationApiStore.unlinkUser(donation.id, r -> this.onResponse(donation.linkedUser.id, r.updatedDonation, null), e -> this.onResponse(donation.linkedUser.id, donation, e));
+        super.context.donationApiStore.unlinkUser(
+            donation.id,
+            r -> this.onResponse(donation.linkedUser.primaryUserId, r.updatedDonation, null),
+            e -> this.onResponse(donation.linkedUser.primaryUserId, donation, e)
+        );
       }
 
       // show loading spinner

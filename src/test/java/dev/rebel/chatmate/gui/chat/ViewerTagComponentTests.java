@@ -32,7 +32,7 @@ public class ViewerTagComponentTests {
 
   @Test
   public void identifyPlatformsChanged_rendersImage_onYoutubePlatform() {
-    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Youtube);
+    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Youtube, false);
 
     // initially false
     ArgumentCaptor<Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>>> captor = ArgumentCaptor.forClass(Function.class);
@@ -54,7 +54,7 @@ public class ViewerTagComponentTests {
 
   @Test
   public void identifyPlatformsChanged_rendersCorrectText_onTwitchPlatform() {
-    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Twitch);
+    PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Twitch, false);
 
     // initially true
     ArgumentCaptor<Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>>> captor = ArgumentCaptor.forClass(Function.class);

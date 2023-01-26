@@ -15,6 +15,7 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
+import org.lwjgl.opengl.GL11;
 
 import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
 
@@ -48,23 +49,34 @@ public class ChatComponentRenderer extends Gui {
         return x.setGui(0);
       }
 
-      Dim requiredWidth = imageComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT_DIM);
-      Dim targetHeight = this.dimFactory.fromGui(this.fontEngine.FONT_HEIGHT);
+      Dim lineHeight = fontEngine.FONT_HEIGHT_DIM;
+      Dim requiredWidth = imageComponent.getRequiredWidth(lineHeight);
       Dim currentHeight = this.dimFactory.fromScreen(texture.height);
+      Dim effectiveHeight = imageComponent.getEffectiveHeight(lineHeight);
       Dim imageX = x.plus(imageComponent.paddingGuiLeft);
       Dim imageY = y;
 
-      float scaleToReachTarget = targetHeight.getGui() / currentHeight.getGui();
+      float scaleToReachTarget = effectiveHeight.getGui() / currentHeight.getGui();
       float scaleY = currentHeight.getGui() / 256 * scaleToReachTarget;
-      float aspectRatio = imageComponent.getImageWidth(this.fontEngine.FONT_HEIGHT_DIM).over(targetHeight);
+      float aspectRatio = imageComponent.getImageWidth(lineHeight).over(effectiveHeight);
       float scaleX = aspectRatio * scaleY;
+      Colour colour = imageComponent.getColour();
+
+      // works alright i guess...
+      // todo: figure out how shaders work and write a shader that does this properly
+      // see https://lwjglgamedev.gitbooks.io/3d-game-development-with-lwjgl/content/chapter04/chapter4.html for more help on shaders
+      // and https://gist.github.com/Volcanoscar/4a9500d240497d3c0228f663593d167a for an example of a greyscale shader
+      boolean greyScale = imageComponent.getGreyScale();
+      if (greyScale) {
+        colour = Colour.GREY33;
+      }
 
       GlStateManager.pushMatrix();
       GlStateManager.scale(scaleX, scaleY, 1);
       GlStateManager.enableBlend();
 
       // The following are required to prevent the rendered context menu from interfering with the status indicator colour..
-      GlStateManager.color(1.0f, 1.0f, 1.0f, opacity < 4 ? 0 : opacity / 255.0f);
+      GlStateManager.color(colour.redf, colour.greenf, colour.bluef, opacity < 4 ? 0 : opacity / 255.0f);
       GlStateManager.disableLighting();
 
       // undo the scaling

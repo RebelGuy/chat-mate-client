@@ -19,6 +19,7 @@ import dev.rebel.chatmate.events.models.EventData.EventIn;
 import dev.rebel.chatmate.events.models.EventData.EventOut;
 import dev.rebel.chatmate.util.Callback;
 import dev.rebel.chatmate.util.Debouncer;
+import dev.rebel.chatmate.util.EnumHelpers;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -46,6 +47,9 @@ public class Config extends EventServiceBase<ConfigType> {
 
   private final StatefulEmitter<Integer> chatVerticalDisplacement;
   public StatefulEmitter<Integer> getChatVerticalDisplacementEmitter() { return this.chatVerticalDisplacement; }
+
+  private final StatefulEmitter<CommandMessageChatVisibility> commandMessageChatVisibility;
+  public StatefulEmitter<CommandMessageChatVisibility> getCommandMessageChatVisibilityEmitter() { return this.commandMessageChatVisibility; }
 
   private final StatefulEmitter<Boolean> hudEnabled;
   public StatefulEmitter<Boolean> getHudEnabledEmitter() { return this.hudEnabled; }
@@ -105,6 +109,7 @@ public class Config extends EventServiceBase<ConfigType> {
     this.chatMateEnabled = new StatefulEmitter<>(ConfigType.ENABLE_CHAT_MATE, false, this::onUpdate);
     this.soundEnabled = new StatefulEmitter<>(ConfigType.ENABLE_SOUND, data == null ? true : data.soundEnabled, this::onUpdate);
     this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, data == null ? 10 : data.chatVerticalDisplacement, this::onUpdate);
+    this.commandMessageChatVisibility = new StatefulEmitter<>(ConfigType.COMMAND_MESSAGE_CHAT_VISIBILITY, data == null || data.commandMessageChatVisibility == null ? CommandMessageChatVisibility.SHOWN : EnumHelpers.fromStringOrDefault(CommandMessageChatVisibility.class, data.commandMessageChatVisibility, CommandMessageChatVisibility.SHOWN), this::onUpdate);
     this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, data == null ? true : data.hudEnabled, this::onUpdate);
     this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, data == null ? true : data.showServerLogsHeartbeat, this::onUpdate);
     this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, data == null ? false : data.showServerLogsTimeSeries, this::onUpdate);
@@ -142,6 +147,7 @@ public class Config extends EventServiceBase<ConfigType> {
       SerialisedConfigV6 serialisedConfig = new SerialisedConfigV6(
           this.soundEnabled.get(),
           this.chatVerticalDisplacement.get(),
+          this.commandMessageChatVisibility.get().toString(),
           this.hudEnabled.get(),
           this.showServerLogsHeartbeat.get(),
           this.showServerLogsTimeSeries.get(),
@@ -326,10 +332,13 @@ public class Config extends EventServiceBase<ConfigType> {
     }
   }
 
+  public enum CommandMessageChatVisibility { HIDDEN, SHOWN, GREYED_OUT }
+
   public enum ConfigType {
     ENABLE_CHAT_MATE,
     ENABLE_SOUND,
     CHAT_VERTICAL_DISPLACEMENT,
+    COMMAND_MESSAGE_CHAT_VISIBILITY,
     ENABLE_HUD,
     SHOW_SERVER_LOGS_HEARTBEAT,
     SHOW_SERVER_LOGS_TIME_SERIES,

@@ -11,6 +11,7 @@ public class PublicChatItem extends PublicObject {
   public Integer id;
   public Long timestamp;
   public ChatPlatform platform;
+  public Boolean isCommand;
   public PublicMessagePart[] messageParts;
   public PublicUser author;
 

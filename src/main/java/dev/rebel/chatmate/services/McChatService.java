@@ -1,8 +1,10 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.*;
+import dev.rebel.chatmate.gui.chat.UserSearchResultRowRenderer.AggregatedUserSearchResult;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
@@ -10,12 +12,13 @@ import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart.MessagePartType;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicRankedUser;
-import dev.rebel.chatmate.api.publicObjects.user.PublicUserNames;
 import dev.rebel.chatmate.events.ChatMateChatService;
 import dev.rebel.chatmate.events.ChatMateEventService;
 import dev.rebel.chatmate.events.MinecraftChatEventService;
 import dev.rebel.chatmate.events.models.LevelUpEventData;
 import dev.rebel.chatmate.events.models.NewTwitchFollowerEventData;
+import dev.rebel.chatmate.gui.style.Colour;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.TextHelpers;
 import dev.rebel.chatmate.util.TextHelpers.StringMask;
@@ -83,22 +86,43 @@ public class McChatService {
   }
 
   public void printStreamChatItem(PublicChatItem item) {
+    CommandMessageChatVisibility commandMessageVisibility = this.config.getCommandMessageChatVisibilityEmitter().get();
+    if (item.isCommand && commandMessageVisibility == CommandMessageChatVisibility.HIDDEN) {
+      return;
+    }
+
     PublicUserRank[] activePunishments = item.author.getActivePunishments();
     if (activePunishments.length > 0) {
-      String name = item.author.userInfo.channelName;
+      String name = item.author.channelInfo.channelName;
       String punishments = String.join(",", Collections.map(Collections.list(activePunishments), p -> p.rank.name.toString()));
       this.logService.logDebug(this, String.format("Ignoring chat message from user '%s' because of the following active punishments: %s", name, punishments));
       return;
     }
 
+    boolean greyOut = item.isCommand && commandMessageVisibility == CommandMessageChatVisibility.GREYED_OUT;
+
     try {
       Integer lvl = item.author.levelInfo.level;
-      IChatComponent level = styledText(lvl.toString(), getLevelStyle(lvl));
-      IChatComponent platform = new PlatformViewerTagComponent(this.dimFactory, this.config, item.platform);
-      IChatComponent rank = this.messageService.getRankComponent(Collections.map(Collections.list(item.author.activeRanks), r -> r.rank));
-      IChatComponent player = this.messageService.getUserComponent(item.author);
-      McChatResult mcChatResult = this.ytChatToMcChat(item, this.fontEngine);
+      ChatStyle levelStyle = getLevelStyle(lvl);
+      if (greyOut) {
+        levelStyle = levelStyle.setColor(EnumChatFormatting.DARK_GRAY);
+      }
+      IChatComponent level = styledText(lvl.toString(), levelStyle);
 
+      IChatComponent platform = new PlatformViewerTagComponent(this.dimFactory, this.config, item.platform, greyOut);
+
+      IChatComponent rank = this.messageService.getRankComponent(Collections.map(Collections.list(item.author.activeRanks), r -> r.rank));
+      if (greyOut) {
+        rank = rank.setChatStyle(rank.getChatStyle().setColor(EnumChatFormatting.DARK_GRAY));
+      }
+
+      Font viewerNameFont = VIEWER_NAME_FONT.create(this.dimFactory);
+      if (greyOut) {
+        viewerNameFont = viewerNameFont.withColour(Colour.GREY33);
+      }
+      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channelInfo.channelName, true, true, false);
+
+      McChatResult mcChatResult = this.streamChatToMcChat(item, this.fontEngine, greyOut);
       IChatComponent joinedMessage = joinComponents("", mcChatResult.chatComponents);
       joinedMessage = this.messageService.ensureNonempty(joinedMessage, "Empty message...");
 
@@ -163,19 +187,19 @@ public class McChatService {
     }
 
     PublicRankedUser highlightUser = highlightIndex == null ? null : users[highlightIndex];
-    LeaderboardRenderer renderer = new LeaderboardRenderer(this.dimFactory, this.messageService, highlightUser);
-    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, users, 10, "Experience Leaderboard");
+    LeaderboardRowRenderer renderer = new LeaderboardRowRenderer(this.dimFactory, this.messageService, highlightUser);
+    ChatPagination<PublicRankedUser> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, Collections.list(users), 10, "Experience Leaderboard");
     pagination.render();
   }
 
-  public void printUserList(PublicUserNames[] users) {
-    if (users.length == 0) {
+  public void printUserSearchResults(List<AggregatedUserSearchResult> results) {
+    if (results.size() == 0) {
       this.minecraftProxyService.printChatMessage("UserList", this.messageService.getInfoMessage("No items to show."));
       return;
     }
 
-    UserNameRenderer renderer = new UserNameRenderer(this.messageService);
-    ChatPagination<PublicUserNames> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, users, 10, "Search Results");
+    UserSearchResultRowRenderer renderer = new UserSearchResultRowRenderer(this.messageService);
+    ChatPagination<AggregatedUserSearchResult> pagination = new ChatPagination<>(this.logService, this.minecraftProxyService, this.customGuiNewChat, this.dimFactory, this.messageService, this.minecraftChatEventService, this.fontEngine, renderer, results, 10, "Search Results");
     pagination.render();
   }
 
@@ -190,7 +214,7 @@ public class McChatService {
     this.minecraftProxyService.printChatMessage("Info", info);
   }
 
-  private McChatResult ytChatToMcChat(PublicChatItem item, FontEngine fontEngine) throws Exception {
+  private McChatResult streamChatToMcChat(PublicChatItem item, FontEngine fontEngine, boolean greyOut) throws Exception {
     ArrayList<IChatComponent> components = new ArrayList<>();
     boolean includesMention = false;
 
@@ -202,7 +226,7 @@ public class McChatService {
       if (msg.type == MessagePartType.text) {
         assert msg.textData != null;
         text = this.filterService.censorNaughtyWords(msg.textData.text);
-        style = YT_CHAT_MESSAGE_TEXT_STYLE.setBold(msg.textData.isBold).setItalic(msg.textData.isItalics);
+        style = YT_CHAT_MESSAGE_TEXT_STYLE.get().setBold(msg.textData.isBold).setItalic(msg.textData.isItalics);
 
       } else if (msg.type == MessagePartType.emoji) {
         assert msg.emojiData != null;
@@ -213,10 +237,10 @@ public class McChatService {
         // check if the resource pack supports it - if so, use it!
         if (nameChars.length == 1 && fontEngine.getCharWidth(nameChars[0]).getGui() > 0) {
           text = name;
-          style = YT_CHAT_MESSAGE_TEXT_STYLE;
+          style = YT_CHAT_MESSAGE_TEXT_STYLE.get();
         } else {
           text = msg.emojiData.label; // e.g. :slightly_smiling:
-          style = YT_CHAT_MESSAGE_EMOJI_STYLE;
+          style = YT_CHAT_MESSAGE_EMOJI_STYLE.get();
         }
 
       } else if (msg.type == MessagePartType.customEmoji) {
@@ -224,13 +248,14 @@ public class McChatService {
         prevText = null;
 
         assert msg.customEmojiData != null;
-        components.add(new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData), this.dimFactory.fromGui(1), this.dimFactory.fromGui(1)));
+        ImageChatComponent imageChatComponent = new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData), this.dimFactory.fromGui(1), this.dimFactory.fromGui(1), greyOut);
+        components.add(imageChatComponent);
         continue;
 
       } else if (msg.type == MessagePartType.cheer) {
         assert msg.cheerData != null;
         text = String.format("[cheer with amount %d]", msg.cheerData.amount);
-        style = YT_CHAT_MESSAGE_CHEER_STYLE;
+        style = YT_CHAT_MESSAGE_CHEER_STYLE.get();
 
       } else throw new Exception("Invalid partial message type " + msg.type);
 
@@ -243,10 +268,19 @@ public class McChatService {
         }
       }
 
+      if (greyOut) {
+        style = style.setColor(EnumChatFormatting.DARK_GRAY);
+      }
+
       if (msg.type == MessagePartType.text) {
         WordFilter[] mentionFilter = TextHelpers.makeWordFilters("[rebel_guy]", "[rebel guy]", "[rebel]");
         StringMask mentionMask = FilterService.filterWords(text, mentionFilter);
-        components.addAll(styledTextWithMask(text, style, mentionMask, MENTION_TEXT_STYLE));
+
+        ChatStyle mentionStyle = MENTION_TEXT_STYLE.get();
+        if (greyOut) {
+          mentionStyle = mentionStyle.setColor(EnumChatFormatting.DARK_GRAY);
+        }
+        components.addAll(styledTextWithMask(text, style, mentionMask, mentionStyle));
 
         if (mentionMask.any()) {
           includesMention = true;

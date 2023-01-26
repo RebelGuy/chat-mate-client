@@ -1,6 +1,5 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud;
+package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.BackgroundElement;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.AnchorBoxSizing;
 import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
@@ -13,7 +12,6 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.services.CursorService;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.util.Collections;
 

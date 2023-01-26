@@ -603,7 +603,7 @@ public class CustomGuiNewChat extends GuiNewChat {
 
       } else if (component instanceof UserNameChatComponent) {
         UserNameChatComponent userNameChatComponent = (UserNameChatComponent)component;
-        lineX = lineX.plus(userNameChatComponent.getWidth());
+        lineX = lineX.plus(userNameChatComponent.getWidth(this.fontEngine.FONT_HEIGHT_DIM));
         if (lineX.gt(x)) {
           return originalComponent;
         }

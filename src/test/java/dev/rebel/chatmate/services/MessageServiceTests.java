@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -27,12 +28,13 @@ public class MessageServiceTests {
   @Mock DimFactory dimFactory;
   @Mock DonationService donationService;
   @Mock RankApiStore rankApiStore;
+  @Mock ChatComponentRenderer chatComponentRenderer;
 
   MessageService messageService;
 
   @Before
   public void setup() {
-    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore);
+    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer);
 
     when(this.fontEngine.getStringWidth(anyString())).thenAnswer(i -> ((String)i.getArgument(0)).length());
   }
@@ -49,7 +51,7 @@ public class MessageServiceTests {
   @Test
   public void ensureNonempty_ComponentWithImage_ReturnsArgument() {
     Dim padding = new Dim(() -> 1, Dim.DimAnchor.GUI);
-    IChatComponent component = new ImageChatComponent(() -> null, padding, padding);
+    IChatComponent component = new ImageChatComponent(() -> null, padding, padding, false);
 
     IChatComponent result = this.messageService.ensureNonempty(component, "Test");
 
@@ -69,10 +71,11 @@ public class MessageServiceTests {
   @Test
   public void getUserComponent_UsesTrimmedName() {
     PublicUser user = new PublicUser() {{
-      id = 1;
-      userInfo = new PublicChannelInfo() {{
+      primaryUserId = 1;
+      channelInfo = new PublicChannelInfo() {{
         channelName = " Test channel ! ";
         activeRanks = new PublicUserRank[0];
+        registeredUser = null;
       }};
     }};
 
@@ -85,10 +88,11 @@ public class MessageServiceTests {
   public void getUserComponent_UnrenderableName_ReplacesWithPlaceholder() {
     when(this.fontEngine.getStringWidth("x")).thenReturn(0);
     PublicUser user = new PublicUser() {{
-      id = 5;
-      userInfo = new PublicChannelInfo() {{
+      primaryUserId = 5;
+      channelInfo = new PublicChannelInfo() {{
         channelName = "x";
         activeRanks = new PublicUserRank[0];
+        registeredUser = null;
       }};
     }};
 

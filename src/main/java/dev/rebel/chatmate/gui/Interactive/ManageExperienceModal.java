@@ -67,7 +67,7 @@ public class ManageExperienceModal extends ModalElement {
     );
 
     super.setBody(new BlockElement(context, this).addElement(this.levelSbs).addElement(this.msgSbs));
-    super.setTitle("Manage Experience for " + user.userInfo.channelName);
+    super.setTitle("Manage Experience for " + user.channelInfo.channelName);
   }
 
   private void onLevelChange(String maybeLevel) {
@@ -88,7 +88,7 @@ public class ManageExperienceModal extends ModalElement {
   }
 
   private void onModifyExperienceResponse(ModifyExperienceResponseData response, Runnable callback) {
-    this.mcChatService.printInfo("Successfully modified experience for " + response.updatedUser.userInfo.channelName + ".");
+    this.mcChatService.printInfo("Successfully modified experience for " + response.updatedUser.channelInfo.channelName + ".");
     callback.run();
     super.onCloseScreen();
   }
@@ -108,7 +108,7 @@ public class ManageExperienceModal extends ModalElement {
   @Override
   protected void submit(Runnable onSuccess, Consumer<String> onError) {
     String msg = isNullOrEmpty(this.currentMessage) ? null : this.currentMessage.trim();
-    ModifyExperienceRequest request = new ModifyExperienceRequest(this.user.id, this.currentLevel, msg);
+    ModifyExperienceRequest request = new ModifyExperienceRequest(this.user.primaryUserId, this.currentLevel, msg);
     this.experienceEndpointProxy.modifyExperienceAsync(
         request,
         res -> this.onModifyExperienceResponse(res, onSuccess),

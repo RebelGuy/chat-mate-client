@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.config.migrations;
 
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV6;
@@ -12,6 +13,7 @@ public class v5v6 extends Migration<SerialisedConfigV5, SerialisedConfigV6> {
   public SerialisedConfigV6 up(SerialisedConfigV5 data) {
     return new SerialisedConfigV6(data.soundEnabled,
         data.chatVerticalDisplacement,
+        Config.CommandMessageChatVisibility.SHOWN.toString(),
         data.hudEnabled,
         data.showServerLogsHeartbeat,
         data.showServerLogsTimeSeries,

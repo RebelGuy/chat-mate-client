@@ -1,16 +1,11 @@
 package dev.rebel.chatmate.gui.Interactive.DonationHudModal;
 
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud.DropdownSelectionElement;
-import dev.rebel.chatmate.gui.Interactive.IElement;
-import dev.rebel.chatmate.gui.Interactive.InlineElement;
+import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.LabelElement;
-import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.style.Colour;
-import scala.Tuple2;
 
 import static dev.rebel.chatmate.util.TextHelpers.toSentenceCase;
 

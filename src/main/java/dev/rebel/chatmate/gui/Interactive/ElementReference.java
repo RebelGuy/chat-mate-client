@@ -263,6 +263,11 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public IElement setOnClick(@Nullable Runnable onClick) {
+    return this.underlyingElement == null ? this : this.underlyingElement.setOnClick(onClick);
+  }
+
+  @Override
   public IElement setName(String name) {
     return this.underlyingElement == null ? this : this.underlyingElement.setName(name);
   }

@@ -5,6 +5,10 @@ import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
+import dev.rebel.chatmate.gui.Interactive.LabelWithImagesElement.IPart;
+import dev.rebel.chatmate.gui.Interactive.LabelWithImagesElement.ImagePart;
+import dev.rebel.chatmate.gui.Interactive.LabelWithImagesElement.TextPart;
+import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -17,7 +21,9 @@ import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class DonationCardElement extends ContainerElement {
   private final static Colour BACKGROUND = new Colour(32, 32, 32);
@@ -49,16 +55,31 @@ public class DonationCardElement extends ContainerElement {
         .setMargin(new RectExtension(ZERO, gui(-4), gui(-8), ZERO)) // move above and to the right of the main content
     );
 
-    String name = this.donation.linkedUser != null ? this.donation.linkedUser.userInfo.channelName : this.donation.name;
-    String title = String.format("%s has donated %s!", name, this.donation.formattedAmount);
-    Font titleFont = new Font().withBold(true).withColour(Colour.YELLOW).withShadow(new Shadow(context.dimFactory));
-    super.addElement(new LabelElement(context, this)
-        .setText(title)
-        .setFont(titleFont)
-        .setOverflow(TextOverflow.SPLIT)
-        .setAlignment(TextAlignment.CENTRE)
-        .setPadding(new RectExtension(ZERO, ZERO, ZERO, gui(4)))
-    );
+    Font titleFont = new Font().withBold(true);
+    String titleName = this.donation.linkedUser != null ? this.donation.linkedUser.channelInfo.channelName : this.donation.name;
+    boolean showVerificationBadge = this.donation.linkedUser != null && this.donation.linkedUser.registeredUser != null;
+    String titleRemaining = String.format("has donated %s!", this.donation.formattedAmount);
+
+    List<IPart> titleParts = Collections.list(new TextPart(titleName, titleFont));
+    if (showVerificationBadge) {
+      titleParts.add(new ImagePart(Asset.GUI_VERIFICATION_ICON_WHITE_SMALL));
+    }
+    titleParts.add(new TextPart(titleRemaining, titleFont));
+
+    LabelWithImagesElement titleElement = new LabelWithImagesElement(super.context, this)
+        .setColour(Colour.YELLOW)
+        .setColouriseImage(true)
+        .setChildrenHorizontalAlignment(HorizontalAlignment.CENTRE)
+        .setImageProcessor((img, i) -> {
+          img.setTargetContentHeight(super.context.fontEngine.FONT_HEIGHT_DIM.over(2))
+              .setMargin(RectExtension.fromLeft(gui(-3)))
+              .setPadding(new RectExtension(ZERO));
+        })
+        .setParts(titleParts)
+        .setPadding(RectExtension.fromBottom(gui(4)))
+        .cast();
+
+    super.addElement(titleElement);
 
     if (this.donation.messageParts.length == 0) {
       Font messageFont = new Font()
@@ -130,7 +151,7 @@ public class DonationCardElement extends ContainerElement {
     public DonationButtonsElement(InteractiveContext context, IElement parent, PublicDonationData donation, Runnable onClickClose, Runnable onClickLink) {
       super(context, parent, LayoutMode.INLINE);
 
-      super.setHorizontalAlignment(Layout.HorizontalAlignment.RIGHT);
+      super.setHorizontalAlignment(HorizontalAlignment.RIGHT);
 
       ButtonElement.IconButtonElement linkButton = new ButtonElement.IconButtonElement(context, this)
           .setImage(Asset.GUI_LINK_ICON)

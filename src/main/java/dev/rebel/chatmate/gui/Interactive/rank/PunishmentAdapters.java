@@ -41,7 +41,7 @@ public class PunishmentAdapters extends Adapters {
 
   @Override
   public String getTitle(PublicUser user) {
-    return "Manage Punishments for " + user.userInfo.channelName;
+    return "Manage Punishments for " + user.channelInfo.channelName;
   }
 
   public static class PunishmentEndpointAdapter extends EndpointAdapter {

@@ -25,7 +25,6 @@ import static dev.rebel.chatmate.util.Objects.firstOrNull;
 public class ButtonElement extends InputElement {
   private Dim minSize;
   private @Nullable IElement childElement;
-  private @Nullable Runnable onClick;
   private Dim outerBorderCornerRadius;
   private Dim innerBorderCornerRadius;
   private Colour borderColour;
@@ -35,7 +34,6 @@ public class ButtonElement extends InputElement {
 
     this.minSize = ZERO;
     this.childElement = null;
-    this.onClick = null;
     this.outerBorderCornerRadius = gui(3.5f);
     this.innerBorderCornerRadius = null;
     this.borderColour = Colour.BLACK;
@@ -50,11 +48,6 @@ public class ButtonElement extends InputElement {
       this.childElement = childElement;
       super.onInvalidateSize();
     }
-    return this;
-  }
-
-  public ButtonElement setOnClick(@Nullable Runnable onClick) {
-    this.onClick = onClick;
     return this;
   }
 
@@ -82,12 +75,13 @@ public class ButtonElement extends InputElement {
   }
 
   @Override
-  public void onMouseDown(IEvent<MouseEventData.In> e) {
+  public boolean onClickHook(IEvent<MouseEventData.In> e) {
     MouseEventData.In data = e.getData();
-    if (data.isClicked(MouseButton.LEFT_BUTTON) && this.getEnabled() && this.onClick != null) {
+    if (data.isClicked(MouseButton.LEFT_BUTTON) && this.getEnabled()) {
       this.context.soundService.playButtonSound();
-      this.onClick.run();
-      e.stopPropagation();
+      return true;
+    } else {
+      return false;
     }
   }
 

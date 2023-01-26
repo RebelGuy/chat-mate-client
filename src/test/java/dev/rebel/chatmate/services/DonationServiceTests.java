@@ -226,8 +226,9 @@ public class DonationServiceTests {
   }
 
   private static PublicDonation createDonation(float donationAmount, long donationTime) {
+    PublicUser user = new PublicUser() {{ primaryUserId = 1; }};
     return new PublicDonation() {{
-      linkedUser = new PublicUser() {{ id = 1; }};
+      linkedUser = user;
       time = donationTime;
       linkedAt = donationTime;
       amount = donationAmount;

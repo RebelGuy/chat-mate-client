@@ -33,7 +33,7 @@ public class Adapters {
   }
 
   public String getTitle(PublicUser user) {
-    return "Manage Ranks for " + user.userInfo.channelName;
+    return "Manage Ranks for " + user.channelInfo.channelName;
   }
 
   public static abstract class EndpointAdapter {

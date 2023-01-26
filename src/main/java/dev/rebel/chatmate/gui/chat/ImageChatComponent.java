@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.chat;
 
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.style.Colour;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.IChatComponent;
 
@@ -11,14 +12,24 @@ import java.util.function.Supplier;
 public class ImageChatComponent extends ChatComponentBase {
   public final Dim paddingGuiLeft;
   public final Dim paddingGuiRight;
+  private final @Nullable Dim maxHeight;
   private @Nullable Texture texture;
+  private Colour colour;
   private final Supplier<Texture> textureSupplier;
+  private final boolean greyScale;
 
-  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight) {
+  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale) {
+    this(textureSupplier, paddingGuiLeft, paddingGuiRight, greyScale, null);
+  }
+
+  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale, @Nullable Dim maxHeight) {
     super();
     this.textureSupplier = textureSupplier;
     this.paddingGuiLeft = paddingGuiLeft;
     this.paddingGuiRight = paddingGuiRight;
+    this.maxHeight = maxHeight;
+    this.greyScale = greyScale;
+    this.colour = new Colour(1.0f, 1.0f, 1.0f);
   }
 
   /** This must be called from the Minecraft thread, as it may initialise the texture and requires the OpenGL context. */
@@ -40,12 +51,30 @@ public class ImageChatComponent extends ChatComponentBase {
   public Dim getImageWidth(Dim guiHeight) {
     Texture texture = this.getTexture();
     float aspectRatio = (float)texture.width / texture.height;
-    return guiHeight.times(aspectRatio);
+    Dim effectiveHeight = this.getEffectiveHeight(guiHeight);
+    return effectiveHeight.times(aspectRatio);
   }
 
   /** Returns the horizontal space required to display this image, in GUI units. */
   public Dim getRequiredWidth(Dim guiHeight) {
-    return this.getImageWidth(guiHeight).plus(this.paddingGuiLeft).plus(this.paddingGuiRight);
+    Dim effectiveHeight = this.getEffectiveHeight(guiHeight);
+    return this.getImageWidth(effectiveHeight).plus(this.paddingGuiLeft).plus(this.paddingGuiRight);
+  }
+
+  public Dim getEffectiveHeight(Dim guiHeight) {
+    return this.maxHeight == null ? guiHeight : Dim.min(this.maxHeight, guiHeight);
+  }
+
+  public void setColour(Colour colour) {
+    this.colour = colour;
+  }
+
+  public Colour getColour() {
+    return this.colour;
+  }
+
+  public boolean getGreyScale() {
+    return this.greyScale;
   }
 
   @Override

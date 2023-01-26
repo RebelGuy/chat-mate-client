@@ -76,6 +76,8 @@ public interface IElement {
   @Nullable String getTooltip();
   IElement setTooltip(@Nullable String text);
 
+  IElement setOnClick(@Nullable Runnable onClick);
+
   IElement setName(String name);
 
   /** If set, the element's full width will never exceed this value. */

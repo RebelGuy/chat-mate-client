@@ -29,7 +29,7 @@ public class MinecraftChatService {
         // as it stands, this is a bit hacky because it doesn't necessarily remove ONLY stream messages, but for now it works.
         // to make this more future-proof, we would need to add some kind of type/tag to Abstract Lines for categorising them.
         PublicUser thisUser = (PublicUser) container.getData();
-        return Objects.equals(thisUser.id, user.id);
+        return Objects.equals(thisUser.primaryUserId, user.primaryUserId);
       }
 
       return false;

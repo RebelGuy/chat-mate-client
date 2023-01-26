@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.chat;
 
+import dev.rebel.chatmate.Asset;
+import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.style.Colour;
@@ -19,6 +21,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.IChatComponent;
 import org.lwjgl.opengl.GL11;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -33,21 +36,24 @@ public class UserNameChatComponent extends ChatComponentBase {
   private final DimFactory dimFactory;
   private final DonationService donationService;
   private final RankApiStore rankApiStore;
+  private final ChatComponentRenderer chatComponentRenderer;
   public final int userId;
   private final Font baseFont;
   private final boolean useEffects;
   private final double tOffset;
+  private final @Nullable ImageChatComponent verificationBadgeComponent;
 
   private String displayName;
   private double lastT;
   private List<Particle> particles;
 
-  public UserNameChatComponent(FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore, int userId, Font baseFont, String displayName, boolean useEffects) {
+  public UserNameChatComponent(FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore, ChatComponentRenderer chatComponentRenderer, int userId, Font baseFont, String displayName, boolean useEffects, boolean showVerificationBadge) {
     super();
     this.fontEngine = fontEngine;
     this.dimFactory = dimFactory;
     this.donationService = donationService;
     this.rankApiStore = rankApiStore;
+    this.chatComponentRenderer = chatComponentRenderer;
     this.userId = userId;
     this.baseFont = baseFont;
     this.displayName = displayName;
@@ -55,6 +61,7 @@ public class UserNameChatComponent extends ChatComponentBase {
     this.tOffset = userId * 22 / 7.0;
     this.lastT = 0;
     this.particles = new ArrayList<>();
+    this.verificationBadgeComponent = showVerificationBadge ? new ImageChatComponent(() -> Asset.GUI_VERIFICATION_ICON_WHITE_SMALL, dimFactory.fromGui(0), dimFactory.fromGui(0), false, this.fontEngine.FONT_HEIGHT_DIM.times(0.5f)) : null;
   }
 
   public void setDisplayName(String formattedName) {
@@ -84,8 +91,9 @@ public class UserNameChatComponent extends ChatComponentBase {
     return this.displayName;
   }
 
-  public Dim getWidth() {
-    return this.fontEngine.getStringWidthDim(this.displayName, this.baseFont);
+  public Dim getWidth(Dim lineHeight) {
+    Dim verificationBadgeWidth = this.verificationBadgeComponent == null ? this.dimFactory.zeroGui() : this.verificationBadgeComponent.getRequiredWidth(lineHeight);
+    return this.fontEngine.getStringWidthDim(this.displayName, this.baseFont).plus(verificationBadgeWidth);
   }
 
   /** Returns the width. */
@@ -95,7 +103,7 @@ public class UserNameChatComponent extends ChatComponentBase {
     if (this.useEffects && this.donationService.shouldShowDonationEffect(this.userId)) {
       newX = this.renderEffect(x, y, alpha, chatRect);
     } else {
-      newX = this.renderDefault(x, y, alpha);
+      newX = this.renderDefault(x, y, alpha, chatRect);
     }
 
     return newX.minus(x);
@@ -111,8 +119,16 @@ public class UserNameChatComponent extends ChatComponentBase {
     return this;
   }
 
-  private Dim renderDefault(Dim x, Dim y, float alpha) {
-    return this.fontEngine.drawString(this.displayName, x, y, this.baseFont.withColour(this.baseFont.getColour().withAlpha(alpha)));
+  private Dim renderDefault(Dim x, Dim y, float alpha, DimRect chatRect) {
+    Colour colour = this.baseFont.getColour().withAlpha(alpha);
+    x = this.fontEngine.drawString(this.displayName, x, y, this.baseFont.withColour(colour));
+    if (this.verificationBadgeComponent != null) {
+      this.verificationBadgeComponent.setColour(colour);
+      Dim w = this.chatComponentRenderer.drawChatComponent(this.verificationBadgeComponent, x, y, colour.alpha, chatRect);
+      x = x.plus(w);
+    }
+
+    return x;
   }
 
   private Dim renderEffect(Dim x, Dim y, float alpha, DimRect chatRect) {
@@ -123,16 +139,20 @@ public class UserNameChatComponent extends ChatComponentBase {
     // particle effect (member)
     if (Collections.map(this.rankApiStore.getCurrentUserRanks(this.userId), r -> r.rank.name).contains(RankName.MEMBER)) {
       // draw this below the text because it looks nicer that way
-      DimRect rect = new DimRect(x, y, this.getWidth(), this.fontEngine.FONT_HEIGHT_DIM);
+      DimRect rect = new DimRect(x, y, this.getWidth(this.fontEngine.FONT_HEIGHT_DIM), this.fontEngine.FONT_HEIGHT_DIM);
       this.renderParticles(t, deltaT, alpha, rect, chatRect);
     }
 
     String fullString = this.displayName;
-    for (int i = 0; i < fullString.length(); i++) {
-      String c = fullString.substring(i, i + 1);
-      if (c.charAt(0) == CHAR_SECTION_SIGN) {
-        i++;
-        continue;
+    int N = fullString.length() + (this.verificationBadgeComponent == null ? 0 : 1);
+    for (int i = 0; i < N; i++) {
+      String c = "";
+      if (i < fullString.length()) {
+        c = fullString.substring(i, i + 1);
+        if (c.charAt(0) == CHAR_SECTION_SIGN) {
+          i++;
+          continue;
+        }
       }
 
       // rainbow effect (all donators)
@@ -146,8 +166,15 @@ public class UserNameChatComponent extends ChatComponentBase {
 
       GL11.glPushMatrix();
       GL11.glTranslated(0, 0, 10);
-      Font font = new Font(this.baseFont).withColour(new Colour(r, g, b, alpha));
-      x = this.fontEngine.drawString(c, x, y.plus(yOffset), font);
+      Colour colour = new Colour(r, g, b, alpha);
+      if (i < N - 1 || this.verificationBadgeComponent == null) {
+        Font font = new Font(this.baseFont).withColour(colour);
+        x = this.fontEngine.drawString(c, x, y.plus(yOffset), font);
+      } else {
+        this.verificationBadgeComponent.setColour(colour);
+        Dim w = this.chatComponentRenderer.drawChatComponent(this.verificationBadgeComponent, x, y.plus(yOffset), colour.alpha, chatRect);
+        x = x.plus(w);
+      }
       GL11.glPopMatrix();
       t -= 0.15; // animates the colours from left to right
     }
