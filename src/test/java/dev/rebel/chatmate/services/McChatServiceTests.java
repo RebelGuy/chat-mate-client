@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
@@ -53,6 +54,7 @@ public class McChatServiceTests {
 
   @Mock Config mockConfig;
   @Mock StatefulEmitter<Boolean> mockShowChatPlatformIconEmitter;
+  @Mock StatefulEmitter<CommandMessageChatVisibility> mockCommandMessageChatVisibilityEmitter;
 
   PublicUser author1 = createAuthor("Author 1");
   PublicMessagePart text1 = createText("Text 1");
@@ -66,7 +68,7 @@ public class McChatServiceTests {
     // assume nonempty, just return the input component
     when(this.mockMessageService.ensureNonempty(ArgumentMatchers.any(), anyString())).thenAnswer(i -> i.getArgument(0));
 
-    when(this.mockMessageService.getUserComponent(ArgumentMatchers.any())).thenAnswer(i -> {
+    when(this.mockMessageService.getUserComponent(ArgumentMatchers.any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean())).thenAnswer(i -> {
       PublicUser user = i.getArgument(0);
       return new ContainerChatComponent(new ChatComponentText(user.channelInfo.channelName), user);
     });
@@ -74,6 +76,7 @@ public class McChatServiceTests {
     // this is for the ViewerTagComponent
     when(this.mockConfig.getShowChatPlatformIconEmitter()).thenReturn(this.mockShowChatPlatformIconEmitter);
 
+    when(this.mockConfig.getCommandMessageChatVisibilityEmitter()).thenReturn(this.mockCommandMessageChatVisibilityEmitter);
     when(this.mockMessageService.getRankComponent(any())).thenReturn(new ChatComponentText("VIEWER"));
   }
 
@@ -89,6 +92,30 @@ public class McChatServiceTests {
     };
     PublicChatItem item = createItem(author1, text1);
     McChatService service = this.setupService();
+
+    service.printStreamChatItem(item);
+
+    verify(this.mockMinecraftProxyService, never()).printChatMessage(anyString(), any());
+  }
+
+  @Test
+  public void addChat_printsMessageIfIsCommandAndCommandsAreShown() {
+    PublicChatItem item = createItem(author1, text1);
+    item.isCommand = true;
+    McChatService service = this.setupService();
+    when(this.mockCommandMessageChatVisibilityEmitter.get()).thenReturn(CommandMessageChatVisibility.SHOWN);
+
+    service.printStreamChatItem(item);
+
+    verify(this.mockMinecraftProxyService).printChatMessage(anyString(), any());
+  }
+
+  @Test
+  public void addChat_ignoresIfMessageIsCommandAndCommandsAreHidden() {
+    PublicChatItem item = createItem(author1, text1);
+    item.isCommand = true;
+    McChatService service = this.setupService();
+    when(this.mockCommandMessageChatVisibilityEmitter.get()).thenReturn(CommandMessageChatVisibility.HIDDEN);
 
     service.printStreamChatItem(item);
 
@@ -216,6 +243,7 @@ public class McChatServiceTests {
       author = msgAuthor;
       messageParts = messages;
       platform = ChatPlatform.Youtube;
+      isCommand = false;
     }};
   }
 

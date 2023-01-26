@@ -51,7 +51,7 @@ public class MessageServiceTests {
   @Test
   public void ensureNonempty_ComponentWithImage_ReturnsArgument() {
     Dim padding = new Dim(() -> 1, Dim.DimAnchor.GUI);
-    IChatComponent component = new ImageChatComponent(() -> null, padding, padding);
+    IChatComponent component = new ImageChatComponent(() -> null, padding, padding, false);
 
     IChatComponent result = this.messageService.ensureNonempty(component, "Test");
 
