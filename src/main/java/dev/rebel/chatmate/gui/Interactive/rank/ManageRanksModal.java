@@ -113,7 +113,9 @@ public class ManageRanksModal extends ModalElement {
       parent.onSubmit = null;
       parent.onClose = null;
 
-      this.titleLabel = new LabelElement(context, this).setText(tableAdapter.tableHeader);
+      this.titleLabel = new LabelElement(context, this).setText(tableAdapter.tableHeader)
+          .setVerticalAlignment(VerticalAlignment.MIDDLE)
+          .cast();
 
       this.createNewRankButton = new TextButtonElement(context, this)
           .setText("Create new")

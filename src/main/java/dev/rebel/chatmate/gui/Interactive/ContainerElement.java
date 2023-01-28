@@ -180,7 +180,9 @@ public abstract class ContainerElement extends ElementBase {
 
       // update current
       currentGroup.add(elementSize);
-      currentAlignment = thisAlignment;
+      if (includedInLayout) {
+        currentAlignment = thisAlignment;
+      }
     }
 
     // flush
