@@ -35,9 +35,6 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
         .setVisible(false)
         .cast();
     super.addElement(this.didClearStoresLabel);
-
-    super.addElement(CHECKBOX_WITH_CONFIG.apply(context.config.getShowServerLogsHeartbeat(), CHECKBOX_LIGHT.create(context, this).setLabel("Show Server Logs Heartbeat")));
-    super.addElement(CHECKBOX_WITH_CONFIG.apply(context.config.getShowServerLogsTimeSeries(), CHECKBOX_LIGHT.create(context, this).setLabel("Show Server Logs Time Series")));
   }
 
   private void onClearStores() {

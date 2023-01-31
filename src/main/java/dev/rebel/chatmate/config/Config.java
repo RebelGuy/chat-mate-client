@@ -54,12 +54,6 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Boolean> hudEnabled;
   public StatefulEmitter<Boolean> getHudEnabledEmitter() { return this.hudEnabled; }
 
-  private final StatefulEmitter<Boolean> showServerLogsHeartbeat;
-  public StatefulEmitter<Boolean> getShowServerLogsHeartbeat() { return this.showServerLogsHeartbeat; }
-
-  private final StatefulEmitter<Boolean> showServerLogsTimeSeries;
-  public StatefulEmitter<Boolean> getShowServerLogsTimeSeries() { return this.showServerLogsTimeSeries; }
-
   private final StatefulEmitter<Boolean> showChatPlatformIcon;
   public StatefulEmitter<Boolean> getShowChatPlatformIconEmitter() { return this.showChatPlatformIcon; }
 
@@ -111,8 +105,6 @@ public class Config extends EventServiceBase<ConfigType> {
     this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, data == null ? 10 : data.chatVerticalDisplacement, this::onUpdate);
     this.commandMessageChatVisibility = new StatefulEmitter<>(ConfigType.COMMAND_MESSAGE_CHAT_VISIBILITY, data == null || data.commandMessageChatVisibility == null ? CommandMessageChatVisibility.SHOWN : EnumHelpers.fromStringOrDefault(CommandMessageChatVisibility.class, data.commandMessageChatVisibility, CommandMessageChatVisibility.SHOWN), this::onUpdate);
     this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, data == null ? true : data.hudEnabled, this::onUpdate);
-    this.showServerLogsHeartbeat = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_HEARTBEAT, data == null ? true : data.showServerLogsHeartbeat, this::onUpdate);
-    this.showServerLogsTimeSeries = new StatefulEmitter<>(ConfigType.SHOW_SERVER_LOGS_TIME_SERIES, data == null ? false : data.showServerLogsTimeSeries, this::onUpdate);
     this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, data == null ? true : data.showChatPlatformIcon, this::onUpdate);
     this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, data == null ? new SeparableHudElement(true, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.statusIndicator.deserialise(), this::onUpdate);
     this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, data == null ? new SeparableHudElement(true, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.viewerCount.deserialise(), this::onUpdate);
@@ -149,8 +141,6 @@ public class Config extends EventServiceBase<ConfigType> {
           this.chatVerticalDisplacement.get(),
           this.commandMessageChatVisibility.get().toString(),
           this.hudEnabled.get(),
-          this.showServerLogsHeartbeat.get(),
-          this.showServerLogsTimeSeries.get(),
           this.showChatPlatformIcon.get(),
           new SerialisedConfigV6.SerialisedSeparableHudElement(this.statusIndicator.get()),
           new SerialisedConfigV6.SerialisedSeparableHudElement(this.viewerCount.get()),

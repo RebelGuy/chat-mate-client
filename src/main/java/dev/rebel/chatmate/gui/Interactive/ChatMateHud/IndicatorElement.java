@@ -11,7 +11,6 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.StatusService;
-import dev.rebel.chatmate.events.ServerLogEventService;
 import dev.rebel.chatmate.events.models.EventData;
 import net.minecraft.util.Tuple;
 
@@ -30,19 +29,17 @@ public class IndicatorElement extends ImageElement implements SeparableHudElemen
   private final boolean isMainIndicator;
   private final StatusService statusService;
   private final Config config;
-  private final ServerLogEventService serverLogEventService;
   private final AnimatedEvent<Asset.Texture> serverLogEvents;
 
   private final Function<EventData.EventIn, EventData.EventOut> _onServerLogError = this::onServerLogError;
   private final Function<EventData.EventIn, EventData.EventOut> _onServerLogWarning = this::onServerLogWarning;
   private final Dim defaultHeight;
 
-  public IndicatorElement(InteractiveScreen.InteractiveContext context, IElement parent, boolean isMainIndicator, Dim defaultHeight, StatusService statusService, Config config, ServerLogEventService serverLogEventService) {
+  public IndicatorElement(InteractiveScreen.InteractiveContext context, IElement parent, boolean isMainIndicator, Dim defaultHeight, StatusService statusService, Config config) {
     super(context, parent);
     this.isMainIndicator = isMainIndicator;
     this.statusService = statusService;
     this.config = config;
-    this.serverLogEventService = serverLogEventService;
 
     this.statusTextures = new HashMap<>();
     this.statusTextures.put(StatusService.SimpleStatus.OK_LIVE, Asset.STATUS_INDICATOR_GREEN);
@@ -55,8 +52,6 @@ public class IndicatorElement extends ImageElement implements SeparableHudElemen
 
     this.serverLogEvents = new AnimatedEvent<>(SERVER_LOG_ANIMATION_DURATION);
 
-    this.serverLogEventService.onWarning(this._onServerLogWarning, this);
-    this.serverLogEventService.onError(this._onServerLogError, this);
     this.defaultHeight = defaultHeight;
     this.setHudScale(1);
   }
@@ -92,34 +87,21 @@ public class IndicatorElement extends ImageElement implements SeparableHudElemen
 
     Asset.Texture texture = this.statusTextures.get(status);
     super.setImage(texture);
-
-    if (this.config.getShowServerLogsHeartbeat().get() && this.config.getDebugModeEnabledEmitter().get() && this.isMainIndicator) {
-      for (Tuple<Asset.Texture, Float> logEvent : this.serverLogEvents.getAllFracs()) {
-        Asset.Texture logTexture = logEvent.getFirst();
-        float scale = logEvent.getSecond() * SERVER_LOG_ANIMATION_MAX_SCALE * super.scale;
-        float alpha = 1 - logEvent.getSecond();
-        DimPoint pos = this.getContentBox().getCentre();
-        RendererHelpers.drawTextureCentred(super.context.minecraft.getTextureManager(), super.context.dimFactory, logTexture, pos, scale, Colour.WHITE.withAlpha(alpha));
-      }
-    }
-
     super.renderElement();
   }
 
   public static class Factory implements SeparableHudElement.ISeparableElementFactory {
     private final Config config;
     private final StatusService statusService;
-    private final ServerLogEventService serverLogEventService;
 
-    public Factory(Config config, StatusService statusService, ServerLogEventService serverLogEventService) {
+    public Factory(Config config, StatusService statusService) {
       this.config = config;
       this.statusService = statusService;
-      this.serverLogEventService = serverLogEventService;
     }
 
     @Override
     public IndicatorElement create(InteractiveScreen.InteractiveContext context, IElement parent, boolean isMainIndicator, Dim defaultHeight) {
-      return new IndicatorElement(context, parent, isMainIndicator, defaultHeight, this.statusService, this.config, this.serverLogEventService);
+      return new IndicatorElement(context, parent, isMainIndicator, defaultHeight, this.statusService, this.config);
     }
   }
 }
