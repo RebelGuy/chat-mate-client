@@ -6,7 +6,7 @@ environments {
         STUDIO_URL = 'http://localhost:3000'
     }
 
-    local1 {
+    debug {
         ENVIRONMENT = 'debug'
         SERVER_URL = 'http://chat-mate-sandbox.azurewebsites.net'
         STUDIO_URL = 'https://nice-coast-05a39c31e.1.azurestaticapps.net'
