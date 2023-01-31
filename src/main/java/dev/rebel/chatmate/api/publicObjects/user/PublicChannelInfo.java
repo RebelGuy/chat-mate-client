@@ -1,12 +1,8 @@
 package dev.rebel.chatmate.api.publicObjects.user;
 
 import com.google.gson.annotations.SerializedName;
-import dev.rebel.chatmate.api.publicObjects.PublicObject;
 
-public class PublicChannelInfo extends PublicObject {
-  @Override
-  public Integer GetExpectedSchema() { return 1; }
-
+public class PublicChannelInfo {
   public Integer defaultUserId;
   public String externalIdOrUserName;
   public Platform platform;

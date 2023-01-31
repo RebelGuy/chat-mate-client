@@ -5,11 +5,6 @@ import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.api.proxy.ApiResponseBase;
 
 public class ModifyExperienceResponse extends ApiResponseBase<ModifyExperienceResponseData> {
-  @Override
-  public Integer GetExpectedSchema() {
-    return 3;
-  }
-
   public static class ModifyExperienceResponseData {
     public PublicUser updatedUser;
   }

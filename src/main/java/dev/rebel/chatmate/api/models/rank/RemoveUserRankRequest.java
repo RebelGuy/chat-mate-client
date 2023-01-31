@@ -11,7 +11,6 @@ public class RemoveUserRankRequest extends ApiRequestBase {
   public @Nullable String message;
 
   public RemoveUserRankRequest(RemoveRankName rank, int userId, @Nullable String message) {
-    super(1);
     this.rank = rank;
     this.userId = userId;
     this.message = message;

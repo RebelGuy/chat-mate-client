@@ -205,19 +205,7 @@ public class EndpointProxy {
       throw new Exception("Parsed response is null - is the JSON conversion implemented correctly?");
     }
 
-    String error = null;
-    if (parsed.schema == null) {
-      error = "The response's `schema` property is null - is the JSON conversion implemented correctly?";
-    } else if (parsed.schema.intValue() != parsed.GetExpectedSchema().intValue()) {
-      // todo: remove schema versions. they are not helpful
-      // error = "Schema mismatch - expected " + parsed.GetExpectedSchema() + " but received " + parsed.schema + " from server.";
-    }
-
-    if (error != null) {
-      throw new Exception("SCHEMA ERROR for class " + returnClass.getSimpleName() + ": " + error);
-    } else {
-      return parsed;
-    }
+    return parsed;
   }
 
   public static String getApiErrorMessage(Throwable e) {

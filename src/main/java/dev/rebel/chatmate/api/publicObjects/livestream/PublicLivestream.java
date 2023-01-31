@@ -1,16 +1,10 @@
 package dev.rebel.chatmate.api.publicObjects.livestream;
 
 import com.google.gson.annotations.SerializedName;
-import dev.rebel.chatmate.api.publicObjects.PublicObject;
 
 import javax.annotation.Nullable;
 
-public class PublicLivestream extends PublicObject {
-  @Override
-  public Integer GetExpectedSchema() {
-    return 1;
-  }
-
+public class PublicLivestream {
   public Integer id;
   public String livestreamLink;
   public LivestreamStatus status;

@@ -5,11 +5,6 @@ import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.proxy.ApiResponseBase;
 
 public class GetPunishmentsResponse extends ApiResponseBase<GetPunishmentsResponseData> {
-  @Override
-  public Integer GetExpectedSchema() {
-    return 2;
-  }
-
   public static class GetPunishmentsResponseData {
     public PublicUserRank[] punishments;
   }

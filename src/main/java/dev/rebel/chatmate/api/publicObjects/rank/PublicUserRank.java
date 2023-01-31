@@ -1,13 +1,8 @@
 package dev.rebel.chatmate.api.publicObjects.rank;
 
-import dev.rebel.chatmate.api.publicObjects.PublicObject;
-
 import javax.annotation.Nullable;
 
-public class PublicUserRank extends PublicObject {
-  @Override
-  public Integer GetExpectedSchema() { return 1; }
-
+public class PublicUserRank {
   public Integer id;
   public @Nullable String streamer;
   public PublicRank rank;

@@ -1,15 +1,11 @@
 package dev.rebel.chatmate.api.publicObjects.donation;
 
-import dev.rebel.chatmate.api.publicObjects.PublicObject;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 
 import javax.annotation.Nullable;
 
-public class PublicDonation extends PublicObject {
-  @Override
-  public Integer GetExpectedSchema() { return 1; }
-
+public class PublicDonation {
   public Integer id;
   public Long time;
   public Float amount;

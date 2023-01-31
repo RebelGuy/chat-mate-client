@@ -12,7 +12,6 @@ public class AddUserRankRequest extends ApiRequestBase {
   public @Nullable Integer durationSeconds;
 
   public AddUserRankRequest(AddRankName rank, int userId, @Nullable String message, @Nullable Integer durationSeconds) {
-    super(1);
     this.rank = rank;
     this.userId = userId;
     this.message = message;
