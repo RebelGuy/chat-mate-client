@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -135,7 +135,7 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onMouseDown(IEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {
     DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.getSliderRect().checkCollision(position)) {
       this.dropElement = new DropElement(context, this, this)
@@ -147,7 +147,7 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onMouseMove(IEvent<MouseEventData.In> e) {
+  public void onMouseMove(InteractiveEvent<MouseEventData.In> e) {
     if (this.getSliderRect().checkCollision(e.getData().mousePositionData.point)) {
       super.setCursor(CursorType.CLICK);
     } else {
@@ -178,7 +178,7 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onMouseScroll(IEvent<MouseEventData.In> e) {
+  public void onMouseScroll(InteractiveEvent<MouseEventData.In> e) {
     int multiplier = e.getData().mouseScrollData.scrollDirection == ScrollDirection.UP ? -1 : 1;
     float delta = (float)Math.pow(10, this.decimals) * multiplier;
     this.value = this.autoFixValue(this.value + delta);

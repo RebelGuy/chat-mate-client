@@ -2,7 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
@@ -140,33 +139,33 @@ public class CheckboxInputElement extends InputElement {
   }
 
   @Override
-  public void onMouseEnter(IEvent<In> e) {
+  public void onMouseEnter(InteractiveEvent<In> e) {
     this.isHovering.set(true);
   }
 
   @Override
-  public void onMouseExit(IEvent<In> e) {
+  public void onMouseExit(InteractiveEvent<In> e) {
     this.isHovering.set(false);
   }
 
   @Override
-  public void onMouseDown(IEvent<In> e) {
+  public void onMouseDown(InteractiveEvent<In> e) {
     this.onFlipChecked(true);
     e.stopPropagation();
   }
 
   @Override
-  public void onFocus(IEvent<FocusEventData> e) {
+  public void onFocus(InteractiveEvent<FocusEventData> e) {
     this.isFocused.set(true);
   }
 
   @Override
-  public void onBlur(IEvent<FocusEventData> e) {
+  public void onBlur(InteractiveEvent<FocusEventData> e) {
     this.isFocused.set(false);
   }
 
   @Override
-  public void onKeyDown(IEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData.In> e) {
     if (e.getData().eventKey == Keyboard.KEY_SPACE) {
       this.onFlipChecked(true);
       e.stopPropagation();

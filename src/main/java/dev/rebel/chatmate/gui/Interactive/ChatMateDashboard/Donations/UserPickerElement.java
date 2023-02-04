@@ -6,6 +6,7 @@ import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.AnchorBoxSizing;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.VerticalPosition;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.style.Colour;
@@ -88,14 +89,14 @@ public class UserPickerElement extends ContainerElement {
   }
 
   @Override
-  public void onMouseDown(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       this.dropdownMenu.setVisible(true);
     }
   }
 
   @Override
-  public void onKeyDown(Events.IEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData.In> e) {
     if (e.getData().isPressed(Keyboard.KEY_ESCAPE) && this.dropdownMenu.getVisible()) {
       this.searchUsersDebouncer.cancel();
       this.dropdownMenu.setVisible(false);

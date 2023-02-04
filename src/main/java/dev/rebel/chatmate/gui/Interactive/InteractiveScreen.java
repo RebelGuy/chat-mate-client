@@ -4,7 +4,12 @@ import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
-import dev.rebel.chatmate.gui.Interactive.Events.*;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData.FocusReason;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventPhase;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.Screen;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -463,7 +468,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     this.context.debugElement = null;
   }
 
-  private boolean propagateMouseEvent(Events.EventType type, MouseEventData.In data) {
+  private boolean propagateMouseEvent(EventType type, MouseEventData.In data) {
     if (this.mainElement == null || this.shouldCloseScreen) {
       return false;
     }
@@ -637,7 +642,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public void onInitialise() { }
 
   @Override
-  public void onEvent(EventType type, IEvent<?> event) { }
+  public void onEvent(EventType type, InteractiveEvent<?> event) { }
 
   @Override
   public DimPoint calculateSize(Dim maxWidth) { return null; }

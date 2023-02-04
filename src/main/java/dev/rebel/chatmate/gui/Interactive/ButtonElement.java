@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Asset.Texture;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -75,7 +75,7 @@ public class ButtonElement extends InputElement {
   }
 
   @Override
-  public boolean onClickHook(IEvent<MouseEventData.In> e) {
+  public boolean onClickHook(InteractiveEvent<MouseEventData.In> e) {
     MouseEventData.In data = e.getData();
     if (data.isClicked(MouseButton.LEFT_BUTTON) && this.getEnabled()) {
       this.context.soundService.playButtonSound();

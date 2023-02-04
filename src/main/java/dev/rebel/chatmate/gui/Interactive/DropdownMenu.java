@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.style.Colour;
@@ -75,7 +75,7 @@ public class DropdownMenu extends OverlayElement {
 
   // clickaway listener
   @Override
-  public void onMouseDown(IEvent<In> e) {
+  public void onMouseDown(InteractiveEvent<In> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       e.stopPropagation();
       super.setVisible(false);

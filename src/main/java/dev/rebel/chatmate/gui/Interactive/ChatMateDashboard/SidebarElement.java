@@ -4,7 +4,7 @@ import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.events.models.ConfigEventData;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -137,19 +137,19 @@ public class SidebarElement extends ContainerElement {
     }
 
     @Override
-    public void onMouseEnter(IEvent<In> e) {
+    public void onMouseEnter(InteractiveEvent<In> e) {
       this.isHovering.set(true);
       super.context.cursorService.toggleCursor(CursorType.CLICK, this, super.getDepth());
     }
 
     @Override
-    public void onMouseExit(IEvent<In> e) {
+    public void onMouseExit(InteractiveEvent<In> e) {
       this.isHovering.set(false);
       super.context.cursorService.untoggleCursor(this);
     }
 
     @Override
-    public void onMouseDown(IEvent<In> e) {
+    public void onMouseDown(InteractiveEvent<In> e) {
       if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
         this.store.setSettingsPage(this.page);
         e.stopPropagation();

@@ -10,7 +10,7 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.DonationsS
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General.GeneralSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud.HudSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudService;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -152,7 +152,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   }
 
   @Override
-  public void onWindowResize(IEvent<ScreenSizeData> e) {
+  public void onWindowResize(InteractiveEvent<ScreenSizeData> e) {
     this.setContentSizes(e.getData().newSize);
   }
 

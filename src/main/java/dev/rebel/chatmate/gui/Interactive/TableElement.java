@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import com.google.common.base.Objects;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
@@ -270,21 +270,21 @@ public class TableElement<T> extends ContainerElement {
     }
 
     @Override
-    public void onMouseDown(IEvent<In> e) {
+    public void onMouseDown(InteractiveEvent<In> e) {
       if (this.item != null && TableElement.this.onClickItem != null) {
         TableElement.this.onClickItem.accept(this.item);
       }
     }
 
     @Override
-    public void onMouseEnter(IEvent<In> e) {
+    public void onMouseEnter(InteractiveEvent<In> e) {
       if (!this.isHeader) {
         this.state.accessState(s -> s.hovering.set(true));
       }
     }
 
     @Override
-    public void onMouseExit(IEvent<In> e) {
+    public void onMouseExit(InteractiveEvent<In> e) {
       this.state.accessState(s -> s.hovering.set(false));
     }
 

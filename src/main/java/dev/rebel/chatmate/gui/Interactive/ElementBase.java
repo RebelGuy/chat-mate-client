@@ -1,7 +1,11 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.gui.Interactive.Events.*;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventPhase;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -147,27 +151,27 @@ public abstract class ElementBase implements IElement {
   }
 
   @Override
-  public final void onEvent(EventType type, IEvent<?> event) {
+  public final void onEvent(EventType type, InteractiveEvent<?> event) {
     if (event.getPhase() == EventPhase.TARGET) {
       switch (type) {
         case FOCUS:
-          this.onFocus((IEvent<FocusEventData>)event);
+          this.onFocus((InteractiveEvent<FocusEventData>)event);
           break;
         case BLUR:
-          this.onBlur((IEvent<FocusEventData>)event);
+          this.onBlur((InteractiveEvent<FocusEventData>)event);
           break;
         case MOUSE_ENTER:
           this.isHovering = true;
           this.updateCursor();
-          this.onMouseEnter((IEvent<MouseEventData.In>)event);
+          this.onMouseEnter((InteractiveEvent<MouseEventData.In>)event);
           break;
         case MOUSE_EXIT:
           this.isHovering = false;
           this.updateCursor();
-          this.onMouseExit((IEvent<MouseEventData.In>)event);
+          this.onMouseExit((InteractiveEvent<MouseEventData.In>)event);
           break;
         case WINDOW_RESIZE:
-          this.onWindowResize((IEvent<ScreenSizeData>)event);
+          this.onWindowResize((InteractiveEvent<ScreenSizeData>)event);
           break;
         default:
           throw EnumHelpers.<EventType>assertUnreachable(type);
@@ -181,85 +185,85 @@ public abstract class ElementBase implements IElement {
     }
   }
 
-  private void onEventCapture(EventType type, IEvent<?> event) {
+  private void onEventCapture(EventType type, InteractiveEvent<?> event) {
     switch (type) {
       case MOUSE_DOWN:
-        this.onCaptureMouseDown((IEvent<MouseEventData.In>)event);
+        this.onCaptureMouseDown((InteractiveEvent<MouseEventData.In>)event);
         break;
       case MOUSE_MOVE:
-        this.onCaptureMouseMove((IEvent<MouseEventData.In>)event);
+        this.onCaptureMouseMove((InteractiveEvent<MouseEventData.In>)event);
         break;
       case MOUSE_UP:
-        this.onCaptureMouseUp((IEvent<MouseEventData.In>)event);
+        this.onCaptureMouseUp((InteractiveEvent<MouseEventData.In>)event);
         break;
       case MOUSE_SCROLL:
-        this.onCaptureMouseScroll((IEvent<MouseEventData.In>)event);
+        this.onCaptureMouseScroll((InteractiveEvent<MouseEventData.In>)event);
         break;
       case MOUSE_ENTER:
-        this.onCaptureMouseEnter((IEvent<MouseEventData.In>)event);
+        this.onCaptureMouseEnter((InteractiveEvent<MouseEventData.In>)event);
         break;
       case KEY_DOWN:
-        this.onCaptureKeyDown((IEvent<KeyboardEventData.In>)event);
+        this.onCaptureKeyDown((InteractiveEvent<KeyboardEventData.In>)event);
         break;
       case KEY_UP:
-        this.onCaptureKeyUp((IEvent<KeyboardEventData.In>)event);
+        this.onCaptureKeyUp((InteractiveEvent<KeyboardEventData.In>)event);
         break;
       default:
         throw EnumHelpers.<EventType>assertUnreachable(type);
     }
   }
 
-  private void onEventBubble(EventType type, IEvent<?> event) {
+  private void onEventBubble(EventType type, InteractiveEvent<?> event) {
     switch (type) {
       case MOUSE_DOWN:
-        if (this.onClick != null && this.onClickHook((IEvent<MouseEventData.In>)event)) {
+        if (this.onClick != null && this.onClickHook((InteractiveEvent<MouseEventData.In>)event)) {
           event.stopPropagation();
           this.onClick.run();
         }
-        this.onMouseDown((IEvent<MouseEventData.In>)event);
+        this.onMouseDown((InteractiveEvent<MouseEventData.In>)event);
         break;
       case MOUSE_MOVE:
-        this.onMouseMove((IEvent<MouseEventData.In>)event);
+        this.onMouseMove((InteractiveEvent<MouseEventData.In>)event);
         break;
       case MOUSE_UP:
-        this.onMouseUp((IEvent<MouseEventData.In>)event);
+        this.onMouseUp((InteractiveEvent<MouseEventData.In>)event);
         break;
       case MOUSE_SCROLL:
-        this.onMouseScroll((IEvent<MouseEventData.In>)event);
+        this.onMouseScroll((InteractiveEvent<MouseEventData.In>)event);
         break;
       case KEY_DOWN:
-        this.onKeyDown((IEvent<KeyboardEventData.In>)event);
+        this.onKeyDown((InteractiveEvent<KeyboardEventData.In>)event);
         break;
       case KEY_UP:
-        this.onKeyUp((IEvent<KeyboardEventData.In>)event);
+        this.onKeyUp((InteractiveEvent<KeyboardEventData.In>)event);
         break;
       default:
         throw EnumHelpers.<EventType>assertUnreachable(type);
     }
   }
 
-  public void onMouseDown(IEvent<MouseEventData.In> e) {}
-  public void onCaptureMouseDown(IEvent<MouseEventData.In> e) {}
-  public void onMouseMove(IEvent<MouseEventData.In> e) {}
-  public void onCaptureMouseMove(IEvent<MouseEventData.In> e) {}
-  public void onMouseUp(IEvent<MouseEventData.In> e) {}
-  public void onCaptureMouseUp(IEvent<MouseEventData.In> e) {}
-  public void onMouseScroll(IEvent<MouseEventData.In> e) {}
-  public void onCaptureMouseScroll(IEvent<MouseEventData.In> e) {}
-  public void onKeyDown(IEvent<KeyboardEventData.In> e) {}
-  public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {}
-  public void onKeyUp(IEvent<KeyboardEventData.In> e) {}
-  public void onCaptureKeyUp(IEvent<KeyboardEventData.In> e) {}
-  public void onFocus(IEvent<FocusEventData> e) {}
-  public void onBlur(IEvent<FocusEventData> e) {}
+  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseDown(InteractiveEvent<MouseEventData.In> e) {}
+  public void onMouseMove(InteractiveEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseMove(InteractiveEvent<MouseEventData.In> e) {}
+  public void onMouseUp(InteractiveEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseUp(InteractiveEvent<MouseEventData.In> e) {}
+  public void onMouseScroll(InteractiveEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseScroll(InteractiveEvent<MouseEventData.In> e) {}
+  public void onKeyDown(InteractiveEvent<KeyboardEventData.In> e) {}
+  public void onCaptureKeyDown(InteractiveEvent<KeyboardEventData.In> e) {}
+  public void onKeyUp(InteractiveEvent<KeyboardEventData.In> e) {}
+  public void onCaptureKeyUp(InteractiveEvent<KeyboardEventData.In> e) {}
+  public void onFocus(InteractiveEvent<FocusEventData> e) {}
+  public void onBlur(InteractiveEvent<FocusEventData> e) {}
   /** Target-only - this cannot be cancelled. */
-  public void onMouseEnter(IEvent<MouseEventData.In> e) {}
+  public void onMouseEnter(InteractiveEvent<MouseEventData.In> e) {}
   /** The onCaptureMouseEnter event is special - if cancelled, all downstream elements to which we didn't get to yet
    * will receive the MOUSE_EXIT event. */
-  public void onCaptureMouseEnter(IEvent<MouseEventData.In> e) {}
+  public void onCaptureMouseEnter(InteractiveEvent<MouseEventData.In> e) {}
   /** This doesn't bubble, it is target-only. there is no way to cancel this. */
-  public void onMouseExit(IEvent<MouseEventData.In> e) {}
-  public void onWindowResize(IEvent<ScreenSizeData> e) {}
+  public void onMouseExit(InteractiveEvent<MouseEventData.In> e) {}
+  public void onWindowResize(InteractiveEvent<ScreenSizeData> e) {}
 
   @Override
   public final void onCloseScreen() { this.parent.onCloseScreen(); }
@@ -275,7 +279,7 @@ public abstract class ElementBase implements IElement {
 
   /** Called when the user clicks the element and an onClick handler exists. Return true to allow the click (default), or false to block the click.
    * If returning true, the onClick handler is guaranteed to be called. */
-  protected boolean onClickHook(IEvent<MouseEventData.In> e) {
+  protected boolean onClickHook(InteractiveEvent<MouseEventData.In> e) {
     return true;
   }
 

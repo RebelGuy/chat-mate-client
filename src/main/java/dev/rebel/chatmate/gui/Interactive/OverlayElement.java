@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractionEventBoundaryElement.IInteractionEventBoundaryListener;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.LayoutGroup;
@@ -37,27 +38,27 @@ public class OverlayElement extends ContainerElement implements IInteractionEven
 
   // interaction events bubbling up to here are those occurring on the overlay layer (excluding holes or children boxes).
   @Override
-  public void onMouseDown(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {
     e.stopPropagation();
   }
 
   @Override
-  public void onMouseMove(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseMove(InteractiveEvent<MouseEventData.In> e) {
     e.stopPropagation();
   }
 
   @Override
-  public void onMouseUp(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseUp(InteractiveEvent<MouseEventData.In> e) {
     e.stopPropagation();
   }
 
   @Override
-  public void onMouseScroll(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseScroll(InteractiveEvent<MouseEventData.In> e) {
     e.stopPropagation();
   }
 
   @Override
-  public void onKeyDown(Events.IEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData.In> e) {
     e.stopPropagation();
   }
 }

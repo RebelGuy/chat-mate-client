@@ -2,10 +2,11 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore.IHudStoreListener;
 import dev.rebel.chatmate.gui.Interactive.ElementHelpers;
-import dev.rebel.chatmate.gui.Interactive.Events;
-import dev.rebel.chatmate.gui.Interactive.Events.EventPhase;
-import dev.rebel.chatmate.gui.Interactive.Events.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData.FocusReason;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventPhase;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventType;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.config.Config;
@@ -106,7 +107,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
       element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, element));
     }
 
-    super.setFocussedElement(null, Events.FocusReason.AUTO);
+    super.setFocussedElement(null, FocusReason.AUTO);
     super.elementsUnderCursor = new ArrayList<>();
     super.blockingElement = null;
     super.blockedElementsUnderCursor = new ArrayList<>();

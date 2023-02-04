@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.LayoutGroup;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
@@ -93,7 +94,7 @@ public class ElementReference implements IElement {
   }
 
   @Override
-  public void onEvent(Events.EventType type, Events.IEvent<?> event) {
+  public void onEvent(InteractiveEvent.EventType type, InteractiveEvent<?> event) {
     if (this.underlyingElement != null) {
       this.underlyingElement.onEvent(type, event);
     }

@@ -1,8 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.Events.EventType;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventType;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -22,7 +21,7 @@ public interface IElement {
   void onInitialise();
 
   // the event data is determined by the event type
-  void onEvent(EventType type, IEvent<?> event);
+  void onEvent(EventType type, InteractiveEvent<?> event);
 
   /** [Upwards] To be called when an element requests the screen to be closed. */
   void onCloseScreen();
