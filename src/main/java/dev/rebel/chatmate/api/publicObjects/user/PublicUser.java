@@ -9,7 +9,7 @@ import java.util.Arrays;
 public class PublicUser {
   public Integer primaryUserId;
   public @Nullable PublicRegisteredUser registeredUser;
-  public PublicChannelInfo channelInfo;
+  public PublicChannel channel;
   public PublicLevelInfo levelInfo;
   public PublicUserRank[] activeRanks;
 

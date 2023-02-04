@@ -51,7 +51,7 @@ public class DonationListElement extends ContainerElement {
   }
 
   private LabelElement donationToElement(PublicDonation donation, int index) {
-    String name = donation.linkedUser != null ? donation.linkedUser.channelInfo.channelName : donation.name;
+    String name = donation.linkedUser != null ? donation.linkedUser.channel.displayName : donation.name;
     return new LabelElement(super.context, this)
         .setText(String.format("%d: %s by %s", index + 1, donation.formattedAmount, name))
         .setOverflow(LabelElement.TextOverflow.SPLIT)

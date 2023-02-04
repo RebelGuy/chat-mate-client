@@ -265,7 +265,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         }
 
         // when we are editing this donation, just fallback to the default name in all cases for simplicity (it might be overwritten by the text box)
-        String user = userToShow == null || this.editingDonations.containsKey(donation) ? donation.name : userToShow.channelInfo.channelName;
+        String user = userToShow == null || this.editingDonations.containsKey(donation) ? donation.name : userToShow.channel.displayName;
         userNameElement = new LabelElement(super.context, this).setText(user).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT);
 
         // clean up, in case we are transitioning from editing to non-editing

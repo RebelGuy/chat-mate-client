@@ -11,9 +11,7 @@ import dev.rebel.chatmate.util.Collections;
 import net.minecraft.util.IChatComponent;
 
 import javax.annotation.Nullable;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class LeaderboardRowRenderer extends PaginationRowRenderer<PublicRankedUser> {
   private final DimFactory dimFactory;
@@ -36,7 +34,7 @@ public class LeaderboardRowRenderer extends PaginationRowRenderer<PublicRankedUs
     List<PublicRankedUser> allItemsOnPage = Collections.map(Collections.list(allPartialItemsOnPage), x -> x.item);
     int rankDigits = String.valueOf(allItemsOnPage.get(allItemsOnPage.size() - 1).rank).length();
     int levelDigits = String.valueOf(allItemsOnPage.get(0).user.levelInfo.level + 1).length();
-    List<Dim> allNameWidths = Collections.map(allItemsOnPage, entry -> fontEngine.getStringWidthDim(entry.user.channelInfo.channelName));
+    List<Dim> allNameWidths = Collections.map(allItemsOnPage, entry -> fontEngine.getStringWidthDim(entry.user.channel.displayName));
     Dim nameWidth = Dim.min(chatWidth.minus(this.dimFactory.fromGui(5)).over(3), Dim.max(allNameWidths));
 
     boolean anyHighlighting = highlightUser != null;

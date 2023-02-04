@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
@@ -15,7 +16,6 @@ import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicMessageText;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
-import dev.rebel.chatmate.api.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.api.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.events.ChatMateChatService;
@@ -70,7 +70,7 @@ public class McChatServiceTests {
 
     when(this.mockMessageService.getUserComponent(ArgumentMatchers.any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean())).thenAnswer(i -> {
       PublicUser user = i.getArgument(0);
-      return new ContainerChatComponent(new ChatComponentText(user.channelInfo.channelName), user);
+      return new ContainerChatComponent(new ChatComponentText(user.channel.displayName), user);
     });
 
     // this is for the ViewerTagComponent
@@ -213,7 +213,7 @@ public class McChatServiceTests {
   }
 
   private static String getExpectedChatText(PublicUser author, String text) {
-    return author.levelInfo.level + " VIEWER " + author.channelInfo.channelName + " " + text;
+    return author.levelInfo.level + " VIEWER " + author.channel.displayName + " " + text;
   }
 
   private McChatService setupService() {
@@ -249,7 +249,7 @@ public class McChatServiceTests {
 
   public static PublicUser createAuthor(String authorName) {
     return new PublicUser() {{
-      channelInfo = new PublicChannelInfo() {{ channelName = authorName; }};
+      channel = new PublicChannel() {{ displayName = authorName; }};
       levelInfo = new PublicLevelInfo() {{ level = 0; levelProgress = 0.0f; }};
       activeRanks = new PublicUserRank[0];
     }};

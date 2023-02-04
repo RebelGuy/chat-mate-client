@@ -3,7 +3,6 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.LabelWithImagesElement.IPart;
 import dev.rebel.chatmate.gui.Interactive.LabelWithImagesElement.ImagePart;
@@ -18,10 +17,8 @@ import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.util.Collections;
-import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -56,7 +53,7 @@ public class DonationCardElement extends ContainerElement {
     );
 
     Font titleFont = new Font().withBold(true);
-    String titleName = this.donation.linkedUser != null ? this.donation.linkedUser.channelInfo.channelName : this.donation.name;
+    String titleName = this.donation.linkedUser != null ? this.donation.linkedUser.channel.displayName : this.donation.name;
     boolean showVerificationBadge = this.donation.linkedUser != null && this.donation.linkedUser.registeredUser != null;
     String titleRemaining = String.format("has donated %s!", this.donation.formattedAmount);
 

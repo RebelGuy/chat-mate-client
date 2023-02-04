@@ -1,12 +1,12 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
-import dev.rebel.chatmate.api.publicObjects.user.PublicChannelInfo;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.stores.RankApiStore;
 import net.minecraft.util.ChatComponentText;
@@ -72,8 +72,8 @@ public class MessageServiceTests {
   public void getUserComponent_UsesTrimmedName() {
     PublicUser user = new PublicUser() {{
       primaryUserId = 1;
-      channelInfo = new PublicChannelInfo() {{
-        channelName = " Test channel ! ";
+      channel = new PublicChannel() {{
+        displayName = " Test channel ! ";
         activeRanks = new PublicUserRank[0];
         registeredUser = null;
       }};
@@ -89,8 +89,8 @@ public class MessageServiceTests {
     when(this.fontEngine.getStringWidth("x")).thenReturn(0);
     PublicUser user = new PublicUser() {{
       primaryUserId = 5;
-      channelInfo = new PublicChannelInfo() {{
-        channelName = "x";
+      channel = new PublicChannel() {{
+        displayName = "x";
         activeRanks = new PublicUserRank[0];
         registeredUser = null;
       }};

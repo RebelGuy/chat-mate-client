@@ -93,7 +93,7 @@ public class McChatService {
 
     PublicUserRank[] activePunishments = item.author.getActivePunishments();
     if (activePunishments.length > 0) {
-      String name = item.author.channelInfo.channelName;
+      String name = item.author.channel.displayName;
       String punishments = String.join(",", Collections.map(Collections.list(activePunishments), p -> p.rank.name.toString()));
       this.logService.logDebug(this, String.format("Ignoring chat message from user '%s' because of the following active punishments: %s", name, punishments));
       return;
@@ -120,7 +120,7 @@ public class McChatService {
       if (greyOut) {
         viewerNameFont = viewerNameFont.withColour(Colour.GREY33);
       }
-      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channelInfo.channelName, true, true, false);
+      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channel.displayName, true, true, false);
 
       McChatResult mcChatResult = this.streamChatToMcChat(item, this.fontEngine, greyOut);
       IChatComponent joinedMessage = joinComponents("", mcChatResult.chatComponents);

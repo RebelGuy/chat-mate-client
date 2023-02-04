@@ -133,7 +133,7 @@ public class MessageService {
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE.get() : GOOD_MSG_STYLE.get())));
-    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory), entry.user.channelInfo.channelName, true, !deEmphasise, false)));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory), entry.user.channel.displayName, true, !deEmphasise, false)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE.get() : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE.get())));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE.get())));
@@ -162,7 +162,7 @@ public class MessageService {
 
     // platform - only for channels
     if (channel != null) {
-      PlatformViewerTagComponent platform = new PlatformViewerTagComponent(this.dimFactory, channel.platform == PublicChannel.Platform.Youtube ? ChatPlatform.Youtube : ChatPlatform.Twitch);
+      PlatformViewerTagComponent platform = new PlatformViewerTagComponent(this.dimFactory, channel.platform == PublicChannel.Platform.YOUTUBE ? ChatPlatform.Youtube : ChatPlatform.Twitch);
       ImageChatComponent imageChatComponent = (ImageChatComponent) platform.getComponent();
       Dim platformWidth = imageChatComponent.getRequiredWidth(this.fontEngine.FONT_HEIGHT_DIM);
       PrecisionLayout platformLayout = new PrecisionLayout(left, platformWidth, PrecisionAlignment.LEFT);
@@ -283,7 +283,7 @@ public class MessageService {
         "Level " + (newLevel + 1) + " is within reach!",
         "Congratulations!",
         styledText("Say 123 if you respect ", INFO_MSG_STYLE.get()).appendSibling(this.getUserComponent(user)).appendSibling(styledText(".", INFO_MSG_STYLE.get())),
-        styledText("Subscribe to ", INFO_MSG_STYLE.get()).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.channelInfo.channelName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE.get()))
+        styledText("Subscribe to ", INFO_MSG_STYLE.get()).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.channel.displayName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE.get()))
       );
   }
 
@@ -293,7 +293,7 @@ public class MessageService {
 
   /** Uses the default channel name if no display name is provided. */
   public IChatComponent getUserComponent(PublicUser user, @Nullable String displayName) {
-    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), firstOrNull(displayName, user.channelInfo.channelName), true, true, false);
+    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), firstOrNull(displayName, user.channel.displayName), true, true, false);
   }
 
   public IChatComponent getUserComponent(PublicUser user, Font font, String displayName, boolean showPunishmentPrefix, boolean useEffects, boolean hideVerificationBadge) {

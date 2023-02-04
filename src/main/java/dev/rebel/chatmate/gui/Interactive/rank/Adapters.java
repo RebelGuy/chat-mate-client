@@ -1,10 +1,10 @@
 package dev.rebel.chatmate.gui.Interactive.rank;
 
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel.Platform;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange;
-import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange.Platform;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
@@ -33,7 +33,7 @@ public class Adapters {
   }
 
   public String getTitle(PublicUser user) {
-    return "Manage Ranks for " + user.channelInfo.channelName;
+    return "Manage Ranks for " + user.channel.displayName;
   }
 
   public static abstract class EndpointAdapter {
@@ -149,13 +149,13 @@ public class Adapters {
     public String actionsHeaderMessage = "External actions:";
 
     public String getTooltip(@Nonnull PublicRank underlyingRank, @Nullable PublicUserRank rank, PublicChannelRankChange rankChange) {
-      String platform = rankChange.platform == Platform.YOUTUBE ? "YouTube" : "Twitch";
+      String platform = rankChange.channel.platform == Platform.YOUTUBE ? "YouTube" : "Twitch";
       if (rankChange.error == null) {
         String actionType = rank == null || rank.isActive ? "applied" : "revoked";
-        return String.format("Successfully %s action to %s channel %d.", actionType, platform, rankChange.channelId);
+        return String.format("Successfully %s action to %s channel %d.", actionType, platform, rankChange.channel.channelId);
       } else {
         String actionType = rank == null || rank.isActive ? "apply" : "revoke";
-        return String.format("Failed to %s action to %s channel %d: %s", actionType, platform, rankChange.channelId, rankChange.error);
+        return String.format("Failed to %s action to %s channel %d: %s", actionType, platform, rankChange.channel.channelId, rankChange.error);
       }
     }
   }

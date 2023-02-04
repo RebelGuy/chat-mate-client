@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.rank;
 
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel.Platform;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
@@ -9,7 +11,6 @@ import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
 import dev.rebel.chatmate.api.models.punishment.*;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange;
-import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange.Platform;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankGroup;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
@@ -41,7 +42,7 @@ public class PunishmentAdapters extends Adapters {
 
   @Override
   public String getTitle(PublicUser user) {
-    return "Manage Punishments for " + user.channelInfo.channelName;
+    return "Manage Punishments for " + user.channel.displayName;
   }
 
   public static class PunishmentEndpointAdapter extends EndpointAdapter {
@@ -182,14 +183,14 @@ public class PunishmentAdapters extends Adapters {
 
     @Override
     public String getTooltip(@Nonnull PublicRank underlyingRank, @Nullable PublicUserRank punishment, PublicChannelRankChange rankChange) {
-      String platform = rankChange.platform == Platform.YOUTUBE ? "YouTube" : "Twitch";
+      String platform = rankChange.channel.platform == Platform.YOUTUBE ? "YouTube" : "Twitch";
       String punishmentType = underlyingRank.displayNameNoun.toLowerCase();
       if (rankChange.error == null) {
         String actionType = punishment == null || punishment.isActive ? "applied" : "revoked";
-        return String.format("Successfully %s %s to %s channel %d.", actionType, punishmentType, platform, rankChange.channelId);
+        return String.format("Successfully %s %s to %s channel %d.", actionType, punishmentType, platform, rankChange.channel.channelId);
       } else {
         String actionType = punishment == null || punishment.isActive ? "apply" : "revoke";
-        return String.format("Failed to %s %s to %s channel %d: %s", actionType, punishmentType, platform, rankChange.channelId, rankChange.error);
+        return String.format("Failed to %s %s to %s channel %d: %s", actionType, punishmentType, platform, rankChange.channel.channelId, rankChange.error);
       }
     }
   }
