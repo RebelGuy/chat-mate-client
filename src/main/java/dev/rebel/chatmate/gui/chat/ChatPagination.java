@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.chat;
 
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.PrecisionChatComponent.PrecisionAlignment;
@@ -10,12 +12,10 @@ import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.events.MinecraftChatEventService;
-import dev.rebel.chatmate.events.models.EventData;
 import dev.rebel.chatmate.util.ChatHelpers.ClickEventWithCallback;
 import dev.rebel.chatmate.util.Collections;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
-import net.minecraft.util.Tuple;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import static dev.rebel.chatmate.gui.chat.Styles.*;
 
@@ -39,7 +38,7 @@ public class ChatPagination<T> {
   private final int itemsPerPage;
   private final PaginationRowRenderer<T> renderer;
   private final int maxPage;
-  private final Function<EventData.EventIn, EventData.EventOut> _onChatDimensionsUpdate = this::onChatDimensionsUpdate;
+  private final EventCallback<?> _onChatDimensionsUpdate = this::onChatDimensionsUpdate;
 
   private @Nullable String headerText;
   private boolean initialised;
@@ -89,9 +88,8 @@ public class ChatPagination<T> {
     this.minecraftChatEventService.onUpdateChatDimensions(this._onChatDimensionsUpdate, this);
   }
 
-  private EventData.EventOut onChatDimensionsUpdate(EventData.EventIn eventIn) {
+  private void onChatDimensionsUpdate(Event<?> event) {
     this.render();
-    return new EventData.EventOut();
   }
 
   /** Renders the paginated entries to chat. */

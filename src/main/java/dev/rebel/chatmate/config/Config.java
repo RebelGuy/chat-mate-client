@@ -1,29 +1,24 @@
 package dev.rebel.chatmate.config;
 
 import dev.rebel.chatmate.config.Config.ConfigType;
-import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV6;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.EventServiceBase;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.events.EventHandler;
-import dev.rebel.chatmate.events.EventServiceBase;
-import dev.rebel.chatmate.events.models.ConfigEventData;
-import dev.rebel.chatmate.events.models.ConfigEventData.In;
-import dev.rebel.chatmate.events.models.ConfigEventData.Options;
-import dev.rebel.chatmate.events.models.ConfigEventData.Out;
-import dev.rebel.chatmate.events.models.EventData.EventIn;
-import dev.rebel.chatmate.events.models.EventData.EventOut;
 import dev.rebel.chatmate.util.Callback;
 import dev.rebel.chatmate.util.Debouncer;
 import dev.rebel.chatmate.util.EnumHelpers;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Config extends EventServiceBase<ConfigType> {
@@ -82,7 +77,7 @@ public class Config extends EventServiceBase<ConfigType> {
   private final List<Callback> updateListeners;
 
   /** Only used for holding onto wrapped callback functions when an onChange subscriber uses the automatic unsubscription feature. Write-only. */
-  private final Map<ConfigType, WeakHashMap<Object, Function<? extends EventIn, ? extends EventOut>>> weakHandlers;
+  private final Map<ConfigType, WeakHashMap<Object, EventCallback<?>>> weakHandlers;
 
   private final Debouncer saveDebouncer;
 
@@ -100,29 +95,98 @@ public class Config extends EventServiceBase<ConfigType> {
 
     // if loading fails, the user will be left with the default settings which is fine
     @Nullable SerialisedConfigV6 data = this.load();
-    this.chatMateEnabled = new StatefulEmitter<>(ConfigType.ENABLE_CHAT_MATE, false, this::onUpdate);
-    this.soundEnabled = new StatefulEmitter<>(ConfigType.ENABLE_SOUND, data == null ? true : data.soundEnabled, this::onUpdate);
-    this.chatVerticalDisplacement = new StatefulEmitter<>(ConfigType.CHAT_VERTICAL_DISPLACEMENT, data == null ? 10 : data.chatVerticalDisplacement, this::onUpdate);
-    this.commandMessageChatVisibility = new StatefulEmitter<>(ConfigType.COMMAND_MESSAGE_CHAT_VISIBILITY, data == null || data.commandMessageChatVisibility == null ? CommandMessageChatVisibility.SHOWN : EnumHelpers.fromStringOrDefault(CommandMessageChatVisibility.class, data.commandMessageChatVisibility, CommandMessageChatVisibility.SHOWN), this::onUpdate);
-    this.hudEnabled = new StatefulEmitter<>(ConfigType.ENABLE_HUD, data == null ? true : data.hudEnabled, this::onUpdate);
-    this.showChatPlatformIcon = new StatefulEmitter<>(ConfigType.SHOW_CHAT_PLATFORM_ICON, data == null ? true : data.showChatPlatformIcon, this::onUpdate);
-    this.statusIndicator = new StatefulEmitter<>(ConfigType.STATUS_INDICATOR, data == null ? new SeparableHudElement(true, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.statusIndicator.deserialise(), this::onUpdate);
-    this.viewerCount = new StatefulEmitter<>(ConfigType.VIEWER_COUNT, data == null ? new SeparableHudElement(true, false, false, SeparableHudElement.PlatformIconPosition.LEFT) : data.viewerCount.deserialise(), this::onUpdate);
-    this.debugModeEnabled = new StatefulEmitter<>(ConfigType.DEBUG_MODE_ENABLED, data == null ? false : data.debugModeEnabled, this::onUpdate);
-    this.lastGetChatResponse = new StatefulEmitter<>(ConfigType.LAST_GET_CHAT_RESPONSE, data == null ? 0L : data.lastGetChatResponse, this::onUpdate);
-    this.lastGetChatMateEventsResponse = new StatefulEmitter<>(ConfigType.LAST_GET_CHAT_MATE_EVENTS_RESPONSE, data == null ? 0L : data.lastGetChatMateEventsResponse, this::onUpdate);
-    this.hudTransforms = new StatefulEmitter<>(ConfigType.HUD_TRANSFORMS, data == null ? new HashMap<>() : dev.rebel.chatmate.util.Collections.map(data.hudTransforms, s -> s.deserialise(dimFactory)), this::onUpdate);
-    this.loginInfo = new StatefulEmitter<>(ConfigType.LOGIN_INFO, data == null ? new LoginInfo(null, null) : data.loginInfo.deserialise(), this::onUpdate);
+    this.chatMateEnabled = new StatefulEmitter<>(
+        ConfigType.ENABLE_CHAT_MATE,
+        Boolean.class,
+        false,
+        this::onUpdate
+    );
+    this.soundEnabled = new StatefulEmitter<>(
+        ConfigType.ENABLE_SOUND,
+        Boolean.class,
+        data == null ? true : data.soundEnabled,
+        this::onUpdate
+    );
+    this.chatVerticalDisplacement = new StatefulEmitter<>(
+        ConfigType.CHAT_VERTICAL_DISPLACEMENT,
+        Integer.class,
+        data == null ? 10 : data.chatVerticalDisplacement,
+        this::onUpdate
+    );
+    this.commandMessageChatVisibility = new StatefulEmitter<>(
+        ConfigType.COMMAND_MESSAGE_CHAT_VISIBILITY,
+        CommandMessageChatVisibility.class,
+        data == null || data.commandMessageChatVisibility == null
+            ? CommandMessageChatVisibility.SHOWN
+            : EnumHelpers.fromStringOrDefault(CommandMessageChatVisibility.class, data.commandMessageChatVisibility, CommandMessageChatVisibility.SHOWN),
+        this::onUpdate);
+    this.hudEnabled = new StatefulEmitter<>(
+        ConfigType.ENABLE_HUD,
+        Boolean.class,
+        data == null ? true : data.hudEnabled,
+        this::onUpdate
+    );
+    this.showChatPlatformIcon = new StatefulEmitter<>(
+        ConfigType.SHOW_CHAT_PLATFORM_ICON,
+        Boolean.class,
+        data == null ? true : data.showChatPlatformIcon,
+        this::onUpdate
+    );
+    this.statusIndicator = new StatefulEmitter<>(
+        ConfigType.STATUS_INDICATOR,
+        SeparableHudElement.class,
+        data == null
+            ? new SeparableHudElement(true, false, false, SeparableHudElement.PlatformIconPosition.LEFT)
+            : data.statusIndicator.deserialise(),
+        this::onUpdate
+    );
+    this.viewerCount = new StatefulEmitter<>(
+        ConfigType.VIEWER_COUNT,
+        SeparableHudElement.class,
+        data == null
+            ? new SeparableHudElement(true, false, false, SeparableHudElement.PlatformIconPosition.LEFT)
+            : data.viewerCount.deserialise(),
+        this::onUpdate
+    );
+    this.debugModeEnabled = new StatefulEmitter<>(
+        ConfigType.DEBUG_MODE_ENABLED,
+        Boolean.class,
+        data == null ? false : data.debugModeEnabled,
+        this::onUpdate
+    );
+    this.lastGetChatResponse = new StatefulEmitter<>(
+        ConfigType.LAST_GET_CHAT_RESPONSE,
+        Long.class,
+        data == null ? 0L : data.lastGetChatResponse,
+        this::onUpdate
+    );
+    this.lastGetChatMateEventsResponse = new StatefulEmitter<>(
+        ConfigType.LAST_GET_CHAT_MATE_EVENTS_RESPONSE,
+        Long.class,
+        data == null ? 0L : data.lastGetChatMateEventsResponse,
+        this::onUpdate
+    );
+    this.hudTransforms = new StatefulEmitter<>(
+        ConfigType.HUD_TRANSFORMS,
+        (Class<Map<String, HudElementTransform>>)(Object)Map.class,
+        data == null ? new HashMap<>() : dev.rebel.chatmate.util.Collections.map(data.hudTransforms, s -> s.deserialise(dimFactory)),
+        this::onUpdate
+    );
+    this.loginInfo = new StatefulEmitter<>(
+        ConfigType.LOGIN_INFO,
+        LoginInfo.class,
+        data == null ? new LoginInfo(null, null) : data.loginInfo.deserialise(),
+        this::onUpdate
+    );
   }
 
   public void listenAny(Callback callback) {
     this.updateListeners.add(callback);
   }
 
-  private <T> Out<T> onUpdate(In<T> _unused) {
+  private <T> void onUpdate(Event<T> _unused) {
     this.saveDebouncer.doDebounce();
     this.updateListeners.forEach(Callback::call);
-    return new Out<>();
   }
 
   @Nullable
@@ -159,41 +223,41 @@ public class Config extends EventServiceBase<ConfigType> {
   /** Represents a state that emits an event when modified */
   public class StatefulEmitter<T> {
     private final ConfigType type;
+    private final Class<T> clazz;
     private T state;
 
     @SafeVarargs
-    public StatefulEmitter (ConfigType type, T initialState, Function<In<T>, Out<T>>... initialListeners) {
+    public StatefulEmitter (ConfigType type, Class<T> clazz, T initialState, EventCallback<T>... initialListeners) {
       super();
       this.type = type;
+      this.clazz = clazz;
       this.state = initialState;
       Arrays.asList(initialListeners).forEach(l -> Config.this.addListener(this.type, l, null));
     }
 
     /** Lambda allowed - no automatic unsubscribing. */
-    public void onChange(Consumer<T> callback) {
-      Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
+    public void onChange(EventCallback<T> handler) {
       this.onChange(handler, null);
     }
 
     /** **NO LAMBDA** - automatic unsubscribing. */
-    public void onChange(Function<In<T>, Out<T>> handler, Object key) {
+    public void onChange(EventCallback<T> handler, Object key) {
       this.onChange(handler, key, false);
     }
 
     // if you try to add a lambda it won't stay subscribed - create a field first which may be a lambda
     /** **NO LAMBDA** - automatic unsubscribing. */
-    public void onChange(Function<In<T>, Out<T>> handler, Object key, boolean fireInitialOnChange) {
-      this.onChange(handler, new Options<>(), key, fireInitialOnChange);
+    public void onChange(EventCallback<T> handler, Object key, boolean fireInitialOnChange) {
+      this.onChange(handler, new ConfigEventOptions<>(), key, fireInitialOnChange);
     }
 
     /** Lambda allowed - no automatic unsubscribing. */
-    public void onChange(Consumer<T> callback, @Nullable Options<T> options) {
-      Function<In<T>, Out<T>> handler = in -> { callback.accept(in.data); return new Out<>(); };
+    public void onChange(EventCallback<T> handler, @Nullable ConfigEventOptions<T> options) {
       this.onChange(handler, options, null, false);
     }
 
     /** **NO LAMBDA** - automatic unsubscribing. */
-    public void onChange(Function<In<T>, Out<T>> handler, @Nullable Options<T> options, Object key, boolean fireInitialOnChange) {
+    public void onChange(EventCallback<T> handler, @Nullable ConfigEventOptions<T> options, Object key, boolean fireInitialOnChange) {
       Config.this.addListener(this.type, handler, options, key);
 
       // fireInitialOnChange is a convenience option for callers that perform logic directly inside the callback function - don't remove it
@@ -201,11 +265,11 @@ public class Config extends EventServiceBase<ConfigType> {
         if (options != null && options.filter != null && !options.filter.test(this.state)) {
           return;
         }
-        In<T> eventIn = new In<>(this.state);
+
         try {
-          handler.apply(eventIn);
+          handler.dispatch(new Event<>(this.state));
         } catch (Exception e) {
-          Config.this.logService.logError(this, "A problem occurred while notifying listener of the", this.type, "event. Event data:", eventIn, "| Error:", e);
+          Config.this.logService.logError(this, "A problem occurred while notifying listener of the", this.type, "event. Event data:", this.state, "| Error:", e);
         }
       }
     }
@@ -221,15 +285,14 @@ public class Config extends EventServiceBase<ConfigType> {
         this.state = newValue;
       }
 
-      ArrayList<EventHandler<In<T>, Out<T>, Options<T>>> handlers = Config.this.getListeners(this.type, ConfigEventData.class);
-      for (EventHandler<In<T>, Out<T>, Options<T>> handler : handlers) {
-        Options<T> options = handler.options;
+      ArrayList<EventHandler<T, ConfigEventOptions<T>>> handlers = Config.this.getListeners(this.type, this.clazz, (Class<ConfigEventOptions<T>>)(Object)ConfigEventOptions.class); // fuck off java
+      for (EventHandler<T, ConfigEventOptions<T>> handler : handlers) {
+        ConfigEventOptions<T> options = handler.options;
         if (options != null && options.filter != null && !options.filter.test(newValue)) {
           continue;
         }
 
-        In<T> eventIn = new In<>(newValue);
-        Out<T> eventOut = Config.this.safeDispatch(this.type, handler, eventIn);
+        Config.this.safeDispatch(this.type, handler, new Event<>(newValue));
       }
     }
 

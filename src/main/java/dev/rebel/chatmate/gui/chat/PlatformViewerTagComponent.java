@@ -1,10 +1,12 @@
 package dev.rebel.chatmate.gui.chat;
 
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem.ChatPlatform;
-import dev.rebel.chatmate.events.models.ConfigEventData;
-import dev.rebel.chatmate.gui.style.Colour;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import net.minecraft.util.ChatComponentText;
 
 import java.util.function.BiFunction;
@@ -21,7 +23,7 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
   private final DimFactory dimFactory;
   private final ChatPlatform platform;
   private final boolean greyScale;
-  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeShowChatPlatformIcon = this::onChangeShowChatPlatformIcon;
+  private final EventCallback<Boolean> _onChangeShowChatPlatformIcon = this::onChangeShowChatPlatformIcon;
 
   public PlatformViewerTagComponent(DimFactory dimFactory, ChatPlatform platform) {
     this.dimFactory = dimFactory;
@@ -37,9 +39,8 @@ public class PlatformViewerTagComponent extends ContainerChatComponent {
     config.getShowChatPlatformIconEmitter().onChange(this._onChangeShowChatPlatformIcon, this, true);
   }
 
-  private ConfigEventData.Out<Boolean> onChangeShowChatPlatformIcon(ConfigEventData.In<Boolean> in) {
-    this.setComponent(in.data);
-    return new ConfigEventData.Out<>();
+  private void onChangeShowChatPlatformIcon(Event<Boolean> event) {
+    this.setComponent(event.getData());
   }
 
   private void setComponent(boolean showChatPlatformIcon) {

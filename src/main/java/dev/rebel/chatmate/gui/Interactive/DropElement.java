@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractionEventBoundaryElement.IInteractionEventBoundaryListener;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -7,7 +8,6 @@ import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
@@ -75,7 +75,7 @@ public class DropElement extends SingleElement implements IInteractionEventBound
   }
 
   @Override
-  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.pressedButtons.contains(MouseButton.LEFT_BUTTON)) {
       this.mouseStart = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
       this.prevPosition = this.mouseStart;
@@ -87,7 +87,7 @@ public class DropElement extends SingleElement implements IInteractionEventBound
   }
 
   @Override
-  public void onMouseMove(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseMove(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.pressedButtons.contains(MouseButton.LEFT_BUTTON) && this.prevPosition != null) {
       DimPoint currentPosition = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
       this.totalDistanceTravelled = this.totalDistanceTravelled.plus(currentPosition.distanceTo(this.prevPosition));
@@ -101,7 +101,7 @@ public class DropElement extends SingleElement implements IInteractionEventBound
   }
 
   @Override
-  public void onMouseUp(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseUp(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       this.listener.onDrop(this.mouseStart, e.getData().mousePositionData.point, this.totalDistanceTravelled);
       this.mouseStart = null;
@@ -115,14 +115,14 @@ public class DropElement extends SingleElement implements IInteractionEventBound
   }
 
   @Override
-  public void onMouseScroll(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseScroll(InteractiveEvent<MouseEventData> e) {
     if (this.blockInteractionEvents) {
       e.stopPropagation();
     }
   }
 
   @Override
-  public void onMouseExit(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseExit(InteractiveEvent<MouseEventData> e) {
     if (this.blockInteractionEvents) {
       e.stopPropagation();
     }

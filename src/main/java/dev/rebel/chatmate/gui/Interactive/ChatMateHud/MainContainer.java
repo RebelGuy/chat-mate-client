@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
@@ -88,7 +88,7 @@ public class MainContainer extends ElementBase implements IDropElementListener {
   }
 
   @Override
-  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
 
@@ -157,7 +157,7 @@ public class MainContainer extends ElementBase implements IDropElementListener {
   }
 
   @Override
-  public void onMouseScroll(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseScroll(InteractiveEvent<MouseEventData> e) {
     DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
     @Nullable HudElement hoveredElement = null;
     for (HudElement element : this.store.getElements()) {

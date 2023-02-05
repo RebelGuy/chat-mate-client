@@ -38,27 +38,27 @@ public class OverlayElement extends ContainerElement implements IInteractionEven
 
   // interaction events bubbling up to here are those occurring on the overlay layer (excluding holes or children boxes).
   @Override
-  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     e.stopPropagation();
   }
 
   @Override
-  public void onMouseMove(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseMove(InteractiveEvent<MouseEventData> e) {
     e.stopPropagation();
   }
 
   @Override
-  public void onMouseUp(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseUp(InteractiveEvent<MouseEventData> e) {
     e.stopPropagation();
   }
 
   @Override
-  public void onMouseScroll(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseScroll(InteractiveEvent<MouseEventData> e) {
     e.stopPropagation();
   }
 
   @Override
-  public void onKeyDown(InteractiveEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     e.stopPropagation();
   }
 }

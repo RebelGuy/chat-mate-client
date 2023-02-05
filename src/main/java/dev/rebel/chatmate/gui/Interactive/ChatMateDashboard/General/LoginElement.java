@@ -1,19 +1,19 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General;
 
-import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.api.models.account.LoginRequest;
 import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.config.Config.LoginInfo;
-import dev.rebel.chatmate.events.models.ConfigEventData;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.TextInputElement.InputType;
-import dev.rebel.chatmate.util.Objects;
-import dev.rebel.chatmate.util.TextHelpers;
 
 import java.util.function.Function;
 
@@ -30,7 +30,7 @@ public class LoginElement extends BlockElement {
   private final LoadingSpinnerElement loadingSpinner;
   private final LabelElement errorLabel;
   private final AccountEndpointProxy accountEndpointProxy;
-  private final Function<ConfigEventData.In<LoginInfo>, ConfigEventData.Out<LoginInfo>> _onLoginChange = this::onLoginChange;
+  private final EventCallback<LoginInfo> _onLoginChange = this::onLoginChange;
 
   public LoginElement(InteractiveContext context, IElement parent, AccountEndpointProxy accountEndpointProxy) {
     super(context, parent);
@@ -98,8 +98,8 @@ public class LoginElement extends BlockElement {
     context.config.getLoginInfoEmitter().onChange(this._onLoginChange, this, true);
   }
 
-  private ConfigEventData.Out<LoginInfo> onLoginChange(ConfigEventData.In<LoginInfo> in) {
-    boolean isLoggedOut = in.data.loginToken == null;
+  private void onLoginChange(Event<LoginInfo> event) {
+    boolean isLoggedOut = event.getData().loginToken == null;
 
     this.usernameInput.setVisible(isLoggedOut);
     this.passwordInput.setVisible(isLoggedOut);
@@ -108,8 +108,6 @@ public class LoginElement extends BlockElement {
         .setText(String.format("Hi, %s!", context.config.getLoginInfoEmitter().get().username))
         .setVisible(!isLoggedOut);
     this.logoutButton.setVisible(!isLoggedOut);
-
-    return new ConfigEventData.Out<>();
   }
 
   private void onUsernameChange(String username) {

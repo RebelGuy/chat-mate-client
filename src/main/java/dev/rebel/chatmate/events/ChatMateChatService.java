@@ -5,6 +5,7 @@ import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.DateTimeService;
 import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
 import dev.rebel.chatmate.services.LogService;
@@ -37,12 +38,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     this.dateTimeService = dateTimeService;
   }
 
-  public void onNewChat(Consumer<PublicChatItem[]> callback, Object key) {
-    // todo: lambdas are forbidden... will have to deal with it in a similar way to the config subscriptions
-    Function<NewChatEventData.In, NewChatEventData.Out> handler = newChat -> {
-      callback.accept(newChat.chatItems);
-      return new NewChatEventData.Out();
-    };
+  public void onNewChat(EventCallback<NewChatEventData> handler, Object key) {
     super.addListener(EventType.NEW_CHAT, handler, null, key);
   }
 
@@ -59,9 +55,10 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
 
   private void onApiResponse(GetChatResponseData response) {
     this.config.getLastGetChatResponseEmitter().set(response.reusableTimestamp);
-    for (EventHandler<NewChatEventData.In, NewChatEventData.Out, NewChatEventData.Options> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
-      NewChatEventData.In eventIn = new NewChatEventData.In(response.chat);
-      super.safeDispatch(EventType.NEW_CHAT, handler, eventIn);
+
+    Event<NewChatEventData> event = new Event<>(new NewChatEventData(response.chat));
+    for (EventHandler<NewChatEventData, ?> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
+      super.safeDispatch(EventType.NEW_CHAT, handler, event);
     }
   }
 

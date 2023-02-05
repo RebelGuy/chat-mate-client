@@ -2,6 +2,8 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
+import dev.rebel.chatmate.events.*;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
@@ -18,9 +20,6 @@ import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.events.ChatMateChatService;
-import dev.rebel.chatmate.events.ChatMateEventService;
-import dev.rebel.chatmate.events.MinecraftChatEventService;
 import net.minecraft.util.ChatComponentText;
 import org.junit.Before;
 import org.junit.Test;
@@ -202,11 +201,11 @@ public class McChatServiceTests {
 
     // since we are dealing with a void method, the only way to retrieve the input is
     // using an ArgumentCaptor and verify()
-    ArgumentCaptor<Consumer<Boolean>> captor = ArgumentCaptor.forClass(Consumer.class);
+    ArgumentCaptor<EventCallback<Boolean>> captor = ArgumentCaptor.forClass(EventCallback.class);
     verify(this.mockShowChatPlatformIconEmitter).onChange(captor.capture());
 
     // notify the subscriber that the value has changed to true
-    captor.getValue().accept(true);
+    captor.getValue().dispatch(new Event<>(true));
 
     // this should have triggered a chat refresh
     verify(this.mockMinecraftProxyService).refreshChat();

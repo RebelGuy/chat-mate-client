@@ -1,38 +1,35 @@
 package dev.rebel.chatmate.events;
 
-import dev.rebel.chatmate.events.models.EventData;
-
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
-import java.util.function.Function;
 
 // Java doesn't support type inference for classes like it does for methods - e.g. EventService<MyEventData> cannot
 // infer MyEventData.MyEventIn, etc. this is why we have to stick to this annoying verbose notation.
 /** If no (or a null) key is provided, the event handler is considered STRONG and will hold on to the callback method, which may be a lambda.
  * If a key is provided, the event handler is considered WEAK and will not hold on to the key or callback method, which may NOT be a lambda. */
-public class EventHandler<In extends EventData.EventIn, Out extends EventData.EventOut, Options extends EventData.EventOptions> {
-  public final Options options;
+public class EventHandler<TData, TOptions> {
+  public final TOptions options;
   private final @Nullable WeakReference<Object> key;
 
   // It is important that we also don't hold on to the callback reference, otherwise the key may not be released
   // (since they are usually attached to the same class instance)
-  private final @Nullable WeakReference<Function<In, Out>> callbackRef;
-  private final @Nullable Function<In, Out> callback;
+  private final @Nullable WeakReference<EventCallback<TData>> callbackRef;
+  private final @Nullable EventCallback<TData> callback;
 
   /** No weak references. */
-  public EventHandler(Function<In, Out> callback, Options options) {
+  public EventHandler(EventCallback<TData> callback, TOptions options) {
     this(callback, options, null);
   }
 
   /** Weak references. */
-  public EventHandler(Function<In, Out> callback, Options options, @Nullable Object key) {
+  public EventHandler(EventCallback<TData> callback, TOptions options, @Nullable Object key) {
     this.options = options;
     this.callbackRef = key == null ? null : new WeakReference<>(callback);
     this.callback = key == null ? callback : null;
     this.key = key == null ? null : new WeakReference<>(key);
   }
 
-  public @Nullable Function<In, Out> getCallbackRef() {
+  public @Nullable EventCallback<TData> getCallbackRef() {
     return this.key == null ? this.callback : this.callbackRef.get();
   }
 
@@ -50,5 +47,10 @@ public class EventHandler<In extends EventData.EventIn, Out extends EventData.Ev
     } else {
       return true;
     }
+  }
+
+  @FunctionalInterface
+  public interface EventCallback<TData> {
+    void dispatch(Event<TData> event);
   }
 }

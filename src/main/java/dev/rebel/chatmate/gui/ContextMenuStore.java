@@ -1,16 +1,16 @@
 package dev.rebel.chatmate.gui;
 
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventOptions;
 import dev.rebel.chatmate.gui.ContextMenu.ContextMenuOption;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.MouseEventService;
-import dev.rebel.chatmate.events.models.GuiScreenChanged;
+import dev.rebel.chatmate.events.models.GuiScreenChangedEventData;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.events.models.MouseEventData.Out.MouseHandlerAction;
-import dev.rebel.chatmate.events.models.Tick;
 import net.minecraft.client.Minecraft;
 
 import javax.annotation.Nullable;
@@ -25,7 +25,7 @@ public class ContextMenuStore {
   private final FontEngine fontEngine;
 
   private ContextMenu currentMenu;
-  private MouseEventData.In.MousePositionData latestPositionData;
+  private MouseEventData.MousePositionData latestPositionData;
   private boolean setClear = false;
 
   public ContextMenuStore(Minecraft minecraft, ForgeEventService forgeEventService, MouseEventService mouseEventService, DimFactory dimFactory, FontEngine fontEngine) {
@@ -35,40 +35,38 @@ public class ContextMenuStore {
     this.dimFactory = dimFactory;
     this.fontEngine = fontEngine;
 
-    this.forgeEventService.onRenderTick(this::onRender, null);
+    this.forgeEventService.onRenderTick(this::onRender);
     this.forgeEventService.onGuiScreenChanged(this::onGuiScreenChanged, null);
-    this.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this::onMouseMove, new MouseEventData.Options(), null);
-    this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this::onMouseDown, new MouseEventData.Options(), null);
+    this.mouseEventService.on(MouseEventService.MouseEventType.MOUSE_MOVE, this::onMouseMove, new MouseEventOptions(), null);
+    this.mouseEventService.on(MouseEventService.MouseEventType.MOUSE_DOWN, this::onMouseDown, new MouseEventOptions(), null);
   }
 
-  private GuiScreenChanged.Out onGuiScreenChanged(GuiScreenChanged.In in) {
+  private void onGuiScreenChanged(Event<GuiScreenChangedEventData> event) {
     this.clearContextMenu();
-    return new GuiScreenChanged.Out();
   }
 
-  private MouseEventData.Out onMouseDown(MouseEventData.In in) {
+  private void onMouseDown(Event<MouseEventData> event) {
     if (this.currentMenu == null) {
-      return new MouseEventData.Out();
+      return;
     }
 
-    if (in.mouseButtonData.eventButton != MouseButton.LEFT_BUTTON) {
+    MouseEventData data = event.getData();
+    if (data.mouseButtonData.eventButton != MouseButton.LEFT_BUTTON) {
       this.clearContextMenu();
-      return new MouseEventData.Out();
+      return;
     }
 
-    if (this.currentMenu.handleClick(in.mousePositionData.x, in.mousePositionData.y)) {
+    if (this.currentMenu.handleClick(data.mousePositionData.x, data.mousePositionData.y)) {
       this.clearContextMenu();
-      return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
+      event.stopPropagation();
     } else {
       this.clearContextMenu();
-      return new MouseEventData.Out();
     }
   }
 
-  private MouseEventData.Out onMouseMove(MouseEventData.In in) {
+  private void onMouseMove(Event<MouseEventData> event) {
     // todo: have mouseEventService store the current position, so it can be fetched on-demand
-    this.latestPositionData = in.mousePositionData;
-    return new MouseEventData.Out();
+    this.latestPositionData = event.getData().mousePositionData;
   }
 
   public void showContextMenu(Dim x, Dim y, @Nullable ContextMenuOption... options) {
@@ -87,7 +85,7 @@ public class ContextMenuStore {
     return this.currentMenu != null;
   }
 
-  private Tick.Out onRender(Tick.In in) {
+  private void onRender(Event<?> event) {
     if (this.setClear) {
       this.setClear = false;
       this.currentMenu = null;
@@ -100,7 +98,5 @@ public class ContextMenuStore {
     if (this.currentMenu != null && this.latestPositionData != null) {
       this.currentMenu.drawMenu(this.latestPositionData.x, this.latestPositionData.y, width, height, maxWidth, this.fontEngine);
     }
-
-    return new Tick.Out();
   }
 }

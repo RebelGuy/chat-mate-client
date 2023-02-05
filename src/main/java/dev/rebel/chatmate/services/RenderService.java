@@ -1,12 +1,13 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.events.ForgeEventService;
-import dev.rebel.chatmate.events.models.RenderGameOverlay;
-import dev.rebel.chatmate.events.models.RenderGameOverlay.Options;
+import dev.rebel.chatmate.events.models.RenderGameOverlayEventData;
+import dev.rebel.chatmate.events.models.RenderGameOverlayEventOptions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
@@ -55,15 +56,15 @@ public class RenderService {
   }
 
   private void registerHandlers() {
-    this.forgeEventService.onRenderGameOverlay(this::onRenderGameOverlay, new Options(ElementType.ALL));
+    this.forgeEventService.onRenderGameOverlay(this::onRenderGameOverlay, new RenderGameOverlayEventOptions(ElementType.ALL));
   }
 
-  private RenderGameOverlay.Out onRenderGameOverlay(RenderGameOverlay.In eventIn) {
+  private void onRenderGameOverlay(Event<RenderGameOverlayEventData> event) {
     if (this.drawnText == null) {
-      return null;
+      return;
     } else if (this.drawnText.get() == null) {
       this.drawnText = null;
-      return null;
+      return;
     }
 
     DrawnText drawnText = this.drawnText.get();
@@ -84,8 +85,6 @@ public class RenderService {
 
       GlStateManager.popMatrix();
     }
-
-    return null;
   }
 
   // Modifying these properties will be reflected in the rendering immediately.

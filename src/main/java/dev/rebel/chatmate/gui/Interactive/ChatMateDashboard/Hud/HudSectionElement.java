@@ -1,5 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud;
 
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.HudRoute;
@@ -16,7 +19,7 @@ import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.Config.SeparableHudElement;
 import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
 import dev.rebel.chatmate.config.Config.StatefulEmitter;
-import dev.rebel.chatmate.events.models.ConfigEventData;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 
 import javax.annotation.Nullable;
 import java.util.function.Function;
@@ -27,9 +30,9 @@ import static dev.rebel.chatmate.util.TextHelpers.toSentenceCase;
 public class HudSectionElement extends ContainerElement implements ISectionElement {
   private final static float SCALE = 0.75f;
 
-  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeHudEnabled = this::onChangeHudEnabled;
-  private final Function<ConfigEventData.In<SeparableHudElement>, ConfigEventData.Out<SeparableHudElement>> _onChangeStatusIndicator = this::onChangeStatusIndicator;
-  private final Function<ConfigEventData.In<SeparableHudElement>, ConfigEventData.Out<SeparableHudElement>> _onChangeViewerCount = this::onChangeViewerCount;
+  private final EventCallback<Boolean> _onChangeHudEnabled = this::onChangeHudEnabled;
+  private final EventCallback<SeparableHudElement> _onChangeStatusIndicator = this::onChangeStatusIndicator;
+  private final EventCallback<SeparableHudElement> _onChangeViewerCount = this::onChangeViewerCount;
 
   private final CheckboxInputElement enableHudCheckbox;
   private final CheckboxInputElement showStatusIndicatorCheckbox;
@@ -113,8 +116,8 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     this.didResetHudLabel.setVisible(true);
   }
 
-  private ConfigEventData.Out<Boolean> onChangeHudEnabled(ConfigEventData.In<Boolean> in) {
-    boolean enabled = in.data;
+  private void onChangeHudEnabled(Event<Boolean> event) {
+    boolean enabled = event.getData();
     this.enableHudCheckbox.setChecked(enabled, true);
     this.showStatusIndicatorCheckbox.setEnabled(this, enabled);
     this.statusIndicatorSubElement.separatePlatformsElement.setEnabled(this, enabled); // nice use of the key functionality of setEnabled!
@@ -124,23 +127,20 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     this.viewerCountSubElement.separatePlatformsElement.setEnabled(this, enabled);
     this.viewerCountSubElement.showPlatformIconElement.setEnabled(this, enabled);
     this.viewerCountSubElement.iconLocationDropdown.setEnabled(this, enabled);
-    return new ConfigEventData.Out<>();
   }
 
-  private ConfigEventData.Out<SeparableHudElement> onChangeStatusIndicator(ConfigEventData.In<SeparableHudElement> in) {
-    this.showStatusIndicatorCheckbox.setChecked(in.data.enabled, true);
-    return new ConfigEventData.Out<>();
+  private void onChangeStatusIndicator(Event<SeparableHudElement> event) {
+    this.showStatusIndicatorCheckbox.setChecked(event.getData().enabled, true);
   }
 
-  private ConfigEventData.Out<SeparableHudElement> onChangeViewerCount(ConfigEventData.In<SeparableHudElement> in) {
-    this.showViewerCountCheckbox.setChecked(in.data.enabled, true);
-    return new ConfigEventData.Out<>();
+  private void onChangeViewerCount(Event<SeparableHudElement> event) {
+    this.showViewerCountCheckbox.setChecked(event.getData().enabled, true);
   }
 
   private static class ExpandableElement extends WrapperElement {
     private final AnimatedBool expanded;
     private final StatefulEmitter<SeparableHudElement> emitter;
-    private final Function<ConfigEventData.In<SeparableHudElement>, ConfigEventData.Out<SeparableHudElement>> _onChangeConfig = this::onChangeConfig;
+    private final EventCallback<SeparableHudElement> _onChangeConfig = this::onChangeConfig;
 
     public final CheckboxInputElement separatePlatformsElement;
     public final CheckboxInputElement showPlatformIconElement;
@@ -199,15 +199,14 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
       emitter.onChange(this._onChangeConfig, this, true);
     }
 
-    private ConfigEventData.Out<SeparableHudElement> onChangeConfig(ConfigEventData.In<SeparableHudElement> eventIn) {
-      this.setExpanded(eventIn.data.enabled);
-      this.separatePlatformsElement.setChecked(eventIn.data.separatePlatforms, true);
-      this.showPlatformIconElement.setChecked(eventIn.data.showPlatformIcon, true);
-      this.showPlatformIconElement.setEnabled(this, eventIn.data.separatePlatforms);
-      this.iconLocationDropdown.setEnabled(this, eventIn.data.separatePlatforms && eventIn.data.showPlatformIcon);
-      this.iconLocationDropdown.setSelection(eventIn.data.platformIconPosition);
-
-      return new ConfigEventData.Out<>();
+    private void onChangeConfig(Event<SeparableHudElement> event) {
+      SeparableHudElement data = event.getData();
+      this.setExpanded(data.enabled);
+      this.separatePlatformsElement.setChecked(data.separatePlatforms, true);
+      this.showPlatformIconElement.setChecked(data.showPlatformIcon, true);
+      this.showPlatformIconElement.setEnabled(this, data.separatePlatforms);
+      this.iconLocationDropdown.setEnabled(this, data.separatePlatforms && data.showPlatformIcon);
+      this.iconLocationDropdown.setSelection(data.platformIconPosition);
     }
 
     private void onClickSelection(PlatformIconPosition position) {

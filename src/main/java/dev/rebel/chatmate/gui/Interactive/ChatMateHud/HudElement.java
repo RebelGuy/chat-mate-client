@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.config.Config.HudElementTransform;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
@@ -10,7 +12,6 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.Objects;

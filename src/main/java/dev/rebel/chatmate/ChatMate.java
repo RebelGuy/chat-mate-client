@@ -264,7 +264,8 @@ public class ChatMate {
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 
-    config.getChatMateEnabledEmitter().onChange(enabled -> {
+    config.getChatMateEnabledEmitter().onChange(e -> {
+      boolean enabled = e.getData();
       if (enabled) {
         mcChatService.printInfo(String.format("Enabled. [%s]", environment.env.toString().toCharArray()[0]));
       }

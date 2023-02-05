@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.events.models.KeyboardEventData.KeyModifier;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData.FocusReason;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
@@ -13,9 +15,7 @@ import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
-import dev.rebel.chatmate.events.models.KeyboardEventData.In.KeyModifier;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.TextHelpers;
@@ -95,7 +95,7 @@ public class TextInputElement extends InputElement {
   }
 
   @Override
-  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       Dim relX = e.getData().mousePositionData.x.minus(this.getContentBox().getX());
       String textBeforeCursor = this.fontEngine.trimStringToWidth(this.getVisibleText(), (int)(relX.getGui() / this.textScale)); // i.e. do this operation at 100% scale
@@ -105,7 +105,7 @@ public class TextInputElement extends InputElement {
   }
 
   @Override
-  public void onKeyDown(InteractiveEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     if (this.textboxKeyTyped(e.getData())) {
       e.stopPropagation();
     }
@@ -321,7 +321,7 @@ public class TextInputElement extends InputElement {
     return currentPos;
   }
 
-  public boolean textboxKeyTyped(KeyboardEventData.In data) {
+  public boolean textboxKeyTyped(KeyboardEventData data) {
     if (data.isKeyModifierActive(KeyModifier.CTRL) && data.isPressed(Keyboard.KEY_A)) {
       this.setCursorPositionToEnd();
       this.setSelectionIndex(0);

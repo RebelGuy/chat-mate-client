@@ -1,6 +1,11 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Environment;
+import dev.rebel.chatmate.events.*;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.KeyboardEventService.KeyboardEventType;
+import dev.rebel.chatmate.events.MouseEventService.MouseEventType;
+import dev.rebel.chatmate.events.models.*;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
@@ -8,7 +13,6 @@ import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData.FocusReason;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventPhase;
-import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventType;
 import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.Screen;
@@ -19,15 +23,6 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.*;
-import dev.rebel.chatmate.events.ForgeEventService;
-import dev.rebel.chatmate.events.KeyboardEventService;
-import dev.rebel.chatmate.events.MouseEventService;
-import dev.rebel.chatmate.events.models.ConfigEventData;
-import dev.rebel.chatmate.events.models.KeyboardEventData;
-import dev.rebel.chatmate.events.models.KeyboardEventData.Out.KeyboardHandlerAction;
-import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.Out.MouseHandlerAction;
-import dev.rebel.chatmate.events.models.ScreenResizeData;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.stores.DonationApiStore;
 import dev.rebel.chatmate.stores.LivestreamApiStore;
@@ -39,7 +34,6 @@ import org.lwjgl.input.Keyboard;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 // note: this is the top-level screen that is responsible for triggering element renders and passing through interactive events.
 // it does not fully implement the IElement interface (most things are meaningless) - just enough to glue things together.
@@ -50,14 +44,14 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   private final @Nullable GuiScreen parentScreen;
   private int recalculationCounter = 0;
 
-  private final Function<MouseEventData.In, MouseEventData.Out> _onMouseDown = this::onMouseDown;
-  private final Function<MouseEventData.In, MouseEventData.Out> _onMouseMove = this::onMouseMove;
-  private final Function<MouseEventData.In, MouseEventData.Out> _onMouseUp = this::onMouseUp;
-  private final Function<MouseEventData.In, MouseEventData.Out> _onMouseScroll = this::onMouseScroll;
-  private final Function<KeyboardEventData.In, KeyboardEventData.Out> _onKeyDown = this::onKeyDown;
-  private final Function<KeyboardEventData.In, KeyboardEventData.Out> _onKeyUp = this::onKeyUp;
-  private final Function<ScreenResizeData.In, ScreenResizeData.Out> _onScreenResize = this::onScreenResize;
-  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
+  private final EventCallback<MouseEventData> _onMouseDown = this::onMouseDown;
+  private final EventCallback<MouseEventData> _onMouseMove = this::onMouseMove;
+  private final EventCallback<MouseEventData> _onMouseUp = this::onMouseUp;
+  private final EventCallback<MouseEventData> _onMouseScroll = this::onMouseScroll;
+  private final EventCallback<KeyboardEventData> _onKeyDown = this::onKeyDown;
+  private final EventCallback<KeyboardEventData> _onKeyUp = this::onKeyUp;
+  private final EventCallback<ScreenResizeData> _onScreenResize = this::onScreenResize;
+  private final EventCallback<Boolean> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
 
   protected boolean requiresRecalculation = true;
   protected boolean shouldCloseScreen = false;
@@ -84,15 +78,15 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     this.screenSize = context.dimFactory.getMinecraftSize();
     this.minecraftScaleFactor = context.dimFactory.getScaleFactor();
 
-    this.context.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this._onMouseDown, new MouseEventData.Options(true), this);
-    this.context.mouseEventService.on(MouseEventService.Events.MOUSE_MOVE, this._onMouseMove, new MouseEventData.Options(true), this);
-    this.context.mouseEventService.on(MouseEventService.Events.MOUSE_UP, this._onMouseUp, new MouseEventData.Options(true), this);
-    this.context.mouseEventService.on(MouseEventService.Events.MOUSE_SCROLL, this._onMouseScroll, new MouseEventData.Options(true), this);
-    this.context.keyboardEventService.on(KeyboardEventService.Events.KEY_DOWN, this._onKeyDown, new KeyboardEventData.Options(true, null, null, null), this);
-    this.context.keyboardEventService.on(KeyboardEventService.Events.KEY_UP, this._onKeyUp, new KeyboardEventData.Options(true, null, null, null), this);
+    this.context.mouseEventService.on(MouseEventType.MOUSE_DOWN, this._onMouseDown, new MouseEventOptions(), this);
+    this.context.mouseEventService.on(MouseEventType.MOUSE_MOVE, this._onMouseMove, new MouseEventOptions(), this);
+    this.context.mouseEventService.on(MouseEventType.MOUSE_UP, this._onMouseUp, new MouseEventOptions(), this);
+    this.context.mouseEventService.on(MouseEventType.MOUSE_SCROLL, this._onMouseScroll, new MouseEventOptions(), this);
+    this.context.keyboardEventService.on(KeyboardEventType.KEY_DOWN, this._onKeyDown, new KeyboardEventOptions(null, null, null), this);
+    this.context.keyboardEventService.on(KeyboardEventType.KEY_UP, this._onKeyUp, new KeyboardEventOptions(null, null, null), this);
 
     // we don't want to override the default `onScreenSizeUpdated()` because it fires only when this interactive screen is active in `Minecraft`, which may not necessarily be the case (e.g. for the HUD)
-    this.context.forgeEventService.onScreenResize(this._onScreenResize, new ScreenResizeData.Options(), this);
+    this.context.forgeEventService.onScreenResize(this._onScreenResize, this);
 
     this.context.config.getDebugModeEnabledEmitter().onChange(this._onChangeDebugModeEnabled, this, false);
   }
@@ -116,10 +110,10 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
 
   protected void doCloseScreen() {
     // fire the MOUSE_EXIT event one last time
-    MouseEventData.In in = this.context.mouseEventService.constructSyntheticMoveEvent();
-    List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
+    MouseEventData data = this.context.mouseEventService.constructSyntheticMoveEvent();
+    List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, data.mousePositionData.point);
     for (IElement element : elements) {
-        element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, element));
+        element.onEvent(InteractiveEvent.EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, data, element));
     }
 
     this.mc.displayGuiScreen(this.parentScreen);
@@ -128,20 +122,18 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     }
   }
 
-  protected ScreenResizeData.Out onScreenResize(ScreenResizeData.In eventIn) {
+  protected void onScreenResize(Event<ScreenResizeData> event) {
     this.onInvalidateSize();
 
     int newScaleFactor = this.context.dimFactory.getScaleFactor();
     DimPoint newSize = this.context.dimFactory.getMinecraftSize();
     ScreenSizeData eventData = new ScreenSizeData(this.screenSize, this.minecraftScaleFactor, newSize, newScaleFactor);
     for (IElement element : ElementHelpers.getAllChildren(this)) {
-      element.onEvent(EventType.WINDOW_RESIZE, new InteractiveEvent<>(EventPhase.TARGET, eventData, element));
+      element.onEvent(InteractiveEvent.EventType.WINDOW_RESIZE, new InteractiveEvent<>(EventPhase.TARGET, eventData, element));
     }
 
     this.screenSize = newSize;
     this.minecraftScaleFactor = newScaleFactor;
-
-    return new ScreenResizeData.Out();
   }
 
   @Override
@@ -230,7 +222,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     this.context.renderer.runSideEffect(() -> {
       if (this.recalculationCounter > 0) {
         // if this causes any more side effects, those will be executed immediately as part of this cycle
-        this.onMouseMove(this.context.mouseEventService.constructSyntheticMoveEvent());
+        this.onMouseMove(new Event<>(this.context.mouseEventService.constructSyntheticMoveEvent()));
         this.recalculationCounter = 0;
       }
     });
@@ -247,13 +239,13 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public void onGuiClosed() {
     // for some reason the InteractiveScreen isn't immediately garbage collected (until going back to the main menu)
     // so let's just unsubscribe from events manually. this is probably how it should be done anyway. I accept defeat
-    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_DOWN, this);
-    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_MOVE, this);
-    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_UP, this);
-    this.context.mouseEventService.off(MouseEventService.Events.MOUSE_SCROLL, this);
-    this.context.keyboardEventService.off(KeyboardEventService.Events.KEY_DOWN, this);
-    this.context.keyboardEventService.off(KeyboardEventService.Events.KEY_UP, this);
-    this.context.forgeEventService.off(ForgeEventService.Events.ScreenResize, this);
+    this.context.mouseEventService.off(MouseEventType.MOUSE_DOWN, this);
+    this.context.mouseEventService.off(MouseEventType.MOUSE_MOVE, this);
+    this.context.mouseEventService.off(MouseEventType.MOUSE_UP, this);
+    this.context.mouseEventService.off(MouseEventType.MOUSE_SCROLL, this);
+    this.context.keyboardEventService.off(KeyboardEventType.KEY_DOWN, this);
+    this.context.keyboardEventService.off(KeyboardEventType.KEY_UP, this);
+    this.context.forgeEventService.off(ForgeEventService.EventType.SCREEN_RESIZE, this);
     this.context.config.getDebugModeEnabledEmitter().off(this);
 
     // it is very important that we remove the parent reference in the mainElement, otherwise
@@ -272,47 +264,53 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
 
   // note: the mouse location does not need to be translated for the root element, because it is assumed to be positioned
   // at 0,0
-  protected MouseEventData.Out onMouseDown(MouseEventData.In in) {
+  protected void onMouseDown(Event<MouseEventData> event) {
     if (this.mainElement == null || this.shouldCloseScreen) {
-      return new MouseEventData.Out(null);
+      return;
     }
 
     // if we are debugging and are in "discovery mode", select the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
-      IElement element = Collections.first(ElementHelpers.raycast(this, in.mousePositionData.point));
+      IElement element = Collections.first(ElementHelpers.raycast(this, event.getData().mousePositionData.point));
       if (element != null) {
         this.debugElementSelected = true;
         this.context.debugElement = element;
-        return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
+        event.stopPropagation();
+        return;
       }
     }
 
     this.recalculateLayout();
-    boolean handled = this.propagateMouseEvent(EventType.MOUSE_DOWN, in);
+    boolean handled = this.propagateMouseEvent(InteractiveEvent.EventType.MOUSE_DOWN, event.getData());
     this.recalculateLayout();
-    return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
+
+    if (handled) {
+      event.stopPropagation();
+    }
   }
 
-  protected MouseEventData.Out onMouseMove(MouseEventData.In in) {
+  protected void onMouseMove(Event<MouseEventData> event) {
     if (this.mainElement == null || this.shouldCloseScreen) {
-      return new MouseEventData.Out(null);
+      return;
     }
 
-    this.context.mousePosition = in.mousePositionData.point.setAnchor(DimAnchor.GUI);
+    MouseEventData data = event.getData();
+    this.context.mousePosition = data.mousePositionData.point.setAnchor(DimAnchor.GUI);
 
     // if we are debugging and haven't selected an element, enter "discovery mode" by temp-debugging the element under the cursor
     if (this.debugModeEnabled && !this.debugElementSelected) {
-      IElement element = Collections.first(ElementHelpers.raycast(this, in.mousePositionData.point));
+      IElement element = Collections.first(ElementHelpers.raycast(this, data.mousePositionData.point));
       if (element != null) {
         this.context.debugElement = element;
-        return new MouseEventData.Out(MouseHandlerAction.SWALLOWED);
+        event.stopPropagation();
+        return;
       }
     }
 
     // fire MOUSE_ENTER/MOUSE_EXIT events
     // if an element blocks the sequence propagation, then the blocked elements will be treated as if for a MOUSE_EXIT event.
     // they will be added back as soon as the blocking element is no longer included in the new elements.
-    List<IElement> newElements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
+    List<IElement> newElements = ElementHelpers.getElementsAtPointInverted(this, data.mousePositionData.point);
     List<IElement> newOrExistingEntered = new ArrayList<>();
     List<IElement> previousElements = this.elementsUnderCursor;
     List<IElement> blocked = this.blockingElement != null && newElements.contains(this.blockingElement) ? this.blockedElementsUnderCursor : new ArrayList<>();
@@ -322,12 +320,12 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       boolean isBlocked = Collections.any(blocked, el -> el == newElement);
       if (!isBlocked) {
         newOrExistingEntered.add(newElement);
-        InteractiveEvent<MouseEventData.In> event = new InteractiveEvent<>(EventPhase.CAPTURE, in, newElement, true);
-        newElement.onEvent(EventType.MOUSE_ENTER, event);
+        InteractiveEvent<MouseEventData> interactiveEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, newElement, true);
+        newElement.onEvent(InteractiveEvent.EventType.MOUSE_ENTER, interactiveEvent);
 
         // go as far as we can or until propagation has stopped
         // all remaining elements are now blocked
-        if (event.stoppedPropagation || event.overriddenTarget) {
+        if (interactiveEvent.stoppedPropagation || interactiveEvent.overriddenTarget) {
           newBlocked = Collections.filter(newElements, el -> !newOrExistingEntered.contains(el));
           newBlocking = newElement;
           break;
@@ -337,13 +335,13 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     for (IElement prevElement : previousElements) {
       if (!newOrExistingEntered.contains(prevElement)) {
         // state change from entered to exited
-        prevElement.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, prevElement));
+        prevElement.onEvent(InteractiveEvent.EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, data, prevElement));
       }
     }
     for (IElement newElement : Collections.reverse(newOrExistingEntered)) { // reverse
       if (!previousElements.contains(newElement)) {
         // state change from exited to entered
-        newElement.onEvent(EventType.MOUSE_ENTER, new InteractiveEvent<>(EventPhase.TARGET, in, newElement));
+        newElement.onEvent(InteractiveEvent.EventType.MOUSE_ENTER, new InteractiveEvent<>(EventPhase.TARGET, data, newElement));
       }
     }
 
@@ -352,114 +350,125 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     this.blockingElement = newBlocking;
 
     this.recalculateLayout();
-    boolean handled = this.propagateMouseEvent(EventType.MOUSE_MOVE, in);
+    boolean handled = this.propagateMouseEvent(InteractiveEvent.EventType.MOUSE_MOVE, data);
     this.recalculateLayout();
-    return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
+    if (handled) {
+      event.stopPropagation();
+    }
   }
 
-  protected MouseEventData.Out onMouseUp(MouseEventData.In in) {
+  protected void onMouseUp(Event<MouseEventData> event) {
     if (this.mainElement == null || this.shouldCloseScreen) {
-      return new MouseEventData.Out(null);
+      return;
     }
 
     this.recalculateLayout();
-    boolean handled = this.propagateMouseEvent(EventType.MOUSE_UP, in);
+    boolean handled = this.propagateMouseEvent(InteractiveEvent.EventType.MOUSE_UP, event.getData());
     this.recalculateLayout();
-    return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
+    if (handled) {
+      event.stopPropagation();
+    }
   }
 
-  protected MouseEventData.Out onMouseScroll(MouseEventData.In in) {
+  protected void onMouseScroll(Event<MouseEventData> event) {
     if (this.mainElement == null || this.shouldCloseScreen) {
-      return new MouseEventData.Out(null);
+      return;
     }
 
     this.recalculateLayout();
-    boolean handled = this.propagateMouseEvent(EventType.MOUSE_SCROLL, in);
+    boolean handled = this.propagateMouseEvent(InteractiveEvent.EventType.MOUSE_SCROLL, event.getData());
     this.recalculateLayout();
-    return new MouseEventData.Out(handled ? MouseHandlerAction.HANDLED : null);
+    if (handled) {
+      event.stopPropagation();
+    }
   }
 
-  protected KeyboardEventData.Out onKeyDown(KeyboardEventData.In in) {
+  protected void onKeyDown(Event<KeyboardEventData> event) {
     if (this.mainElement == null || this.shouldCloseScreen) {
-      return new KeyboardEventData.Out(null);
+      return;
     }
 
+    KeyboardEventData data = event.getData();
     // first handle debug controls
     if (this.debugModeEnabled && this.debugElementSelected && this.context.debugElement != null) {
-      if (in.isPressed(Keyboard.KEY_UP) && this.context.debugElement.getParent() != null) {
+      if (data.isPressed(Keyboard.KEY_UP) && this.context.debugElement.getParent() != null) {
         // go to parent
         this.context.debugElement = this.context.debugElement.getParent();
-        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-      } else if (in.isPressed(Keyboard.KEY_DOWN) && Collections.any(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible))) {
+        event.stopPropagation();
+        return;
+      } else if (data.isPressed(Keyboard.KEY_DOWN) && Collections.any(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible))) {
         // go to first child
         this.context.debugElement = Collections.first(Collections.filter(this.context.debugElement.getChildren(), IElement::getVisible));
-        return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-      } else if (this.context.debugElement.getParent() != null && (in.isPressed(Keyboard.KEY_LEFT) || in.isPressed(Keyboard.KEY_RIGHT))) {
+        event.stopPropagation();
+        return;
+      } else if (this.context.debugElement.getParent() != null && (data.isPressed(Keyboard.KEY_LEFT) || data.isPressed(Keyboard.KEY_RIGHT))) {
         List<IElement> siblings = Collections.filter(this.context.debugElement.getParent().getChildren(), IElement::getVisible);
         if (Collections.size(siblings) > 1) {
           int currentIndex = siblings.indexOf(this.context.debugElement);
-          int delta = in.isPressed(Keyboard.KEY_LEFT) ? -1 : 1;
+          int delta = data.isPressed(Keyboard.KEY_LEFT) ? -1 : 1;
           this.context.debugElement = Collections.elementAt(siblings, currentIndex + delta);
-          return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+          event.stopPropagation();
+          return;
         }
       }
     }
 
     // now do the normal event propagation
     this.recalculateLayout();
-    boolean handled = this.propagateKeyboardEvent(EventType.KEY_DOWN, in);
+    boolean handled = this.propagateKeyboardEvent(InteractiveEvent.EventType.KEY_DOWN, data);
     this.recalculateLayout();
     if (handled) {
-      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      event.stopPropagation();
+      return;
     }
 
     // fallback key handling
-    if (this.mainElement != null && in.isPressed(Keyboard.KEY_ESCAPE)) {
+    if (this.mainElement != null && data.isPressed(Keyboard.KEY_ESCAPE)) {
       this.onCloseScreen();
-      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-    } else if (in.isPressed(Keyboard.KEY_F11)) {
+      event.stopPropagation();
+      return;
+    } else if (data.isPressed(Keyboard.KEY_F11)) {
       this.context.minecraft.toggleFullscreen();
-      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-    } else if (in.isPressed(Keyboard.KEY_F3) && this.context.config.getDebugModeEnabledEmitter().get()) {
+      event.stopPropagation();
+      return;
+    } else if (data.isPressed(Keyboard.KEY_F3) && this.context.config.getDebugModeEnabledEmitter().get()) {
       this.toggleDebug();
-      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
-    } else if (in.isPressed(Keyboard.KEY_F5)) {
+      event.stopPropagation();
+      return;
+    } else if (data.isPressed(Keyboard.KEY_F5)) {
       // force a refresh
       this.refreshTimestamp = new Date().getTime();
       this.onInvalidateSize();
-      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      event.stopPropagation();
+      return;
 
-    } else if (in.isPressed(Keyboard.KEY_TAB) && this.context.focusedElement != null) {
+    } else if (data.isPressed(Keyboard.KEY_TAB) && this.context.focusedElement != null) {
       // focus onto the next element
       List<InputElement> inputElements = ElementHelpers.getElementsOfType(this.mainElement, InputElement.class);
       List<InputElement> focusable = Collections.filter(inputElements, InputElement::canTabFocus);
       if (Collections.any(focusable)) {
         List<InputElement> sorted = Collections.orderBy(focusable, InputElement::getTabIndex);
         int currentIndex = sorted.indexOf(this.context.focusedElement);
-        int delta = in.isKeyModifierActive(KeyboardEventData.In.KeyModifier.SHIFT) ? -1 : 1;
+        int delta = data.isKeyModifierActive(KeyboardEventData.KeyModifier.SHIFT) ? -1 : 1;
         InputElement newFocus = Collections.elementAt(sorted, currentIndex + delta);
         this.setFocussedElement(newFocus, FocusReason.TAB);
       }
     }
 
     this.recalculateLayout();
-    return new KeyboardEventData.Out(null);
   }
 
-  protected KeyboardEventData.Out onKeyUp(KeyboardEventData.In in) {
+  protected void onKeyUp(Event<KeyboardEventData> event) {
     if (this.mainElement == null || this.shouldCloseScreen) {
-      return new KeyboardEventData.Out(null);
+      return ;
     }
 
     this.recalculateLayout();
-    boolean handled = this.propagateKeyboardEvent(EventType.KEY_UP, in);
+    boolean handled = this.propagateKeyboardEvent(InteractiveEvent.EventType.KEY_UP, event.getData());
     this.recalculateLayout();
     if (handled) {
-      return new KeyboardEventData.Out(KeyboardHandlerAction.SWALLOWED);
+      event.stopPropagation();
     }
-
-    this.recalculateLayout();
-    return new KeyboardEventData.Out(null);
   }
 
     private void toggleDebug() {
@@ -468,17 +477,17 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     this.context.debugElement = null;
   }
 
-  private boolean propagateMouseEvent(EventType type, MouseEventData.In data) {
+  private boolean propagateMouseEvent(InteractiveEvent.EventType type, MouseEventData data) {
     if (this.mainElement == null || this.shouldCloseScreen) {
       return false;
     }
 
     // collect the focus while we're at it - if no element along the path accepts a focus, we will unfocus the currently focussed element.
-    boolean refocus = type == EventType.MOUSE_DOWN;
+    boolean refocus = type == InteractiveEvent.EventType.MOUSE_DOWN;
 
     List<IElement> elements = ElementHelpers.getElementsAtPoint(this, data.mousePositionData.point);
     IElement target = Collections.last(elements);
-    InteractiveEvent<MouseEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target, true);
+    InteractiveEvent<MouseEventData> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target, true);
     InputElement newFocus = null;
     for (IElement element : elements) {
       if (element instanceof InputElement) {
@@ -505,7 +514,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       return true;
     }
 
-    InteractiveEvent<MouseEventData.In> bubbleEvent = new InteractiveEvent<>(EventPhase.BUBBLE, data, target);
+    InteractiveEvent<MouseEventData> bubbleEvent = new InteractiveEvent<>(EventPhase.BUBBLE, data, target);
     for (IElement element : Collections.reverse(elements)) {
       element.onEvent(type, bubbleEvent);
       if (bubbleEvent.stoppedPropagation) {
@@ -530,17 +539,17 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       FocusEventData focusData = new FocusEventData(oldFocus, newFocus, reason);
       if (oldFocus != null) {
         InteractiveEvent<FocusEventData> blurEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, oldFocus);
-        oldFocus.onEvent(EventType.BLUR, blurEvent);
+        oldFocus.onEvent(InteractiveEvent.EventType.BLUR, blurEvent);
       }
       if (newFocus != null) {
         InteractiveEvent<FocusEventData> focusEvent = new InteractiveEvent<>(EventPhase.TARGET, focusData, newFocus);
-        newFocus.onEvent(EventType.FOCUS, focusEvent);
+        newFocus.onEvent(InteractiveEvent.EventType.FOCUS, focusEvent);
       }
     }
   }
 
   /** Propagates the keyboard event to the currently focused element. */
-  private boolean propagateKeyboardEvent(EventType type, KeyboardEventData.In data) {
+  private boolean propagateKeyboardEvent(InteractiveEvent.EventType type, KeyboardEventData data) {
     if (this.mainElement == null) {
       return false;
     }
@@ -559,7 +568,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       }
     }
 
-    InteractiveEvent<KeyboardEventData.In> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target, true);
+    InteractiveEvent<KeyboardEventData> captureEvent = new InteractiveEvent<>(EventPhase.CAPTURE, data, target, true);
     for (IElement element : Collections.reverse(elements)) {
       element.onEvent(type, captureEvent);
       if (captureEvent.overriddenTarget) {
@@ -576,7 +585,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       return true;
     }
 
-    InteractiveEvent<KeyboardEventData.In> bubbleEvent = new InteractiveEvent<>(EventPhase.BUBBLE, data, target);
+    InteractiveEvent<KeyboardEventData> bubbleEvent = new InteractiveEvent<>(EventPhase.BUBBLE, data, target);
     for (IElement element : elements) {
       element.onEvent(type, bubbleEvent);
       if (bubbleEvent.stoppedPropagation) {
@@ -621,11 +630,10 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     RendererHelpers.drawTooltip(context.dimFactory, context.fontEngine, context.mousePosition, tooltip);
   }
 
-  private ConfigEventData.Out<Boolean> onChangeDebugModeEnabled(ConfigEventData.In<Boolean> eventIn) {
+  private void onChangeDebugModeEnabled(Event<Boolean> event) {
     this.debugModeEnabled = false;
     this.debugElementSelected = false;
     this.context.debugElement = null;
-    return new ConfigEventData.Out<>();
   }
 
   //region Empty or delegated IElement methods
@@ -642,7 +650,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public void onInitialise() { }
 
   @Override
-  public void onEvent(EventType type, InteractiveEvent<?> event) { }
+  public void onEvent(InteractiveEvent.EventType type, InteractiveEvent<?> event) { }
 
   @Override
   public DimPoint calculateSize(Dim maxWidth) { return null; }

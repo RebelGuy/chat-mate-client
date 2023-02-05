@@ -1,7 +1,10 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Chat;
 
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
-import dev.rebel.chatmate.events.models.ConfigEventData;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.ChatRoute;
@@ -18,12 +21,11 @@ import java.util.function.Function;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.CHECKBOX_LIGHT;
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
-import static dev.rebel.chatmate.util.TextHelpers.toSentenceCase;
 
 public class ChatSectionElement extends ContainerElement implements ISectionElement {
   private final DropdownSelectionElement<CommandMessageChatVisibility> commandVisibilityDropdown;
 
-  private final Function<ConfigEventData.In<CommandMessageChatVisibility>, ConfigEventData.Out<CommandMessageChatVisibility>> _onChangeConfig = this::onChangeConfig;
+  private final EventCallback<CommandMessageChatVisibility> _onChangeConfig = this::onChangeConfig;
 
   public ChatSectionElement(InteractiveContext context, IElement parent, @Nullable ChatRoute route, Config config) {
     super(context, parent, LayoutMode.BLOCK);
@@ -111,8 +113,7 @@ public class ChatSectionElement extends ContainerElement implements ISectionElem
     super.context.config.getCommandMessageChatVisibilityEmitter().set(value);
   }
 
-  private ConfigEventData.Out<CommandMessageChatVisibility> onChangeConfig(ConfigEventData.In<CommandMessageChatVisibility> value) {
-    this.commandVisibilityDropdown.setSelection(value.data);
-    return new ConfigEventData.Out<>();
+  private void onChangeConfig(Event<CommandMessageChatVisibility> event) {
+    this.commandVisibilityDropdown.setSelection(event.getData());
   }
 }

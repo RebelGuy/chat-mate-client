@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
@@ -14,8 +16,6 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nonnull;
@@ -135,7 +135,7 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onMouseDown(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.getSliderRect().checkCollision(position)) {
       this.dropElement = new DropElement(context, this, this)
@@ -147,7 +147,7 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onMouseMove(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseMove(InteractiveEvent<MouseEventData> e) {
     if (this.getSliderRect().checkCollision(e.getData().mousePositionData.point)) {
       super.setCursor(CursorType.CLICK);
     } else {
@@ -178,7 +178,7 @@ public class ValueSliderElement extends InputElement implements IDropElementList
   }
 
   @Override
-  public void onMouseScroll(InteractiveEvent<MouseEventData.In> e) {
+  public void onMouseScroll(InteractiveEvent<MouseEventData> e) {
     int multiplier = e.getData().mouseScrollData.scrollDirection == ScrollDirection.UP ? -1 : 1;
     float delta = (float)Math.pow(10, this.decimals) * multiplier;
     this.value = this.autoFixValue(this.value + delta);

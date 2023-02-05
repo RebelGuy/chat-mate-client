@@ -4,15 +4,10 @@ import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.ImageElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
-import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedEvent;
-import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
-import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.StatusService;
-import dev.rebel.chatmate.events.models.EventData;
-import net.minecraft.util.Tuple;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,17 +17,10 @@ import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_ORANGE;
 import static dev.rebel.chatmate.Asset.STATUS_INDICATOR_RED;
 
 public class IndicatorElement extends ImageElement implements SeparableHudElement.ISeparableElement {
-  private final static long SERVER_LOG_ANIMATION_DURATION = 1000;
-  private final static float SERVER_LOG_ANIMATION_MAX_SCALE = 3;
-
   private final Map<StatusService.SimpleStatus, Asset.Texture> statusTextures;
   private final boolean isMainIndicator;
   private final StatusService statusService;
   private final Config config;
-  private final AnimatedEvent<Asset.Texture> serverLogEvents;
-
-  private final Function<EventData.EventIn, EventData.EventOut> _onServerLogError = this::onServerLogError;
-  private final Function<EventData.EventIn, EventData.EventOut> _onServerLogWarning = this::onServerLogWarning;
   private final Dim defaultHeight;
 
   public IndicatorElement(InteractiveScreen.InteractiveContext context, IElement parent, boolean isMainIndicator, Dim defaultHeight, StatusService statusService, Config config) {
@@ -50,20 +38,8 @@ public class IndicatorElement extends ImageElement implements SeparableHudElemen
 
     super.setImage(Asset.STATUS_INDICATOR_RED);
 
-    this.serverLogEvents = new AnimatedEvent<>(SERVER_LOG_ANIMATION_DURATION);
-
     this.defaultHeight = defaultHeight;
     this.setHudScale(1);
-  }
-
-  private EventData.EventOut onServerLogError(EventData.EventIn eventIn) {
-    this.serverLogEvents.onEvent(STATUS_INDICATOR_RED);
-    return null;
-  }
-
-  private EventData.EventOut onServerLogWarning(EventData.EventIn eventIn) {
-    this.serverLogEvents.onEvent(STATUS_INDICATOR_ORANGE);
-    return null;
   }
 
   @Override

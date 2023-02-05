@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
@@ -20,10 +21,7 @@ import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
 import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.KeyboardEventService;
 import dev.rebel.chatmate.events.MouseEventService;
-import dev.rebel.chatmate.events.models.OpenGui;
-import dev.rebel.chatmate.events.models.Tick;
-import dev.rebel.chatmate.events.models.Tick.In;
-import dev.rebel.chatmate.events.models.Tick.Out;
+import dev.rebel.chatmate.events.models.OpenGuiEventData;
 import dev.rebel.chatmate.stores.DonationApiStore;
 import dev.rebel.chatmate.stores.LivestreamApiStore;
 import dev.rebel.chatmate.stores.RankApiStore;
@@ -179,16 +177,16 @@ public class GuiService {
   }
 
   private void addEventHandlers() {
-    this.forgeEventService.onOpenGuiModList(this::onOpenGuiModList, null);
-    this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu, null);
-    this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu, null);
-    this.forgeEventService.onOpenChat(this::onOpenChat, null);
-    this.forgeEventService.onClientTick(this::onClientTick, null);
+    this.forgeEventService.onOpenGuiModList(this::onOpenGuiModList);
+    this.forgeEventService.onOpenGuiIngameMenu(this::onOpenIngameMenu);
+    this.forgeEventService.onOpenChatSettingsMenu(this::onOpenChatSettingsMenu);
+    this.forgeEventService.onOpenChat(this::onOpenChat);
+    this.forgeEventService.onClientTick(this::onClientTick);
 
     this.keyBindingService.on(ChatMateKeyEvent.OPEN_CHAT_MATE_HUD, this::onOpenChatMateHud);
   }
 
-  private Out onClientTick(In in) {
+  private void onClientTick(Event<?> event) {
     if (this.minecraft.ingameGUI != customGuiIngame) {
       if (customGuiIngame == null) {
         throw new RuntimeException("The CustomGuiIngame object has not been instantiated.");
@@ -201,27 +199,26 @@ public class GuiService {
       this.minecraft.ingameGUI = customGuiIngame;
       this.logService.logInfo(this, "Setting minecraft.ingameGUI to our custom IngameGui implementation.");
     }
-    return new Tick.Out();
   }
 
-  private OpenGui.Out onOpenGuiModList(OpenGui.In eventIn) {
+  private void onOpenGuiModList(Event<OpenGuiEventData> event) {
     // : - <|
     GuiScreen replaceWithGui = new CustomGuiModList(null, this.minecraft, this.config, this, this.fontEngineProxy);
-    return new OpenGui.Out(replaceWithGui);
+    event.modifyData(new OpenGuiEventData(replaceWithGui));
   }
 
-  private OpenGui.Out onOpenIngameMenu(OpenGui.In eventIn) {
+  private void onOpenIngameMenu(Event<OpenGuiEventData> event) {
     GuiScreen replaceWithGui = new CustomGuiPause(this, this.config);
-    return new OpenGui.Out(replaceWithGui);
+    event.modifyData(new OpenGuiEventData(replaceWithGui));
   }
 
-  private OpenGui.Out onOpenChatSettingsMenu(OpenGui.In eventIn) {
+  private void onOpenChatSettingsMenu(Event<OpenGuiEventData> event) {
     GuiScreen replaceWithGui = new CustomScreenChatOptions(null, this.minecraft.gameSettings, this.config);
-    return new OpenGui.Out(replaceWithGui);
+    event.modifyData(new OpenGuiEventData(replaceWithGui));
   }
 
-  private OpenGui.Out onOpenChat(OpenGui.In eventIn) {
-    GuiChat guiChat = (GuiChat)eventIn.gui;
+  private void onOpenChat(Event<OpenGuiEventData> event) {
+    GuiChat guiChat = (GuiChat)event.getData().gui;
 
     // HACK: we need to get this private field, otherwise pressing "/" no longer pre-fills the chat window
     String defaultValue = "";
@@ -245,7 +242,7 @@ public class GuiService {
         this.urlService,
         this.forgeEventService,
         this.customGuiNewChat);
-    return new OpenGui.Out(replaceWithGui);
+    event.modifyData(new OpenGuiEventData(replaceWithGui));
   }
 
   private Boolean onOpenChatMateHud() {

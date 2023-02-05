@@ -1,7 +1,12 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.Asset;
-import dev.rebel.chatmate.events.models.ConfigEventData;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
@@ -17,8 +22,6 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.events.models.MouseEventData.In;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import scala.Tuple2;
 
 import java.net.URI;
@@ -86,7 +89,7 @@ public class SidebarElement extends ContainerElement {
     private final LabelElement label;
     private final HorizontalDivider horizontalDivider;
 
-    private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
+    private final EventCallback<Boolean> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
 
     public SidebarOption(InteractiveContext context, IElement parent, DashboardStore store, SettingsPage page, String name) {
       super(context, parent, LayoutMode.BLOCK);
@@ -130,26 +133,25 @@ public class SidebarElement extends ContainerElement {
       this.horizontalDivider.setVisible(selected);
     }
 
-    private ConfigEventData.Out<Boolean> onChangeDebugModeEnabled(ConfigEventData.In<Boolean> eventIn) {
-      super.setVisible(eventIn.data);
+    private void onChangeDebugModeEnabled(Event<Boolean> event) {
+      super.setVisible(event.getData());
       this.setSelected(this.store.getSettingsPage() == this.page); // make sure the appearance is correct
-      return new ConfigEventData.Out<>();
     }
 
     @Override
-    public void onMouseEnter(InteractiveEvent<In> e) {
+    public void onMouseEnter(InteractiveEvent<MouseEventData> e) {
       this.isHovering.set(true);
       super.context.cursorService.toggleCursor(CursorType.CLICK, this, super.getDepth());
     }
 
     @Override
-    public void onMouseExit(InteractiveEvent<In> e) {
+    public void onMouseExit(InteractiveEvent<MouseEventData> e) {
       this.isHovering.set(false);
       super.context.cursorService.untoggleCursor(this);
     }
 
     @Override
-    public void onMouseDown(InteractiveEvent<In> e) {
+    public void onMouseDown(InteractiveEvent<MouseEventData> e) {
       if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
         this.store.setSettingsPage(this.page);
         e.stopPropagation();

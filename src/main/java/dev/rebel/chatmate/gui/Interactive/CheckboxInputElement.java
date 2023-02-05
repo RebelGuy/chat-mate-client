@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
@@ -15,7 +16,6 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In;
 import dev.rebel.chatmate.util.Collections;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -139,17 +139,17 @@ public class CheckboxInputElement extends InputElement {
   }
 
   @Override
-  public void onMouseEnter(InteractiveEvent<In> e) {
+  public void onMouseEnter(InteractiveEvent<MouseEventData> e) {
     this.isHovering.set(true);
   }
 
   @Override
-  public void onMouseExit(InteractiveEvent<In> e) {
+  public void onMouseExit(InteractiveEvent<MouseEventData> e) {
     this.isHovering.set(false);
   }
 
   @Override
-  public void onMouseDown(InteractiveEvent<In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     this.onFlipChecked(true);
     e.stopPropagation();
   }
@@ -165,7 +165,7 @@ public class CheckboxInputElement extends InputElement {
   }
 
   @Override
-  public void onKeyDown(InteractiveEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     if (e.getData().eventKey == Keyboard.KEY_SPACE) {
       this.onFlipChecked(true);
       e.stopPropagation();
