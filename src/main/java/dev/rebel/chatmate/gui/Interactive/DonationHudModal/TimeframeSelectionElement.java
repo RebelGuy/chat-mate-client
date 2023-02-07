@@ -46,7 +46,6 @@ public class TimeframeSelectionElement extends BlockElement {
         .addElement(this.sinceDateCheckbox)
         .addElement(this.datePicker)
         .setMargin(new RectExtension(ZERO, gui(2)))
-        .setVerticalAlignment(VerticalAlignment.MIDDLE)
     );
   }
 
