@@ -2,9 +2,7 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.events.Event;
-import dev.rebel.chatmate.events.EventHandler;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
-import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.*;
@@ -26,20 +24,23 @@ import scala.Tuple2;
 
 import java.net.URI;
 import java.util.List;
-import java.util.function.Function;
 
 public class SidebarElement extends ContainerElement {
   private final DashboardStore store;
 
-  public SidebarElement(InteractiveContext context, IElement parent, DashboardStore store, List<Tuple2<SettingsPage, String>> pageNames) {
+  public SidebarElement(InteractiveContext context, IElement parent, DashboardStore store, List<Tuple2<SettingsPage, PageOptions>> pages) {
     super(context, parent, LayoutMode.BLOCK);
     super.setName("SidebarElement");
 
     this.store = store;
 
-    for (Tuple2<SettingsPage, String> pair : pageNames) {
-      SidebarOption option = new SidebarOption(context, this, store, pair._1, pair._2);
-      super.addElement(option);
+    for (Tuple2<SettingsPage, PageOptions> page : pages) {
+      SidebarOption option = new SidebarOption(context, this, store, page._1, page._2.name);
+      if (page._2.requiredLoggedIn) {
+        super.addElement(new RequireLoggedInElement(super.context, this, option));
+      } else {
+        super.addElement(option);
+      }
     }
 
     super.addElement(
@@ -170,6 +171,16 @@ public class SidebarElement extends ContainerElement {
       }
 
       super.renderElement();
+    }
+  }
+
+  public static class PageOptions {
+    public final String name;
+    public final boolean requiredLoggedIn;
+
+    public PageOptions(String name, boolean requiredLoggedIn) {
+      this.name = name;
+      this.requiredLoggedIn = requiredLoggedIn;
     }
   }
 }

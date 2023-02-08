@@ -131,11 +131,11 @@ public class EndpointProxy {
         return parsed.data;
       }
     } catch (ChatMateApiException e) {
-      this.logService.logError(this, "Failed to parse API response:", e);
+      this.logService.logError(this, "API response for", method, this.basePath + path, "failed:", e);
       throw e;
     } catch (Exception e) {
       // errors reaching here are most likely due to a response with an unexpected format, e.g. 502 errors.
-      this.logService.logError(this, "Failed to parse API response:", e);
+      this.logService.logError(this, "API response for", method, this.basePath + path, "failed:", e);
       throw new HttpException(e.getMessage(), result.statusCode, result.responseBody);
     }
   }

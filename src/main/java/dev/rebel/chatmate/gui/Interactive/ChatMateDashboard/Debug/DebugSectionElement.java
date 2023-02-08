@@ -35,6 +35,12 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
         .setVisible(false)
         .cast();
     super.addElement(this.didClearStoresLabel);
+
+    super.addElement(TEXT_BUTTON_LIGHT.create(context, this)
+        .setText("Reset cursor")
+        .setTextScale(0.75f)
+        .setOnClick(this::onResetCursor)
+    );
   }
 
   private void onClearStores() {
@@ -43,6 +49,10 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
     super.context.livestreamApiStore.clear();
     super.context.donationHudStore.clear();
     this.didClearStoresLabel.setVisible(true);
+  }
+
+  private void onResetCursor() {
+    super.context.cursorService.reset();
   }
 
   @Override

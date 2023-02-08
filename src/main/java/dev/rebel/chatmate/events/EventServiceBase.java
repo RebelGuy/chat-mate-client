@@ -96,7 +96,7 @@ public abstract class EventServiceBase<EventType extends Enum<EventType>> {
     try {
       ((EventCallback<Object>)handler.getCallbackRef()).dispatch((Event<Object>)event);
     } catch (Exception e) {
-      this.logService.logError(this, "A problem occurred while notifying listener of the", event, "event. Event data:", event.getData(), "| Error:", e);
+      this.logService.logError(this, "A problem occurred while notifying listener of the", eventType, "event. Event data:", event.getData(), "| Error:", e);
     }
   }
 

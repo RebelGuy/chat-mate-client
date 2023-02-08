@@ -43,6 +43,11 @@ public class CursorService {
     this.forgeEventService.onRenderTick(this::onRenderTick);
   }
 
+  public void reset() {
+    this.nextCursors.clear();
+    this.toggledCursors.clear();
+  }
+
   /** Use this for an interactive-based cursor modification.
    * Required to be called every frame. The cursor with the highest weight wins. Falls back to `DEFAULT`. */
   public void setCursorType(CursorType type, int priority) {

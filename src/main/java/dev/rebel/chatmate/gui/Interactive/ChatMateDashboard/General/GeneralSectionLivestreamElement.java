@@ -1,16 +1,13 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General;
 
 import dev.rebel.chatmate.Asset;
+import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.IconButtonElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
-import dev.rebel.chatmate.gui.Interactive.ContainerElement;
-import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
-import dev.rebel.chatmate.gui.Interactive.LabelElement;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.Interactive.TextInputElement;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.api.models.chatMate.GetStatusResponse.GetStatusResponseData;
 import dev.rebel.chatmate.api.models.chatMate.SetActiveLivestreamRequest;
@@ -107,22 +104,30 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
     this.livestream = "";
 
-    super.addElement(this.label);
-    super.addElement(this.livestreamInputField);
-    super.addElement(this.clearButton);
-    super.addElement(this.confirmButton);
-    super.addElement(this.refreshButton);
-    super.addElement(this.copyButton);
-    super.addElement(this.openInBrowserButton);
-    super.addElement(this.errorLabel);
+    super.addElement(
+        new RequireLoggedInElement(context, this, new InlineElement(context, this)
+          .addElement(this.label)
+          .addElement(this.livestreamInputField)
+          .addElement(this.clearButton)
+          .addElement(this.confirmButton)
+          .addElement(this.refreshButton)
+          .addElement(this.copyButton)
+          .addElement(this.openInBrowserButton)
+          .addElement(this.errorLabel)
+        ).onLoggedIn(this::onLoggedIn)
+    );
   }
 
   public void onShow() {
-    this.onRefresh();
+    // no op
   }
 
   public void onHide() {
     // no op
+  }
+
+  private void onLoggedIn() {
+    this.onRefresh();
   }
 
   private void onChange(String livestream) {
