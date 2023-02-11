@@ -69,6 +69,11 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.23 - The Cleanup Update [11/2/2023]
+- Major refactor of the internal event system
+- Removed the server logs HUD component
+- Removed API schemas
+
 ## v1.22 - The Link Update [26/1/2023]
 - Added verification badges to users that are linked with a registered account
 - Command messages can be hidden, greyed out, or shown as normal messages

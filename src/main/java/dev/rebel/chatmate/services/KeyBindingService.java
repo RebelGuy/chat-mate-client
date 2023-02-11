@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/** EventType here will only fire on the initial key-press, NOT when holding down the key. */
+/** Events here will only fire on the initial key-press, NOT when holding down the key. */
 public class KeyBindingService {
   private final ForgeEventService forgeEventService;
 

@@ -3,8 +3,6 @@ package dev.rebel.chatmate.events;
 import javax.annotation.Nullable;
 import java.lang.ref.WeakReference;
 
-// Java doesn't support type inference for classes like it does for methods - e.g. EventService<MyEventData> cannot
-// infer MyEventData.MyEventIn, etc. this is why we have to stick to this annoying verbose notation.
 /** If no (or a null) key is provided, the event handler is considered STRONG and will hold on to the callback method, which may be a lambda.
  * If a key is provided, the event handler is considered WEAK and will not hold on to the key or callback method, which may NOT be a lambda. */
 public class EventHandler<TData, TOptions> {
