@@ -4,8 +4,11 @@ import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.HttpException;
 import dev.rebel.chatmate.config.Config.LoginInfo;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.events.models.ConfigEventData;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 
 import javax.annotation.Nullable;
 import java.net.ConnectException;
@@ -33,8 +36,8 @@ public class ApiPoller<D> {
   private boolean isUnauthorised;
   private @Nullable String unauthorisedLoginToken;
 
-  private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChatMateEnabledChanged = this::onChatMateEnabledChanged;
-  private final Function<ConfigEventData.In<LoginInfo>, ConfigEventData.Out<LoginInfo>> _onLoginInfoChanged = this::onLoginInfoChanged;
+  private final EventCallback<Boolean> _onChatMateEnabledChanged = this::onChatMateEnabledChanged;
+  private final EventCallback<LoginInfo> _onLoginInfoChanged = this::onLoginInfoChanged;
 
   private @Nullable Timer timer;
   private @Nullable Long pauseUntil;
@@ -67,25 +70,21 @@ public class ApiPoller<D> {
     this.config.getLoginInfoEmitter().onChange(this._onLoginInfoChanged, this, false);
   }
 
-  private ConfigEventData.Out<Boolean> onChatMateEnabledChanged(ConfigEventData.In<Boolean> in) {
-    boolean enabled = in.data;
+  private void onChatMateEnabledChanged(Event<Boolean> event) {
+    boolean enabled = event.getData();
     if (enabled) {
       this.resumePoller();
     } else {
       this.pausePoller();
     }
-
-    return new ConfigEventData.Out<>();
   }
 
-  private ConfigEventData.Out<LoginInfo> onLoginInfoChanged(ConfigEventData.In<LoginInfo> in) {
-    LoginInfo data = in.data;
+  private void onLoginInfoChanged(Event<LoginInfo> in) {
+    LoginInfo data = in.getData();
 
     if (this.isUnauthorised && !java.util.Objects.equals(data.loginToken, this.unauthorisedLoginToken)) {
       this.resumePoller();
     }
-
-    return new ConfigEventData.Out<>();
   }
 
   private void resumePoller() {

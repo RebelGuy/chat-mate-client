@@ -1,6 +1,10 @@
 package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Sets;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventOptions;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -13,8 +17,6 @@ import dev.rebel.chatmate.services.MinecraftProxyService;
 import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.MouseEventService;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.events.models.Tick;
 import dev.rebel.chatmate.util.ChatHelpers.ClickEventWithCallback;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiConfirmOpenLink;
@@ -30,7 +32,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
-import java.util.function.Function;
 
 public class CustomGuiChat extends GuiChat {
   private static final Logger LOGGER = LogManager.getLogger();
@@ -44,7 +45,7 @@ public class CustomGuiChat extends GuiChat {
   private final UrlService urlService;
   private final ForgeEventService forgeEventService;
   private final CustomGuiNewChat customGuiNewChat;
-  private final Function<MouseEventData.In, MouseEventData.Out> onMouseDown = this::onMouseDown;
+  private final EventCallback<MouseEventData> onMouseDown = this::onMouseDown;
 
   private URI clickedLinkURI;
 
@@ -68,20 +69,21 @@ public class CustomGuiChat extends GuiChat {
     this.forgeEventService = forgeEventService;
     this.customGuiNewChat = customGuiNewChat;
 
-    this.mouseEventService.on(MouseEventService.Events.MOUSE_DOWN, this.onMouseDown, new MouseEventData.Options(), this);
-    this.forgeEventService.onRenderTick(this::onRender, null);
+    this.mouseEventService.on(MouseEventService.MouseEventType.MOUSE_DOWN, this.onMouseDown, new MouseEventOptions(), this);
+    this.forgeEventService.onRenderTick(this::onRender);
   }
 
-  private MouseEventData.Out onMouseDown(MouseEventData.In in) {
+  private void onMouseDown(Event<MouseEventData> event) {
     if (!this.minecraftProxyService.checkCurrentScreen(this)) {
-      return new MouseEventData.Out();
+      return;
     }
 
     this.customGuiNewChat.setSelectedLine(null);
 
-    if (in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
-      Dim x = in.mousePositionData.x;
-      Dim y = in.mousePositionData.y;
+    MouseEventData data = event.getData();
+    if (data.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
+      Dim x = data.mousePositionData.x;
+      Dim y = data.mousePositionData.y;
 
       IChatComponent component = this.customGuiNewChat.getChatComponent(x, y);
 
@@ -89,7 +91,8 @@ public class CustomGuiChat extends GuiChat {
         ContainerChatComponent container = (ContainerChatComponent)component;
         if (container.getData() instanceof PublicUser) {
           this.contextMenuService.showUserContext(x, y, (PublicUser)container.getData());
-          return new MouseEventData.Out(MouseEventData.Out.MouseHandlerAction.HANDLED);
+          event.stopPropagation();
+          return;
         }
       }
 
@@ -99,18 +102,16 @@ public class CustomGuiChat extends GuiChat {
         this.customGuiNewChat.setSelectedLine(chatLine);
       }
     }
-
-    return new MouseEventData.Out();
   }
 
-  private Tick.Out onRender(Tick.In in) {
+  private void onRender(Event<?> event) {
     if (!this.minecraftProxyService.checkCurrentScreen(this)) {
-      return new Tick.Out();
+      return;
     }
 
     if (this.contextMenuStore.isShowingContextMenu()) {
       this.cursorService.setCursorType(CursorType.DEFAULT, 0);
-      return new Tick.Out();
+      return;
     }
 
     Dim mouseX = this.mouseEventService.getCurrentPosition().x;
@@ -125,8 +126,6 @@ public class CustomGuiChat extends GuiChat {
     } else {
       this.cursorService.setCursorType(CursorType.DEFAULT, 0);
     }
-
-    return new Tick.Out();
   }
 
   @Override

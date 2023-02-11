@@ -9,8 +9,9 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Debug.DebugSectionEl
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.DonationsSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General.GeneralSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud.HudSectionElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SidebarElement.PageOptions;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudService;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -36,12 +37,12 @@ import static dev.rebel.chatmate.util.Objects.castOrNull;
 
 /** The main element that should be rendered into the interactive screen. */
 public class ChatMateDashboardElement extends ContainerElement {
-  private final static List<Tuple2<SettingsPage, String>> pageNames = new ArrayList<Tuple2<SettingsPage, String>>() {{
-    add(new Tuple2<>(SettingsPage.GENERAL, "General"));
-    add(new Tuple2<>(SettingsPage.HUD, "HUD"));
-    add(new Tuple2<>(SettingsPage.CHAT, "Chat"));
-    add(new Tuple2<>(SettingsPage.DONATION, "Donations"));
-    add(new Tuple2<>(SettingsPage.DEBUG, "Debug"));
+  private final static List<Tuple2<SettingsPage, PageOptions>> pageNames = new ArrayList<Tuple2<SettingsPage, PageOptions>>() {{
+    add(new Tuple2<>(SettingsPage.GENERAL, new PageOptions("General", false)));
+    add(new Tuple2<>(SettingsPage.HUD, new PageOptions("HUD", false)));
+    add(new Tuple2<>(SettingsPage.CHAT, new PageOptions("Chat", false)));
+    add(new Tuple2<>(SettingsPage.DONATION, new PageOptions("Donations", true)));
+    add(new Tuple2<>(SettingsPage.DEBUG, new PageOptions("Debug", false)));
   }};
 
   private final DashboardStore store;
@@ -152,7 +153,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   }
 
   @Override
-  public void onWindowResize(IEvent<ScreenSizeData> e) {
+  public void onWindowResize(InteractiveEvent<ScreenSizeData> e) {
     this.setContentSizes(e.getData().newSize);
   }
 

@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.Layout.LayoutGroup;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
@@ -47,7 +47,7 @@ public class InteractionEventBoundaryElement extends SingleElement {
   // we can override all capture events to simulate a "bottom", and then let events bubble back up.
 
   @Override
-  public void onCaptureMouseDown(IEvent<MouseEventData.In> e) {
+  public void onCaptureMouseDown(InteractiveEvent<MouseEventData> e) {
     if (this.isInHole(e.getData().mousePositionData.point)) {
       return;
     }
@@ -56,7 +56,7 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   @Override
-  public void onMouseDown(IEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     if (this.isInBlock(e.getData().mousePositionData.point)) {
       return;
     }
@@ -65,7 +65,7 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   @Override
-  public void onCaptureMouseMove(IEvent<MouseEventData.In> e) {
+  public void onCaptureMouseMove(InteractiveEvent<MouseEventData> e) {
     if (this.isInHole(e.getData().mousePositionData.point)) {
       return;
     }
@@ -74,7 +74,7 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   @Override
-  public void onMouseMove(IEvent<MouseEventData.In> e) {
+  public void onMouseMove(InteractiveEvent<MouseEventData> e) {
     if (this.isInBlock(e.getData().mousePositionData.point)) {
       return;
     }
@@ -83,7 +83,7 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   @Override
-  public void onCaptureMouseUp(IEvent<MouseEventData.In> e) {
+  public void onCaptureMouseUp(InteractiveEvent<MouseEventData> e) {
     if (this.isInHole(e.getData().mousePositionData.point)) {
       return;
     }
@@ -92,7 +92,7 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   @Override
-  public void onMouseUp(IEvent<MouseEventData.In> e) {
+  public void onMouseUp(InteractiveEvent<MouseEventData> e) {
     if (this.isInBlock(e.getData().mousePositionData.point)) {
       return;
     }
@@ -101,7 +101,7 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   @Override
-  public void onCaptureMouseScroll(IEvent<MouseEventData.In> e) {
+  public void onCaptureMouseScroll(InteractiveEvent<MouseEventData> e) {
     if (this.isInHole(e.getData().mousePositionData.point)) {
       return;
     }
@@ -110,7 +110,7 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   @Override
-  public void onMouseScroll(IEvent<MouseEventData.In> e) {
+  public void onMouseScroll(InteractiveEvent<MouseEventData> e) {
     if (this.isInBlock(e.getData().mousePositionData.point)) {
       return;
     }
@@ -119,18 +119,18 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   @Override
-  public void onCaptureKeyDown(IEvent<KeyboardEventData.In> e) {
+  public void onCaptureKeyDown(InteractiveEvent<KeyboardEventData> e) {
     e.overrideTarget();
   }
 
   @Override
-  public void onKeyDown(IEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     this.listener.onKeyDown(e);
   }
 
   // cancelling this ensures that the MOUSE_ENTER event is fired for all applicable elements on the main layer
   @Override
-  public void onCaptureMouseEnter(IEvent<MouseEventData.In> e) {
+  public void onCaptureMouseEnter(InteractiveEvent<MouseEventData> e) {
     if (this.isInHole(e.getData().mousePositionData.point)) {
       return;
     }
@@ -171,13 +171,13 @@ public class InteractionEventBoundaryElement extends SingleElement {
   }
 
   public interface IInteractionEventBoundaryListener {
-    void onMouseDown(IEvent<MouseEventData.In> e);
-    void onMouseMove(IEvent<MouseEventData.In> e);
-    void onMouseUp(IEvent<MouseEventData.In> e);
-    void onMouseScroll(IEvent<MouseEventData.In> e);
+    void onMouseDown(InteractiveEvent<MouseEventData> e);
+    void onMouseMove(InteractiveEvent<MouseEventData> e);
+    void onMouseUp(InteractiveEvent<MouseEventData> e);
+    void onMouseScroll(InteractiveEvent<MouseEventData> e);
 
     // note that this is called without relevance to the parent's box - this means that none of the elements above the boundary have stopped propagation of this event
-    void onKeyDown(IEvent<KeyboardEventData.In> e);
+    void onKeyDown(InteractiveEvent<KeyboardEventData> e);
 
     // all other interaction events are target-only
   }

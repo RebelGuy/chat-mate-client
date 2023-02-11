@@ -1,7 +1,9 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.gui.Interactive.DropElement.IDropElementListener;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedDim;
@@ -11,8 +13,6 @@ import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.util.Collections;
 import org.lwjgl.input.Keyboard;
 
@@ -95,7 +95,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
   }
 
   @Override
-  public void onMouseScroll(IEvent<MouseEventData.In> e) {
+  public void onMouseScroll(InteractiveEvent<MouseEventData> e) {
     if (this.scrollingPosition == null || this.scrollbarElement.isDragging()) {
       return;
     }
@@ -233,7 +233,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
     }
 
     @Override
-    public void onMouseDown(IEvent<MouseEventData.In> e) {
+    public void onMouseDown(InteractiveEvent<MouseEventData> e) {
       DimPoint position = e.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
       if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.getBarRect().checkCollision(position)) {
         this.dragPositionStart = position;

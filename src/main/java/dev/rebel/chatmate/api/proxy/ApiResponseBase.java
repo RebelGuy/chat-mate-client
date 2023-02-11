@@ -3,9 +3,6 @@ package dev.rebel.chatmate.api.proxy;
 import java.util.StringJoiner;
 
 public abstract class ApiResponseBase<Data> {
-  /* The server's schema version of the response object. */
-  public Integer schema;
-
   /* The timestamp at which the response was generated. */
   public Long timestamp;
 
@@ -16,13 +13,9 @@ public abstract class ApiResponseBase<Data> {
 
   public ApiResponseError error;
 
-  /* Should return the expected schema of this response (hardcoded in Java). */
-  public abstract Integer GetExpectedSchema();
-
   /** Ensures that the base structure of the response follows the expectations. */
   public final void assertIntegrity() throws Exception {
     StringJoiner joiner = new StringJoiner(" ");
-    if (this.schema == null) joiner.add("The response object's `schema` property is null.");
     if (this.timestamp == null) joiner.add("The response object's `timestamp` property is null.");
     if (this.success == null) joiner.add("The response object's `success` property is null.");
     if (this.success && this.data == null) joiner.add("The response object's `data` property is null, but `success` is true.");

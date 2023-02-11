@@ -8,9 +8,6 @@ import dev.rebel.chatmate.api.proxy.ApiResponseBase;
 import javax.annotation.Nullable;
 
 public class UnbanUserResponse extends ApiResponseBase<UnbanUserResponseData> {
-  @Override
-  public Integer GetExpectedSchema() { return 4; }
-
   public static class UnbanUserResponseData {
     public @Nullable PublicUserRank removedPunishment;
     public @Nullable String removedPunishmentError;

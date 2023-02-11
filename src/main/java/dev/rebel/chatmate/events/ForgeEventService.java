@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.events;
 
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.events.ForgeEventService.Events;
 import dev.rebel.chatmate.events.models.*;
 import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.client.Minecraft;
@@ -17,123 +17,125 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.function.Function;
 
 // why? because I would like to keep Forge event subscriptions centralised for an easier overview and for easier debugging.
 // it also makes testing specific events A LOT easier because we can just mock out this class and test the event handler
 // in complete isolation.
 // thank Java for the verbose typings.
-public class ForgeEventService extends EventServiceBase<Events> {
+public class ForgeEventService extends EventServiceBase<ForgeEventService.EventType> {
   private final Minecraft minecraft;
 
   private int prevDisplayWidth;
   private int prevDisplayHeight;
 
   public ForgeEventService(LogService logService, Minecraft minecraft) {
-    super(Events.class, logService);
+    super(EventType.class, logService);
     this.minecraft = minecraft;
 
     this.prevDisplayHeight = this.minecraft.displayHeight;
     this.prevDisplayWidth = this.minecraft.displayWidth;
   }
 
-  public void onOpenGuiModList(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
-    this.addListener(Events.OpenGuiModList, handler, options);
+  public void onOpenGuiModList(EventCallback<OpenGuiEventData> handler) {
+    this.addListener(EventType.OPEN_GUI_MOD_LIST, handler, null);
   }
 
-  public void onOpenGuiIngameMenu(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
-    this.addListener(Events.OpenGuiInGameMenu, handler, options);
+  public void onOpenGuiIngameMenu(EventCallback<OpenGuiEventData> handler) {
+    this.addListener(EventType.OPEN_GUI_IN_GAME_MENU, handler, null);
   }
 
-  public void onOpenChatSettingsMenu(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
-    this.addListener(Events.OpenChatSettingsMenu, handler, options);
+  public void onOpenChatSettingsMenu(EventCallback<OpenGuiEventData> handler) {
+    this.addListener(EventType.OPEN_CHAT_SETTINGS_MENU, handler, null);
   }
 
   /** Fires when the GuiChat (GuiScreen) is shown. */
-  public void onOpenChat(Function<OpenGui.In, OpenGui.Out> handler, OpenGui.Options options) {
-    this.addListener(Events.OpenChat, handler, options);
+  public void onOpenChat(EventCallback<OpenGuiEventData> handler) {
+    this.addListener(EventType.OPEN_CHAT, handler, null);
   }
 
   /** Fires after the minecraft.currentScreen has changed reference. Occurs AFTER any onOpen* events - it is read-only. */
-  public void onGuiScreenChanged(Function<GuiScreenChanged.In, GuiScreenChanged.Out> handler, @Nullable GuiScreenChanged.Options options) {
-    this.addListener(Events.GuiScreenChanged, handler, options);
+  public void onGuiScreenChanged(EventCallback<GuiScreenChangedEventData> handler, @Nullable GuiScreenChangedEventOptions options) {
+    this.addListener(EventType.GUI_SCREEN_CHANGED, handler, options);
   }
 
-  public void onRenderGameOverlay(Function<RenderGameOverlay.In, RenderGameOverlay.Out> handler, @Nonnull RenderGameOverlay.Options options) {
-    this.addListener(Events.RenderGameOverlay, handler, options);
+  public void onRenderGameOverlay(EventCallback<RenderGameOverlayEventData> handler, @Nonnull RenderGameOverlayEventOptions options) {
+    this.addListener(EventType.RENDER_GAME_OVERLAY, handler, options);
   }
 
   /** Fires before the main chat box GUI component is rendered. */
-  public void onRenderChatGameOverlay(Function<RenderChatGameOverlay.In, RenderChatGameOverlay.Out> handler, @Nullable RenderGameOverlay.Options options) {
-    this.addListener(Events.RenderChatGameOverlay, handler, options);
+  public void onRenderChatGameOverlay(EventCallback<RenderChatGameOverlayEventData> handler, @Nullable RenderGameOverlayEventOptions options) {
+    this.addListener(EventType.RENDER_CHAT_GAME_OVERLAY, handler, options);
   }
 
-  public void onRenderTick(Function<Tick.In, Tick.Out> handler, @Nullable Tick.Options options) {
-    this.addListener(Events.RenderTick, handler, options);
+  public void onRenderTick(EventCallback<?> handler) {
+    this.addListener(EventType.RENDER_TICK, handler, null);
   }
 
-  public void onClientTick(Function<Tick.In, Tick.Out> handler, @Nullable Tick.Options options) {
-    this.addListener(Events.ClientTick, handler, options);
+  public void onClientTick(EventCallback<?> handler) {
+    this.addListener(EventType.CLIENT_TICK, handler, null);
   }
 
   /** Fires for mouse events within a GUI screen. */
-  public void onGuiScreenMouse(Function<InputEventData.In, InputEventData.Out> handler, @Nullable InputEventData.Options options) {
-    this.addListener(Events.GuiScreenMouse, handler, options);
+  public void onGuiScreenMouse(EventCallback<?> handler) {
+    this.addListener(EventType.GUI_SCREEN_MOUSE, handler, null);
   }
 
   /** Fires for keyboard events within a GUI screen. */
-  public void onGuiScreenKeyboard(Function<InputEventData.In, InputEventData.Out> handler, @Nullable InputEventData.Options options) {
-    this.addListener(Events.GuiScreenKeyboard, handler, options);
+  public void onGuiScreenKeyboard(EventCallback<?> handler) {
+    this.addListener(EventType.GUI_SCREEN_KEYBOARD, handler, null);
   }
 
   /** Stored as a weak reference - lambda forbidden. */
-  public void onScreenResize(Function<ScreenResizeData.In, ScreenResizeData.Out> handler, @Nullable ScreenResizeData.Options options, Object key) {
-    this.addListener(Events.ScreenResize, handler, options, key);
+  public void onScreenResize(EventCallback<ScreenResizeData> handler, Object key) {
+    this.addListener(EventType.SCREEN_RESIZE, handler, null, key);
   }
 
-  public void off(Events event, Object key) {
+  public void off(EventType event, Object key) {
     this.removeListener(event, key);
   }
 
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(GuiOpenEvent event) {
+  public void forgeEventSubscriber(GuiOpenEvent forgeEvent) {
     GuiScreen originalScreen = this.minecraft.currentScreen;
-    Events eventType;
-    if (event.gui instanceof GuiModList) {
-      eventType = Events.OpenGuiModList;
-    } else if (event.gui instanceof GuiIngameMenu) {
-      eventType = Events.OpenGuiInGameMenu;
-    } else if (event.gui instanceof ScreenChatOptions) {
-      eventType = Events.OpenChatSettingsMenu;
-    } else if (event.gui instanceof GuiChat) {
-      eventType = Events.OpenChat;
+    EventType eventType;
+    if (forgeEvent.gui instanceof GuiModList) {
+      eventType = EventType.OPEN_GUI_MOD_LIST;
+    } else if (forgeEvent.gui instanceof GuiIngameMenu) {
+      eventType = EventType.OPEN_GUI_IN_GAME_MENU;
+    } else if (forgeEvent.gui instanceof ScreenChatOptions) {
+      eventType = EventType.OPEN_CHAT_SETTINGS_MENU;
+    } else if (forgeEvent.gui instanceof GuiChat) {
+      eventType = EventType.OPEN_CHAT;
     } else {
       eventType = null;
     }
 
     if (eventType != null) {
-      boolean guiReplaced = false;
-      for (EventHandler<OpenGui.In, OpenGui.Out, OpenGui.Options> handler : this.getListeners(eventType, OpenGui.class)) {
-        OpenGui.In eventIn = new OpenGui.In(event.gui, guiReplaced);
-        OpenGui.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+      Event<OpenGuiEventData> event = new Event<>(new OpenGuiEventData(forgeEvent.gui));
+      for (EventHandler<OpenGuiEventData,?> handler : this.getListeners(eventType, OpenGuiEventData.class)) {
+        super.safeDispatch(eventType, handler, event);
 
-        if (eventOut != null && eventOut.shouldReplaceGui) {
-          guiReplaced = true;
-          event.gui = eventOut.gui;
+        if (event.hasModifiedData) {
+          forgeEvent.gui = event.getData().gui;
+        }
+        if (event.stoppedPropagation) {
+          forgeEvent.setCanceled(event.stoppedPropagation);
+          break;
         }
       }
     }
 
-    GuiScreen newScreen = event.gui;
+    GuiScreen newScreen = forgeEvent.gui;
     if (originalScreen != newScreen) {
-      for (EventHandler<GuiScreenChanged.In, GuiScreenChanged.Out, GuiScreenChanged.Options> handler : this.getListeners(Events.GuiScreenChanged, GuiScreenChanged.class)) {
-        GuiScreenChanged.Options options = handler.options;
+      Event<GuiScreenChangedEventData> event = new Event<>(new GuiScreenChangedEventData(originalScreen, newScreen), false);
+      for (EventHandler<GuiScreenChangedEventData, GuiScreenChangedEventOptions> handler : this.getListeners(EventType.GUI_SCREEN_CHANGED, GuiScreenChangedEventData.class, GuiScreenChangedEventOptions.class)) {
+        GuiScreenChangedEventOptions options = handler.options;
 
         // check if the subscriber is interested in this event, and skip notifying them if not
         if (options != null) {
           Class<? extends GuiScreen> filter = options.screenFilter;
-          GuiScreenChanged.ListenType listenType = options.listenType;
+          GuiScreenChangedEventData.ListenType listenType = options.listenType;
 
           boolean matchClose, matchOpen;
           if (filter == null) {
@@ -144,19 +146,18 @@ public class ForgeEventService extends EventServiceBase<Events> {
             matchOpen = newScreen != null && filter.isAssignableFrom(newScreen.getClass());
           }
 
-          if (listenType == GuiScreenChanged.ListenType.OPEN_ONLY) {
+          if (listenType == GuiScreenChangedEventData.ListenType.OPEN_ONLY) {
             if (!matchOpen) continue;
-          } else if (listenType == GuiScreenChanged.ListenType.CLOSE_ONLY) {
+          } else if (listenType == GuiScreenChangedEventData.ListenType.CLOSE_ONLY) {
             if (!matchClose) continue;
-          } else if (listenType == GuiScreenChanged.ListenType.OPEN_AND_CLOSE) {
+          } else if (listenType == GuiScreenChangedEventData.ListenType.OPEN_AND_CLOSE) {
             if (!matchOpen && !matchClose) continue;
           } else {
-            throw EnumHelpers.<GuiScreenChanged.ListenType>assertUnreachable(listenType);
+            throw EnumHelpers.<GuiScreenChangedEventData.ListenType>assertUnreachable(listenType);
           }
         }
 
-        GuiScreenChanged.In eventIn = new GuiScreenChanged.In(originalScreen, newScreen);
-        GuiScreenChanged.Out eventOut = this.safeDispatch(Events.GuiScreenChanged, handler, eventIn);
+        super.safeDispatch(EventType.GUI_SCREEN_CHANGED, handler, event);
       }
     }
   }
@@ -188,31 +189,39 @@ public class ForgeEventService extends EventServiceBase<Events> {
   // writing text to the screen will place it only on top of the in-game GUI (underneath e.g. menu overlays)
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(RenderGameOverlayEvent.Post event) // need to subscribe to post so what we draw on top of what is already shown
-  {
+  public void forgeEventSubscriber(RenderGameOverlayEvent.Post forgeEvent) { // need to subscribe to the Post event so that we draw on top of what is already shown
     // this is a bit naughty, but pretend there is no render event when the F3 screen is open.
     // we should probably just let the handlers decide for themselves if they want to render or not.
     if (this.minecraft.gameSettings.showDebugInfo) {
       return;
     }
 
-    Events eventType = Events.RenderGameOverlay;
-    for (EventHandler<RenderGameOverlay.In, RenderGameOverlay.Out, RenderGameOverlay.Options> handler : this.getListeners(eventType, RenderGameOverlay.class)) {
-      if (handler.options.subscribeToTypes.contains(event.type)) {
-        RenderGameOverlay.In eventIn = new RenderGameOverlay.In(event.type);
-        RenderGameOverlay.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+    EventType eventType = EventType.RENDER_GAME_OVERLAY;
+    Event<RenderGameOverlayEventData> event = new Event<>(new RenderGameOverlayEventData(forgeEvent.type));
+    for (EventHandler<RenderGameOverlayEventData, RenderGameOverlayEventOptions> handler : this.getListeners(eventType, RenderGameOverlayEventData.class, RenderGameOverlayEventOptions.class)) {
+      if (handler.options.subscribeToTypes.contains(forgeEvent.type)) {
+        super.safeDispatch(eventType, handler, event);
+
+        if (event.stoppedPropagation) {
+          forgeEvent.setCanceled(true);
+          return;
+        }
       }
     }
   }
 
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(RenderGameOverlayEvent.Chat event) {
+  public void forgeEventSubscriber(RenderGameOverlayEvent.Chat forgeEvent) {
     // fired by GuiIngameForge::renderChat
-    Events eventType = Events.RenderChatGameOverlay;
-    for (EventHandler<RenderChatGameOverlay.In, RenderChatGameOverlay.Out, RenderChatGameOverlay.Options> handler : this.getListeners(eventType, RenderChatGameOverlay.class)) {
-      RenderChatGameOverlay.In eventIn = new RenderChatGameOverlay.In(event);
-      RenderChatGameOverlay.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+    EventType eventType = EventType.RENDER_CHAT_GAME_OVERLAY;
+    Event<RenderChatGameOverlayEventData> event = new Event<>(new RenderChatGameOverlayEventData(forgeEvent.posX, forgeEvent.posY));
+    for (EventHandler<RenderChatGameOverlayEventData, ?> handler : this.getListeners(eventType, RenderChatGameOverlayEventData.class)) {
+      super.safeDispatch(eventType, handler, event);
+
+      if (event.stoppedPropagation) {
+        forgeEvent.setCanceled(true);
+      }
     }
   }
 
@@ -220,7 +229,7 @@ public class ForgeEventService extends EventServiceBase<Events> {
   // writing text to the screen will put the text on TOP of everything.
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(TickEvent.RenderTickEvent event) {
+  public void forgeEventSubscriber(TickEvent.RenderTickEvent forgeEvent) {
     // check if the screen was resized every frame
     int displayWidth = this.minecraft.displayWidth;
     int displayHeight = this.minecraft.displayHeight;
@@ -228,16 +237,16 @@ public class ForgeEventService extends EventServiceBase<Events> {
       this.prevDisplayWidth = displayWidth;
       this.prevDisplayHeight = displayHeight;
 
-      for (EventHandler<ScreenResizeData.In, ScreenResizeData.Out, ScreenResizeData.Options> handler : this.getListeners(Events.ScreenResize, ScreenResizeData.class)) {
-        ScreenResizeData.In eventIn = new ScreenResizeData.In(displayWidth, displayHeight);
-        ScreenResizeData.Out eventOut = this.safeDispatch(Events.ScreenResize, handler, eventIn);
+      Event<ScreenResizeData> resizeEvent = new Event<>(new ScreenResizeData(displayWidth, displayHeight), false);
+      for (EventHandler<ScreenResizeData, ?> handler : this.getListeners(EventType.SCREEN_RESIZE, ScreenResizeData.class)) {
+        super.safeDispatch(EventType.SCREEN_RESIZE, handler, resizeEvent);
       }
     }
 
-    Events eventType = Events.RenderTick;
-    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(eventType, Tick.class)) {
-      Tick.In eventIn = new Tick.In();
-      Tick.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+    EventType eventType = EventType.RENDER_TICK;
+    Event<?> renderEvent = new Event<>(null, false);
+    for (EventHandler<?,?> handler : this.getListeners(eventType)) {
+      super.safeDispatch(eventType, handler, renderEvent);
     }
 
     // HACK - something is disabling alpha, but Forge expects alpha to be enabled else it causes problems when rendering textures in the server menu. reset it here after we are done rendering all our custom stuff.
@@ -247,11 +256,11 @@ public class ForgeEventService extends EventServiceBase<Events> {
 
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(TickEvent.ClientTickEvent event) {
-    Events eventType = Events.ClientTick;
-    for (EventHandler<Tick.In, Tick.Out, Tick.Options> handler : this.getListeners(eventType, Tick.class)) {
-      Tick.In eventIn = new Tick.In();
-      Tick.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+  public void forgeEventSubscriber(TickEvent.ClientTickEvent forgeEvent) {
+    EventType eventType = EventType.CLIENT_TICK;
+    Event<?> event = new Event<>(null, false);
+    for (EventHandler<?,?> handler : this.getListeners(eventType)) {
+      super.safeDispatch(eventType, handler, event);
     }
   }
 
@@ -260,14 +269,14 @@ public class ForgeEventService extends EventServiceBase<Events> {
   // * InputEvent.MouseInputEvent/KeyboardInputEvent: Fired for any events that haven't already been fired by screens
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(GuiScreenEvent.MouseInputEvent.Pre event) {
-    Events eventType = Events.GuiScreenMouse;
-    for (EventHandler<InputEventData.In, InputEventData.Out, InputEventData.Options> handler : this.getListeners(eventType, InputEventData.class)) {
-      InputEventData.In eventIn = new InputEventData.In();
-      InputEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+  public void forgeEventSubscriber(GuiScreenEvent.MouseInputEvent.Pre forgeEvent) {
+    EventType eventType = EventType.GUI_SCREEN_MOUSE;
+    Event<?> event = new Event<>();
+    for (EventHandler<?,?> handler : this.getListeners(eventType)) {
+      super.safeDispatch(eventType, handler, event);
 
-      if (eventOut != null && eventOut.cancelled) {
-        event.setCanceled(true);
+      if (event.stoppedPropagation) {
+        forgeEvent.setCanceled(true);
         return;
       }
     }
@@ -275,31 +284,31 @@ public class ForgeEventService extends EventServiceBase<Events> {
 
   @SideOnly(Side.CLIENT)
   @SubscribeEvent
-  public void forgeEventSubscriber(GuiScreenEvent.KeyboardInputEvent.Pre event) {
-    Events eventType = Events.GuiScreenKeyboard;
-    for (EventHandler<InputEventData.In, InputEventData.Out, InputEventData.Options> handler : this.getListeners(eventType, InputEventData.class)) {
-      InputEventData.In eventIn = new InputEventData.In();
-      InputEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+  public void forgeEventSubscriber(GuiScreenEvent.KeyboardInputEvent.Pre forgeEvent) {
+    EventType eventType = EventType.GUI_SCREEN_KEYBOARD;
+    Event<?> event = new Event<>();
+    for (EventHandler<?,?> handler : this.getListeners(eventType)) {
+      super.safeDispatch(eventType, handler, event);
 
-      if (eventOut != null && eventOut.cancelled) {
-        event.setCanceled(true);
+      if (event.stoppedPropagation) {
+        forgeEvent.setCanceled(true);
         return;
       }
     }
   }
 
-  public enum Events {
-    OpenGuiModList,
-    OpenGuiInGameMenu,
-    OpenChatSettingsMenu,
-    OpenChat,
-    GuiScreenChanged,
-    RenderGameOverlay,
-    RenderChatGameOverlay,
-    RenderTick,
-    ClientTick,
-    GuiScreenMouse,
-    GuiScreenKeyboard,
-    ScreenResize
+  public enum EventType {
+    OPEN_GUI_MOD_LIST,
+    OPEN_GUI_IN_GAME_MENU,
+    OPEN_CHAT_SETTINGS_MENU,
+    OPEN_CHAT,
+    GUI_SCREEN_CHANGED,
+    RENDER_GAME_OVERLAY,
+    RENDER_CHAT_GAME_OVERLAY,
+    RENDER_TICK,
+    CLIENT_TICK,
+    GUI_SCREEN_MOUSE,
+    GUI_SCREEN_KEYBOARD,
+    SCREEN_RESIZE
   }
 }

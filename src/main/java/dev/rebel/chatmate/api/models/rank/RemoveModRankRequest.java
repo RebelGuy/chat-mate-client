@@ -9,7 +9,6 @@ public class RemoveModRankRequest extends ApiRequestBase {
   public @Nullable String message;
 
   public RemoveModRankRequest(int userId, @Nullable String message) {
-    super(1);
     this.userId = userId;
     this.message = message;
   }

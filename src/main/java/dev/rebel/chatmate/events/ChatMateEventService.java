@@ -10,6 +10,7 @@ import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.api.publicObjects.event.PublicLevelUpData;
 import dev.rebel.chatmate.api.publicObjects.event.PublicNewTwitchFollowerData;
 import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.DateTimeService;
 import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
 import dev.rebel.chatmate.services.LogService;
@@ -44,16 +45,16 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
     this.dateTimeService = dateTimeService;
   }
 
-  public void onLevelUp(Function<LevelUpEventData.In, LevelUpEventData.Out> handler, @Nullable LevelUpEventData.Options options) {
-    this.addListener(ChatMateEventType.LEVEL_UP, handler, options);
+  public void onLevelUp(EventCallback<LevelUpEventData> handler) {
+    this.addListener(ChatMateEventType.LEVEL_UP, handler, null);
   }
 
-  public void onNewTwitchFollower(Function<NewTwitchFollowerEventData.In, NewTwitchFollowerEventData.Out> handler, @Nullable NewTwitchFollowerEventData.Options options) {
-    this.addListener(ChatMateEventType.NEW_TWITCH_FOLLOWER, handler, options);
+  public void onNewTwitchFollower(EventCallback<NewTwitchFollowerEventData> handler) {
+    this.addListener(ChatMateEventType.NEW_TWITCH_FOLLOWER, handler, null);
   }
 
-  public void onDonation(Function<DonationEventData.In, DonationEventData.Out> handler, @Nullable DonationEventData.Options options) {
-    this.addListener(ChatMateEventType.DONATION, handler, options);
+  public void onDonation(EventCallback<DonationEventData> handler) {
+    this.addListener(ChatMateEventType.DONATION, handler, null);
   }
 
   private void onMakeRequest(Consumer<GetEventsResponseData> callback, Consumer<Throwable> onError) {
@@ -72,26 +73,26 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
     for (PublicChatMateEvent event : response.events) {
       if (event.type == ChatMateEventType.LEVEL_UP) {
         ChatMateEventType eventType = ChatMateEventType.LEVEL_UP;
-        for (EventHandler<LevelUpEventData.In, LevelUpEventData.Out, LevelUpEventData.Options> handler : this.getListeners(eventType, LevelUpEventData.class)) {
+        for (EventHandler<LevelUpEventData, ?> handler : this.getListeners(eventType, LevelUpEventData.class)) {
           PublicLevelUpData data = event.levelUpData;
-          LevelUpEventData.In eventIn = new LevelUpEventData.In(new Date(event.timestamp), data.user, data.oldLevel, data.newLevel);
-          LevelUpEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+          LevelUpEventData eventData = new LevelUpEventData(new Date(event.timestamp), data.user, data.oldLevel, data.newLevel);
+          this.safeDispatch(eventType, handler, new Event<>(eventData));
         }
 
       } else if (event.type == ChatMateEventType.NEW_TWITCH_FOLLOWER) {
         ChatMateEventType eventType = ChatMateEventType.NEW_TWITCH_FOLLOWER;
-        for (EventHandler<NewTwitchFollowerEventData.In, NewTwitchFollowerEventData.Out, NewTwitchFollowerEventData.Options> handler : this.getListeners(eventType, NewTwitchFollowerEventData.class)) {
+        for (EventHandler<NewTwitchFollowerEventData, ?> handler : this.getListeners(eventType, NewTwitchFollowerEventData.class)) {
           PublicNewTwitchFollowerData data = event.newTwitchFollowerData;
-          NewTwitchFollowerEventData.In eventIn = new NewTwitchFollowerEventData.In(new Date(event.timestamp), data.displayName);
-          NewTwitchFollowerEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+          NewTwitchFollowerEventData eventData = new NewTwitchFollowerEventData(new Date(event.timestamp), data.displayName);
+          this.safeDispatch(eventType, handler, new Event<>(eventData));
         }
 
       } else if (event.type == ChatMateEventType.DONATION) {
         ChatMateEventType eventType = ChatMateEventType.DONATION;
-        for (EventHandler<DonationEventData.In, DonationEventData.Out, DonationEventData.Options> handler : this.getListeners(eventType, DonationEventData.class)) {
+        for (EventHandler<DonationEventData, ?> handler : this.getListeners(eventType, DonationEventData.class)) {
           PublicDonationData data = event.donationData;
-          DonationEventData.In eventIn = new DonationEventData.In(new Date(event.timestamp), data);
-          DonationEventData.Out eventOut = this.safeDispatch(eventType, handler, eventIn);
+          DonationEventData eventData = new DonationEventData(new Date(event.timestamp), data);
+          this.safeDispatch(eventType, handler, new Event<>(eventData));
         }
       } else {
         this.logService.logError("Invalid ChatMate event of type " + event.type);

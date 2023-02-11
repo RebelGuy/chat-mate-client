@@ -36,8 +36,11 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
         .cast();
     super.addElement(this.didClearStoresLabel);
 
-    super.addElement(CHECKBOX_WITH_CONFIG.apply(context.config.getShowServerLogsHeartbeat(), CHECKBOX_LIGHT.create(context, this).setLabel("Show Server Logs Heartbeat")));
-    super.addElement(CHECKBOX_WITH_CONFIG.apply(context.config.getShowServerLogsTimeSeries(), CHECKBOX_LIGHT.create(context, this).setLabel("Show Server Logs Time Series")));
+    super.addElement(TEXT_BUTTON_LIGHT.create(context, this)
+        .setText("Reset cursor")
+        .setTextScale(0.75f)
+        .setOnClick(this::onResetCursor)
+    );
   }
 
   private void onClearStores() {
@@ -46,6 +49,10 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
     super.context.livestreamApiStore.clear();
     super.context.donationHudStore.clear();
     this.didClearStoresLabel.setVisible(true);
+  }
+
+  private void onResetCursor() {
+    super.context.cursorService.reset();
   }
 
   @Override

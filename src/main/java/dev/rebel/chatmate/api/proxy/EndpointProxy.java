@@ -7,6 +7,7 @@ import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.api.HttpException;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.ApiRequestService;
+import dev.rebel.chatmate.util.RequestBackoff;
 
 import javax.annotation.Nullable;
 import java.io.*;
@@ -17,6 +18,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.util.Objects.ifClass;
@@ -26,6 +29,7 @@ public class EndpointProxy {
   private final ApiRequestService apiRequestService;
   private final String basePath;
   private final Gson gson;
+  private final ConcurrentMap<String, RequestBackoff> requestBackoffs;
 
   private int requestId = 0;
 
@@ -36,6 +40,7 @@ public class EndpointProxy {
     this.gson = new GsonBuilder()
         .serializeNulls()
         .create();
+    this.requestBackoffs = new ConcurrentHashMap<>();
 
     hack_allowPatchRequests();
   }
@@ -57,34 +62,45 @@ public class EndpointProxy {
 
   /** Error is one of the following types: ConnectException, ChatMateApiException, Exception. */
   public <Data, Res extends ApiResponseBase<Data>> void makeRequestAsync(Method method, String path, Object data, Class<Res> returnClass, Consumer<Data> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
-    // we got there eventually.....
-    CompletableFuture.supplyAsync(() -> {
-      Runnable onComplete = isActiveRequest ? this.apiRequestService.onNewRequest() : () -> {};
-      try {
-        Data result = this.makeRequest(method, path, returnClass, data);
-        onComplete.run();
-        return result;
+    this.requestBackoffs.forEach((key, value) -> {
+      if (value.canDispose()) {
+        this.requestBackoffs.remove(key);
+      }
+    });
 
-      } catch (Exception e) {
-        onComplete.run();
-        if (errorHandler != null) {
-          errorHandler.accept(e);
+    if (!this.requestBackoffs.containsKey(path)) {
+      this.requestBackoffs.put(path, new RequestBackoff());
+    }
+    RequestBackoff backoff = this.requestBackoffs.get(path);
+    backoff.wait(() -> {
+      // we got there eventually.....
+      CompletableFuture.supplyAsync(() -> {
+        Runnable onComplete = isActiveRequest ? this.apiRequestService.onNewRequest() : () -> {
+        };
+        try {
+          Data result = this.makeRequest(method, path, returnClass, data);
+          backoff.onSuccess();
+          onComplete.run();
+          return result;
+
+        } catch (Exception e) {
+          backoff.onError(e);
+          onComplete.run();
+          if (errorHandler != null) {
+            errorHandler.accept(e);
+          }
+          return null;
         }
-        return null;
-      }
-    }).thenAccept(res -> {
-      if (res != null) {
-        // if there is an exception here, it will bubble up
-        callback.accept(res);
-      }
+      }).thenAccept(res -> {
+        if (res != null) {
+          // if there is an exception here, it will bubble up
+          callback.accept(res);
+        }
+      });
     });
   }
 
-  public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass) throws ConnectException, ChatMateApiException, HttpException, Exception {
-    return this.makeRequest(method, path, returnClass, null);
-  }
-
-  public <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass, Object data) throws ConnectException, ChatMateApiException, HttpException, Exception {
+  private <Data, Res extends ApiResponseBase<Data>> Data makeRequest(Method method, String path, Class<Res> returnClass, Object data) throws ConnectException, ChatMateApiException, HttpException, Exception {
     int id = ++this.requestId;
     this.logService.logApiRequest(this, id, method, this.basePath + path);
 
@@ -115,11 +131,11 @@ public class EndpointProxy {
         return parsed.data;
       }
     } catch (ChatMateApiException e) {
-      this.logService.logError(this, "Failed to parse API response:", e);
+      this.logService.logError(this, "API response for", method, this.basePath + path, "failed:", e);
       throw e;
     } catch (Exception e) {
       // errors reaching here are most likely due to a response with an unexpected format, e.g. 502 errors.
-      this.logService.logError(this, "Failed to parse API response:", e);
+      this.logService.logError(this, "API response for", method, this.basePath + path, "failed:", e);
       throw new HttpException(e.getMessage(), result.statusCode, result.responseBody);
     }
   }
@@ -189,19 +205,7 @@ public class EndpointProxy {
       throw new Exception("Parsed response is null - is the JSON conversion implemented correctly?");
     }
 
-    String error = null;
-    if (parsed.schema == null) {
-      error = "The response's `schema` property is null - is the JSON conversion implemented correctly?";
-    } else if (parsed.schema.intValue() != parsed.GetExpectedSchema().intValue()) {
-      // todo: remove schema versions. they are not helpful
-      // error = "Schema mismatch - expected " + parsed.GetExpectedSchema() + " but received " + parsed.schema + " from server.";
-    }
-
-    if (error != null) {
-      throw new Exception("SCHEMA ERROR for class " + returnClass.getSimpleName() + ": " + error);
-    } else {
-      return parsed;
-    }
+    return parsed;
   }
 
   public static String getApiErrorMessage(Throwable e) {

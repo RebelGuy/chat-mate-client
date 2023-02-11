@@ -5,6 +5,7 @@ import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.Config.HudElementTransform;
 import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -65,21 +66,22 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
         .cast();
 
     settings.onChange(this::onChangeStatusIndicatorSettings);
-    this.onChangeStatusIndicatorSettings(settings.get());
+    this.onChangeStatusIndicatorSettings(new Event<>(settings.get()));
 
     settings.onChange(this::onChangeStatusIndicatorConfig);
-    this.onChangeStatusIndicatorConfig(settings.get());
+    this.onChangeStatusIndicatorConfig(new Event<>(settings.get()));
 
     super.setDefaultPosition(defaultTransform.getPosition(), Anchor.TOP_LEFT);
     super.setDefaultScale(defaultTransform.scale);
     super.enablePersistTransform(persistName);
   }
 
-  private void onChangeStatusIndicatorSettings(Config.SeparableHudElement settings) {
+  private void onChangeStatusIndicatorSettings(Event<Config.SeparableHudElement> event) {
     // updating (or toggling) the icon position is done in two steps so that the indicator appears stationary, while the icon "orbits" around it
     // 1. remove the existing icon by creating a new container that is resize-anchored such that the indicator doesn't move (this is done here)
     // 2. add the new icon (if applicable) to the container, changing the resize anchor again such that the indicator doesn't move (this is done just after setting the box)
 
+    Config.SeparableHudElement settings = event.getData();
     Anchor resizeAnchor = Anchor.TOP_LEFT;
     if (this.prevIconPosition != null) {
       switch (this.prevIconPosition) {
@@ -112,7 +114,8 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
     }
   }
 
-  private void onChangeStatusIndicatorConfig(Config.SeparableHudElement data) {
+  private void onChangeStatusIndicatorConfig(Event<Config.SeparableHudElement> event) {
+    Config.SeparableHudElement data = event.getData();
     this.updateVisibility(data.enabled, data.separatePlatforms);
   }
 

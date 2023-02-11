@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.chat.*;
@@ -74,12 +75,12 @@ public class McChatService {
     this.customGuiNewChat = customGuiNewChat;
     this.minecraftChatEventService = minecraftChatEventService;
 
-    this.chatMateEventService.onLevelUp(this::onLevelUp, null);
-    this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower, null);
+    this.chatMateEventService.onLevelUp(this::onLevelUp);
+    this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower);
     this.config.getShowChatPlatformIconEmitter().onChange(_value -> this.minecraftProxyService.refreshChat());
 
     chatMateChatService.onNewChat(newChat -> {
-      for (PublicChatItem chat: newChat) {
+      for (PublicChatItem chat: newChat.getData().chatItems) {
         this.printStreamChatItem(chat);
       }
     }, null);
@@ -93,7 +94,7 @@ public class McChatService {
 
     PublicUserRank[] activePunishments = item.author.getActivePunishments();
     if (activePunishments.length > 0) {
-      String name = item.author.channelInfo.channelName;
+      String name = item.author.channel.displayName;
       String punishments = String.join(",", Collections.map(Collections.list(activePunishments), p -> p.rank.name.toString()));
       this.logService.logDebug(this, String.format("Ignoring chat message from user '%s' because of the following active punishments: %s", name, punishments));
       return;
@@ -120,7 +121,7 @@ public class McChatService {
       if (greyOut) {
         viewerNameFont = viewerNameFont.withColour(Colour.GREY33);
       }
-      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channelInfo.channelName, true, true, false);
+      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channel.displayName, true, true, false);
 
       McChatResult mcChatResult = this.streamChatToMcChat(item, this.fontEngine, greyOut);
       IChatComponent joinedMessage = joinComponents("", mcChatResult.chatComponents);
@@ -143,41 +144,40 @@ public class McChatService {
     }
   }
 
-  public LevelUpEventData.Out onLevelUp(LevelUpEventData.In in) {
-    if (in.newLevel == 0 || in.newLevel % 5 != 0) {
-      return new LevelUpEventData.Out();
+  public void onLevelUp(Event<LevelUpEventData> event) {
+    LevelUpEventData data = event.getData();
+    if (data.newLevel == 0 || data.newLevel % 5 != 0) {
+      return;
     }
 
     try {
       IChatComponent message;
-      if (in.newLevel % 20 == 0) {
-        message = this.messageService.getLargeLevelUpMessage(in.user, in.newLevel);
-        this.soundService.playLevelUp(1 - in.newLevel / 200.0f);
+      if (data.newLevel % 20 == 0) {
+        message = this.messageService.getLargeLevelUpMessage(data.user, data.newLevel);
+        this.soundService.playLevelUp(1 - data.newLevel / 200.0f);
       } else {
-        message = this.messageService.getSmallLevelUpMessage(in.user, in.newLevel);
+        message = this.messageService.getSmallLevelUpMessage(data.user, data.newLevel);
         this.soundService.playLevelUp(2);
       }
 
       this.minecraftProxyService.printChatMessage("Level up", message);
     } catch (Exception e) {
-      this.logService.logError(this, String.format("Could not print level up message for '%s': %s", in.user, e.getMessage()));
+      this.logService.logError(this, String.format("Could not print level up message for '%s': %s", data.user, e.getMessage()));
     }
-
-    return new LevelUpEventData.Out();
   }
 
-  public NewTwitchFollowerEventData.Out onNewTwitchFollower(NewTwitchFollowerEventData.In in) {
+  public void onNewTwitchFollower(Event<NewTwitchFollowerEventData> event) {
     this.soundService.playLevelUp(1.75f);
 
+    NewTwitchFollowerEventData data = event.getData();
+
     try {
-      IChatComponent message = this.messageService.getNewFollowerMessage(in.displayName);
+      IChatComponent message = this.messageService.getNewFollowerMessage(data.displayName);
       this.minecraftProxyService.printChatMessage("New follower", message);
 
     } catch (Exception e) {
-      this.logService.logError(this, String.format("Could not print new follower message for '%s'", in.displayName));
+      this.logService.logError(this, String.format("Could not print new follower message for '%s'", data.displayName));
     }
-
-    return new NewTwitchFollowerEventData.Out();
   }
 
   public void printLeaderboard(PublicRankedUser[] users, @Nullable Integer highlightIndex) {

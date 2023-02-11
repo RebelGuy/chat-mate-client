@@ -8,9 +8,6 @@ import dev.rebel.chatmate.api.proxy.ApiResponseBase;
 import javax.annotation.Nullable;
 
 public class TimeoutUserResponse extends ApiResponseBase<TimeoutUserResponseData> {
-  @Override
-  public Integer GetExpectedSchema() { return 4; }
-
   public static class TimeoutUserResponseData {
     public @Nullable PublicUserRank newPunishment;
     public @Nullable String newPunishmentError;

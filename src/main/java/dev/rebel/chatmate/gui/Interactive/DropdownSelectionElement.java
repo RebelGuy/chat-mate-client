@@ -1,8 +1,9 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.BackgroundElement;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.AnchorBoxSizing;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
@@ -11,7 +12,6 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.util.Collections;
 
@@ -135,7 +135,7 @@ public class DropdownSelectionElement<V> extends InputElement {
   }
 
   @Override
-  public void onMouseDown(IEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && (this.dropdownMenu.getVisible() || super.getEnabled())) {
       this.dropdownMenu.toggleVisible();
     }
@@ -179,7 +179,7 @@ public class DropdownSelectionElement<V> extends InputElement {
     }
 
     @Override
-    public void onMouseDown(IEvent<MouseEventData.In> e) {
+    public void onMouseDown(InteractiveEvent<MouseEventData> e) {
       this.onSelect.run();
       e.stopPropagation();
     }

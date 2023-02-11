@@ -1,14 +1,10 @@
 package dev.rebel.chatmate.api.publicObjects.rank;
 
 import com.google.gson.annotations.SerializedName;
-import dev.rebel.chatmate.api.publicObjects.PublicObject;
 
 import javax.annotation.Nullable;
 
-public class PublicRank extends PublicObject {
-  @Override
-  public Integer GetExpectedSchema() { return 1; }
-
+public class PublicRank {
   public Number id;
   public RankName name;
   public RankGroup group;

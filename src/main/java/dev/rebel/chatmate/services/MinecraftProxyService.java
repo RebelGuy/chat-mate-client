@@ -1,8 +1,9 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.events.ForgeEventService;
-import dev.rebel.chatmate.events.models.RenderChatGameOverlay;
+import dev.rebel.chatmate.events.models.RenderChatGameOverlayEventData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.gui.GuiScreen;
@@ -72,9 +73,8 @@ public class MinecraftProxyService {
     this.minecraft.addScheduledTask(() -> work.accept(this.minecraft));
   }
 
-  private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
+  private void onRenderChatGameOverlay(Event<RenderChatGameOverlayEventData> event) {
     this.flushPendingChatChanges();
-    return new RenderChatGameOverlay.Out();
   }
 
   private void flushPendingChatChanges() {

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
@@ -33,7 +34,7 @@ public class DonationHudService implements DonationHudStore.IDonationHudStoreLis
     this.chatMateEventService = chatMateEventService;
     this.logService = logService;
 
-    chatMateEventService.onDonation(this::onNewDonation, null);
+    chatMateEventService.onDonation(this::onNewDonation);
     donationHudStore.addListener(this);
   }
 
@@ -53,9 +54,8 @@ public class DonationHudService implements DonationHudStore.IDonationHudStoreLis
     }
   }
 
-  private DonationEventData.Out onNewDonation(DonationEventData.In in) {
-    this.donationHudStore.addDonation(in.donation);
-    return new DonationEventData.Out();
+  private void onNewDonation(Event<DonationEventData> event) {
+    this.donationHudStore.addDonation(event.getData().donation);
   }
 
   private void onOpenDashboard(PublicDonationData donation) {

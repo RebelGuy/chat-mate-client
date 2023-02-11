@@ -1,19 +1,15 @@
 package dev.rebel.chatmate.events;
 
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseScrollData.ScrollDirection;
+import dev.rebel.chatmate.events.models.MouseEventOptions;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.events.MouseEventService.Events;
-import dev.rebel.chatmate.events.models.InputEventData;
+import dev.rebel.chatmate.events.MouseEventService.MouseEventType;
 import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.*;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MousePositionData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
-import dev.rebel.chatmate.events.models.MouseEventData.Out.MouseHandlerAction;
-import dev.rebel.chatmate.events.models.Tick;
 import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.input.Mouse;
@@ -21,9 +17,8 @@ import org.lwjgl.input.Mouse;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Function;
 
-public class MouseEventService extends EventServiceBase<Events> {
+public class MouseEventService extends EventServiceBase<MouseEventType> {
   private final ForgeEventService forgeEventService;
   private final Minecraft minecraft;
   private final DimFactory dimFactory;
@@ -32,22 +27,22 @@ public class MouseEventService extends EventServiceBase<Events> {
   private Set<MouseButton> prevHeld = new HashSet<>();
 
   public MouseEventService(LogService logService, ForgeEventService forgeEventService, Minecraft minecraft, DimFactory dimFactory) {
-    super(Events.class, logService);
+    super(MouseEventType.class, logService);
     this.forgeEventService = forgeEventService;
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
 
     this.prevPosition = new MousePositionData(dimFactory.fromScreen(0), dimFactory.fromScreen(0));
 
-    this.forgeEventService.onGuiScreenMouse(this::onGuiScreenMouse, new InputEventData.Options());
-    this.forgeEventService.onRenderTick(this::onRenderTick, null);
+    this.forgeEventService.onGuiScreenMouse(this::onGuiScreenMouse);
+    this.forgeEventService.onRenderTick(this::onRenderTick);
   }
 
-  public void on(Events event, Function<In, Out> handler, Options options, Object key) {
+  public void on(MouseEventType event, EventCallback<MouseEventData> handler, MouseEventOptions options, Object key) {
     this.addListener(event, handler, options, key);
   }
 
-  public boolean off(Events event, Object key) {
+  public boolean off(MouseEventType event, Object key) {
     return this.removeListener(event, key);
   }
 
@@ -55,15 +50,15 @@ public class MouseEventService extends EventServiceBase<Events> {
     return this.prevPosition;
   }
 
-  public In constructSyntheticMoveEvent() {
-    return new In(Events.MOUSE_MOVE, this.getCurrentPosition(), new MouseButtonData(null, this.prevHeld), null);
+  public MouseEventData constructSyntheticMoveEvent() {
+    return new MouseEventData(MouseEventType.MOUSE_MOVE, this.getCurrentPosition(), new MouseButtonData(null, this.prevHeld), null);
   }
 
   public boolean isHeldDown(MouseButton button) {
     return this.constructSyntheticMoveEvent().mouseButtonData.pressedButtons.contains(button);
   }
 
-  private Tick.Out onRenderTick(Tick.In in) {
+  private void onRenderTick(Event<?> event) {
     int x = Mouse.getX();
     int y = Mouse.getY();
     MousePositionData position = this.constructPositionData(x, y);
@@ -71,13 +66,11 @@ public class MouseEventService extends EventServiceBase<Events> {
     if (!this.prevPosition.Equals(position)) {
       this.prevPosition = position;
       Set<MouseButton> currentDown = new HashSet<>(prevHeld);
-      this.dispatchEvent(Events.MOUSE_MOVE, position, new MouseButtonData(null, currentDown), null);
+      this.dispatchEvent(MouseEventType.MOUSE_MOVE, position, new MouseButtonData(null, currentDown), null);
     }
-
-    return new Tick.Out();
   }
 
-  private InputEventData.Out onGuiScreenMouse(InputEventData.In in) {
+  private void onGuiScreenMouse(Event<?> event) {
     // always use getEvent* so it doesn't reset its internal state after the call.
 
     // the button action could have occurred at the beginning or end of the mouse move sequence, so must keep track of position
@@ -106,7 +99,7 @@ public class MouseEventService extends EventServiceBase<Events> {
 //    }
 
     if (position == null) {
-      return new InputEventData.Out(false);
+      return;
     }
 
     // cancel out ups/downs
@@ -117,15 +110,15 @@ public class MouseEventService extends EventServiceBase<Events> {
       }
     }
     Set<MouseButton> currentDown = new HashSet<>(prevHeld);
-    boolean swallowed = false;
+    boolean handled = false;
 
     // fire button events that started at the beginning of the sequence
     for (MouseButton button : buttonsReleased.keySet()) {
       currentDown.remove(button);
       MousePositionData buttonPosition = buttonsReleased.get(button);
       if (buttonPosition.equals(this.prevPosition)) {
-        if (this.dispatchEvent(Events.MOUSE_UP, buttonPosition, new MouseButtonData(button, currentDown), null)) {
-          swallowed = true;
+        if (this.dispatchEvent(MouseEventType.MOUSE_UP, buttonPosition, new MouseButtonData(button, currentDown), null)) {
+          handled = true;
         }
       }
     }
@@ -133,16 +126,16 @@ public class MouseEventService extends EventServiceBase<Events> {
       currentDown.add(button);
       MousePositionData buttonPosition = buttonsPressed.get(button);
       if (buttonPosition.equals(this.prevPosition)) {
-        if (this.dispatchEvent(Events.MOUSE_DOWN, buttonPosition, new MouseButtonData(button, currentDown), null)) {
-          swallowed = true;
+        if (this.dispatchEvent(MouseEventType.MOUSE_DOWN, buttonPosition, new MouseButtonData(button, currentDown), null)) {
+          handled = true;
         }
       }
     }
 
     // fire move event
     if (!position.Equals(this.prevPosition)) {
-      if (this.dispatchEvent(Events.MOUSE_MOVE, position, new MouseButtonData(null, currentDown), null)) {
-        swallowed = true;
+      if (this.dispatchEvent(MouseEventType.MOUSE_MOVE, position, new MouseButtonData(null, currentDown), null)) {
+        handled = true;
       }
     }
 
@@ -151,8 +144,8 @@ public class MouseEventService extends EventServiceBase<Events> {
       currentDown.remove(button);
       MousePositionData buttonPosition = buttonsReleased.get(button);
       if (!buttonPosition.equals(this.prevPosition)) {
-        if (this.dispatchEvent(Events.MOUSE_UP, buttonPosition, new MouseButtonData(button, currentDown), null)) {
-          swallowed = true;
+        if (this.dispatchEvent(MouseEventType.MOUSE_UP, buttonPosition, new MouseButtonData(button, currentDown), null)) {
+          handled = true;
         }
       }
     }
@@ -160,8 +153,8 @@ public class MouseEventService extends EventServiceBase<Events> {
       currentDown.add(button);
       MousePositionData buttonPosition = buttonsPressed.get(button);
       if (!buttonPosition.equals(this.prevPosition)) {
-        if (this.dispatchEvent(Events.MOUSE_DOWN, buttonPosition, new MouseButtonData(button, currentDown), null)) {
-          swallowed = true;
+        if (this.dispatchEvent(MouseEventType.MOUSE_DOWN, buttonPosition, new MouseButtonData(button, currentDown), null)) {
+          handled = true;
         }
       }
     }
@@ -170,15 +163,18 @@ public class MouseEventService extends EventServiceBase<Events> {
     if (dWheel != 0) {
       ScrollDirection direction = dWheel < 0 ? ScrollDirection.DOWN : ScrollDirection.UP;
       MouseScrollData scrollData = new MouseScrollData(direction, Math.abs(dWheel));
-      if (this.dispatchEvent(Events.MOUSE_SCROLL, position, new MouseButtonData(null, currentDown), scrollData)) {
-        swallowed = true;
+      if (this.dispatchEvent(MouseEventType.MOUSE_SCROLL, position, new MouseButtonData(null, currentDown), scrollData)) {
+        handled = true;
       }
     }
 
     // update state
     this.prevPosition = position;
     this.prevHeld = new HashSet<>(currentDown);
-    return new InputEventData.Out(swallowed);
+
+    if (handled) {
+      event.stopPropagation();
+    }
   }
 
   private MousePositionData constructPositionData(int rawMouseX, int rawMouseY) {
@@ -188,30 +184,25 @@ public class MouseEventService extends EventServiceBase<Events> {
     return new MousePositionData(x, y);
   }
 
-  /** Returns true if the event has been swallowed. */
-  private boolean dispatchEvent(Events event, MousePositionData positionData, MouseButtonData buttonData, @Nullable MouseScrollData scrollData) {
-    boolean handled = false;
+  /** Returns true if the event has been handled. */
+  private boolean dispatchEvent(MouseEventType eventType, MousePositionData positionData, MouseButtonData buttonData, @Nullable MouseScrollData scrollData) {
+    MouseEventData data = new MouseEventData(eventType, positionData, buttonData, scrollData);
+    Event<MouseEventData> event = new Event<>(data);
 
     // to prevent collection concurrency issues (a listener may unsubscribe itself from the list), we first copy the list
-    List<EventHandler<In, Out, Options>> listeners = Collections.list(this.getListeners(event, MouseEventData.class));
-    for (EventHandler<In, Out, Options> handler : listeners) {
-      Options options = handler.options;
-      if (options.ignoreHandled && handled) {
-        continue;
-      } else if ((event == Events.MOUSE_DOWN || event == Events.MOUSE_UP)
+    List<EventHandler<MouseEventData, MouseEventOptions>> listeners = Collections.list(this.getListeners(eventType, MouseEventData.class, MouseEventOptions.class));
+    for (EventHandler<MouseEventData, MouseEventOptions> handler : listeners) {
+      MouseEventOptions options = handler.options;
+      if ((eventType == MouseEventType.MOUSE_DOWN || eventType == MouseEventType.MOUSE_UP)
+          && options != null
           && options.listenForButtons != null
           && !options.listenForButtons.contains(buttonData.eventButton)) {
         continue;
       }
 
-      In eventIn = new In(event, positionData, buttonData, scrollData);
-      Out eventOut = this.safeDispatch(event, handler, eventIn);
+      this.safeDispatch(eventType, handler, event);
 
-      if (eventOut == null || eventOut.handlerAction == null) {
-        continue;
-      } else if (eventOut.handlerAction == MouseHandlerAction.HANDLED) {
-        handled = true;
-      } else if (eventOut.handlerAction == MouseHandlerAction.SWALLOWED) {
+      if (event.stoppedPropagation) {
         return true;
       }
     }
@@ -219,7 +210,7 @@ public class MouseEventService extends EventServiceBase<Events> {
     return false;
   }
 
-  public enum Events {
+  public enum MouseEventType {
     MOUSE_DOWN,
     MOUSE_MOVE,
     MOUSE_UP,

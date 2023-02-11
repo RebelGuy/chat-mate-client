@@ -1,7 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -12,7 +13,6 @@ import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.events.models.KeyboardEventData.In;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
@@ -174,7 +174,7 @@ public abstract class ModalElement extends ContainerElement {
   }
 
   @Override
-  public void onKeyDown(IEvent<In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     if (e.getData().eventKey == Keyboard.KEY_RETURN && this.validate()) {
       this.onSubmit();
     }

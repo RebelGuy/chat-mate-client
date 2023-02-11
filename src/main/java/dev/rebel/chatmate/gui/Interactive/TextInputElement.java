@@ -1,6 +1,10 @@
 package dev.rebel.chatmate.gui.Interactive;
 
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.events.models.KeyboardEventData.KeyModifier;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData.FocusReason;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.style.Colour;
@@ -11,9 +15,7 @@ import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
-import dev.rebel.chatmate.events.models.KeyboardEventData.In.KeyModifier;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.TextHelpers;
@@ -24,7 +26,6 @@ import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.MathHelper;
-import org.graalvm.compiler.nodeinfo.InputType;
 import org.lwjgl.input.Keyboard;
 import scala.Tuple2;
 
@@ -94,7 +95,7 @@ public class TextInputElement extends InputElement {
   }
 
   @Override
-  public void onMouseDown(IEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       Dim relX = e.getData().mousePositionData.x.minus(this.getContentBox().getX());
       String textBeforeCursor = this.fontEngine.trimStringToWidth(this.getVisibleText(), (int)(relX.getGui() / this.textScale)); // i.e. do this operation at 100% scale
@@ -104,26 +105,26 @@ public class TextInputElement extends InputElement {
   }
 
   @Override
-  public void onKeyDown(IEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     if (this.textboxKeyTyped(e.getData())) {
       e.stopPropagation();
     }
   }
 
   @Override
-  public void onFocus(IEvent<Events.FocusEventData> e) {
-    if (e.getData().reason == Events.FocusReason.TAB) {
+  public void onFocus(InteractiveEvent<FocusEventData> e) {
+    if (e.getData().reason == FocusReason.TAB) {
       // select all when we tab into the field
       this.cursorIndex = this.text.length();
       this.selectionEndIndex = 0;
-    } else if (e.getData().reason == Events.FocusReason.CODE) {
+    } else if (e.getData().reason == FocusReason.CODE) {
       this.cursorIndex = this.text.length();
       this.selectionEndIndex = this.text.length();
     }
   }
 
   @Override
-  public void onBlur(IEvent<Events.FocusEventData> e) {
+  public void onBlur(InteractiveEvent<FocusEventData> e) {
     this.cursorIndex = 0;
     this.selectionEndIndex = 0;
   }
@@ -320,7 +321,7 @@ public class TextInputElement extends InputElement {
     return currentPos;
   }
 
-  public boolean textboxKeyTyped(KeyboardEventData.In data) {
+  public boolean textboxKeyTyped(KeyboardEventData data) {
     if (data.isKeyModifierActive(KeyModifier.CTRL) && data.isPressed(Keyboard.KEY_A)) {
       this.setCursorPositionToEnd();
       this.setSelectionIndex(0);

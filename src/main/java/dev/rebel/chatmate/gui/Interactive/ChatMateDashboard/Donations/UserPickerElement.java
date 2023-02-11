@@ -2,10 +2,12 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUserSearchResults;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.AnchorBoxSizing;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.VerticalPosition;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.*;
 import dev.rebel.chatmate.gui.style.Colour;
@@ -21,7 +23,6 @@ import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Debouncer;
 import net.minecraft.util.IChatComponent;
@@ -88,14 +89,14 @@ public class UserPickerElement extends ContainerElement {
   }
 
   @Override
-  public void onMouseDown(Events.IEvent<MouseEventData.In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       this.dropdownMenu.setVisible(true);
     }
   }
 
   @Override
-  public void onKeyDown(Events.IEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     if (e.getData().isPressed(Keyboard.KEY_ESCAPE) && this.dropdownMenu.getVisible()) {
       this.searchUsersDebouncer.cancel();
       this.dropdownMenu.setVisible(false);

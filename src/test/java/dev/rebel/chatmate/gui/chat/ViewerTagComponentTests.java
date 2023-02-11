@@ -1,10 +1,13 @@
 package dev.rebel.chatmate.gui.chat;
 
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.Config.StatefulEmitter;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem.ChatPlatform;
-import dev.rebel.chatmate.events.models.ConfigEventData;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,19 +38,19 @@ public class ViewerTagComponentTests {
     PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Youtube, false);
 
     // initially false
-    ArgumentCaptor<Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>>> captor = ArgumentCaptor.forClass(Function.class);
+    ArgumentCaptor<EventCallback<Boolean>> captor = ArgumentCaptor.forClass(EventCallback.class);
     verify(this.showChatPlatformIconEmitter).onChange(captor.capture(), any(Object.class), eq(true));
-    captor.getValue().apply(new ConfigEventData.In<>(false));
+    captor.getValue().dispatch(new Event<>(false));
 
     Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
 
     // change to true
-    captor.getValue().apply(new ConfigEventData.In<>(true));
+    captor.getValue().dispatch(new Event<>(true));
 
     Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
 
     // change to false
-    captor.getValue().apply(new ConfigEventData.In<>(false));
+    captor.getValue().dispatch(new Event<>(false));
 
     Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
   }
@@ -57,27 +60,20 @@ public class ViewerTagComponentTests {
     PlatformViewerTagComponent component = new PlatformViewerTagComponent(this.mockDimFactory, this.mockConfig, ChatPlatform.Twitch, false);
 
     // initially true
-    ArgumentCaptor<Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>>> captor = ArgumentCaptor.forClass(Function.class);
+    ArgumentCaptor<EventCallback<Boolean>> captor = ArgumentCaptor.forClass(EventCallback.class);
     verify(this.showChatPlatformIconEmitter).onChange(captor.capture(), any(Object.class), eq(true));
-    captor.getValue().apply(new ConfigEventData.In<>(true));
+    captor.getValue().dispatch(new Event<>(true));
 
     Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
 
     // change to false
-    captor.getValue().apply(new ConfigEventData.In<>(false));
+    captor.getValue().dispatch(new Event<>(false));
 
     Assert.assertFalse(component.getComponent() instanceof ImageChatComponent);
 
     // change to true
-    captor.getValue().apply(new ConfigEventData.In<>(true));
+    captor.getValue().dispatch(new Event<>(true));
 
     Assert.assertTrue(component.getComponent() instanceof ImageChatComponent);
-  }
-
-  private static void verifyText(PlatformViewerTagComponent component, boolean expectImage) {
-    if (expectImage) {
-
-    }
-    Assert.assertEquals(component, component.getUnformattedText());
   }
 }

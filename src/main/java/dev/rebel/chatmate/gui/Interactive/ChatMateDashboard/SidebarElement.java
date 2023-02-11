@@ -1,10 +1,13 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.Asset;
-import dev.rebel.chatmate.events.models.ConfigEventData;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -17,26 +20,27 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
-import dev.rebel.chatmate.events.models.MouseEventData.In;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
 import scala.Tuple2;
 
 import java.net.URI;
 import java.util.List;
-import java.util.function.Function;
 
 public class SidebarElement extends ContainerElement {
   private final DashboardStore store;
 
-  public SidebarElement(InteractiveContext context, IElement parent, DashboardStore store, List<Tuple2<SettingsPage, String>> pageNames) {
+  public SidebarElement(InteractiveContext context, IElement parent, DashboardStore store, List<Tuple2<SettingsPage, PageOptions>> pages) {
     super(context, parent, LayoutMode.BLOCK);
     super.setName("SidebarElement");
 
     this.store = store;
 
-    for (Tuple2<SettingsPage, String> pair : pageNames) {
-      SidebarOption option = new SidebarOption(context, this, store, pair._1, pair._2);
-      super.addElement(option);
+    for (Tuple2<SettingsPage, PageOptions> page : pages) {
+      SidebarOption option = new SidebarOption(context, this, store, page._1, page._2.name);
+      if (page._2.requiredLoggedIn) {
+        super.addElement(new RequireLoggedInElement(super.context, this, option));
+      } else {
+        super.addElement(option);
+      }
     }
 
     super.addElement(
@@ -86,7 +90,7 @@ public class SidebarElement extends ContainerElement {
     private final LabelElement label;
     private final HorizontalDivider horizontalDivider;
 
-    private final Function<ConfigEventData.In<Boolean>, ConfigEventData.Out<Boolean>> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
+    private final EventCallback<Boolean> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
 
     public SidebarOption(InteractiveContext context, IElement parent, DashboardStore store, SettingsPage page, String name) {
       super(context, parent, LayoutMode.BLOCK);
@@ -130,26 +134,25 @@ public class SidebarElement extends ContainerElement {
       this.horizontalDivider.setVisible(selected);
     }
 
-    private ConfigEventData.Out<Boolean> onChangeDebugModeEnabled(ConfigEventData.In<Boolean> eventIn) {
-      super.setVisible(eventIn.data);
+    private void onChangeDebugModeEnabled(Event<Boolean> event) {
+      super.setVisible(event.getData());
       this.setSelected(this.store.getSettingsPage() == this.page); // make sure the appearance is correct
-      return new ConfigEventData.Out<>();
     }
 
     @Override
-    public void onMouseEnter(IEvent<In> e) {
+    public void onMouseEnter(InteractiveEvent<MouseEventData> e) {
       this.isHovering.set(true);
       super.context.cursorService.toggleCursor(CursorType.CLICK, this, super.getDepth());
     }
 
     @Override
-    public void onMouseExit(IEvent<In> e) {
+    public void onMouseExit(InteractiveEvent<MouseEventData> e) {
       this.isHovering.set(false);
       super.context.cursorService.untoggleCursor(this);
     }
 
     @Override
-    public void onMouseDown(IEvent<In> e) {
+    public void onMouseDown(InteractiveEvent<MouseEventData> e) {
       if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
         this.store.setSettingsPage(this.page);
         e.stopPropagation();
@@ -168,6 +171,16 @@ public class SidebarElement extends ContainerElement {
       }
 
       super.renderElement();
+    }
+  }
+
+  public static class PageOptions {
+    public final String name;
+    public final boolean requiredLoggedIn;
+
+    public PageOptions(String name, boolean requiredLoggedIn) {
+      this.name = name;
+      this.requiredLoggedIn = requiredLoggedIn;
     }
   }
 }

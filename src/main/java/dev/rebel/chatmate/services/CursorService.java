@@ -1,8 +1,8 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Asset;
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.ForgeEventService;
-import dev.rebel.chatmate.events.models.Tick;
 import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
@@ -40,7 +40,12 @@ public class CursorService {
     this.cursors = new HashMap<>();
 
     // some cursor changes might take one frame to come into effect - this is a known and accepted limitation
-    this.forgeEventService.onRenderTick(this::onRenderTick, null);
+    this.forgeEventService.onRenderTick(this::onRenderTick);
+  }
+
+  public void reset() {
+    this.nextCursors.clear();
+    this.toggledCursors.clear();
   }
 
   /** Use this for an interactive-based cursor modification.
@@ -65,7 +70,7 @@ public class CursorService {
     this.toggledCursors.remove(key);
   }
 
-  private Tick.Out onRenderTick(Tick.In in) {
+  private void onRenderTick(Event<?> event) {
     CursorType type = this.getAndResetCursorType();
     Cursor cursor = this.getCursorInstance(type);
 
@@ -73,8 +78,6 @@ public class CursorService {
     if (cursor != null && this.currentCursor != cursor) {
       this.setCursor(cursor);
     }
-
-    return new Tick.Out();
   }
 
   private CursorType getAndResetCursorType() {

@@ -6,6 +6,9 @@ import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.events.ChatMateChatService;
+import dev.rebel.chatmate.events.EventHandler;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.models.NewChatEventData;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,7 +44,7 @@ public class ChatMateChatServiceTests {
       reusableTimestamp = new Date().getTime();
       chat = chatItems;
     }};
-    Consumer<PublicChatItem[]> mockChatSubscriber = mock(Consumer.class);
+    EventCallback<NewChatEventData> mockChatSubscriber = mock(EventCallback.class);
     when(this.mockConfig.getLastGetChatResponseEmitter()).thenReturn(this.mockLastResponseEmitter);
     when(this.mockLastResponseEmitter.get()).thenReturn(0L);
 
@@ -65,6 +68,6 @@ public class ChatMateChatServiceTests {
     onResponseCaptor.getValue().accept(chatResponse);
 
     // at long last, check that any subscribers were notified of the new data
-    verify(mockChatSubscriber).accept(ArgumentMatchers.argThat(arg -> arg == chatItems));
+    verify(mockChatSubscriber).dispatch(ArgumentMatchers.argThat(arg -> arg.getData().chatItems == chatItems));
   }
 }

@@ -1,15 +1,17 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.config.Config.HudElementTransform;
+import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudFilters.IHudFilter;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseScrollData.ScrollDirection;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.Objects;
@@ -190,7 +192,7 @@ public abstract class HudElement extends ElementBase {
 
         // e.g. if we persisted the element to be 2 pixels from the right of the window and 5 pixels from the top, then we should retain that position relative to the current window
         DimRect persistedBox = new DimRect(new DimPoint(persistedTransform.x, persistedTransform.y), super.lastCalculatedSize);
-        Events.ScreenSizeData persistedScreenSizeData = new Events.ScreenSizeData(
+        ScreenSizeData persistedScreenSizeData = new ScreenSizeData(
             persistedTransform.screenRect.getSize(),
             persistedTransform.screenScaleFactor,
             super.context.dimFactory.getMinecraftSize(),
@@ -254,13 +256,13 @@ public abstract class HudElement extends ElementBase {
   public abstract void onRenderElement();
 
   @Override
-  public void onWindowResize(IEvent<Events.ScreenSizeData> e) {
+  public void onWindowResize(InteractiveEvent<ScreenSizeData> e) {
     DimRect box = super.getBox();
     DimPoint newPosition = repositionInResizedWindow(this.autoAnchor, box, e.getData());
     super.setBox(box.withPosition(newPosition));
   }
 
-  private static DimPoint repositionInResizedWindow(Anchor resizeAnchor, DimRect box, Events.ScreenSizeData screenSizeData) {
+  private static DimPoint repositionInResizedWindow(Anchor resizeAnchor, DimRect box, ScreenSizeData screenSizeData) {
     Function<DimPoint, Dim> horizontal = DimPoint::getX;
     Function<DimPoint, Dim> vertical = DimPoint::getY;
     DimPoint position = box.getPosition();
@@ -314,7 +316,7 @@ public abstract class HudElement extends ElementBase {
     return new DimPoint(x, y);
   }
 
-  private static Dim alignLower(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, Events.ScreenSizeData screenSizeData) {
+  private static Dim alignLower(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, ScreenSizeData screenSizeData) {
     Dim x = dimSelector.apply(boxPosition);
     DimAnchor anchor = x.anchor;
 
@@ -330,7 +332,7 @@ public abstract class HudElement extends ElementBase {
     return newWidth.times(relLeft).setAnchor(anchor);
   }
 
-  private static Dim alignMiddle(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, Events.ScreenSizeData screenSizeData) {
+  private static Dim alignMiddle(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, ScreenSizeData screenSizeData) {
     Dim x = dimSelector.apply(boxPosition);
     DimAnchor anchor = x.anchor;
     Dim w = dimSelector.apply(boxSize);
@@ -343,7 +345,7 @@ public abstract class HudElement extends ElementBase {
     return newWidth.times(relCentre).minus(w.over(2)).setAnchor(anchor);
   }
 
-  private static Dim alignUpper(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, Events.ScreenSizeData screenSizeData) {
+  private static Dim alignUpper(Function<DimPoint, Dim> dimSelector, DimPoint boxPosition, DimPoint boxSize, ScreenSizeData screenSizeData) {
     Dim x = dimSelector.apply(boxPosition);
     Dim w = dimSelector.apply(boxSize);
     DimAnchor anchor = x.anchor;

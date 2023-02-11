@@ -92,7 +92,6 @@ public class ChatMate {
     UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, apiPath);
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, apiPath);
     PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, apiPath);
-    LogEndpointProxy logEndpointProxy = new LogEndpointProxy(logService, apiRequestService, apiPath);
     RankEndpointProxy rankEndpointProxy = new RankEndpointProxy(logService, apiRequestService, apiPath);
     DonationEndpointProxy donationEndpointProxy = new DonationEndpointProxy(logService, apiRequestService, apiPath);
     LivestreamEndpointProxy livestreamEndpointProxy = new LivestreamEndpointProxy(logService, apiRequestService, apiPath);
@@ -145,7 +144,6 @@ public class ChatMate {
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory, livestreamApiStore);
 
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
-    ServerLogEventService serverLogEventService = new ServerLogEventService(logService, logEndpointProxy, apiPollerFactory);
     ClipboardService clipboardService = new ClipboardService();
     UrlService urlService = new UrlService(logService);
     MinecraftChatService minecraftChatService = new MinecraftChatService(customGuiNewChat);
@@ -210,7 +208,7 @@ public class ChatMate {
         statusService,
         imageService);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
-    ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService, serverLogEventService);
+    ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService);
 
     CustomGuiIngame customGuiIngame = new CustomGuiIngame(minecraft, customGuiNewChat);
     GuiService guiService = new GuiService(this.isDev,
@@ -266,7 +264,8 @@ public class ChatMate {
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 
-    config.getChatMateEnabledEmitter().onChange(enabled -> {
+    config.getChatMateEnabledEmitter().onChange(e -> {
+      boolean enabled = e.getData();
       if (enabled) {
         mcChatService.printInfo(String.format("Enabled. [%s]", environment.env.toString().toCharArray()[0]));
       }

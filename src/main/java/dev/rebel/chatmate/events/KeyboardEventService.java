@@ -1,93 +1,80 @@
 package dev.rebel.chatmate.events;
 
-import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.events.KeyboardEventService.Events;
-import dev.rebel.chatmate.events.models.InputEventData;
+import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.KeyboardEventService.KeyboardEventType;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
-import dev.rebel.chatmate.events.models.KeyboardEventData.In;
-import dev.rebel.chatmate.events.models.KeyboardEventData.In.KeyModifier;
-import dev.rebel.chatmate.events.models.KeyboardEventData.Options;
-import dev.rebel.chatmate.events.models.KeyboardEventData.Out;
-import dev.rebel.chatmate.events.models.KeyboardEventData.Out.KeyboardHandlerAction;
+import dev.rebel.chatmate.events.models.KeyboardEventData.KeyModifier;
+import dev.rebel.chatmate.events.models.KeyboardEventOptions;
+import dev.rebel.chatmate.services.LogService;
 import org.lwjgl.input.Keyboard;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
-public class KeyboardEventService extends EventServiceBase<Events> {
+public class KeyboardEventService extends EventServiceBase<KeyboardEventType> {
   private final ForgeEventService forgeEventService;
 
   private Map<Integer, Character> currentlyHeldDown = new HashMap<>();
 
   public KeyboardEventService(LogService logService, ForgeEventService forgeEventService) {
-    super(Events.class, logService);
+    super(KeyboardEventType.class, logService);
     this.forgeEventService = forgeEventService;
 
     // it's possible onRenderTick is not the correct event to listen to - if it doesn't work, try
     // MouseInputEvent (fires in GuiScreen). Same with Mouse. If so, make sure you override event propagation.
-    this.forgeEventService.onGuiScreenKeyboard(this::onGuiScreenKeyboard, null);
+    this.forgeEventService.onGuiScreenKeyboard(this::onGuiScreenKeyboard);
   }
 
   /** Note that multiple events may be emitted at the same time. For now, repeat keys (holding down keys) do not fire multiple events. */
-  public void on(Events event, Function<In, Out> handler, Options options, Object key) {
-    this.addListener(event, handler, options, key);
+  public void on(KeyboardEventType eventType, EventCallback<KeyboardEventData> handler, KeyboardEventOptions options, Object key) {
+    this.addListener(eventType, handler, options, key);
   }
 
-  public boolean off(Events event, Object key) {
-    return this.removeListener(event, key);
+  public boolean off(KeyboardEventType eventType, Object key) {
+    return this.removeListener(eventType, key);
   }
 
   public boolean isHeldDown(int key) {
     return this.currentlyHeldDown.containsKey(key);
   }
 
-  private InputEventData.Out onGuiScreenKeyboard(InputEventData.In in) {
+  private void onGuiScreenKeyboard(Event<?> discard) {
     int key = Keyboard.getEventKey();
     char character = Keyboard.getEventCharacter();
 
-    Events event;
+    KeyboardEventType eventType;
     if (Keyboard.getEventKeyState()) {
-      event = Events.KEY_DOWN;
+      eventType = KeyboardEventType.KEY_DOWN;
       this.currentlyHeldDown.put(key, character);
     } else {
-      event = Events.KEY_UP;
+      eventType = KeyboardEventType.KEY_UP;
       this.currentlyHeldDown.remove(key);
     }
 
-    boolean handled = false;
-    boolean swallowed = false;
-    for (EventHandler<In, Out, Options> handler : this.getListeners(event, KeyboardEventData.class)) {
-      Options options = handler.options;
-      In eventIn = new In(event, key, character, this.currentlyHeldDown);
+    KeyboardEventData data = new KeyboardEventData(eventType, key, character, this.currentlyHeldDown);
+    Event<KeyboardEventData> event = new Event<>(data);
 
-      if (options.ignoreHandled && handled
-        || options.listenForKeys != null && !options.listenForKeys.contains(key)
-        || Boolean.TRUE.equals(options.requireShift) && !eventIn.isKeyModifierActive(KeyModifier.SHIFT)
-        || Boolean.FALSE.equals(options.requireShift) && eventIn.isKeyModifierActive(KeyModifier.SHIFT)
-        || Boolean.TRUE.equals(options.requireCtrl) && !eventIn.isKeyModifierActive(KeyModifier.CTRL)
-        || Boolean.FALSE.equals(options.requireCtrl) && eventIn.isKeyModifierActive(KeyModifier.CTRL)
-        || Boolean.TRUE.equals(options.requireAlt) && !eventIn.isKeyModifierActive(KeyModifier.ALT)
-        || Boolean.FALSE.equals(options.requireAlt) && eventIn.isKeyModifierActive(KeyModifier.ALT)) {
+    for (EventHandler<KeyboardEventData, KeyboardEventOptions> handler : this.getListeners(eventType, KeyboardEventData.class, KeyboardEventOptions.class)) {
+      KeyboardEventOptions options = handler.options;
+
+      if (options.listenForKeys != null && !options.listenForKeys.contains(key)
+        || Boolean.TRUE.equals(options.requireShift) && !data.isKeyModifierActive(KeyModifier.SHIFT)
+        || Boolean.FALSE.equals(options.requireShift) && data.isKeyModifierActive(KeyModifier.SHIFT)
+        || Boolean.TRUE.equals(options.requireCtrl) && !data.isKeyModifierActive(KeyModifier.CTRL)
+        || Boolean.FALSE.equals(options.requireCtrl) && data.isKeyModifierActive(KeyModifier.CTRL)
+        || Boolean.TRUE.equals(options.requireAlt) && !data.isKeyModifierActive(KeyModifier.ALT)
+        || Boolean.FALSE.equals(options.requireAlt) && data.isKeyModifierActive(KeyModifier.ALT)) {
         continue;
       }
 
-      Out eventOut = this.safeDispatch(event, handler, eventIn);
-
-      if (eventOut.handlerAction == null) {
-        continue;
-      } else if (eventOut.handlerAction == KeyboardHandlerAction.HANDLED) {
-        handled = true;
-      } else if (eventOut.handlerAction == KeyboardHandlerAction.SWALLOWED) {
-        swallowed = true;
+      this.safeDispatch(eventType, handler, event);
+      if (event.stoppedPropagation) {
         break;
       }
     }
-
-    return new InputEventData.Out(swallowed);
   }
 
-  public enum Events {
+  public enum KeyboardEventType {
     KEY_UP,
     KEY_DOWN
   }

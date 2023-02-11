@@ -10,7 +10,6 @@ public class ModifyExperienceRequest extends ApiRequestBase {
   private final @Nullable String message;
 
   public ModifyExperienceRequest(int userId, float deltaLevels, @Nullable String message) {
-    super(3);
     this.userId = userId;
     this.deltaLevels = deltaLevels;
     this.message = message;

@@ -1,8 +1,9 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
-import dev.rebel.chatmate.gui.Interactive.Events.IEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -15,7 +16,6 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In;
 import dev.rebel.chatmate.util.Collections;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL11;
@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
@@ -140,33 +139,33 @@ public class CheckboxInputElement extends InputElement {
   }
 
   @Override
-  public void onMouseEnter(IEvent<In> e) {
+  public void onMouseEnter(InteractiveEvent<MouseEventData> e) {
     this.isHovering.set(true);
   }
 
   @Override
-  public void onMouseExit(IEvent<In> e) {
+  public void onMouseExit(InteractiveEvent<MouseEventData> e) {
     this.isHovering.set(false);
   }
 
   @Override
-  public void onMouseDown(IEvent<In> e) {
+  public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     this.onFlipChecked(true);
     e.stopPropagation();
   }
 
   @Override
-  public void onFocus(IEvent<FocusEventData> e) {
+  public void onFocus(InteractiveEvent<FocusEventData> e) {
     this.isFocused.set(true);
   }
 
   @Override
-  public void onBlur(IEvent<FocusEventData> e) {
+  public void onBlur(InteractiveEvent<FocusEventData> e) {
     this.isFocused.set(false);
   }
 
   @Override
-  public void onKeyDown(IEvent<KeyboardEventData.In> e) {
+  public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     if (e.getData().eventKey == Keyboard.KEY_SPACE) {
       this.onFlipChecked(true);
       e.stopPropagation();

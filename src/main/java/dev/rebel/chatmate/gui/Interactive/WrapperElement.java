@@ -11,7 +11,7 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public class WrapperElement extends SingleElement {
-  private IElement contents;
+  protected IElement contents;
 
   public WrapperElement(InteractiveContext context, IElement parent) {
     super(context, parent);

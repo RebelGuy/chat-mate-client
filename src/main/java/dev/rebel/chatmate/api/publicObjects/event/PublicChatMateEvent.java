@@ -1,14 +1,10 @@
 package dev.rebel.chatmate.api.publicObjects.event;
 
 import com.google.gson.annotations.SerializedName;
-import dev.rebel.chatmate.api.publicObjects.PublicObject;
 
 import javax.annotation.Nullable;
 
-public class PublicChatMateEvent extends PublicObject {
-  @Override
-  public Integer GetExpectedSchema() { return 5; }
-
+public class PublicChatMateEvent {
   public ChatMateEventType type;
   public Long timestamp;
   public @Nullable PublicLevelUpData levelUpData;

@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.gui.Interactive.rank;
 
 import dev.rebel.chatmate.Asset;
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
+import dev.rebel.chatmate.api.publicObjects.user.PublicChannel.Platform;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.DropdownMenu.HorizontalPosition;
@@ -17,7 +19,6 @@ import dev.rebel.chatmate.gui.Interactive.rank.Adapters.EndpointAdapter.RankResu
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange;
-import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange.Platform;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
@@ -113,7 +114,9 @@ public class ManageRanksModal extends ModalElement {
       parent.onSubmit = null;
       parent.onClose = null;
 
-      this.titleLabel = new LabelElement(context, this).setText(tableAdapter.tableHeader);
+      this.titleLabel = new LabelElement(context, this).setText(tableAdapter.tableHeader)
+          .setVerticalAlignment(VerticalAlignment.MIDDLE)
+          .cast();
 
       this.createNewRankButton = new TextButtonElement(context, this)
           .setText("Create new")
@@ -419,11 +422,11 @@ public class ManageRanksModal extends ModalElement {
         for (PublicChannelRankChange rankChange : channelRankChanges) {
           IElement nameElement = new InlineElement(super.context, this)
               .addElement(new ImageElement(context, this)
-                  .setImage(rankChange.platform == Platform.YOUTUBE ? Asset.LOGO_YOUTUBE : Asset.LOGO_TWITCH)
+                  .setImage(rankChange.channel.platform == Platform.YOUTUBE ? Asset.LOGO_YOUTUBE : Asset.LOGO_TWITCH)
                   .setTargetContentHeight(context.fontEngine.FONT_HEIGHT_DIM)
                   .setMargin(new RectExtension(ZERO, gui(4), ZERO, ZERO))
               ).addElement(new LabelElement(context, this)
-                  .setText(rankChange.channelName)
+                  .setText(rankChange.channel.displayName)
                   .setFont(VIEWER_NAME_FONT.create(context.dimFactory))
               );
 

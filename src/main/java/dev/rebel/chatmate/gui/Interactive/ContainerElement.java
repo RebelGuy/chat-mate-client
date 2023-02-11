@@ -180,7 +180,9 @@ public abstract class ContainerElement extends ElementBase {
 
       // update current
       currentGroup.add(elementSize);
-      currentAlignment = thisAlignment;
+      if (includedInLayout) {
+        currentAlignment = thisAlignment;
+      }
     }
 
     // flush
@@ -222,7 +224,7 @@ public abstract class ContainerElement extends ElementBase {
         currentPos = currentPos;
       } else if (alignmentOrder == 2) {
         // align the group in the middle of the space
-        currentPos = currentPos.plus(containerSize.minus(groupSize).over(2));
+        currentPos = currentPos.plus(remainingContentSize.minus(groupSize).over(2));
 
         // if the container size were to change, then the calculated position may no longer be centred. therefore, the final container size should be the same size passed into this method.
         requiresContainerSize = true;

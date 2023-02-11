@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
-import dev.rebel.chatmate.gui.Interactive.Events;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ElementFactory;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -105,7 +105,7 @@ public class ChatMateHudStore {
     }
 
     @Override
-    public void onEvent(Events.EventType type, Events.IEvent<?> event) {
+    public void onEvent(InteractiveEvent.EventType type, InteractiveEvent<?> event) {
 
     }
 

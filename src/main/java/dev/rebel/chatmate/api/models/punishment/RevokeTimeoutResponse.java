@@ -8,9 +8,6 @@ import dev.rebel.chatmate.api.proxy.ApiResponseBase;
 import javax.annotation.Nullable;
 
 public class RevokeTimeoutResponse extends ApiResponseBase<RevokeTimeoutResponseData> {
-  @Override
-  public Integer GetExpectedSchema() { return 4; }
-
   public static class RevokeTimeoutResponseData {
     public @Nullable PublicUserRank removedPunishment;
     public @Nullable String removedPunishmentError;

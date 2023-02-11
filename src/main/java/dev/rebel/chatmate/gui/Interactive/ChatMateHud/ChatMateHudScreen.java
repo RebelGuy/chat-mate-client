@@ -1,20 +1,19 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore.IHudStoreListener;
 import dev.rebel.chatmate.gui.Interactive.ElementHelpers;
-import dev.rebel.chatmate.gui.Interactive.Events;
-import dev.rebel.chatmate.gui.Interactive.Events.EventPhase;
-import dev.rebel.chatmate.gui.Interactive.Events.EventType;
+import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData.FocusReason;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventPhase;
+import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent.EventType;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.ContextMenuService;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.events.models.MouseEventData.Out.MouseHandlerAction;
-import dev.rebel.chatmate.events.models.Tick;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +35,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
     super.setMainElement(new MainContainer(chatMateHudStore, this.context, this));
 
     // don't have to worry about unsubscribing because this Screen instance is re-used during the entirety of the application lifetime
-    this.context.forgeEventService.onRenderTick(this::onRenderTick, null);
+    this.context.forgeEventService.onRenderTick(this::onRenderTick);
     config.getHudEnabledEmitter().onChange(x -> this.updateVisibility());
     config.getChatMateEnabledEmitter().onChange(x -> this.updateVisibility());
     chatMateHudStore.addListener(this);
@@ -100,13 +99,13 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
    */
   private void cleanUp() {
     // fire the MOUSE_EXIT event one last time
-    MouseEventData.In in = this.context.mouseEventService.constructSyntheticMoveEvent();
-    List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, in.mousePositionData.point);
+    MouseEventData data = this.context.mouseEventService.constructSyntheticMoveEvent();
+    List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, data.mousePositionData.point);
     for (IElement element : elements) {
-      element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, in, element));
+      element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, data, element));
     }
 
-    super.setFocussedElement(null, Events.FocusReason.AUTO);
+    super.setFocussedElement(null, FocusReason.AUTO);
     super.elementsUnderCursor = new ArrayList<>();
     super.blockingElement = null;
     super.blockedElementsUnderCursor = new ArrayList<>();
@@ -126,61 +125,60 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   }
 
   @Override
-  protected MouseEventData.Out onMouseDown(MouseEventData.In in) {
+  protected void onMouseDown(Event<MouseEventData> event) {
     if (this.isInteractivityDisabled()) {
-      return new MouseEventData.Out();
+      return;
     }
 
-    MouseEventData.Out out = super.onMouseDown(in);
-    if (out.handlerAction == null && in.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
-      this.contextMenuService.showHudContext(in.mousePositionData.x, in.mousePositionData.y);
-      return new MouseEventData.Out(MouseHandlerAction.HANDLED);
-    }
+    super.onMouseDown(event);
 
-    return new MouseEventData.Out();
+    MouseEventData data = event.getData();
+    if (!event.stoppedPropagation && data.mouseButtonData.eventButton == MouseButton.RIGHT_BUTTON) {
+      this.contextMenuService.showHudContext(data.mousePositionData.x, data.mousePositionData.y);
+      event.stopPropagation();
+    }
   }
 
   @Override
-  protected MouseEventData.Out onMouseMove(MouseEventData.In in) {
+  protected void onMouseMove(Event<MouseEventData> event) {
     if (this.isInteractivityDisabled()) {
-      return new MouseEventData.Out();
+      return;
     }
 
-    return super.onMouseMove(in);
+    super.onMouseMove(event);
   }
 
   @Override
-  protected MouseEventData.Out onMouseUp(MouseEventData.In in) {
+  protected void onMouseUp(Event<MouseEventData> event) {
     if (this.isInteractivityDisabled()) {
-      return new MouseEventData.Out();
+      return;
     }
 
-    return super.onMouseUp(in);
+    super.onMouseUp(event);
   }
 
   @Override
-  protected MouseEventData.Out onMouseScroll(MouseEventData.In in) {
+  protected void onMouseScroll(Event<MouseEventData> event) {
     if (this.isInteractivityDisabled()) {
-      return new MouseEventData.Out();
+      return;
     }
 
-    return super.onMouseScroll(in);
+    super.onMouseScroll(event);
   }
 
   @Override
-  protected KeyboardEventData.Out onKeyDown(KeyboardEventData.In in) {
+  protected void onKeyDown(Event<KeyboardEventData> event) {
     if (this.isInteractivityDisabled()) {
-      return new KeyboardEventData.Out();
+      return;
     }
 
-    return super.onKeyDown(in);
+    super.onKeyDown(event);
   }
 
-  private Tick.Out onRenderTick(Tick.In event) {
+  private void onRenderTick(Event<?> event) {
     if (!super.context.minecraft.gameSettings.showDebugInfo || super.shouldCloseScreen) {
       super.drawScreen(0, 0, 0);
     }
-    return new Tick.Out();
   }
 
   private boolean isInteractivityDisabled() {

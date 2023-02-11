@@ -67,7 +67,7 @@ public class ManageExperienceModal extends ModalElement {
     );
 
     super.setBody(new BlockElement(context, this).addElement(this.levelSbs).addElement(this.msgSbs));
-    super.setTitle("Manage Experience for " + user.channelInfo.channelName);
+    super.setTitle("Manage Experience for " + user.channel.displayName);
   }
 
   private void onLevelChange(String maybeLevel) {
@@ -88,7 +88,7 @@ public class ManageExperienceModal extends ModalElement {
   }
 
   private void onModifyExperienceResponse(ModifyExperienceResponseData response, Runnable callback) {
-    this.mcChatService.printInfo("Successfully modified experience for " + response.updatedUser.channelInfo.channelName + ".");
+    this.mcChatService.printInfo("Successfully modified experience for " + response.updatedUser.channel.displayName + ".");
     callback.run();
     super.onCloseScreen();
   }

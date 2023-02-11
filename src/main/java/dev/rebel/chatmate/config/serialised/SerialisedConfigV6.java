@@ -14,12 +14,10 @@ import java.util.Map;
 import java.util.Objects;
 
 public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
-  public boolean soundEnabled;
-  public int chatVerticalDisplacement;
+  public final boolean soundEnabled;
+  public final int chatVerticalDisplacement;
   public final String commandMessageChatVisibility;
-  public boolean hudEnabled;
-  public boolean showServerLogsHeartbeat;
-  public boolean showServerLogsTimeSeries;
+  public final boolean hudEnabled;
   public final boolean showChatPlatformIcon;
   public final SerialisedSeparableHudElement statusIndicator;
   public final SerialisedSeparableHudElement viewerCount;
@@ -33,8 +31,6 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
                             int chatVerticalDisplacement,
                             String commandMessageChatVisibility,
                             boolean hudEnabled,
-                            boolean showServerLogsHeartbeat,
-                            boolean showServerLogsTimeSeries,
                             boolean showChatPlatformIcon,
                             SerialisedSeparableHudElement statusIndicator,
                             SerialisedSeparableHudElement viewerCount,
@@ -47,8 +43,6 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
     this.chatVerticalDisplacement = chatVerticalDisplacement;
     this.commandMessageChatVisibility = commandMessageChatVisibility;
     this.hudEnabled = hudEnabled;
-    this.showServerLogsHeartbeat = showServerLogsHeartbeat;
-    this.showServerLogsTimeSeries = showServerLogsTimeSeries;
     this.showChatPlatformIcon = showChatPlatformIcon;
     this.statusIndicator = statusIndicator;
     this.viewerCount = viewerCount;

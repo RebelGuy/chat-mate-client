@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.ForgeEventService;
-import dev.rebel.chatmate.events.models.Tick;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import org.lwjgl.input.Keyboard;
@@ -50,20 +50,18 @@ public class KeyBindingService {
   }
 
   private void registerHandlers() {
-    this.forgeEventService.onClientTick(this::onClientTick, null);
+    this.forgeEventService.onClientTick(this::onClientTick);
   }
 
-  private Tick.Out onClientTick(Tick.In eventIn) {
-    for (ChatMateKeyEvent event : ChatMateKeyEvent.values()) {
-      KeyBinding keyBinding = this.keyBindings.get(event);
+  private void onClientTick(Event<?> event) {
+    for (ChatMateKeyEvent keyEvent : ChatMateKeyEvent.values()) {
+      KeyBinding keyBinding = this.keyBindings.get(keyEvent);
 
       if (keyBinding.isPressed()) {
-        ArrayList<Supplier<Boolean>> listeners = this.listeners.get(event);
+        ArrayList<Supplier<Boolean>> listeners = this.listeners.get(keyEvent);
         this.notifyListeners(listeners);
       }
     }
-
-    return new Tick.Out();
   }
 
   private void notifyListeners(ArrayList<Supplier<Boolean>> listeners) {

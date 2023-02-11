@@ -1,6 +1,10 @@
 package dev.rebel.chatmate.gui;
 
 import com.google.common.collect.Lists;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.models.*;
+import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.events.models.MouseEventData.MousePositionData;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
 import dev.rebel.chatmate.gui.Interactive.RendererHelpers.Transform;
 import dev.rebel.chatmate.gui.StateManagement.*;
@@ -14,11 +18,7 @@ import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.MinecraftChatEventService;
 import dev.rebel.chatmate.events.MouseEventService;
-import dev.rebel.chatmate.events.MouseEventService.Events;
-import dev.rebel.chatmate.events.models.GuiScreenChanged;
-import dev.rebel.chatmate.events.models.MouseEventData;
-import dev.rebel.chatmate.events.models.MouseEventData.In.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.events.models.RenderChatGameOverlay;
+import dev.rebel.chatmate.events.MouseEventService.MouseEventType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
@@ -27,7 +27,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.MathHelper;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import scala.Tuple2;
@@ -106,40 +105,37 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.scrollPos.setEasing(frac -> 1 - (float)Math.pow(1 - frac, 5));
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
-    this.forgeEventService.onGuiScreenChanged(this::onChatLoseFocus, new GuiScreenChanged.Options(GuiScreenChanged.ListenType.CLOSE_ONLY, CustomGuiChat.class));
-    this.mouseEventService.on(Events.MOUSE_DOWN, this::onMouseDown, new MouseEventData.Options(), null);
-    this.mouseEventService.on(Events.MOUSE_UP, this::onMouseUp, new MouseEventData.Options(), null);
-    this.mouseEventService.on(Events.MOUSE_MOVE, this::onMouseMove, new MouseEventData.Options(), null);
+    this.forgeEventService.onGuiScreenChanged(this::onChatLoseFocus, new GuiScreenChangedEventOptions(GuiScreenChangedEventData.ListenType.CLOSE_ONLY, CustomGuiChat.class));
+    this.mouseEventService.on(MouseEventType.MOUSE_DOWN, this::onMouseDown, new MouseEventOptions(), null);
+    this.mouseEventService.on(MouseEventType.MOUSE_UP, this::onMouseUp, new MouseEventOptions(), null);
+    this.mouseEventService.on(MouseEventType.MOUSE_MOVE, this::onMouseMove, new MouseEventOptions(), null);
   }
 
-  private GuiScreenChanged.Out onChatLoseFocus(GuiScreenChanged.In in) {
+  private void onChatLoseFocus(Event<GuiScreenChangedEventData> event) {
     this.hoveredLine.setSelected(null);
     this.scrollBarDragPosition = null;
     this.scrollBarPositionAtDrag = null;
     this.hoveringOverScrollbar.set(false);
-    return new GuiScreenChanged.Out();
   }
 
-  private MouseEventData.Out onMouseDown(MouseEventData.In in) {
-    DimPoint position = in.mousePositionData.point.setAnchor(DimAnchor.GUI);
-    if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.scrollBarRect != null && this.scrollBarRect.checkCollision(position)) {
+  private void onMouseDown(Event<MouseEventData> event) {
+    MouseEventData data = event.getData();
+    DimPoint position = data.mousePositionData.point.setAnchor(DimAnchor.GUI);
+    if (data.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON && this.scrollBarRect != null && this.scrollBarRect.checkCollision(position)) {
       this.scrollBarDragPosition = position;
       this.scrollBarPositionAtDrag = this.scrollPos.get();
     }
-    return new MouseEventData.Out();
   }
 
-  private MouseEventData.Out onMouseUp(MouseEventData.In in) {
-    if (in.mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
+  private void onMouseUp(Event<MouseEventData> event) {
+    if (event.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       this.scrollBarDragPosition = null;
       this.scrollBarPositionAtDrag = null;
     }
-
-    return new MouseEventData.Out();
   }
 
-  private MouseEventData.Out onMouseMove(MouseEventData.In in) {
-    DimPoint position = in.mousePositionData.point.setAnchor(DimAnchor.GUI);
+  private void onMouseMove(Event<MouseEventData> event) {
+    DimPoint position = event.getData().mousePositionData.point.setAnchor(DimAnchor.GUI);
     this.hoveringOverScrollbar.set(this.scrollBarRect != null && this.scrollBarRect.checkCollision(position));
 
     if (this.scrollBarDragPosition != null) {
@@ -161,24 +157,22 @@ public class CustomGuiNewChat extends GuiNewChat {
     }
 
     this.updateHoveredLine();
-    return new MouseEventData.Out();
   }
 
   private void updateHoveredLine() {
     if (this.contextMenuStore.isShowingContextMenu() || !this.getChatOpen()) {
       this.hoveredLine.setSelected(null);
     } else {
-      MouseEventData.In.MousePositionData position = this.mouseEventService.getCurrentPosition();
+      MousePositionData position = this.mouseEventService.getCurrentPosition();
       this.hoveredLine.setSelected(this.getAbstractChatLine(position.x, position.y));
     }
   }
 
-  private RenderChatGameOverlay.Out onRenderChatGameOverlay(RenderChatGameOverlay.In eventIn) {
-    RenderGameOverlayEvent.Chat event = eventIn.event;
-    event.setCanceled(true);
+  private void onRenderChatGameOverlay(Event<RenderChatGameOverlayEventData> event) {
+    event.stopPropagation();
 
-    float posX = event.posX + LEFT;
-    float posY = eventIn.event.posY - this.config.getChatVerticalDisplacementEmitter().get() + BOTTOM;
+    float posX = event.getData().posX + LEFT;
+    float posY = event.getData().posY - this.config.getChatVerticalDisplacementEmitter().get() + BOTTOM;
     DimPoint translation = new DimPoint(this.dimFactory.fromGui(posX), this.dimFactory.fromGui(posY)); // bottom left position
 
     // clip the chat vertically
@@ -197,7 +191,6 @@ public class CustomGuiNewChat extends GuiNewChat {
     });
 
     this.minecraft.mcProfiler.endSection();
-    return new RenderChatGameOverlay.Out();
   }
 
   @Override
