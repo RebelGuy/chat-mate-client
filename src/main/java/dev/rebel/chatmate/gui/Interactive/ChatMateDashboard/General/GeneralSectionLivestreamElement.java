@@ -119,7 +119,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
   }
 
   public void onShow() {
-    // no op
+    this.onRefresh();
   }
 
   public void onHide() {
