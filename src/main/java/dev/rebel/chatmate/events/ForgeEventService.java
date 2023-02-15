@@ -37,57 +37,57 @@ public class ForgeEventService extends EventServiceBase<ForgeEventService.EventT
   }
 
   public void onOpenGuiModList(EventCallback<OpenGuiEventData> handler) {
-    this.addListener(EventType.OPEN_GUI_MOD_LIST, handler, null);
+    this.addListener(EventType.OPEN_GUI_MOD_LIST, 0, handler, null);
   }
 
   public void onOpenGuiIngameMenu(EventCallback<OpenGuiEventData> handler) {
-    this.addListener(EventType.OPEN_GUI_IN_GAME_MENU, handler, null);
+    this.addListener(EventType.OPEN_GUI_IN_GAME_MENU, 0, handler, null);
   }
 
   public void onOpenChatSettingsMenu(EventCallback<OpenGuiEventData> handler) {
-    this.addListener(EventType.OPEN_CHAT_SETTINGS_MENU, handler, null);
+    this.addListener(EventType.OPEN_CHAT_SETTINGS_MENU, 0, handler, null);
   }
 
   /** Fires when the GuiChat (GuiScreen) is shown. */
   public void onOpenChat(EventCallback<OpenGuiEventData> handler) {
-    this.addListener(EventType.OPEN_CHAT, handler, null);
+    this.addListener(EventType.OPEN_CHAT, 0, handler, null);
   }
 
   /** Fires after the minecraft.currentScreen has changed reference. Occurs AFTER any onOpen* events - it is read-only. */
   public void onGuiScreenChanged(EventCallback<GuiScreenChangedEventData> handler, @Nullable GuiScreenChangedEventOptions options) {
-    this.addListener(EventType.GUI_SCREEN_CHANGED, handler, options);
+    this.addListener(EventType.GUI_SCREEN_CHANGED, 0, handler, options);
   }
 
   public void onRenderGameOverlay(EventCallback<RenderGameOverlayEventData> handler, @Nonnull RenderGameOverlayEventOptions options) {
-    this.addListener(EventType.RENDER_GAME_OVERLAY, handler, options);
+    this.addListener(EventType.RENDER_GAME_OVERLAY, 0, handler, options);
   }
 
   /** Fires before the main chat box GUI component is rendered. */
   public void onRenderChatGameOverlay(EventCallback<RenderChatGameOverlayEventData> handler, @Nullable RenderGameOverlayEventOptions options) {
-    this.addListener(EventType.RENDER_CHAT_GAME_OVERLAY, handler, options);
+    this.addListener(EventType.RENDER_CHAT_GAME_OVERLAY, 0, handler, options);
   }
 
   public void onRenderTick(EventCallback<?> handler) {
-    this.addListener(EventType.RENDER_TICK, handler, null);
+    this.addListener(EventType.RENDER_TICK, 0, handler, null);
   }
 
   public void onClientTick(EventCallback<?> handler) {
-    this.addListener(EventType.CLIENT_TICK, handler, null);
+    this.addListener(EventType.CLIENT_TICK, 0, handler, null);
   }
 
   /** Fires for mouse events within a GUI screen. */
   public void onGuiScreenMouse(EventCallback<?> handler) {
-    this.addListener(EventType.GUI_SCREEN_MOUSE, handler, null);
+    this.addListener(EventType.GUI_SCREEN_MOUSE, 0, handler, null);
   }
 
   /** Fires for keyboard events within a GUI screen. */
   public void onGuiScreenKeyboard(EventCallback<?> handler) {
-    this.addListener(EventType.GUI_SCREEN_KEYBOARD, handler, null);
+    this.addListener(EventType.GUI_SCREEN_KEYBOARD, 0, handler, null);
   }
 
   /** Stored as a weak reference - lambda forbidden. */
   public void onScreenResize(EventCallback<ScreenResizeData> handler, Object key) {
-    this.addListener(EventType.SCREEN_RESIZE, handler, null, key);
+    this.addListener(EventType.SCREEN_RESIZE, 0, handler, null, key);
   }
 
   public void off(EventType event, Object key) {

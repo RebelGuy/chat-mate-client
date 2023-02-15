@@ -41,6 +41,7 @@ import java.util.function.Consumer;
 // the correct way would have been to split IElement up into two interfaces, but it doesn't really matter.
 public class InteractiveScreen extends Screen implements IElement, IFocusListener {
   public final InteractiveScreenType interactiveScreenType;
+  private final LifecycleType lifecycleType;
   protected InteractiveContext context;
   private final @Nullable GuiScreen parentScreen;
   private int recalculationCounter = 0;
@@ -60,7 +61,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   protected IElement mainElement = null;
   protected List<IElement> elementsUnderCursor = new ArrayList<>();
   protected IElement blockingElement = null;
-  protected List<IElement> blockedElementsUnderCursor = new ArrayList<>();  // contains the list of elements that this element blocks, if any
+  protected List<IElement> blockedElementsUnderCursor = new ArrayList<>(); // contains the list of elements that this element blocks, if any
   protected boolean debugModeEnabled = false;
   protected boolean debugElementSelected = false;
   protected long refreshTimestamp; // for showing a quick tooltip after F5 is pressed
@@ -68,11 +69,16 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   protected int minecraftScaleFactor;
 
   public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen, InteractiveScreenType interactiveScreenType) {
+    this(context, parentScreen, interactiveScreenType, LifecycleType.PUBLIC);
+  }
+
+  public InteractiveScreen(InteractiveContext context, @Nullable GuiScreen parentScreen, InteractiveScreenType interactiveScreenType, LifecycleType lifecycleType) {
     super();
 
     context.addFocusListener(this);
 
     this.interactiveScreenType = interactiveScreenType;
+    this.lifecycleType = lifecycleType;
     this.context = context;
     this.parentScreen = parentScreen;
     this.refreshTimestamp = 0;
@@ -83,8 +89,8 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     this.context.mouseEventService.on(MouseEventType.MOUSE_MOVE, this._onMouseMove, new MouseEventOptions(), this);
     this.context.mouseEventService.on(MouseEventType.MOUSE_UP, this._onMouseUp, new MouseEventOptions(), this);
     this.context.mouseEventService.on(MouseEventType.MOUSE_SCROLL, this._onMouseScroll, new MouseEventOptions(), this);
-    this.context.keyboardEventService.on(KeyboardEventType.KEY_DOWN, this._onKeyDown, new KeyboardEventOptions(null, null, null), this);
-    this.context.keyboardEventService.on(KeyboardEventType.KEY_UP, this._onKeyUp, new KeyboardEventOptions(null, null, null), this);
+    this.context.keyboardEventService.on(KeyboardEventType.KEY_DOWN, 0, this._onKeyDown, new KeyboardEventOptions(null, null, null), this);
+    this.context.keyboardEventService.on(KeyboardEventType.KEY_UP, 0, this._onKeyUp, new KeyboardEventOptions(null, null, null), this);
 
     // we don't want to override the default `onScreenSizeUpdated()` because it fires only when this interactive screen is active in `Minecraft`, which may not necessarily be the case (e.g. for the HUD)
     this.context.forgeEventService.onScreenResize(this._onScreenResize, this);
@@ -93,7 +99,14 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   }
 
   public void setMainElement(IElement mainElement) {
-    this.mainElement = mainElement;
+    if (this.mainElement != mainElement) {
+      this.mainElement = mainElement;
+      this.onInvalidateSize();
+    }
+  }
+
+  public @Nullable IElement getMainElement() {
+    return this.mainElement;
   }
 
   @Override
@@ -114,7 +127,13 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     MouseEventData data = this.context.mouseEventService.constructSyntheticMoveEvent();
     List<IElement> elements = ElementHelpers.getElementsAtPointInverted(this, data.mousePositionData.point);
     for (IElement element : elements) {
-        element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, data, element));
+      element.onEvent(EventType.MOUSE_EXIT, new InteractiveEvent<>(EventPhase.TARGET, data, element));
+    }
+
+    if (this.lifecycleType == LifecycleType.PRIVATE) {
+      // minecraft will never call this for us, so we have to do it ourselves
+      this.onGuiClosed();
+      return;
     }
 
     this.mc.displayGuiScreen(this.parentScreen);
@@ -988,7 +1007,15 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public enum InteractiveScreenType {
     MODAL,
     DASHBOARD,
-    HUD
+    HUD,
+    CHAT_COMPONENT
+  }
+
+  public enum LifecycleType {
+    /** Minecraft knows about this screen and is happy to manage its lifecycle for us. */
+    PUBLIC,
+    /** Minecraft does not know about this screen and we have to manage its lifecycle ourselves. */
+    PRIVATE
   }
 }
 

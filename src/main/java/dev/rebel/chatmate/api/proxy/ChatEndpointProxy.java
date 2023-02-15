@@ -2,6 +2,8 @@ package dev.rebel.chatmate.api.proxy;
 
 import dev.rebel.chatmate.api.models.chat.GetChatResponse;
 import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
+import dev.rebel.chatmate.api.models.chat.GetCommandStatusResponse;
+import dev.rebel.chatmate.api.models.chat.GetCommandStatusResponse.GetCommandStatusResponseData;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.ApiRequestService;
 
@@ -20,5 +22,10 @@ public class ChatEndpointProxy extends EndpointProxy {
     String url = String.format("?since=%d%s", sinceTimestamp, limitParam);
 
     this.makeRequestAsync(Method.GET, url, GetChatResponse.class, callback, errorHandler, false);
+  }
+
+  public void getCommandStatus(int commandId, Consumer<GetCommandStatusResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    String url = String.format("/command/%d", commandId);
+    this.makeRequestAsync(Method.GET, url, GetCommandStatusResponse.class, callback, errorHandler, false);
   }
 }

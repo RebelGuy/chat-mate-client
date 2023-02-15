@@ -26,8 +26,8 @@ public class KeyboardEventService extends EventServiceBase<KeyboardEventType> {
   }
 
   /** Note that multiple events may be emitted at the same time. For now, repeat keys (holding down keys) do not fire multiple events. */
-  public void on(KeyboardEventType eventType, EventCallback<KeyboardEventData> handler, KeyboardEventOptions options, Object key) {
-    this.addListener(eventType, handler, options, key);
+  public void on(KeyboardEventType eventType, int zIndex, EventCallback<KeyboardEventData> handler, KeyboardEventOptions options, Object key) {
+    this.addListener(eventType, zIndex, handler, options, key);
   }
 
   public boolean off(KeyboardEventType eventType, Object key) {

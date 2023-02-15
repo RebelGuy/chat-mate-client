@@ -24,19 +24,19 @@ public abstract class EventServiceBase<EventType extends Enum<EventType>> {
   }
 
   /** Add an event listener without a key (cannot unsubscribe - callback will be held as a strong reference). Lambda allowed. */
-  protected final <TData, TOptions> void addListener(EventType event, EventCallback<TData> handler, @Nullable TOptions options) {
+  protected final <TData, TOptions> void addListener(EventType event, int zIndex, EventCallback<TData> handler, @Nullable TOptions options) {
     synchronized (this.listeners.get(event)) {
-      this.listeners.get(event).add(new EventHandler<>(handler, options));
+      this.addEventHandler(this.listeners.get(event), new EventHandler<>(zIndex, handler, options));
     }
   }
 
   /** Add an event listener with a key (can unsubscribe explicitly or implicitly - callback will be held as a weak reference). **LAMBDA FORBIDDEN.** */
-  protected final <TData, TOptions> void addListener(EventType event, EventCallback<TData> handler, @Nullable TOptions options, Object key) {
+  protected final <TData, TOptions> void addListener(EventType event, int zIndex, EventCallback<TData> handler, @Nullable TOptions options, Object key) {
     synchronized (this.listeners.get(event)) {
       if (this.listeners.get(event).stream().anyMatch(eh -> eh.isHandlerForKey(key))) {
         this.logService.logError(this, new RuntimeException("Key already exists for event " + event));
       } else {
-        this.listeners.get(event).add(new EventHandler<>(handler, options, key));
+        this.addEventHandler(this.listeners.get(event), new EventHandler<>(zIndex, handler, options, key));
       }
     }
     this.removeDeadHandlers(event);
@@ -104,5 +104,19 @@ public abstract class EventServiceBase<EventType extends Enum<EventType>> {
     synchronized (this.listeners.get(event)) {
       this.listeners.get(event).removeIf(handler -> !handler.isActive());
     }
+  }
+
+  // sorted from highest to lowest z-index. handlers with the same index are first-in-first-served
+  private void addEventHandler (List<EventHandler<?, ?>> allHandlers, EventHandler<?, ?> handler) {
+    int insertAt = 0;
+    for (EventHandler<?, ?> h : allHandlers) {
+      if (handler.zIndex > h.zIndex) {
+        break;
+      }
+
+      insertAt++;
+    }
+
+    allHandlers.add(insertAt, handler);
   }
 }

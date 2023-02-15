@@ -100,7 +100,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_printsMessageIfIsCommandAndCommandsAreShown() {
     PublicChatItem item = createItem(author1, text1);
-    item.isCommand = true;
+    item.commandId = 1;
     McChatService service = this.setupService();
     when(this.mockCommandMessageChatVisibilityEmitter.get()).thenReturn(CommandMessageChatVisibility.SHOWN);
 
@@ -112,7 +112,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_ignoresIfMessageIsCommandAndCommandsAreHidden() {
     PublicChatItem item = createItem(author1, text1);
-    item.isCommand = true;
+    item.commandId = 1;
     McChatService service = this.setupService();
     when(this.mockCommandMessageChatVisibilityEmitter.get()).thenReturn(CommandMessageChatVisibility.HIDDEN);
 
@@ -231,7 +231,8 @@ public class McChatServiceTests {
         this.mockFontEngine,
         this.mockDimFactory,
         this.mockCustomGuiNewChat,
-        this.mockMinecraftChatEventService);
+        this.mockMinecraftChatEventService,
+        null);
   }
 
   // The below methods should be used for mock data creation. It sets all
@@ -242,7 +243,7 @@ public class McChatServiceTests {
       author = msgAuthor;
       messageParts = messages;
       platform = ChatPlatform.Youtube;
-      isCommand = false;
+      commandId = null;
     }};
   }
 

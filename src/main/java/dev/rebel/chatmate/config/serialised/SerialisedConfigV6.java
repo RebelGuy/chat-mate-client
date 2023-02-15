@@ -17,6 +17,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
   public final boolean soundEnabled;
   public final int chatVerticalDisplacement;
   public final String commandMessageChatVisibility;
+  public final boolean showCommandMessageStatus;
   public final boolean hudEnabled;
   public final boolean showChatPlatformIcon;
   public final SerialisedSeparableHudElement statusIndicator;
@@ -30,6 +31,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
   public SerialisedConfigV6(boolean soundEnabled,
                             int chatVerticalDisplacement,
                             String commandMessageChatVisibility,
+                            boolean showCommandMessageStatus,
                             boolean hudEnabled,
                             boolean showChatPlatformIcon,
                             SerialisedSeparableHudElement statusIndicator,
@@ -42,6 +44,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
     this.soundEnabled = soundEnabled;
     this.chatVerticalDisplacement = chatVerticalDisplacement;
     this.commandMessageChatVisibility = commandMessageChatVisibility;
+    this.showCommandMessageStatus = showCommandMessageStatus;
     this.hudEnabled = hudEnabled;
     this.showChatPlatformIcon = showChatPlatformIcon;
     this.statusIndicator = statusIndicator;
