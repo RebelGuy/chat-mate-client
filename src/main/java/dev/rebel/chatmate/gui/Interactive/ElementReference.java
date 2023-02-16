@@ -309,6 +309,11 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public @Nullable Dim getEffectiveTargetHeight() {
+    return this.parent.getEffectiveTargetHeight();
+  }
+
+  @Override
   public @Nullable Dim getTargetContentHeight() {
     return this.underlyingElement == null ? null : this.underlyingElement.getTargetContentHeight();
   }

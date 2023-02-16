@@ -100,7 +100,7 @@ public class ChatComponentRenderer extends Gui {
 
     } else if (component instanceof InteractiveElementChatComponent) {
       InteractiveElementChatComponent interactiveChatComponent = (InteractiveElementChatComponent)component;
-      return interactiveChatComponent.render(x, y, chatRect);
+      return interactiveChatComponent.render(x, y, opacity, chatRect);
 
     } else {
       throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());

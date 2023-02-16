@@ -19,6 +19,7 @@ import dev.rebel.chatmate.api.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.events.*;
+import dev.rebel.chatmate.stores.CommandApiStore;
 import dev.rebel.chatmate.util.FileHelpers;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.stores.DonationApiStore;
@@ -101,6 +102,7 @@ public class ChatMate {
     LivestreamApiStore livestreamApiStore = new LivestreamApiStore(livestreamEndpointProxy);
     DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy);
     RankApiStore rankApiStore = new RankApiStore(rankEndpointProxy);
+    CommandApiStore commandApiStore = new CommandApiStore(chatEndpointProxy);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -158,6 +160,7 @@ public class ChatMate {
         rankApiStore,
         livestreamApiStore,
         donationApiStore,
+        commandApiStore,
         config,
         imageService,
         donationHudStore);
@@ -206,6 +209,7 @@ public class ChatMate {
         chatComponentRenderer,
         donationHudStore,
         rankApiStore,
+        commandApiStore,
         livestreamApiStore,
         donationApiStore,
         customGuiNewChat,
@@ -249,6 +253,7 @@ public class ChatMate {
         livestreamApiStore,
         donationApiStore,
         rankApiStore,
+        commandApiStore,
         customGuiNewChat,
         imageService,
         donationHudStore,

@@ -92,6 +92,8 @@ public interface IElement {
   /** If set, attempts to lock the height of the element's full box. No guarantee can be made that the height won't exceed this value. */
   IElement setTargetHeight(@Nullable Dim height);
   @Nullable Dim getTargetHeight();
+  /** Takes into account this and the ancestors' target height. */
+  @Nullable Dim getEffectiveTargetHeight();
   /** If set, attempts to lock the height of the element's content box. No guarantee can be made that the height won't exceed this value. */
   IElement setTargetContentHeight(@Nullable Dim contentHeight);
   @Nullable Dim getTargetContentHeight();

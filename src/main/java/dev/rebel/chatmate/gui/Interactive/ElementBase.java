@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBox;
+import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 // a note about box size terminology:
 // the full box includes contents, surrounded by padding, surrounded by border, surrounded by margin. it is the box used when calculating any sort of layout.
@@ -619,6 +620,22 @@ public abstract class ElementBase implements IElement {
       return getFullBoxHeight(this.targetContentHeight);
     } else {
       return null;
+    }
+  }
+// set target content height, not target height, that way our padding won't affect the result
+  @Override
+  public @Nullable Dim getEffectiveTargetHeight() {
+    @Nullable Dim parentHeight = this.parent.getEffectiveTargetHeight();
+    if (parentHeight != null) {
+      parentHeight = parentHeight.minus(this.parent.getPadding().getExtendedHeight()).minus(this.parent.getBorder().getExtendedHeight()).minus(this.parent.getMargin().getExtendedHeight());
+    }
+
+    if (this.getTargetHeight() == null) {
+      return parentHeight;
+    } else if (parentHeight == null) {
+      return this.getTargetHeight();
+    } else {
+      return Dim.min(this.getTargetHeight(), parentHeight);
     }
   }
 

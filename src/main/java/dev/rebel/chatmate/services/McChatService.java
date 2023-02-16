@@ -139,7 +139,7 @@ public class McChatService {
       components.add(rank);
       components.add(player);
       components.add(joinedMessage);
-      if (isCommand || true) {
+      if (isCommand) {
         components.add(new ChatCommandChatComponent(this.interactiveContext, item.commandId));
       }
       IChatComponent message = joinComponents(" ", components, c -> c == platform);

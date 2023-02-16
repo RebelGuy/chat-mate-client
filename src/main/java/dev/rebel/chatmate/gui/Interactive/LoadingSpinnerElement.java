@@ -8,6 +8,7 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
 
 public class LoadingSpinnerElement extends SingleElement {
   private Dim lineWidth;
@@ -29,6 +30,11 @@ public class LoadingSpinnerElement extends SingleElement {
 
   public LoadingSpinnerElement setLineWidth(Dim lineWidth) {
     this.lineWidth = lineWidth;
+    return this;
+  }
+
+  public LoadingSpinnerElement setColour(Function<Colour, Colour> colourUpdater) {
+    this.colour = colourUpdater.apply(this.colour);
     return this;
   }
 

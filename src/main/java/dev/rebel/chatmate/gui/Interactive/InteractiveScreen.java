@@ -24,6 +24,7 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.*;
+import dev.rebel.chatmate.stores.CommandApiStore;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.stores.DonationApiStore;
 import dev.rebel.chatmate.stores.LivestreamApiStore;
@@ -796,6 +797,9 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public @Nullable Dim getTargetHeight() { return null; }
 
   @Override
+  public @Nullable Dim getEffectiveTargetHeight() { return null; }
+
+  @Override
   public @Nullable Dim getTargetContentHeight() { return null; }
 
   //endregion
@@ -822,6 +826,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     public final RankApiStore rankApiStore;
     public final LivestreamApiStore livestreamApiStore;
     public final DonationApiStore donationApiStore;
+    public final CommandApiStore commandApiStore;
     public final Config config;
     public final ImageService imageService;
     public final DonationHudStore donationHudStore;
@@ -855,6 +860,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
                               RankApiStore rankApiStore,
                               LivestreamApiStore livestreamApiStore,
                               DonationApiStore donationApiStore,
+                              CommandApiStore commandApiStore,
                               Config config,
                               ImageService imageService,
                               DonationHudStore donationHudStore) {
@@ -877,6 +883,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       this.rankApiStore = rankApiStore;
       this.livestreamApiStore = livestreamApiStore;
       this.donationApiStore = donationApiStore;
+      this.commandApiStore = commandApiStore;
       this.config = config;
       this.imageService = imageService;
       this.donationHudStore = donationHudStore;

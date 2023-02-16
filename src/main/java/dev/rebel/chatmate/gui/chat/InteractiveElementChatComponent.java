@@ -15,6 +15,7 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.LifecycleType;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import net.minecraft.client.gui.GuiChat;
 import org.lwjgl.input.Keyboard;
 
 /** Misleading name: this won't allow any interactions! */
@@ -33,6 +34,10 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
   }
 
   private void onKeyDown(Event<KeyboardEventData> event) {
+    if (!(this.context.minecraft.currentScreen instanceof GuiChat)) {
+      return;
+    }
+
     // don't close the chat component's screen if we hit escape!
     if (event.getData().eventKey == Keyboard.KEY_ESCAPE) {
       event.stopPropagation();
@@ -40,7 +45,7 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
   }
 
   /** It is safe to add/remove/modify elements in this method. */
-  abstract void onPreRender(Dim x, Dim y);
+  abstract void onPreRender(Dim x, Dim y, int opacity);
 
   public void dispose() {
     this.screen.onCloseScreen();
@@ -54,7 +59,7 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
 
     IElement mainElement = this.screen.getMainElement();
     if (mainElement != null && mainElement.getVisible()) {
-      mainElement.setTargetHeight(lineHeight);
+      mainElement.setTargetContentHeight(lineHeight);
       mainElement.setMaxWidth(lineWidth);
       DimPoint size = mainElement.calculateSize(lineWidth);
       return size.getX();
@@ -73,7 +78,7 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
   }
 
   /** Returns the width taken up by the component. */
-  public Dim render(Dim x, Dim y, DimRect chatRect) {
+  public Dim render(Dim x, Dim y, int opacity, DimRect chatRect) {
     if (!this.initialised) {
       this.initialised = true;
       this.screen.initGui();
@@ -81,7 +86,7 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
       return this.context.dimFactory.zeroGui();
     }
 
-    this.onPreRender(x, y);
+    this.onPreRender(x, y, opacity);
     if (this.screen.getMainElement() == null) {
       return this.context.dimFactory.zeroGui();
     }

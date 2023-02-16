@@ -307,6 +307,9 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public @Nullable Dim getEffectiveTargetHeight() { return null; }
+
+    @Override
     public IElement setTargetContentHeight(@Nullable Dim contentHeight) {
       return null;
     }

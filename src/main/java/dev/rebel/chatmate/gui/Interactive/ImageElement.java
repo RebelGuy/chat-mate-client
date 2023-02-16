@@ -76,7 +76,8 @@ public class ImageElement extends SingleElement {
       height = height.over(scalingFactor);
     }
 
-    @Nullable Dim maxHeight = super.getTargetContentHeight();
+    @Nullable Dim effectiveHeight = super.getEffectiveTargetHeight();
+    @Nullable Dim maxHeight = effectiveHeight == null ? null : super.getContentBoxHeight(effectiveHeight);
     if (maxHeight != null && height.gt(maxHeight)) {
       float scalingFactor = height.over(maxHeight);
       height = height.over(scalingFactor);
