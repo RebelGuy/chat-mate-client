@@ -16,7 +16,7 @@ public class LruCache<TKey, TValue> {
 
   public TValue getOrSet(TKey key, Supplier<TValue> valueGetter) {
     // re-add the key to the beginning of the list
-    this.keys.remove(key);
+    this.removeFromKeys(key);
     this.keys.add(key);
 
     if (!this.map.containsKey(key)) {
@@ -28,6 +28,7 @@ public class LruCache<TKey, TValue> {
   }
 
   public void set(TKey key, TValue value) {
+    this.removeFromKeys(key);
     this.keys.add(key);
     this.map.put(key, value);
     this.pruneCache();
@@ -46,7 +47,7 @@ public class LruCache<TKey, TValue> {
   }
 
   public void remove(TKey key) {
-    this.keys.remove(key);
+    this.removeFromKeys(key);
     this.map.remove(key);  }
 
   public void remove(List<TKey> keys) {
@@ -60,9 +61,13 @@ public class LruCache<TKey, TValue> {
 
   private void pruneCache() {
     while (this.keys.size() > this.limit) {
-      TKey lastKey = Collections.last(this.keys);
-      this.keys.remove(lastKey);
-      this.map.remove(lastKey);
+      TKey firstKey = Collections.first(this.keys);
+      this.removeFromKeys(firstKey);
+      this.map.remove(firstKey);
     }
+  }
+
+  private void removeFromKeys(TKey key) {
+    while (this.keys.remove(key));
   }
 }

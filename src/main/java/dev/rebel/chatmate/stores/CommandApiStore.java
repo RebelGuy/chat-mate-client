@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.stores;
 
+import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.api.models.chat.GetCommandStatusResponse.CommandStatus;
 import dev.rebel.chatmate.api.models.chat.GetCommandStatusResponse.GetCommandStatusResponseData;
 import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
@@ -7,6 +8,7 @@ import dev.rebel.chatmate.util.LruCache;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
+import java.net.ConnectException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
@@ -78,8 +80,28 @@ public class CommandApiStore {
           this.cache.set(commandId, new Tuple2<>(new Date().getTime(), res));
           this.loading.remove(commandId);
         }, err -> {
-          // this forces an update when we next try to load the status
-          this.cache.remove(commandId);
+          // errors that are not connection errors are final states
+          if (err instanceof ConnectException) {
+            // force a refresh
+            this.loading.remove(commandId);
+            this.cache.remove(commandId);
+            return;
+          }
+
+          String message = "Unable to get information about the command.";
+          if (err instanceof ChatMateApiException) {
+            ChatMateApiException exception = (ChatMateApiException)err;
+            if (exception.apiResponseError.errorCode == 404) {
+              message = exception.apiResponseError.message;
+            }
+          }
+
+          String errorMessage = message; // yes java whatever you say
+          this.cache.set(commandId, new Tuple2<>(new Date().getTime(), new GetCommandStatusResponseData() {{
+            status = CommandStatus.ERROR;
+            message = errorMessage;
+            durationMs = 0L;
+          }}));
           this.loading.remove(commandId);
         });
   }

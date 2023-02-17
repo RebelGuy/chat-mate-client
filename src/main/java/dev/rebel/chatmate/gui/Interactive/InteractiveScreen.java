@@ -58,6 +58,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
 
   protected boolean requiresRecalculation = true;
   protected boolean shouldCloseScreen = false;
+  protected boolean preventCloseByEscapeKey = false;
 
   protected IElement mainElement = null;
   protected List<IElement> elementsUnderCursor = new ArrayList<>();
@@ -108,6 +109,11 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
 
   public @Nullable IElement getMainElement() {
     return this.mainElement;
+  }
+
+  public InteractiveScreen preventCloseByEscapeKey(boolean preventCloseByEscapeKey) {
+    this.preventCloseByEscapeKey = preventCloseByEscapeKey;
+    return this;
   }
 
   @Override
@@ -444,7 +450,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     }
 
     // fallback key handling
-    if (this.mainElement != null && data.isPressed(Keyboard.KEY_ESCAPE)) {
+    if (this.mainElement != null && data.isPressed(Keyboard.KEY_ESCAPE) && !this.preventCloseByEscapeKey) {
       this.onCloseScreen();
       event.stopPropagation();
       return;

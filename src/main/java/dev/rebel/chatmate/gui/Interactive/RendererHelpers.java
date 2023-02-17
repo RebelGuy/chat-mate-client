@@ -428,6 +428,7 @@ public class RendererHelpers {
     GlStateManager.enableAlpha();
     GlStateManager.enableTexture2D();
     GlStateManager.shadeModel(7424);
+    GlStateManager.depthMask(true);
     GlStateManager.popMatrix();
   }
 

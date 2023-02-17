@@ -5,6 +5,7 @@ import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.events.models.MouseEventOptions;
+import dev.rebel.chatmate.gui.chat.ChatCommandChatComponent;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -18,9 +19,11 @@ import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.MouseEventService;
 import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.util.ChatHelpers.ClickEventWithCallback;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiConfirmOpenLink;
 import net.minecraft.client.gui.stream.GuiTwitchUserMode;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.event.ClickEvent;
 import net.minecraft.util.IChatComponent;
 import org.apache.logging.log4j.LogManager;
@@ -125,6 +128,12 @@ public class CustomGuiChat extends GuiChat {
       this.cursorService.setCursorType(CursorType.TIP, 0);
     } else {
       this.cursorService.setCursorType(CursorType.DEFAULT, 0);
+    }
+
+    if (component instanceof ChatCommandChatComponent) {
+      ChatCommandChatComponent chatComponent = (ChatCommandChatComponent)component;
+      super.drawHoveringText(Collections.list(chatComponent.hoverText), (int)mouseX.getGui(), (int)mouseY.getGui());
+      GlStateManager.disableLighting();
     }
   }
 

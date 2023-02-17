@@ -10,7 +10,6 @@ import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.style.Colour;
 import net.minecraft.util.IChatComponent;
-import org.lwjgl.Sys;
 
 import javax.annotation.Nullable;
 
@@ -24,6 +23,8 @@ public class ChatCommandChatComponent extends InteractiveElementChatComponent {
 
   private @Nullable CommandStatus lastStatus = null;
 
+  public String hoverText = "The command has not yet completed.";
+
   public ChatCommandChatComponent(InteractiveContext context, int commandId) {
     super(context);
 
@@ -35,7 +36,6 @@ public class ChatCommandChatComponent extends InteractiveElementChatComponent {
     this.successElement = new ImageElement(context, super.screen)
         .setImage(Asset.GUI_TICK_ICON)
         .setVisible(false)
-        .setTooltip("The command has not yet completed.")
         .setSizingMode(SizingMode.MINIMISE)
         .cast();
     this.errorElement = new ImageElement(context, super.screen)
@@ -45,13 +45,10 @@ public class ChatCommandChatComponent extends InteractiveElementChatComponent {
         .cast();
 
     super.screen.setMainElement(
-        new WrapperElement(context, super.screen,
-            new InlineElement(context, super.screen)
-              .addElement(this.loadingSpinnerElement)
-              .addElement(this.successElement)
-              .addElement(this.errorElement)
-              .setOnClick(() -> System.out.println("CLICKED"))
-        )
+        new InlineElement(context, super.screen)
+          .addElement(this.loadingSpinnerElement)
+          .addElement(this.successElement)
+          .addElement(this.errorElement)
     );
   }
 
@@ -74,17 +71,24 @@ public class ChatCommandChatComponent extends InteractiveElementChatComponent {
   @Override
   public void onPreRender(Dim x, Dim y, int opacity) {
     @Nullable GetCommandStatusResponseData data = this.context.commandApiStore.getCommandStatus(this.commandId);
-    @Nullable CommandStatus newStatus = data == null ? null : data.status;
+
+    if (data != null && data.message != null) {
+      String durationText = "";
+      if (data.durationMs != null && data.durationMs >= 100) {
+        durationText = String.format(" (%.1f s)", (float)data.durationMs / 1000);
+      }
+      this.hoverText = String.format("%s%s", data.message, durationText);
+    }
+
+    CommandStatus newStatus = data == null ? CommandStatus.PENDING : data.status;
     if (newStatus != this.lastStatus) {
       this.lastStatus = newStatus;
       this.loadingSpinnerElement
           .setVisible(newStatus == null || newStatus == CommandStatus.PENDING);
       this.successElement
-          .setVisible(newStatus == CommandStatus.SUCCESS)
-          .setTooltip(data.message);
+          .setVisible(newStatus == CommandStatus.SUCCESS);
       this.errorElement
-          .setVisible(newStatus == CommandStatus.ERROR)
-          .setTooltip(data.message);
+          .setVisible(newStatus == CommandStatus.ERROR);
     }
 
     this.loadingSpinnerElement.setColour(c -> c.withAlpha(opacity));

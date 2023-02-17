@@ -1,12 +1,5 @@
 package dev.rebel.chatmate.gui.chat;
 
-import dev.rebel.chatmate.events.Event;
-import dev.rebel.chatmate.events.EventHandler;
-import dev.rebel.chatmate.events.EventHandler.EventCallback;
-import dev.rebel.chatmate.events.KeyboardEventService;
-import dev.rebel.chatmate.events.KeyboardEventService.KeyboardEventType;
-import dev.rebel.chatmate.events.models.KeyboardEventData;
-import dev.rebel.chatmate.events.models.KeyboardEventOptions;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -15,13 +8,10 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.LifecycleType;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import net.minecraft.client.gui.GuiChat;
-import org.lwjgl.input.Keyboard;
 
 /** Misleading name: this won't allow any interactions! */
 public abstract class InteractiveElementChatComponent extends ChatComponentBase {
   private final InteractiveContext context;
-  private final EventCallback<KeyboardEventData> _onKeyDown = this::onKeyDown;
 
   private boolean initialised;
   protected final InteractiveScreen screen;
@@ -29,19 +19,8 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
   public InteractiveElementChatComponent(InteractiveContext context) {
     this.context = context;
     this.initialised = false;
-    this.screen = new InteractiveScreen(context, null, InteractiveScreenType.CHAT_COMPONENT, LifecycleType.PRIVATE);
-    context.keyboardEventService.on(KeyboardEventType.KEY_DOWN, 1, this._onKeyDown, new KeyboardEventOptions(null, null, null), this);
-  }
-
-  private void onKeyDown(Event<KeyboardEventData> event) {
-    if (!(this.context.minecraft.currentScreen instanceof GuiChat)) {
-      return;
-    }
-
-    // don't close the chat component's screen if we hit escape!
-    if (event.getData().eventKey == Keyboard.KEY_ESCAPE) {
-      event.stopPropagation();
-    }
+    this.screen = new InteractiveScreen(context, null, InteractiveScreenType.CHAT_COMPONENT, LifecycleType.PRIVATE)
+        .preventCloseByEscapeKey(true);
   }
 
   /** It is safe to add/remove/modify elements in this method. */
@@ -62,7 +41,9 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
       mainElement.setTargetContentHeight(lineHeight);
       mainElement.setMaxWidth(lineWidth);
       DimPoint size = mainElement.calculateSize(lineWidth);
-      return size.getX();
+
+      // dirty hack: subtract the horizontal margin as it is assumed that the margin is used to position the main element
+      return size.getX().minus(this.screen.getMainElement().getMargin().getExtendedWidth());
     } else {
       return this.context.dimFactory.zeroGui();
     }
@@ -74,7 +55,7 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
     }
 
     DimPoint lastSize = this.screen.getMainElement().getLastCalculatedSize();
-    return lastSize != null ? lastSize.getX() : this.context.dimFactory.zeroGui();
+    return lastSize != null ? lastSize.getX().minus(this.screen.getMainElement().getMargin().getExtendedWidth()) : this.context.dimFactory.zeroGui();
   }
 
   /** Returns the width taken up by the component. */
