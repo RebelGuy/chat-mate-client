@@ -4,6 +4,8 @@ import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.chat.UserSearchResultRowRenderer.AggregatedUserSearchResult;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -48,6 +50,7 @@ public class McChatService {
   private final DimFactory dimFactory;
   private final CustomGuiNewChat customGuiNewChat;
   private final MinecraftChatEventService minecraftChatEventService;
+  private final InteractiveContext interactiveContext;
 
   public McChatService(MinecraftProxyService minecraftProxyService,
                        LogService logService,
@@ -61,7 +64,8 @@ public class McChatService {
                        FontEngine fontEngine,
                        DimFactory dimFactory,
                        CustomGuiNewChat customGuiNewChat,
-                       MinecraftChatEventService minecraftChatEventService) {
+                       MinecraftChatEventService minecraftChatEventService,
+                       InteractiveContext interactiveContext) {
     this.minecraftProxyService = minecraftProxyService;
     this.logService = logService;
     this.filterService = filterService;
@@ -74,6 +78,7 @@ public class McChatService {
     this.dimFactory = dimFactory;
     this.customGuiNewChat = customGuiNewChat;
     this.minecraftChatEventService = minecraftChatEventService;
+    this.interactiveContext = interactiveContext;
 
     this.chatMateEventService.onLevelUp(this::onLevelUp);
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower);
@@ -87,8 +92,9 @@ public class McChatService {
   }
 
   public void printStreamChatItem(PublicChatItem item) {
+    boolean isCommand = item.commandId != null;
     CommandMessageChatVisibility commandMessageVisibility = this.config.getCommandMessageChatVisibilityEmitter().get();
-    if (item.isCommand && commandMessageVisibility == CommandMessageChatVisibility.HIDDEN) {
+    if (isCommand && commandMessageVisibility == CommandMessageChatVisibility.HIDDEN) {
       return;
     }
 
@@ -100,7 +106,7 @@ public class McChatService {
       return;
     }
 
-    boolean greyOut = item.isCommand && commandMessageVisibility == CommandMessageChatVisibility.GREYED_OUT;
+    boolean greyOut = isCommand && commandMessageVisibility == CommandMessageChatVisibility.GREYED_OUT;
 
     try {
       Integer lvl = item.author.levelInfo.level;
@@ -133,6 +139,9 @@ public class McChatService {
       components.add(rank);
       components.add(player);
       components.add(joinedMessage);
+      if (isCommand) {
+        components.add(new ChatCommandChatComponent(this.interactiveContext, item.commandId));
+      }
       IChatComponent message = joinComponents(" ", components, c -> c == platform);
 
       this.minecraftProxyService.printChatMessage("YouTube chat", message);

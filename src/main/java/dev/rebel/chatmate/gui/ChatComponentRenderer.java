@@ -1,9 +1,13 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
+import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.chat.ImageChatComponent;
+import dev.rebel.chatmate.gui.chat.InteractiveElementChatComponent;
 import dev.rebel.chatmate.gui.chat.UserNameChatComponent;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -93,6 +97,10 @@ public class ChatComponentRenderer extends Gui {
     } else if (component instanceof UserNameChatComponent) {
       UserNameChatComponent userNameChatComponent = (UserNameChatComponent)component;
       return userNameChatComponent.renderComponent(x, y, opacity, chatRect);
+
+    } else if (component instanceof InteractiveElementChatComponent) {
+      InteractiveElementChatComponent interactiveChatComponent = (InteractiveElementChatComponent)component;
+      return interactiveChatComponent.render(x, y, opacity, chatRect);
 
     } else {
       throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());

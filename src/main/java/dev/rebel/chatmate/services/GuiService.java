@@ -22,6 +22,7 @@ import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.KeyboardEventService;
 import dev.rebel.chatmate.events.MouseEventService;
 import dev.rebel.chatmate.events.models.OpenGuiEventData;
+import dev.rebel.chatmate.stores.CommandApiStore;
 import dev.rebel.chatmate.stores.DonationApiStore;
 import dev.rebel.chatmate.stores.LivestreamApiStore;
 import dev.rebel.chatmate.stores.RankApiStore;
@@ -65,6 +66,7 @@ public class GuiService {
   private final LivestreamApiStore livestreamApiStore;
   private final DonationApiStore donationApiStore;
   private final RankApiStore rankApiStore;
+  private final CommandApiStore commandApiStore;
   private final CustomGuiNewChat customGuiNewChat;
   private final ImageService imageService;
   private final DonationHudStore donationHudStore;
@@ -103,6 +105,7 @@ public class GuiService {
                     LivestreamApiStore livestreamApiStore,
                     DonationApiStore donationApiStore,
                     RankApiStore rankApiStore,
+                    CommandApiStore commandApiStore,
                     CustomGuiNewChat customGuiNewChat,
                     ImageService imageService,
                     DonationHudStore donationHudStore,
@@ -140,6 +143,7 @@ public class GuiService {
     this.livestreamApiStore = livestreamApiStore;
     this.donationApiStore = donationApiStore;
     this.rankApiStore = rankApiStore;
+    this.commandApiStore = commandApiStore;
     this.customGuiNewChat = customGuiNewChat;
     this.imageService = imageService;
     this.donationHudStore = donationHudStore;
@@ -275,6 +279,7 @@ public class GuiService {
         this.rankApiStore,
         this.livestreamApiStore,
         this.donationApiStore,
+        this.commandApiStore,
         this.config,
         this.imageService,
         this.donationHudStore);

@@ -122,6 +122,7 @@ public class SidebarElement extends ContainerElement {
 
       if (page == SettingsPage.DEBUG) {
         context.config.getDebugModeEnabledEmitter().onChange(this._onChangeDebugModeEnabled, this, true);
+        super.addDisposer(() -> super.context.config.getDebugModeEnabledEmitter().off(this));
       }
     }
 

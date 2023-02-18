@@ -94,6 +94,14 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public void onDisposed() {
+    if (this.underlyingElement != null) {
+      this.underlyingElement.onDisposed();
+      this.underlyingElement = null;
+    }
+  }
+
+  @Override
   public void onEvent(InteractiveEvent.EventType type, InteractiveEvent<?> event) {
     if (this.underlyingElement != null) {
       this.underlyingElement.onEvent(type, event);
@@ -306,6 +314,11 @@ public class ElementReference implements IElement {
   @Override
   public @Nullable Dim getTargetHeight() {
     return this.underlyingElement == null ? null : this.underlyingElement.getTargetHeight();
+  }
+
+  @Override
+  public @Nullable Dim getEffectiveTargetHeight() {
+    return this.parent.getEffectiveTargetHeight();
   }
 
   @Override

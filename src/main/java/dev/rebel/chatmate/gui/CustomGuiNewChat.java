@@ -407,13 +407,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     // purge entries at the top
     while (this.abstractChatLines.size() > MAX_LINES) {
       AbstractChatLine lastLine = this.abstractChatLines.get(this.abstractChatLines.size() - 1);
-      for (IChatComponent component : lastLine.getChatComponent()) {
-        if (component instanceof ImageChatComponent) {
-          // avoid memory leaks by unloading textures before removing the line
-          ImageChatComponent imageComponent = (ImageChatComponent)component;
-          imageComponent.destroy(this.minecraft.getTextureManager());
-        }
-      }
+      this.disposeComponentsInLine(lastLine);
       this.abstractChatLines.remove(this.abstractChatLines.size() - 1);
     }
 
@@ -601,6 +595,13 @@ public class CustomGuiNewChat extends GuiNewChat {
           return originalComponent;
         }
 
+      } else if (component instanceof InteractiveElementChatComponent) {
+        InteractiveElementChatComponent interactiveElementChatComponent = (InteractiveElementChatComponent)component;
+        lineX = lineX.plus(interactiveElementChatComponent.getLastWidth());
+        if (lineX.gt(x)) {
+          return originalComponent;
+        }
+
       } else if (component instanceof ContainerChatComponent) {
         throw new RuntimeException("Cannot get chat component because a container has not been unwrapped.");
       }
@@ -702,14 +703,29 @@ public class CustomGuiNewChat extends GuiNewChat {
     int removed = 0;
     Iterator<ChatLine> chatLines = this.chatLines.iterator();
     while (chatLines.hasNext()) {
-      if (predicate.test(chatLines.next().getParent())) {
+      ChatLine nextLine = chatLines.next();
+      if (predicate.test(nextLine.getParent())) {
         chatLines.remove();
+        this.disposeComponentsInLine(nextLine.getParent());
         removed++;
       }
     }
 
     // this ensures that the bottom lines will shift upwards to fill the gap, if we are currently scrolled
     this.scroll(-removed, true);
+  }
+
+  private void disposeComponentsInLine(AbstractChatLine chatLine) {
+    for (IChatComponent component : chatLine.getChatComponent()) {
+      if (component instanceof ImageChatComponent) {
+        // avoid memory leaks by unloading textures before removing the line
+        ImageChatComponent imageComponent = (ImageChatComponent) component;
+        imageComponent.destroy(this.minecraft.getTextureManager());
+      } else if (component instanceof InteractiveElementChatComponent) {
+        InteractiveElementChatComponent interactiveElementChatComponent = (InteractiveElementChatComponent) component;
+        interactiveElementChatComponent.dispose();
+      }
+    }
   }
 
   /** Returns the actual chat width. */

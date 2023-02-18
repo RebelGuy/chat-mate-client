@@ -89,6 +89,8 @@ public class ComponentHelpers {
       return new TrimmedComponent(component, maxWidth, null);
     } else if (component instanceof UserNameChatComponent) {
       return trimmedComponent((UserNameChatComponent)component, maxWidth, isLineStart, font);
+    } else if (component instanceof InteractiveElementChatComponent) {
+      return trimComponent((InteractiveElementChatComponent)component, maxWidth, isLineStart, font);
     } else {
       throw new RuntimeException(String.format("Unable to trim component (isLineStart=%s) because it is of type %s", String.valueOf(isLineStart), component.getClass().getSimpleName()));
     }
@@ -199,6 +201,16 @@ public class ComponentHelpers {
       return new TrimmedComponent(component, componentWidth, null);
     } else {
       return new TrimmedComponent(new ChatComponentText(""), componentWidth, component);
+    }
+  }
+
+  private static TrimmedComponent trimComponent(InteractiveElementChatComponent component, int maxWidth, boolean isLineStart, FontEngine fontEngine) {
+    int requiredWidth = (int)component.getWidth(fontEngine.FONT_HEIGHT_DIM.setGui(maxWidth), fontEngine.FONT_HEIGHT_DIM).getGui();
+    if (isLineStart || maxWidth >= requiredWidth) {
+      return new TrimmedComponent(component, requiredWidth, null);
+    } else {
+      // add to next line
+      return new TrimmedComponent(new ChatComponentText(""), requiredWidth, component);
     }
   }
 

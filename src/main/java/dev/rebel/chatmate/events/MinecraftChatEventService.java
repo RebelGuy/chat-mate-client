@@ -9,7 +9,7 @@ public class MinecraftChatEventService extends EventServiceBase<MinecraftChatEve
   }
 
   public void onUpdateChatDimensions(EventCallback<?> callback, Object key) {
-    super.addListener(ChatEvent.UPDATE_CHAT_DIMENSIONS, callback, null, key);
+    super.addListener(ChatEvent.UPDATE_CHAT_DIMENSIONS, 0, callback, null, key);
   }
 
   public void dispatchUpdateChatDimensionsEvent() {

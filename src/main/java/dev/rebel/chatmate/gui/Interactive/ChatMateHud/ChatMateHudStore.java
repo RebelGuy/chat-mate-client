@@ -105,6 +105,11 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public void onDisposed () {
+
+    }
+
+    @Override
     public void onEvent(InteractiveEvent.EventType type, InteractiveEvent<?> event) {
 
     }
@@ -305,6 +310,9 @@ public class ChatMateHudStore {
     public Dim getTargetHeight() {
       return null;
     }
+
+    @Override
+    public @Nullable Dim getEffectiveTargetHeight() { return null; }
 
     @Override
     public IElement setTargetContentHeight(@Nullable Dim contentHeight) {

@@ -97,8 +97,11 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     super.addElement(this.didResetHudLabel);
 
     config.getHudEnabledEmitter().onChange(this._onChangeHudEnabled, this, true);
+    super.addDisposer(() -> super.context.config.getHudEnabledEmitter().off(this));
     config.getStatusIndicatorEmitter().onChange(this._onChangeStatusIndicator, this, false);
+    super.addDisposer(() -> super.context.config.getStatusIndicatorEmitter().off(this));
     config.getViewerCountEmitter().onChange(this._onChangeViewerCount, this, false);
+    super.addDisposer(() -> super.context.config.getViewerCountEmitter().off(this));
   }
 
   @Override
@@ -197,6 +200,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
       );
 
       emitter.onChange(this._onChangeConfig, this, true);
+      super.addDisposer(() -> emitter.off(this));
     }
 
     private void onChangeConfig(Event<SeparableHudElement> event) {

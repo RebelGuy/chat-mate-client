@@ -25,6 +25,7 @@ public interface IElement {
 
   /** [Upwards] To be called when an element requests the screen to be closed. */
   void onCloseScreen();
+  void onDisposed();
   /** [Upwards] To be called when the contents have changed in such a way that a size recalculation is required immediately. will not re-calculate sizes unless this is called somewhere.
    * Careful: the layout will be regenerated before a render until no more elements invalidate their sizes, so it is possible to run into an infinite loop. */
   void onInvalidateSize();
@@ -92,6 +93,8 @@ public interface IElement {
   /** If set, attempts to lock the height of the element's full box. No guarantee can be made that the height won't exceed this value. */
   IElement setTargetHeight(@Nullable Dim height);
   @Nullable Dim getTargetHeight();
+  /** Takes into account this and the ancestors' target height. */
+  @Nullable Dim getEffectiveTargetHeight();
   /** If set, attempts to lock the height of the element's content box. No guarantee can be made that the height won't exceed this value. */
   IElement setTargetContentHeight(@Nullable Dim contentHeight);
   @Nullable Dim getTargetContentHeight();

@@ -39,7 +39,7 @@ public class MouseEventService extends EventServiceBase<MouseEventType> {
   }
 
   public void on(MouseEventType event, EventCallback<MouseEventData> handler, MouseEventOptions options, Object key) {
-    this.addListener(event, handler, options, key);
+    this.addListener(event, 0, handler, options, key);
   }
 
   public boolean off(MouseEventType event, Object key) {

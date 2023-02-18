@@ -6,6 +6,7 @@ import java.lang.ref.WeakReference;
 /** If no (or a null) key is provided, the event handler is considered STRONG and will hold on to the callback method, which may be a lambda.
  * If a key is provided, the event handler is considered WEAK and will not hold on to the key or callback method, which may NOT be a lambda. */
 public class EventHandler<TData, TOptions> {
+  public final int zIndex;
   public final TOptions options;
   private final @Nullable WeakReference<Object> key;
 
@@ -15,12 +16,13 @@ public class EventHandler<TData, TOptions> {
   private final @Nullable EventCallback<TData> callback;
 
   /** No weak references. */
-  public EventHandler(EventCallback<TData> callback, TOptions options) {
-    this(callback, options, null);
+  public EventHandler(int zIndex, EventCallback<TData> callback, TOptions options) {
+    this(zIndex, callback, options, null);
   }
 
   /** Weak references. */
-  public EventHandler(EventCallback<TData> callback, TOptions options, @Nullable Object key) {
+  public EventHandler(int zIndex, EventCallback<TData> callback, TOptions options, @Nullable Object key) {
+    this.zIndex = zIndex;
     this.options = options;
     this.callbackRef = key == null ? null : new WeakReference<>(callback);
     this.callback = key == null ? callback : null;

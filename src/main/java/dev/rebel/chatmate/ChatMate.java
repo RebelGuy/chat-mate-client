@@ -19,6 +19,7 @@ import dev.rebel.chatmate.api.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.events.*;
+import dev.rebel.chatmate.stores.CommandApiStore;
 import dev.rebel.chatmate.util.FileHelpers;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.stores.DonationApiStore;
@@ -34,6 +35,8 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+
+import java.util.function.Supplier;
 
 // refer to mcmod.info for more settings.
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
@@ -99,6 +102,7 @@ public class ChatMate {
     LivestreamApiStore livestreamApiStore = new LivestreamApiStore(livestreamEndpointProxy);
     DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy);
     RankApiStore rankApiStore = new RankApiStore(rankEndpointProxy);
+    CommandApiStore commandApiStore = new CommandApiStore(chatEndpointProxy);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -128,19 +132,6 @@ public class ChatMate {
     DonationService donationService = new DonationService(dateTimeService, donationApiStore, livestreamApiStore, rankApiStore, chatMateEventService);
     MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore, chatComponentRenderer);
     ImageService imageService = new ImageService(minecraft);
-    McChatService mcChatService = new McChatService(minecraftProxyService,
-        logService,
-        filterService,
-        soundService,
-        chatMateEventService,
-        messageService,
-        imageService,
-        config,
-        chatMateChatService,
-        fontEngine,
-        dimFactory,
-        customGuiNewChat,
-        minecraftChatEventService);
     StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory, livestreamApiStore);
 
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
@@ -149,7 +140,7 @@ public class ChatMate {
     MinecraftChatService minecraftChatService = new MinecraftChatService(customGuiNewChat);
 
     DonationHudStore donationHudStore = new DonationHudStore(config, logService);
-    InteractiveContext hudContext = new InteractiveContext(
+    Supplier<InteractiveContext> interactiveContextFactory = () -> new InteractiveContext(
         new InteractiveScreen.ScreenRenderer(),
         mouseEventService,
         keyboardEventService,
@@ -169,10 +160,28 @@ public class ChatMate {
         rankApiStore,
         livestreamApiStore,
         donationApiStore,
+        commandApiStore,
         config,
         imageService,
         donationHudStore);
 
+    McChatService mcChatService = new McChatService(minecraftProxyService,
+        logService,
+        filterService,
+        soundService,
+        chatMateEventService,
+        messageService,
+        imageService,
+        config,
+        chatMateChatService,
+        fontEngine,
+        dimFactory,
+        customGuiNewChat,
+        minecraftChatEventService,
+        interactiveContextFactory.get()
+    );
+
+    InteractiveContext hudContext = interactiveContextFactory.get();
     ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, chatMateHudStore);
     CounterHandler counterHandler = new CounterHandler(keyBindingService, chatMateHudStore, dimFactory);
@@ -200,6 +209,7 @@ public class ChatMate {
         chatComponentRenderer,
         donationHudStore,
         rankApiStore,
+        commandApiStore,
         livestreamApiStore,
         donationApiStore,
         customGuiNewChat,
@@ -243,6 +253,7 @@ public class ChatMate {
         livestreamApiStore,
         donationApiStore,
         rankApiStore,
+        commandApiStore,
         customGuiNewChat,
         imageService,
         donationHudStore,

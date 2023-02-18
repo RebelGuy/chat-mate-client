@@ -46,6 +46,9 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<CommandMessageChatVisibility> commandMessageChatVisibility;
   public StatefulEmitter<CommandMessageChatVisibility> getCommandMessageChatVisibilityEmitter() { return this.commandMessageChatVisibility; }
 
+  private final StatefulEmitter<Boolean> showCommandMessageStatus;
+  public StatefulEmitter<Boolean> getShowCommandMessageStatus() { return this.showCommandMessageStatus; }
+
   private final StatefulEmitter<Boolean> hudEnabled;
   public StatefulEmitter<Boolean> getHudEnabledEmitter() { return this.hudEnabled; }
 
@@ -120,6 +123,12 @@ public class Config extends EventServiceBase<ConfigType> {
             ? CommandMessageChatVisibility.SHOWN
             : EnumHelpers.fromStringOrDefault(CommandMessageChatVisibility.class, data.commandMessageChatVisibility, CommandMessageChatVisibility.SHOWN),
         this::onUpdate);
+    this.showCommandMessageStatus = new StatefulEmitter<>(
+        ConfigType.SHOW_COMMAND_MESSAGE_STATUS,
+        Boolean.class,
+        data == null ? true : data.showCommandMessageStatus,
+        this::onUpdate
+    );
     this.hudEnabled = new StatefulEmitter<>(
         ConfigType.ENABLE_HUD,
         Boolean.class,
@@ -204,6 +213,7 @@ public class Config extends EventServiceBase<ConfigType> {
           this.soundEnabled.get(),
           this.chatVerticalDisplacement.get(),
           this.commandMessageChatVisibility.get().toString(),
+          this.showCommandMessageStatus.get(),
           this.hudEnabled.get(),
           this.showChatPlatformIcon.get(),
           new SerialisedConfigV6.SerialisedSeparableHudElement(this.statusIndicator.get()),
@@ -232,7 +242,7 @@ public class Config extends EventServiceBase<ConfigType> {
       this.type = type;
       this.clazz = clazz;
       this.state = initialState;
-      Arrays.asList(initialListeners).forEach(l -> Config.this.addListener(this.type, l, null));
+      Arrays.asList(initialListeners).forEach(l -> Config.this.addListener(this.type, 0, l, null));
     }
 
     /** Lambda allowed - no automatic unsubscribing. */
@@ -258,7 +268,7 @@ public class Config extends EventServiceBase<ConfigType> {
 
     /** **NO LAMBDA** - automatic unsubscribing. */
     public void onChange(EventCallback<T> handler, @Nullable ConfigEventOptions<T> options, Object key, boolean fireInitialOnChange) {
-      Config.this.addListener(this.type, handler, options, key);
+      Config.this.addListener(this.type, 0, handler, options, key);
 
       // fireInitialOnChange is a convenience option for callers that perform logic directly inside the callback function - don't remove it
       if (fireInitialOnChange) {
@@ -392,6 +402,7 @@ public class Config extends EventServiceBase<ConfigType> {
     ENABLE_SOUND,
     CHAT_VERTICAL_DISPLACEMENT,
     COMMAND_MESSAGE_CHAT_VISIBILITY,
+    SHOW_COMMAND_MESSAGE_STATUS,
     ENABLE_HUD,
     SHOW_SERVER_LOGS_HEARTBEAT,
     SHOW_SERVER_LOGS_TIME_SERIES,

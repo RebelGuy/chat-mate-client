@@ -33,6 +33,7 @@ import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
 import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.KeyboardEventService;
 import dev.rebel.chatmate.events.MouseEventService;
+import dev.rebel.chatmate.stores.CommandApiStore;
 import dev.rebel.chatmate.stores.DonationApiStore;
 import dev.rebel.chatmate.stores.LivestreamApiStore;
 import dev.rebel.chatmate.stores.RankApiStore;
@@ -66,6 +67,7 @@ public class ContextMenuService {
   private final ChatComponentRenderer chatComponentRenderer;
   private final DonationHudStore donationHudStore;
   private final RankApiStore rankApiStore;
+  private final CommandApiStore commandApiStore;
   private final LivestreamApiStore livestreamApiStore;
   private final DonationApiStore donationApiStore;
   private final CustomGuiNewChat customGuiNewChat;
@@ -98,6 +100,7 @@ public class ContextMenuService {
                             ChatComponentRenderer chatComponentRenderer,
                             DonationHudStore donationHudStore,
                             RankApiStore rankApiStore,
+                            CommandApiStore commandApiStore,
                             LivestreamApiStore livestreamApiStore,
                             DonationApiStore donationApiStore,
                             CustomGuiNewChat customGuiNewChat,
@@ -129,6 +132,7 @@ public class ContextMenuService {
     this.chatComponentRenderer = chatComponentRenderer;
     this.donationHudStore = donationHudStore;
     this.rankApiStore = rankApiStore;
+    this.commandApiStore = commandApiStore;
     this.livestreamApiStore = livestreamApiStore;
     this.donationApiStore = donationApiStore;
     this.customGuiNewChat = customGuiNewChat;
@@ -245,6 +249,7 @@ public class ContextMenuService {
         this.rankApiStore,
         this.livestreamApiStore,
         this.donationApiStore,
+        this.commandApiStore,
         this.config,
         this.imageService,
         this.donationHudStore);

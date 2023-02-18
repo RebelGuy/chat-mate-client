@@ -39,7 +39,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
   }
 
   public void onNewChat(EventCallback<NewChatEventData> handler, Object key) {
-    super.addListener(EventType.NEW_CHAT, handler, null, key);
+    super.addListener(EventType.NEW_CHAT, 0, handler, null, key);
   }
 
   private void onMakeRequest(Consumer<GetChatResponseData> callback, Consumer<Throwable> onError) {

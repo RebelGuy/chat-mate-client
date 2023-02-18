@@ -1,11 +1,17 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.events.*;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.Dim.DimAnchor;
@@ -20,6 +26,11 @@ import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
+import dev.rebel.chatmate.stores.CommandApiStore;
+import dev.rebel.chatmate.stores.DonationApiStore;
+import dev.rebel.chatmate.stores.LivestreamApiStore;
+import dev.rebel.chatmate.stores.RankApiStore;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,9 +38,8 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -53,6 +63,7 @@ public class McChatServiceTests {
 
   @Mock Config mockConfig;
   @Mock StatefulEmitter<Boolean> mockShowChatPlatformIconEmitter;
+  @Mock StatefulEmitter<Boolean> mockDebugModeEnabledEmitter;
   @Mock StatefulEmitter<CommandMessageChatVisibility> mockCommandMessageChatVisibilityEmitter;
 
   PublicUser author1 = createAuthor("Author 1");
@@ -100,7 +111,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_printsMessageIfIsCommandAndCommandsAreShown() {
     PublicChatItem item = createItem(author1, text1);
-    item.isCommand = true;
+    item.commandId = 1;
     McChatService service = this.setupService();
     when(this.mockCommandMessageChatVisibilityEmitter.get()).thenReturn(CommandMessageChatVisibility.SHOWN);
 
@@ -112,7 +123,7 @@ public class McChatServiceTests {
   @Test
   public void addChat_ignoresIfMessageIsCommandAndCommandsAreHidden() {
     PublicChatItem item = createItem(author1, text1);
-    item.isCommand = true;
+    item.commandId = 1;
     McChatService service = this.setupService();
     when(this.mockCommandMessageChatVisibilityEmitter.get()).thenReturn(CommandMessageChatVisibility.HIDDEN);
 
@@ -219,6 +230,8 @@ public class McChatServiceTests {
     // just return the input
     when(this.mockFilterService.censorNaughtyWords(anyString())).thenAnswer(args -> args.getArgument(0));
 
+    when(this.mockConfig.getDebugModeEnabledEmitter()).thenReturn(this.mockDebugModeEnabledEmitter);
+
     return new McChatService(this.mockMinecraftProxyService,
         this.mockLogService,
         this.mockFilterService,
@@ -231,7 +244,32 @@ public class McChatServiceTests {
         this.mockFontEngine,
         this.mockDimFactory,
         this.mockCustomGuiNewChat,
-        this.mockMinecraftChatEventService);
+        this.mockMinecraftChatEventService,
+        new InteractiveContext(
+            Mockito.mock(ScreenRenderer.class),
+            Mockito.mock(MouseEventService.class),
+            Mockito.mock(KeyboardEventService.class),
+            Mockito.mock(DimFactory.class),
+            Mockito.mock(Minecraft.class),
+            Mockito.mock(FontEngine.class),
+            Mockito.mock(ClipboardService.class),
+            Mockito.mock(SoundService.class),
+            Mockito.mock(CursorService.class),
+            Mockito.mock(MinecraftProxyService.class),
+            Mockito.mock(UrlService.class),
+            Mockito.mock(Environment.class),
+            Mockito.mock(LogService.class),
+            Mockito.mock(MinecraftChatService.class),
+            Mockito.mock(ForgeEventService.class),
+            Mockito.mock(ChatComponentRenderer.class),
+            Mockito.mock(RankApiStore.class),
+            Mockito.mock(LivestreamApiStore.class),
+            Mockito.mock(DonationApiStore.class),
+            Mockito.mock(CommandApiStore.class),
+            this.mockConfig,
+            Mockito.mock(ImageService.class),
+            Mockito.mock(DonationHudStore.class)
+        ));
   }
 
   // The below methods should be used for mock data creation. It sets all
@@ -242,7 +280,7 @@ public class McChatServiceTests {
       author = msgAuthor;
       messageParts = messages;
       platform = ChatPlatform.Youtube;
-      isCommand = false;
+      commandId = null;
     }};
   }
 

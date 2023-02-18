@@ -14,6 +14,7 @@ public class v5v6 extends Migration<SerialisedConfigV5, SerialisedConfigV6> {
     return new SerialisedConfigV6(data.soundEnabled,
         data.chatVerticalDisplacement,
         Config.CommandMessageChatVisibility.SHOWN.toString(),
+        true,
         data.hudEnabled,
         data.showChatPlatformIcon,
         new SerialisedConfigV6.SerialisedSeparableHudElement(data.statusIndicator.enabled, data.statusIndicator.separatePlatforms, data.statusIndicator.showPlatformIcon, data.statusIndicator.platformIconPosition),

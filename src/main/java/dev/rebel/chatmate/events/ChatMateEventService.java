@@ -46,15 +46,15 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
   }
 
   public void onLevelUp(EventCallback<LevelUpEventData> handler) {
-    this.addListener(ChatMateEventType.LEVEL_UP, handler, null);
+    this.addListener(ChatMateEventType.LEVEL_UP, 0, handler, null);
   }
 
   public void onNewTwitchFollower(EventCallback<NewTwitchFollowerEventData> handler) {
-    this.addListener(ChatMateEventType.NEW_TWITCH_FOLLOWER, handler, null);
+    this.addListener(ChatMateEventType.NEW_TWITCH_FOLLOWER, 0, handler, null);
   }
 
   public void onDonation(EventCallback<DonationEventData> handler) {
-    this.addListener(ChatMateEventType.DONATION, handler, null);
+    this.addListener(ChatMateEventType.DONATION, 0, handler, null);
   }
 
   private void onMakeRequest(Consumer<GetEventsResponseData> callback, Consumer<Throwable> onError) {
