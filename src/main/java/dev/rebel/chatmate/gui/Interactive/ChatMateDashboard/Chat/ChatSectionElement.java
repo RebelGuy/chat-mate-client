@@ -97,6 +97,7 @@ public class ChatSectionElement extends ContainerElement implements ISectionElem
     );
 
     context.config.getCommandMessageChatVisibilityEmitter().onChange(this._onChangeConfig, this, true);
+    super.addDisposer(() -> super.context.config.getCommandMessageChatVisibilityEmitter().off(this));
   }
 
   @Override

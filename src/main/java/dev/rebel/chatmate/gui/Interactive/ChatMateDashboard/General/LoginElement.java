@@ -96,6 +96,7 @@ public class LoginElement extends BlockElement {
     super.addElement(this.errorLabel);
 
     context.config.getLoginInfoEmitter().onChange(this._onLoginChange, this, true);
+    super.addDisposer(() -> super.context.config.getLoginInfoEmitter().off(this));
   }
 
   private void onLoginChange(Event<LoginInfo> event) {

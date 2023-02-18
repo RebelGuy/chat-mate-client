@@ -15,6 +15,7 @@ public class RequireLoggedInElement extends WrapperElement {
     super(context, parent, content);
 
     this.context.config.getLoginInfoEmitter().onChange(this._onLoginChange, this);
+    super.addDisposer(() -> super.context.config.getLoginInfoEmitter().off(this));
   }
 
   private void onLoginChange(Event<LoginInfo> e) {

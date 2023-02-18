@@ -94,6 +94,14 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public void onDisposed() {
+    if (this.underlyingElement != null) {
+      this.underlyingElement.onDisposed();
+      this.underlyingElement = null;
+    }
+  }
+
+  @Override
   public void onEvent(InteractiveEvent.EventType type, InteractiveEvent<?> event) {
     if (this.underlyingElement != null) {
       this.underlyingElement.onEvent(type, event);

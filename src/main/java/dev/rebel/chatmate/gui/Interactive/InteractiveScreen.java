@@ -264,6 +264,8 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
 
   @Override
   public void onGuiClosed() {
+    this.mainElement.onDisposed();
+
     // for some reason the InteractiveScreen isn't immediately garbage collected (until going back to the main menu)
     // so let's just unsubscribe from events manually. this is probably how it should be done anyway. I accept defeat
     this.context.mouseEventService.off(MouseEventType.MOUSE_DOWN, this);
@@ -675,6 +677,9 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
 
   @Override
   public void onInitialise() { }
+
+  @Override
+  public void onDisposed() { }
 
   @Override
   public void onEvent(EventType type, InteractiveEvent<?> event) { }

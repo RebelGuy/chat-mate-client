@@ -105,6 +105,11 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public void onDisposed () {
+
+    }
+
+    @Override
     public void onEvent(InteractiveEvent.EventType type, InteractiveEvent<?> event) {
 
     }

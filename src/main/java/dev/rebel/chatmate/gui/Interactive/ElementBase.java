@@ -19,6 +19,8 @@ import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -63,6 +65,7 @@ public abstract class ElementBase implements IElement {
   private @Nullable Dim targetFullHeight;
   private @Nullable Dim targetContentHeight;
   private @Nullable CursorType cursor;
+  private List<Runnable> disposers;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     ID++;
@@ -93,6 +96,7 @@ public abstract class ElementBase implements IElement {
     this.minWidth = null;
     this.targetFullHeight = null;
     this.cursor = null;
+    this.disposers = new ArrayList<>();
   }
 
   @Override
@@ -273,6 +277,21 @@ public abstract class ElementBase implements IElement {
   @Override
   public final void onInvalidateSize() {
     this.parent.onInvalidateSize();
+  }
+
+  @Override
+  public void onDisposed() {
+    this.parent = null;
+    this.disposers.forEach(Runnable::run);
+
+    if (this.getChildren() != null) {
+      this.getChildren().forEach(IElement::onDisposed);
+    }
+  }
+
+  /** The disposer will be called when this element is disposed. */
+  protected void addDisposer(Runnable disposer) {
+    this.disposers.add(disposer);
   }
 
   /** Called when a critical error occurs. Only do clean-up logic if overriding this. No guarantee is made about the initialisation of state. */
