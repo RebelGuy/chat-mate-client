@@ -34,6 +34,9 @@ Ok, so after 12+ hours of trying absolutely everything, here is what I found. I 
 - Don't set the SDK in the Project Settings -> Structure. It appears to be automatically set to adopt-12 (JDK 12)
 - Use the `setupDevWorkspace` task (the `setupDecompWorkspace` doesn't work and I don't know why), and manually add the MinecraftForge source file in Project Structure -> Libraries. This will need to be copied from a working project.
 
+There is a keyboard bug on Linux that prevents the decimal keys 2 and 6 to be recognised while LShift is held down. To fix this, add this mod to the mods folder:
+https://github.com/Leo3418/mckeyboardfix
+
 ### Troubleshooting
 If the MinecraftForge source is not found, manually get the `forgeBin` and `forgeSrc` files from a working project and add them to the Gradle cache folder:
 `.gradle/caches/minecraft/net/minecraftforge/forge/1.8.9-11.15.1.2318-1.8.9/stable/22/`
@@ -91,6 +94,9 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.24 - The Studio Update [5/4/2023]
+- 
+
 ## v1.23 - The Cleanup Update [11/2/2023]
 - Major refactor of the internal event system
 - Removed the server logs HUD component

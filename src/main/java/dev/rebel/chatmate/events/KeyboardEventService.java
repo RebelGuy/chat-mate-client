@@ -8,6 +8,7 @@ import dev.rebel.chatmate.events.models.KeyboardEventOptions;
 import dev.rebel.chatmate.services.LogService;
 import org.lwjgl.input.Keyboard;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +27,7 @@ public class KeyboardEventService extends EventServiceBase<KeyboardEventType> {
   }
 
   /** Note that multiple events may be emitted at the same time. For now, repeat keys (holding down keys) do not fire multiple events. */
-  public void on(KeyboardEventType eventType, int zIndex, EventCallback<KeyboardEventData> handler, KeyboardEventOptions options, Object key) {
+  public void on(KeyboardEventType eventType, int zIndex, EventCallback<KeyboardEventData> handler, @Nullable KeyboardEventOptions options, Object key) {
     this.addListener(eventType, zIndex, handler, options, key);
   }
 
@@ -57,14 +58,16 @@ public class KeyboardEventService extends EventServiceBase<KeyboardEventType> {
     for (EventHandler<KeyboardEventData, KeyboardEventOptions> handler : this.getListeners(eventType, KeyboardEventData.class, KeyboardEventOptions.class)) {
       KeyboardEventOptions options = handler.options;
 
-      if (options.listenForKeys != null && !options.listenForKeys.contains(key)
-        || Boolean.TRUE.equals(options.requireShift) && !data.isKeyModifierActive(KeyModifier.SHIFT)
-        || Boolean.FALSE.equals(options.requireShift) && data.isKeyModifierActive(KeyModifier.SHIFT)
-        || Boolean.TRUE.equals(options.requireCtrl) && !data.isKeyModifierActive(KeyModifier.CTRL)
-        || Boolean.FALSE.equals(options.requireCtrl) && data.isKeyModifierActive(KeyModifier.CTRL)
-        || Boolean.TRUE.equals(options.requireAlt) && !data.isKeyModifierActive(KeyModifier.ALT)
-        || Boolean.FALSE.equals(options.requireAlt) && data.isKeyModifierActive(KeyModifier.ALT)) {
-        continue;
+      if (options != null) {
+        if (options.listenForKeys != null && !options.listenForKeys.contains(key)
+            || Boolean.TRUE.equals(options.requireShift) && !data.isKeyModifierActive(KeyModifier.SHIFT)
+            || Boolean.FALSE.equals(options.requireShift) && data.isKeyModifierActive(KeyModifier.SHIFT)
+            || Boolean.TRUE.equals(options.requireCtrl) && !data.isKeyModifierActive(KeyModifier.CTRL)
+            || Boolean.FALSE.equals(options.requireCtrl) && data.isKeyModifierActive(KeyModifier.CTRL)
+            || Boolean.TRUE.equals(options.requireAlt) && !data.isKeyModifierActive(KeyModifier.ALT)
+            || Boolean.FALSE.equals(options.requireAlt) && data.isKeyModifierActive(KeyModifier.ALT)) {
+          continue;
+        }
       }
 
       this.safeDispatch(eventType, handler, event);
