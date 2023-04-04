@@ -95,7 +95,9 @@ List of unicode emojis that can be printed directly in chat: https://archive.ph/
 
 # Change Log
 ## v1.24 - The Studio Update [5/4/2023]
-- 
+- Livestream commands now show the current status
+- Project is now building on Linux
+- Fixed bug where HUD screen would not close when pressing the Escape key
 
 ## v1.23 - The Cleanup Update [11/2/2023]
 - Major refactor of the internal event system
