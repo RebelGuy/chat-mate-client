@@ -27,7 +27,7 @@ public class ChatMateHudScreen extends InteractiveScreen implements IHudStoreLis
   private final Config config;
 
   public ChatMateHudScreen(ChatMateHudStore chatMateHudStore, ContextMenuService contextMenuService, InteractiveContext context, Config config) {
-    super(context, null, InteractiveScreenType.HUD, LifecycleType.PRIVATE);
+    super(context, null, InteractiveScreenType.HUD, LifecycleType.PUBLIC);
     this.chatMateHudStore = chatMateHudStore;
     this.contextMenuService = contextMenuService;
     this.config = config;
