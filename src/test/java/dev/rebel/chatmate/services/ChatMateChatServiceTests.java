@@ -68,6 +68,6 @@ public class ChatMateChatServiceTests {
     onResponseCaptor.getValue().accept(chatResponse);
 
     // at long last, check that any subscribers were notified of the new data
-    verify(mockChatSubscriber).dispatch(ArgumentMatchers.argThat(arg -> arg.getData().chatItems == chatItems));abcd
+    verify(mockChatSubscriber).dispatch(ArgumentMatchers.argThat(arg -> arg.getData().chatItems == chatItems));abcdef
   }
 }
