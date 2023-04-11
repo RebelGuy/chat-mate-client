@@ -92,7 +92,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
-    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route));
+    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route), config);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))

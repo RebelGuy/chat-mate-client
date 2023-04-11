@@ -23,6 +23,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
   public final SerialisedSeparableHudElement statusIndicator;
   public final SerialisedSeparableHudElement viewerCount;
   public final boolean debugModeEnabled;
+  public final String[] logLevels;
   public final long lastGetChatResponse;
   public final long lastGetChatMateEventsResponse;
   public final Map<String, SerialisedHudElementTransform> hudTransforms;
@@ -37,6 +38,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
                             SerialisedSeparableHudElement statusIndicator,
                             SerialisedSeparableHudElement viewerCount,
                             boolean debugModeEnabled,
+                            String[] logLevels,
                             long lastGetChatResponse,
                             long lastGetChatMateEventsResponse,
                             Map<String, SerialisedHudElementTransform> hudTransforms,
@@ -50,6 +52,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
     this.statusIndicator = statusIndicator;
     this.viewerCount = viewerCount;
     this.debugModeEnabled = debugModeEnabled;
+    this.logLevels = logLevels;
     this.lastGetChatResponse = lastGetChatResponse;
     this.lastGetChatMateEventsResponse = lastGetChatMateEventsResponse;
     this.hudTransforms = hudTransforms;

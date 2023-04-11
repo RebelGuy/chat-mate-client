@@ -56,13 +56,18 @@ public class ChatMate {
     String currentDir = System.getProperty("user.dir").replace("\\", "/");
     String dataDir = currentDir + "/mods/ChatMate";
     FileService fileService = new FileService(dataDir);
-    LogService logService = new LogService(fileService, false);
+    LogService logService = new LogService(fileService);
 
     Minecraft minecraft = Minecraft.getMinecraft();
+    DimFactory dimFactory = new DimFactory(minecraft);
+
+    ConfigPersistorService<SerialisedConfigV6> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV6.class, logService, fileService);
+    this.config = new Config(logService, configPersistorService, dimFactory);
+    logService.injectConfig(this.config);
+
     ForgeEventService forgeEventService = new ForgeEventService(logService, minecraft);
     // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
     MinecraftForge.EVENT_BUS.register(forgeEventService);
-    DimFactory dimFactory = new DimFactory(minecraft);
     FontEngine fontEngine = new FontEngine(dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
     FontEngineProxy fontEngineProxy = new FontEngineProxy(fontEngine, dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
 
@@ -74,9 +79,6 @@ public class ChatMate {
     }
     IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
-
-    ConfigPersistorService<SerialisedConfigV6> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV6.class, logService, fileService);
-    this.config = new Config(logService, configPersistorService, dimFactory);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
