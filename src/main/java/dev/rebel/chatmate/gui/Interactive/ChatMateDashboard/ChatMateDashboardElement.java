@@ -61,7 +61,6 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final SidebarElement sidebar;
   private final ScrollingElement contentWrapper;
   private final ElementReference content;
-  private final AccountEndpointProxy accountEndpointProxy;
 
   public ChatMateDashboardElement(InteractiveContext context,
                                   IElement parent,
@@ -73,7 +72,8 @@ public class ChatMateDashboardElement extends ContainerElement {
                                   MessageService messageService,
                                   Config config,
                                   ChatMateHudService chatMateHudService,
-                                  AccountEndpointProxy accountEndpointProxy) {
+                                  AccountEndpointProxy accountEndpointProxy,
+                                  String dataFolder) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
@@ -82,17 +82,16 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.store = new DashboardStore();
     this.chatMateEndpointProxy = chatMateEndpointProxy;
     this.chatMateHudService = chatMateHudService;
-    this.accountEndpointProxy = accountEndpointProxy;
 
     this.sidebarMaxWidth = gui(80);
     this.backgroundFadeIn = new AnimatedBool(500L, false);
     this.backgroundFadeIn.set(true);
 
-    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy, config, this.accountEndpointProxy);
+    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy, config, accountEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
-    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route), config);
+    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route), config, context.urlService, dataFolder);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))

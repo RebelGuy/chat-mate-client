@@ -260,7 +260,8 @@ public class ChatMate {
         imageService,
         donationHudStore,
         chatMateHudService,
-        accountEndpointProxy);
+        accountEndpointProxy,
+        fileService.dataFolder);
     this.donationHudService = new DonationHudService(chatMateHudStore,
         donationHudStore,
         guiService,

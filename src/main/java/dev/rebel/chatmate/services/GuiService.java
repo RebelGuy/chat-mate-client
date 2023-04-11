@@ -72,6 +72,7 @@ public class GuiService {
   private final DonationHudStore donationHudStore;
   private final ChatMateHudService chatMateHudService;
   private final AccountEndpointProxy accountEndpointProxy;
+  private final String dataFolder;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -110,7 +111,8 @@ public class GuiService {
                     ImageService imageService,
                     DonationHudStore donationHudStore,
                     ChatMateHudService chatMateHudService,
-                    AccountEndpointProxy accountEndpointProxy) {
+                    AccountEndpointProxy accountEndpointProxy,
+                    String dataFolder) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -149,6 +151,7 @@ public class GuiService {
     this.donationHudStore = donationHudStore;
     this.chatMateHudService = chatMateHudService;
     this.accountEndpointProxy = accountEndpointProxy;
+    this.dataFolder = dataFolder;
 
     this.addEventHandlers();
   }
@@ -175,7 +178,8 @@ public class GuiService {
         this.messageService,
         this.config,
         this.chatMateHudService,
-        this.accountEndpointProxy)
+        this.accountEndpointProxy,
+        this.dataFolder)
     );
     return screen;
   }
