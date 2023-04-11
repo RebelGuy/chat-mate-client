@@ -59,7 +59,12 @@ temporarily modified directly.
 
 Build output: `chat-mate-client/build/libs/*.jar`.
 
-Debug partial .minecraft folder: `chat-mate-client/run/`
+Debug partial .minecraft folder: `chat-mate-client/run/`.
+
+## CI
+Github Actions is used for automatically building and testing the Client when pushed.
+
+If the string `--skip-tests` is included in the commit message, the `test` project will not be built and unit tests will be skipped on Github.
 
 ## Profiling
 Use the IntelliJ extension `VisualVM Launcher` from the Marketplace: `https://plugins.jetbrains.com/plugin/7115-visualvm-launcher/`.
