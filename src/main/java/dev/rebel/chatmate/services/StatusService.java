@@ -4,7 +4,7 @@ import dev.rebel.chatmate.api.models.chatMate.GetStatusResponse.GetStatusRespons
 import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
 import dev.rebel.chatmate.api.publicObjects.status.PublicApiStatus.ApiStatus;
 import dev.rebel.chatmate.api.publicObjects.status.PublicLivestreamStatus;
-import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.stores.LivestreamApiStore;
 import dev.rebel.chatmate.util.ApiPoller;
 import dev.rebel.chatmate.util.ApiPoller.PollType;
@@ -16,14 +16,14 @@ import java.util.function.Consumer;
 public class StatusService {
   private final static long INTERVAL = 5000;
 
-  private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final StreamerEndpointProxy streamerEndpointProxy;
   private final ApiPoller<GetStatusResponseData> apiPoller;
   private final LivestreamApiStore livestreamApiStore;
 
   private @Nullable GetStatusResponseData lastStatusResponse;
 
-  public StatusService(ChatMateEndpointProxy chatMateEndpointProxy, ApiPollerFactory apiPollerFactory, LivestreamApiStore livestreamApiStore) {
-    this.chatMateEndpointProxy = chatMateEndpointProxy;
+  public StatusService(StreamerEndpointProxy streamerEndpointProxy, ApiPollerFactory apiPollerFactory, LivestreamApiStore livestreamApiStore) {
+    this.streamerEndpointProxy = streamerEndpointProxy;
     this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, INTERVAL, PollType.CONSTANT_INTERVAL, null);
     this.livestreamApiStore = livestreamApiStore;
 
@@ -124,7 +124,7 @@ public class StatusService {
   }
 
   private void onMakeRequest(Consumer<GetStatusResponseData> onResponse, Consumer<Throwable> onError) {
-    this.chatMateEndpointProxy.getStatusAsync(onResponse, onError, false);
+    this.streamerEndpointProxy.getStatusAsync(onResponse, onError, false);
   }
 
   private void onApiResponse(GetStatusResponseData response) {

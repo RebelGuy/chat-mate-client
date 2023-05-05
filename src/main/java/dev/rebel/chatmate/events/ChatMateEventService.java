@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.events;
 
 import dev.rebel.chatmate.api.ChatMateApiException;
-import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.publicObjects.event.PublicChatMateEvent.ChatMateEventType;
 import dev.rebel.chatmate.api.models.chatMate.GetEventsResponse.GetEventsResponseData;
@@ -9,7 +8,7 @@ import dev.rebel.chatmate.api.publicObjects.event.PublicChatMateEvent;
 import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
 import dev.rebel.chatmate.api.publicObjects.event.PublicLevelUpData;
 import dev.rebel.chatmate.api.publicObjects.event.PublicNewTwitchFollowerData;
-import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.DateTimeService;
 import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
@@ -25,20 +24,19 @@ import dev.rebel.chatmate.util.Objects;
 import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
   private final static long TIMEOUT_WAIT = 60 * 1000;
 
-  private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final StreamerEndpointProxy streamerEndpointProxy;
   private final LogService logService;
   private final ApiPoller<GetEventsResponseData> apiPoller;
   private final Config config;
   private final DateTimeService dateTimeService;
 
-  public ChatMateEventService(LogService logService, ChatMateEndpointProxy chatMateEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService) {
+  public ChatMateEventService(LogService logService, StreamerEndpointProxy streamerEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService) {
     super(ChatMateEventType.class, logService);
-    this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.streamerEndpointProxy = streamerEndpointProxy;
     this.logService = logService;
     this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 1000L, PollType.CONSTANT_PADDING, TIMEOUT_WAIT);
     this.config = config;
@@ -65,7 +63,7 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
     } else if (sinceTimestamp < lastAllowedTimestamp) {
       sinceTimestamp = this.dateTimeService.now();
     }
-    this.chatMateEndpointProxy.getEventsAsync(callback, onError, sinceTimestamp);
+    this.streamerEndpointProxy.getEventsAsync(callback, onError, sinceTimestamp);
   }
 
   private void onApiResponse(GetEventsResponseData response) {

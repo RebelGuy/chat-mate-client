@@ -14,7 +14,7 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
@@ -50,7 +50,7 @@ public class GuiService {
   private final KeyboardEventService keyboardEventService;
   private final ClipboardService clipboardService;
   private final UrlService urlService;
-  private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final StreamerEndpointProxy streamerEndpointProxy;
   private final Environment environment;
   private final MinecraftChatService minecraftChatService;
   private final CustomGuiIngame customGuiIngame;
@@ -90,7 +90,7 @@ public class GuiService {
                     KeyboardEventService keyboardEventService,
                     ClipboardService clipboardService,
                     UrlService urlService,
-                    ChatMateEndpointProxy chatMateEndpointProxy,
+                    StreamerEndpointProxy streamerEndpointProxy,
                     Environment environment,
                     MinecraftChatService minecraftChatService,
                     CustomGuiIngame customGuiIngame,
@@ -129,7 +129,7 @@ public class GuiService {
     this.keyboardEventService = keyboardEventService;
     this.clipboardService = clipboardService;
     this.urlService = urlService;
-    this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.streamerEndpointProxy = streamerEndpointProxy;
     this.environment = environment;
     this.minecraftChatService = minecraftChatService;
     this.customGuiIngame = customGuiIngame;
@@ -171,7 +171,7 @@ public class GuiService {
         context,
         screen,
         route,
-        this.chatMateEndpointProxy,
+        this.streamerEndpointProxy,
         this.statusService,
         this.apiRequestService,
         this.userEndpointProxy,

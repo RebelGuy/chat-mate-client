@@ -21,7 +21,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.MessageService;
@@ -46,7 +46,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   }};
 
   private final DashboardStore store;
-  private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final StreamerEndpointProxy streamerEndpointProxy;
   private final ChatMateHudService chatMateHudService;
 
   private final Dim sidebarMaxWidth;
@@ -65,7 +65,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   public ChatMateDashboardElement(InteractiveContext context,
                                   IElement parent,
                                   @Nullable DashboardRoute route,
-                                  ChatMateEndpointProxy chatMateEndpointProxy,
+                                  StreamerEndpointProxy streamerEndpointProxy,
                                   StatusService statusService,
                                   ApiRequestService apiRequestService,
                                   UserEndpointProxy userEndpointProxy,
@@ -80,14 +80,14 @@ public class ChatMateDashboardElement extends ContainerElement {
     super.setPadding(new RectExtension(gui(8)));
 
     this.store = new DashboardStore();
-    this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.streamerEndpointProxy = streamerEndpointProxy;
     this.chatMateHudService = chatMateHudService;
 
     this.sidebarMaxWidth = gui(80);
     this.backgroundFadeIn = new AnimatedBool(500L, false);
     this.backgroundFadeIn.set(true);
 
-    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy, config, accountEndpointProxy);
+    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.streamerEndpointProxy, config, accountEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
