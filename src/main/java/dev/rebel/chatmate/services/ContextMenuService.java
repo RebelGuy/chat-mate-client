@@ -147,7 +147,8 @@ public class ContextMenuService {
       new ContextMenuOption("Reveal on leaderboard", () -> this.onRevealOnLeaderboard(user)),
       new ContextMenuOption("Manage experience", () -> this.onModifyExperience(user)),
       new ContextMenuOption("Manage ranks", () -> this.onManageRanks(user)),
-      new ContextMenuOption("Manage punishments", () -> this.onManagePunishments(user))
+      new ContextMenuOption("Manage punishments", () -> this.onManagePunishments(user)),
+      new ContextMenuOption("Go to channel", () -> this.onGoToChannel(user))
     );
   }
 
@@ -182,6 +183,10 @@ public class ContextMenuService {
   private void onManagePunishments(PublicUser user) {
     PunishmentAdapters punishmentAdapters = new PunishmentAdapters(this.rankEndpointProxy, this.punishmentEndpointProxy, this.rankApiStore);
     this.displayElementInScreen((context, screen) -> new ManageRanksModal(context, screen, user, punishmentAdapters));
+  }
+
+  private void onGoToChannel(PublicUser user) {
+    this.urlService.openUrl(user.channel.channelUrl);
   }
 
   private void onAddCountdownTitle() {

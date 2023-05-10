@@ -34,4 +34,13 @@ public class UrlService {
       return false;
     }
   }
+
+  public boolean openUrl(String url) {
+    try {
+      return this.openUrl(new URI(url));
+    } catch (Throwable throwable) {
+      this.logService.logError(String.format("Failed to open link '%s'", url), throwable);
+      return false;
+    }
+  }
 }
