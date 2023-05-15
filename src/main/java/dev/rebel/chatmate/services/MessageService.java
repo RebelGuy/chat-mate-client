@@ -248,6 +248,15 @@ public class MessageService {
     return joinComponents(" ", list);
   }
 
+  public IChatComponent getNewViewerMessage(PublicUser user) {
+    List<IChatComponent> list = new ArrayList<>();
+    list.add(INFO_PREFIX);
+    list.add(styledText("Welcome", INFO_MSG_STYLE.get()));
+    list.add(this.getUserComponent(user));
+    list.add(styledText("to the livestream!", INFO_MSG_STYLE.get()));
+    return joinComponents(" ", list);
+  }
+
   private IChatComponent getLargeLevelUpIntro(PublicUser user, int newLevel) {
     return pickRandom(INFO_MSG_STYLE.get(),
         "My little rebels... I have news for you.",

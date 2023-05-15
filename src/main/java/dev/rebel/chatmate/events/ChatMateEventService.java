@@ -1,15 +1,13 @@
 package dev.rebel.chatmate.events;
 
 import dev.rebel.chatmate.api.ChatMateApiException;
+import dev.rebel.chatmate.api.publicObjects.event.*;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.publicObjects.event.PublicChatMateEvent.ChatMateEventType;
 import dev.rebel.chatmate.api.models.chatMate.GetEventsResponse.GetEventsResponseData;
-import dev.rebel.chatmate.api.publicObjects.event.PublicChatMateEvent;
-import dev.rebel.chatmate.api.publicObjects.event.PublicDonationData;
-import dev.rebel.chatmate.api.publicObjects.event.PublicLevelUpData;
-import dev.rebel.chatmate.api.publicObjects.event.PublicNewTwitchFollowerData;
 import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
+import dev.rebel.chatmate.events.models.NewViewerEventData;
 import dev.rebel.chatmate.services.DateTimeService;
 import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
 import dev.rebel.chatmate.services.LogService;
@@ -55,6 +53,10 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
     this.addListener(ChatMateEventType.DONATION, 0, handler, null);
   }
 
+  public void onNewViewer(EventCallback<NewViewerEventData> handler) {
+    this.addListener(ChatMateEventType.NEW_VIEWER, 0, handler, null);
+  }
+
   private void onMakeRequest(Consumer<GetEventsResponseData> callback, Consumer<Throwable> onError) {
     @Nullable Long sinceTimestamp = this.config.getLastGetChatMateEventsResponseEmitter().get();
     long lastAllowedTimestamp = this.dateTimeService.nowPlus(UnitOfTime.HOUR, -1.0);
@@ -90,6 +92,14 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
         for (EventHandler<DonationEventData, ?> handler : this.getListeners(eventType, DonationEventData.class)) {
           PublicDonationData data = event.donationData;
           DonationEventData eventData = new DonationEventData(new Date(event.timestamp), data);
+          this.safeDispatch(eventType, handler, new Event<>(eventData));
+        }
+
+      } else if (event.type == ChatMateEventType.NEW_VIEWER) {
+        ChatMateEventType eventType = ChatMateEventType.NEW_VIEWER;
+        for (EventHandler<NewViewerEventData, ?> handler : this.getListeners(eventType, NewViewerEventData.class)) {
+          PublicNewViewerData data = event.newViewerData;
+          NewViewerEventData eventData = new NewViewerEventData(new Date(event.timestamp), data);
           this.safeDispatch(eventType, handler, new Event<>(eventData));
         }
       } else {
