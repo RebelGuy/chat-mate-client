@@ -42,12 +42,23 @@ public class UserNameChatComponent extends ChatComponentBase {
   private final boolean useEffects;
   private final double tOffset;
   private final @Nullable ImageChatComponent verificationBadgeComponent;
+  private final @Nullable ImageChatComponent newUserIconComponent;
 
   private String displayName;
   private double lastT;
   private List<Particle> particles;
 
-  public UserNameChatComponent(FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore, ChatComponentRenderer chatComponentRenderer, int userId, Font baseFont, String displayName, boolean useEffects, boolean showVerificationBadge) {
+  public UserNameChatComponent(FontEngine fontEngine,
+                               DimFactory dimFactory,
+                               DonationService donationService,
+                               RankApiStore rankApiStore,
+                               ChatComponentRenderer chatComponentRenderer,
+                               int userId,
+                               Font baseFont,
+                               String displayName,
+                               boolean useEffects,
+                               boolean showVerificationBadge,
+                               boolean showNewUserIcon) {
     super();
     this.fontEngine = fontEngine;
     this.dimFactory = dimFactory;
@@ -62,6 +73,7 @@ public class UserNameChatComponent extends ChatComponentBase {
     this.lastT = 0;
     this.particles = new ArrayList<>();
     this.verificationBadgeComponent = showVerificationBadge ? new ImageChatComponent(() -> Asset.GUI_VERIFICATION_ICON_WHITE_SMALL, dimFactory.fromGui(0), dimFactory.fromGui(0), false, this.fontEngine.FONT_HEIGHT_DIM.times(0.5f)) : null;
+    this.newUserIconComponent = showNewUserIcon ? new ImageChatComponent(() -> Asset.STAR, dimFactory.fromGui(-4), dimFactory.fromGui(0), false) : null;
   }
 
   public void setDisplayName(String formattedName) {
@@ -93,7 +105,8 @@ public class UserNameChatComponent extends ChatComponentBase {
 
   public Dim getWidth(Dim lineHeight) {
     Dim verificationBadgeWidth = this.verificationBadgeComponent == null ? this.dimFactory.zeroGui() : this.verificationBadgeComponent.getRequiredWidth(lineHeight);
-    return this.fontEngine.getStringWidthDim(this.displayName, this.baseFont).plus(verificationBadgeWidth);
+    Dim newUserIconWidth = this.newUserIconComponent == null ? this.dimFactory.zeroGui() : this.newUserIconComponent.getRequiredWidth(lineHeight);
+    return this.fontEngine.getStringWidthDim(this.displayName, this.baseFont).plus(verificationBadgeWidth).plus(newUserIconWidth);
   }
 
   /** Returns the width. */
@@ -121,7 +134,14 @@ public class UserNameChatComponent extends ChatComponentBase {
 
   private Dim renderDefault(Dim x, Dim y, float alpha, DimRect chatRect) {
     Colour colour = this.baseFont.getColour().withAlpha(alpha);
+
+    if (this.newUserIconComponent != null) {
+      Dim w = this.chatComponentRenderer.drawChatComponent(this.newUserIconComponent, x, y.plus(this.dimFactory.fromGui(-1)), colour.alpha, chatRect);
+      x = x.plus(w);
+    }
+
     x = this.fontEngine.drawString(this.displayName, x, y, this.baseFont.withColour(colour));
+
     if (this.verificationBadgeComponent != null) {
       this.verificationBadgeComponent.setColour(colour);
       Dim w = this.chatComponentRenderer.drawChatComponent(this.verificationBadgeComponent, x, y, colour.alpha, chatRect);
@@ -143,9 +163,27 @@ public class UserNameChatComponent extends ChatComponentBase {
       this.renderParticles(t, deltaT, alpha, rect, chatRect);
     }
 
+    // rainbow effect (all donators)
+    // make sure we don't get noticeable repeats
+    float r = ((float)Math.sin(t / 2) + 1) / 2;
+    float g = ((float)Math.sin(t / Math.E) + 1) / 2;
+    float b = ((float)Math.sin(t / Math.PI) + 1) / 2;
+    Colour colour = new Colour(r, g, b, alpha);
+
+    // wave effect (supporter)
+    Dim yOffset = this.getVerticalOffset(t);
+
+    if (this.verificationBadgeComponent != null) {
+      Dim w = this.chatComponentRenderer.drawChatComponent(this.newUserIconComponent, x, y.plus(yOffset), colour.alpha, chatRect);
+      x = x.plus(w);
+    }
+
     String fullString = this.displayName;
-    int N = fullString.length() + (this.verificationBadgeComponent == null ? 0 : 1);
-    for (int i = 0; i < N; i++) {
+    int imageCharacterCount = (this.verificationBadgeComponent == null ? 0 : 1) + (this.newUserIconComponent == null ? 0 : 1);
+    int N = fullString.length() + imageCharacterCount;
+    int startIndex = this.verificationBadgeComponent == null ? 0 : 1;
+
+    for (int i = startIndex; i < N; i++) {
       String c = "";
       if (i < fullString.length()) {
         c = fullString.substring(i, i + 1);
@@ -155,18 +193,8 @@ public class UserNameChatComponent extends ChatComponentBase {
         }
       }
 
-      // rainbow effect (all donators)
-      // make sure we don't get noticeable repeats
-      float r = ((float)Math.sin(t / 2) + 1) / 2;
-      float g = ((float)Math.sin(t / Math.E) + 1) / 2;
-      float b = ((float)Math.sin(t / Math.PI) + 1) / 2;
-
-      // wave effect (supporter)
-      Dim yOffset = this.getVerticalOffset(t);
-
       GL11.glPushMatrix();
       GL11.glTranslated(0, 0, 10);
-      Colour colour = new Colour(r, g, b, alpha);
       if (i < N - 1 || this.verificationBadgeComponent == null) {
         Font font = new Font(this.baseFont).withColour(colour);
         x = this.fontEngine.drawString(c, x, y.plus(yOffset), font);

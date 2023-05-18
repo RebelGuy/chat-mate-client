@@ -129,7 +129,7 @@ public class McChatService {
       if (greyOut) {
         viewerNameFont = viewerNameFont.withColour(Colour.GREY33);
       }
-      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channel.displayName, true, true, false);
+      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channel.displayName, true, true, false, false);
 
       McChatResult mcChatResult = this.streamChatToMcChat(item, this.fontEngine, greyOut);
       IChatComponent joinedMessage = joinComponents("", mcChatResult.chatComponents);

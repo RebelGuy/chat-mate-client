@@ -29,12 +29,13 @@ public class MessageServiceTests {
   @Mock DonationService donationService;
   @Mock RankApiStore rankApiStore;
   @Mock ChatComponentRenderer chatComponentRenderer;
+  @Mock DateTimeService dateTimeService;
 
   MessageService messageService;
 
   @Before
   public void setup() {
-    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer);
+    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer, this.dateTimeService);
 
     when(this.fontEngine.getStringWidth(anyString())).thenAnswer(i -> ((String)i.getArgument(0)).length());
   }

@@ -78,7 +78,7 @@ public class McChatServiceTests {
     // assume nonempty, just return the input component
     when(this.mockMessageService.ensureNonempty(ArgumentMatchers.any(), anyString())).thenAnswer(i -> i.getArgument(0));
 
-    when(this.mockMessageService.getUserComponent(ArgumentMatchers.any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean())).thenAnswer(i -> {
+    when(this.mockMessageService.getUserComponent(ArgumentMatchers.any(), any(), any(), anyBoolean(), anyBoolean(), anyBoolean(),anyBoolean())).thenAnswer(i -> {
       PublicUser user = i.getArgument(0);
       return new ContainerChatComponent(new ChatComponentText(user.channel.displayName), user);
     });

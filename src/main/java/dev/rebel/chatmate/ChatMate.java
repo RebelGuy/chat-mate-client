@@ -132,7 +132,7 @@ public class ChatMate {
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, streamerEndpointProxy, apiPollerFactory, config, dateTimeService);
     DonationService donationService = new DonationService(dateTimeService, donationApiStore, livestreamApiStore, rankApiStore, chatMateEventService);
-    MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore, chatComponentRenderer);
+    MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore, chatComponentRenderer, dateTimeService);
     ImageService imageService = new ImageService(minecraft);
     StatusService statusService = new StatusService(streamerEndpointProxy, apiPollerFactory, livestreamApiStore);
 
