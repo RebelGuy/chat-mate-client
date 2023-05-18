@@ -35,6 +35,7 @@ import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class MessageService {
   private static final IChatComponent INFO_PREFIX = styledText("ChatMate>", INFO_MSG_PREFIX_STYLE.get());
+  private static final int NEW_USER_THRESHOLD_DAYS = 1;
 
   private final Random random = new Random();
   private final LogService logService;
@@ -334,7 +335,7 @@ public class MessageService {
     }
 
     boolean showVerificationBadge = !hideVerificationBadge && user.registeredUser != null;
-    boolean showNewUserIcon = !hideNewUserIcon && user.firstSeen > this.dateTimeService.nowPlus(DateTimeService.UnitOfTime.DAY, -31.0);
+    boolean showNewUserIcon = !hideNewUserIcon && user.firstSeen > this.dateTimeService.nowPlus(DateTimeService.UnitOfTime.DAY, -NEW_USER_THRESHOLD_DAYS);
     UserNameChatComponent component = new UserNameChatComponent(
         this.fontEngine,
         this.dimFactory,

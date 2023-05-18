@@ -73,6 +73,7 @@ public class MessageServiceTests {
   public void getUserComponent_UsesTrimmedName() {
     PublicUser user = new PublicUser() {{
       primaryUserId = 1;
+      firstSeen = 0L;
       channel = new PublicChannel() {{
         displayName = " Test channel ! ";
         activeRanks = new PublicUserRank[0];
@@ -90,6 +91,7 @@ public class MessageServiceTests {
     when(this.fontEngine.getStringWidth("x")).thenReturn(0);
     PublicUser user = new PublicUser() {{
       primaryUserId = 5;
+      firstSeen = 0L;
       channel = new PublicChannel() {{
         displayName = "x";
         activeRanks = new PublicUserRank[0];
