@@ -39,7 +39,7 @@ public abstract class InteractiveElementChatComponent extends ChatComponentBase 
     IElement mainElement = this.screen.getMainElement();
     if (mainElement != null && mainElement.getVisible()) {
       mainElement.setTargetContentHeight(lineHeight);
-      mainElement.setMaxWidth(lineWidth);
+      mainElement.setMaxContentWidth(lineWidth);
       DimPoint size = mainElement.calculateSize(lineWidth);
 
       // dirty hack: subtract the horizontal margin as it is assumed that the margin is used to position the main element
