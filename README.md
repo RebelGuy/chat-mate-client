@@ -99,6 +99,15 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## V1.25 - The Multistream Update [27/5/2023]
+- First-time chatters are now announced in the chat, and new (<24 hours) channels are highlighted using a star
+- Right-clicking a user now allows the option to go to the user's channel
+- Logs can now be toggled via the ChatMate Dashboard -> Debug menu
+- Unit tests can now be skipped during the CI build
+- Some API requests are now retried for improved reliability
+- Fixed donation effect not working properly
+- Fixed the command status icon not being sized correctly
+
 ## v1.24 - The Studio Update [5/4/2023]
 - Livestream commands now show the current status
 - Project is now building on Linux

@@ -72,7 +72,7 @@ public class LogService {
 
   private void log(LogLevel logLevel, Object logger, Object... args) {
     if (this.config == null) {
-      // defer logging until we know what to log
+      // defer logging until we know where to log
       assert this.args != null;
       this.args.add(new Args(logLevel, logger, args));
       return;
