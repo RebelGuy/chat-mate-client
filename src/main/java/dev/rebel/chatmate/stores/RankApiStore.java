@@ -86,12 +86,10 @@ public class RankApiStore {
     }
 
     List<PublicUserRank> allRanks = this.cache.get(key);
-    return this.memoiser.memoise(String.format("%d-past", userId), () -> {
-      return Collections.filter(allRanks, rank -> rank.issuedAt <= time && // rank was issued before the requested time
-          (rank.expirationTime == null || rank.expirationTime > time) && // and if it expired, it expired after the requested time
-          (rank.revokedAt == null || rank.revokedAt > time) // and if it was revoked, it was revoked after the requested time
-      );
-    }, allRanks);
+    return Collections.filter(allRanks, rank -> rank.issuedAt <= time && // rank was issued before the requested time
+        (rank.expirationTime == null || rank.expirationTime > time) && // and if it expired, it expired after the requested time
+        (rank.revokedAt == null || rank.revokedAt > time) // and if it was revoked, it was revoked after the requested time
+    );
   }
 
   private static String getKey(int userId) {

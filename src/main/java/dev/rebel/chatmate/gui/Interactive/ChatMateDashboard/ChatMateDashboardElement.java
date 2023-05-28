@@ -21,7 +21,7 @@ import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.MessageService;
@@ -46,7 +46,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   }};
 
   private final DashboardStore store;
-  private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final StreamerEndpointProxy streamerEndpointProxy;
   private final ChatMateHudService chatMateHudService;
 
   private final Dim sidebarMaxWidth;
@@ -61,38 +61,37 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final SidebarElement sidebar;
   private final ScrollingElement contentWrapper;
   private final ElementReference content;
-  private final AccountEndpointProxy accountEndpointProxy;
 
   public ChatMateDashboardElement(InteractiveContext context,
                                   IElement parent,
                                   @Nullable DashboardRoute route,
-                                  ChatMateEndpointProxy chatMateEndpointProxy,
+                                  StreamerEndpointProxy streamerEndpointProxy,
                                   StatusService statusService,
                                   ApiRequestService apiRequestService,
                                   UserEndpointProxy userEndpointProxy,
                                   MessageService messageService,
                                   Config config,
                                   ChatMateHudService chatMateHudService,
-                                  AccountEndpointProxy accountEndpointProxy) {
+                                  AccountEndpointProxy accountEndpointProxy,
+                                  String dataFolder) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
     super.setPadding(new RectExtension(gui(8)));
 
     this.store = new DashboardStore();
-    this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.streamerEndpointProxy = streamerEndpointProxy;
     this.chatMateHudService = chatMateHudService;
-    this.accountEndpointProxy = accountEndpointProxy;
 
     this.sidebarMaxWidth = gui(80);
     this.backgroundFadeIn = new AnimatedBool(500L, false);
     this.backgroundFadeIn.set(true);
 
-    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.chatMateEndpointProxy, config, this.accountEndpointProxy);
+    this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.streamerEndpointProxy, config, accountEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
-    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route));
+    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route), config, context.urlService, dataFolder);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))

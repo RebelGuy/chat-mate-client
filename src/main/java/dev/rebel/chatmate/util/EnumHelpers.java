@@ -33,9 +33,9 @@ public class EnumHelpers {
     return null;
   }
 
-  public static <T extends Enum<T>> T fromStringOrDefault(Class<T> anchorClass, String stringValue, T defaultValue) {
+  public static <T extends Enum<T>> T fromStringOrDefault(Class<T> clazz, String stringValue, T defaultValue) {
     try {
-      return T.valueOf(anchorClass, stringValue);
+      return T.valueOf(clazz, stringValue);
     } catch (IllegalArgumentException e) {
       return defaultValue;
     }

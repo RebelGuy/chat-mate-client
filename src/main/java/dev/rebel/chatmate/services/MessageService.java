@@ -35,6 +35,7 @@ import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class MessageService {
   private static final IChatComponent INFO_PREFIX = styledText("ChatMate>", INFO_MSG_PREFIX_STYLE.get());
+  private static final int NEW_USER_THRESHOLD_DAYS = 1;
 
   private final Random random = new Random();
   private final LogService logService;
@@ -43,14 +44,16 @@ public class MessageService {
   private final DonationService donationService;
   private final RankApiStore rankApiStore;
   private final ChatComponentRenderer chatComponentRenderer;
+  private final DateTimeService dateTimeService;
 
-  public MessageService(LogService logService, FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore, ChatComponentRenderer chatComponentRenderer) {
+  public MessageService(LogService logService, FontEngine fontEngine, DimFactory dimFactory, DonationService donationService, RankApiStore rankApiStore, ChatComponentRenderer chatComponentRenderer, DateTimeService dateTimeService) {
     this.logService = logService;
     this.fontEngine = fontEngine;
     this.dimFactory = dimFactory;
     this.donationService = donationService;
     this.rankApiStore = rankApiStore;
     this.chatComponentRenderer = chatComponentRenderer;
+    this.dateTimeService = dateTimeService;
   }
 
   public IChatComponent getErrorMessage(String msg) {
@@ -133,7 +136,7 @@ public class MessageService {
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE.get() : GOOD_MSG_STYLE.get())));
-    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory), entry.user.channel.displayName, true, !deEmphasise, false)));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory), entry.user.channel.displayName, true, !deEmphasise, false, false)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE.get() : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE.get())));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE.get())));
@@ -173,7 +176,7 @@ public class MessageService {
     // name
     PrecisionLayout nameLayout = new PrecisionLayout(left.plus(this.dimFactory.fromGui(4)), messageWidth, PrecisionAlignment.LEFT);
     Font font = Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory);
-    IChatComponent component = this.getUserComponent(user, font, displayName, true, true, !isMainMessage);
+    IChatComponent component = this.getUserComponent(user, font, displayName, true, true, !isMainMessage, !isMainMessage);
     layouts.add(new Tuple2<>(nameLayout, component));
 
     return new PrecisionChatComponent(layouts);
@@ -248,6 +251,15 @@ public class MessageService {
     return joinComponents(" ", list);
   }
 
+  public IChatComponent getNewViewerMessage(PublicUser user) {
+    List<IChatComponent> list = new ArrayList<>();
+    list.add(INFO_PREFIX);
+    list.add(styledText("Welcome", INFO_MSG_STYLE.get()));
+    list.add(this.getUserComponent(user));
+    list.add(styledText("to the livestream!", INFO_MSG_STYLE.get()));
+    return joinComponents(" ", list);
+  }
+
   private IChatComponent getLargeLevelUpIntro(PublicUser user, int newLevel) {
     return pickRandom(INFO_MSG_STYLE.get(),
         "My little rebels... I have news for you.",
@@ -293,10 +305,10 @@ public class MessageService {
 
   /** Uses the default channel name if no display name is provided. */
   public IChatComponent getUserComponent(PublicUser user, @Nullable String displayName) {
-    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), firstOrNull(displayName, user.channel.displayName), true, true, false);
+    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), firstOrNull(displayName, user.channel.displayName), true, true, false, false);
   }
 
-  public IChatComponent getUserComponent(PublicUser user, Font font, String displayName, boolean showPunishmentPrefix, boolean useEffects, boolean hideVerificationBadge) {
+  public IChatComponent getUserComponent(PublicUser user, Font font, String displayName, boolean showPunishmentPrefix, boolean useEffects, boolean hideVerificationBadge, boolean hideNewUserIcon) {
     ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(displayName);
     String unstyledName = extractedFormatting.unformattedText.trim();
 
@@ -323,7 +335,21 @@ public class MessageService {
     }
 
     boolean showVerificationBadge = !hideVerificationBadge && user.registeredUser != null;
-    return new ContainerChatComponent(new UserNameChatComponent(this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer, user.primaryUserId, font, unstyledName, useEffects, showVerificationBadge), user);
+    boolean showNewUserIcon = !hideNewUserIcon && user.firstSeen > this.dateTimeService.nowPlus(DateTimeService.UnitOfTime.DAY, -NEW_USER_THRESHOLD_DAYS);
+    UserNameChatComponent component = new UserNameChatComponent(
+        this.fontEngine,
+        this.dimFactory,
+        this.donationService,
+        this.rankApiStore,
+        this.chatComponentRenderer,
+        user.primaryUserId,
+        font,
+        unstyledName,
+        useEffects,
+        showVerificationBadge,
+        showNewUserIcon
+    );
+    return new ContainerChatComponent(component, user);
   }
 
   public IChatComponent getRankComponent(List<PublicRank> activeRanks) {

@@ -64,6 +64,9 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Boolean> debugModeEnabled;
   public StatefulEmitter<Boolean> getDebugModeEnabledEmitter() { return this.debugModeEnabled; }
 
+  private final StatefulEmitter<LogLevel[]> logLevels;
+  public StatefulEmitter<LogLevel[]> getLogLevelsEmitter() { return this.logLevels; }
+
   private final StatefulEmitter<Long> lastGetChatResponse;
   public StatefulEmitter<Long> getLastGetChatResponseEmitter() { return this.lastGetChatResponse; }
 
@@ -163,6 +166,17 @@ public class Config extends EventServiceBase<ConfigType> {
         data == null ? false : data.debugModeEnabled,
         this::onUpdate
     );
+    this.logLevels = new StatefulEmitter<>(
+        ConfigType.LOG_LEVEL,
+        LogLevel[].class,
+        data == null || data.logLevels == null
+            ? new LogLevel[] { LogLevel.ERROR, LogLevel.WARNING, LogLevel.INFO }
+            : dev.rebel.chatmate.util.Collections.map(
+                dev.rebel.chatmate.util.Collections.list(data.logLevels),
+                level -> EnumHelpers.fromStringOrDefault(LogLevel.class, level, LogLevel.ERROR)
+              ).toArray(new LogLevel[0]),
+        this::onUpdate
+    );
     this.lastGetChatResponse = new StatefulEmitter<>(
         ConfigType.LAST_GET_CHAT_RESPONSE,
         Long.class,
@@ -219,6 +233,9 @@ public class Config extends EventServiceBase<ConfigType> {
           new SerialisedConfigV6.SerialisedSeparableHudElement(this.statusIndicator.get()),
           new SerialisedConfigV6.SerialisedSeparableHudElement(this.viewerCount.get()),
           this.debugModeEnabled.get(),
+          dev.rebel.chatmate.util.Collections.map(
+              dev.rebel.chatmate.util.Collections.list(this.logLevels.get()), Enum::toString
+          ).toArray(new String[0]),
           this.lastGetChatResponse.get(),
           this.lastGetChatMateEventsResponse.get(),
           dev.rebel.chatmate.util.Collections.map(this.hudTransforms.get(), SerialisedConfigV6.SerialisedHudElementTransform::new), // no import aliasing in Java..
@@ -397,6 +414,8 @@ public class Config extends EventServiceBase<ConfigType> {
 
   public enum CommandMessageChatVisibility { HIDDEN, SHOWN, GREYED_OUT }
 
+  public enum LogLevel { ERROR, WARNING, INFO, DEBUG, API }
+
   public enum ConfigType {
     ENABLE_CHAT_MATE,
     ENABLE_SOUND,
@@ -410,6 +429,7 @@ public class Config extends EventServiceBase<ConfigType> {
     STATUS_INDICATOR,
     VIEWER_COUNT,
     DEBUG_MODE_ENABLED,
+    LOG_LEVEL,
     LAST_GET_CHAT_RESPONSE,
     LAST_GET_CHAT_MATE_EVENTS_RESPONSE,
     HUD_TRANSFORMS,

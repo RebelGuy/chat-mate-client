@@ -61,7 +61,7 @@ public class DonationService {
       // we go forward over each donation, then over each livestream, and figure out if the user has any effect-time credited at the current instance in time.
       // to do this, we transform all livestream run times into a continuous timeline, and match the donation times to that timeline
       List<Tuple2<Long, Long>> mappedDonations = new ArrayList<>(); // (time, duration) pairs
-      for (PublicDonation donation : donations) {
+      for (PublicDonation donation : Collections.orderBy(donations, DonationService::getLinkTime)) {
         long t = 0;
         for (PublicLivestream livestream : livestreams) {
           long endTime = livestream.endTime == null ? now : livestream.endTime;
@@ -84,7 +84,7 @@ public class DonationService {
         // important: we are getting the ranks at the time the donation was linked (not at the time it was posted), because only
         // at that time would the server have updated the user's ranks due to the donation. a linked time that is before the donation
         // was posted implies that the donation was auto-linked, and in that case we want to use the donation's time.
-        long time = Math.max(donation.time, donation.linkedAt);
+        long time = getLinkTime(donation);
         List<RankName> ranks = Collections.map(this.rankApiStore.getUserRanksAtTime(userId, time), r -> r.rank.name);
         int minutesPerDollar;
         if (ranks.contains(RankName.MEMBER)) {
@@ -134,5 +134,9 @@ public class DonationService {
 
   private void onNewDonation(Event<DonationEventData> in) {
     this.donationApiStore.clear();
+  }
+
+  private static long getLinkTime(PublicDonation linkedDonation) {
+    return Math.max(linkedDonation.time, linkedDonation.linkedAt);
   }
 }

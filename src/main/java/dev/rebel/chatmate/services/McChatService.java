@@ -2,6 +2,7 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.models.NewViewerEventData;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
@@ -82,6 +83,7 @@ public class McChatService {
 
     this.chatMateEventService.onLevelUp(this::onLevelUp);
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower);
+    this.chatMateEventService.onNewViewer(this::onNewViewer);
     this.config.getShowChatPlatformIconEmitter().onChange(_value -> this.minecraftProxyService.refreshChat());
 
     chatMateChatService.onNewChat(newChat -> {
@@ -127,7 +129,7 @@ public class McChatService {
       if (greyOut) {
         viewerNameFont = viewerNameFont.withColour(Colour.GREY33);
       }
-      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channel.displayName, true, true, false);
+      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channel.displayName, true, true, false, false);
 
       McChatResult mcChatResult = this.streamChatToMcChat(item, this.fontEngine, greyOut);
       IChatComponent joinedMessage = joinComponents("", mcChatResult.chatComponents);
@@ -186,6 +188,20 @@ public class McChatService {
 
     } catch (Exception e) {
       this.logService.logError(this, String.format("Could not print new follower message for '%s'", data.displayName));
+    }
+  }
+
+  public void onNewViewer(Event<NewViewerEventData> event) {
+    this.soundService.playLevelUp(1.75f);
+
+    NewViewerEventData data = event.getData();
+
+    try {
+      IChatComponent message = this.messageService.getNewViewerMessage(data.newViewer.user);
+      this.minecraftProxyService.printChatMessage("New viewer", message);
+
+    } catch (Exception e) {
+      this.logService.logError(this, String.format("Could not print new viewer message for '%s'", data.newViewer.user.channel.displayName));
     }
   }
 
