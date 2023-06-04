@@ -22,7 +22,8 @@ public class ApiPollerFactory {
                                  BiConsumer<Consumer<D>, Consumer<Throwable>> endpoint,
                                  long interval,
                                  PollType type,
-                                 @Nullable Long timeoutWaitTime) {
-    return new ApiPoller<>(this.logService, this.config, callback, errorHandler, endpoint, interval, type, timeoutWaitTime);
+                                 @Nullable Long timeoutWaitTime,
+                                 @Nullable Integer retries) {
+    return new ApiPoller<>(this.logService, this.config, callback, errorHandler, endpoint, interval, type, timeoutWaitTime, retries);
   }
 }

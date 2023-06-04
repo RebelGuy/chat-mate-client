@@ -29,12 +29,13 @@ public class MessageServiceTests {
   @Mock DonationService donationService;
   @Mock RankApiStore rankApiStore;
   @Mock ChatComponentRenderer chatComponentRenderer;
+  @Mock DateTimeService dateTimeService;
 
   MessageService messageService;
 
   @Before
   public void setup() {
-    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer);
+    this.messageService = new MessageService(this.logService, this.fontEngine, this.dimFactory, this.donationService, this.rankApiStore, this.chatComponentRenderer, this.dateTimeService);
 
     when(this.fontEngine.getStringWidth(anyString())).thenAnswer(i -> ((String)i.getArgument(0)).length());
   }
@@ -72,6 +73,7 @@ public class MessageServiceTests {
   public void getUserComponent_UsesTrimmedName() {
     PublicUser user = new PublicUser() {{
       primaryUserId = 1;
+      firstSeen = 0L;
       channel = new PublicChannel() {{
         displayName = " Test channel ! ";
         activeRanks = new PublicUserRank[0];
@@ -89,6 +91,7 @@ public class MessageServiceTests {
     when(this.fontEngine.getStringWidth("x")).thenReturn(0);
     PublicUser user = new PublicUser() {{
       primaryUserId = 5;
+      firstSeen = 0L;
       channel = new PublicChannel() {{
         displayName = "x";
         activeRanks = new PublicUserRank[0];

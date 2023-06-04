@@ -317,7 +317,7 @@ public abstract class ElementBase implements IElement {
       // with content units (rather than full units).
       Dim contentWidth = getContentBoxWidth(maxFullWidth);
       if (this.maxContentWidth != null) {
-        contentWidth = Dim.min(this.maxContentWidth, maxContentWidth);
+        contentWidth = Dim.min(this.maxContentWidth, contentWidth);
       }
       DimPoint size = this.calculateThisSize(contentWidth);
       DimPoint fullSize = getFullBoxSize(size);

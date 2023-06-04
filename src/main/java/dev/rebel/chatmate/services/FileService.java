@@ -9,7 +9,7 @@ import java.nio.file.Files;
 
 
 public class FileService {
-  private final String dataFolder;
+  public final String dataFolder;
   private final Gson gson;
 
   public FileService(String dataDir) {

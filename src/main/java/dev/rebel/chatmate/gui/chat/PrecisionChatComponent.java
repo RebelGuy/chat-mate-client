@@ -75,23 +75,35 @@ public class PrecisionChatComponent implements IChatComponent {
 
     String text = component.getFormattedText();
     Dim textWidth = fontEngine.getStringWidthDim(text);
+    Dim componentWidth = textWidth;
+
+    IChatComponent unwrappedComponent = component;
+    if (component instanceof ContainerChatComponent) {
+      unwrappedComponent = casted(ContainerChatComponent.class, component, ContainerChatComponent::getComponent);
+    }
+
+    if (unwrappedComponent instanceof UserNameChatComponent) {
+      componentWidth = casted(UserNameChatComponent.class, unwrappedComponent, c -> c.getWidth(fontEngine.FONT_HEIGHT_DIM));
+    }
+    Dim nonTextWidth = componentWidth.minus(textWidth);
 
     if (textWidth.gt(maxWidth)) {
       String truncation = layout.customTruncation == null ? "…" : layout.customTruncation;
       Dim suffixWidth = fontEngine.getStringWidthDim(truncation);
-      text = listFormattedStringToWidth(component.getFormattedText(), maxWidth.minus(suffixWidth), fontEngine).get(0) + truncation;
+      text = listFormattedStringToWidth(component.getFormattedText(), maxWidth.minus(suffixWidth).minus(nonTextWidth), fontEngine).get(0) + truncation;
       textWidth = fontEngine.getStringWidthDim(text);
     }
 
-    // at this point, the text is guaranteed to be <= maxWidth
+    // at this point, the total width is guaranteed to be <= maxWidth
+    Dim totalWidth = textWidth.plus(nonTextWidth);
     Dim originalPosition = layout.position;
     Dim effectivePosition;
     if (layout.alignment == PrecisionAlignment.LEFT) {
       effectivePosition = originalPosition;
     } else if (layout.alignment == PrecisionAlignment.CENTRE) {
-      effectivePosition = originalPosition.plus(maxWidth.minus(textWidth).over(2));
+      effectivePosition = originalPosition.plus(maxWidth.minus(totalWidth).over(2));
     } else if (layout.alignment == PrecisionAlignment.RIGHT) {
-      effectivePosition = originalPosition.plus(maxWidth.minus(textWidth));
+      effectivePosition = originalPosition.plus(maxWidth.minus(totalWidth));
     } else {
       throw EnumHelpers.<PrecisionAlignment>assertUnreachable(layout.alignment);
     }
@@ -106,7 +118,7 @@ public class PrecisionChatComponent implements IChatComponent {
     } else {
       effectiveComponent = new ChatComponentText(text);
     }
-    PrecisionLayout effectiveLayout = new PrecisionLayout(effectivePosition, textWidth, PrecisionAlignment.LEFT);
+    PrecisionLayout effectiveLayout = new PrecisionLayout(effectivePosition, totalWidth, PrecisionAlignment.LEFT);
     return new Tuple2<>(effectiveLayout, effectiveComponent);
   }
 

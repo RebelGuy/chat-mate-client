@@ -56,13 +56,18 @@ public class ChatMate {
     String currentDir = System.getProperty("user.dir").replace("\\", "/");
     String dataDir = currentDir + "/mods/ChatMate";
     FileService fileService = new FileService(dataDir);
-    LogService logService = new LogService(fileService, false);
+    LogService logService = new LogService(fileService);
 
     Minecraft minecraft = Minecraft.getMinecraft();
+    DimFactory dimFactory = new DimFactory(minecraft);
+
+    ConfigPersistorService<SerialisedConfigV6> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV6.class, logService, fileService);
+    this.config = new Config(logService, configPersistorService, dimFactory);
+    logService.injectConfig(this.config);
+
     ForgeEventService forgeEventService = new ForgeEventService(logService, minecraft);
     // the "event bus" is the pipeline through which all evens run - so we must register our handler to that
     MinecraftForge.EVENT_BUS.register(forgeEventService);
-    DimFactory dimFactory = new DimFactory(minecraft);
     FontEngine fontEngine = new FontEngine(dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
     FontEngineProxy fontEngineProxy = new FontEngineProxy(fontEngine, dimFactory, minecraft.gameSettings, new ResourceLocation("textures/font/ascii.png"), minecraft.renderEngine, false);
 
@@ -74,9 +79,6 @@ public class ChatMate {
     }
     IReloadableResourceManager reloadableResourceManager = (IReloadableResourceManager)minecraft.getResourceManager();
     reloadableResourceManager.registerReloadListener(fontEngineProxy);
-
-    ConfigPersistorService<SerialisedConfigV6> configPersistorService = new ConfigPersistorService<>(SerialisedConfigV6.class, logService, fileService);
-    this.config = new Config(logService, configPersistorService, dimFactory);
     MouseEventService mouseEventService = new MouseEventService(logService, forgeEventService, minecraft, dimFactory);
     KeyboardEventService keyboardEventService = new KeyboardEventService(logService, forgeEventService);
 
@@ -91,7 +93,7 @@ public class ChatMate {
     this.accountEndpointProxy = new AccountEndpointProxy(logService, apiRequestService, apiPath);
     this.validateLoginDetails();
 
-    ChatMateEndpointProxy chatMateEndpointProxy = new ChatMateEndpointProxy(logService, apiRequestService, apiPath);
+    StreamerEndpointProxy streamerEndpointProxy = new StreamerEndpointProxy(logService, apiRequestService, apiPath);
     UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, apiPath);
     ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, apiPath);
     PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, apiPath);
@@ -128,11 +130,11 @@ public class ChatMate {
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService, customGuiNewChat);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
-    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, chatMateEndpointProxy, apiPollerFactory, config, dateTimeService);
+    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, streamerEndpointProxy, apiPollerFactory, config, dateTimeService);
     DonationService donationService = new DonationService(dateTimeService, donationApiStore, livestreamApiStore, rankApiStore, chatMateEventService);
-    MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore, chatComponentRenderer);
+    MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore, chatComponentRenderer, dateTimeService);
     ImageService imageService = new ImageService(minecraft);
-    StatusService statusService = new StatusService(chatMateEndpointProxy, apiPollerFactory, livestreamApiStore);
+    StatusService statusService = new StatusService(streamerEndpointProxy, apiPollerFactory, livestreamApiStore);
 
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);
     ClipboardService clipboardService = new ClipboardService();
@@ -237,7 +239,7 @@ public class ChatMate {
         keyboardEventService,
         clipboardService,
         urlService,
-        chatMateEndpointProxy,
+        streamerEndpointProxy,
         environment,
         minecraftChatService,
         customGuiIngame,
@@ -258,7 +260,8 @@ public class ChatMate {
         imageService,
         donationHudStore,
         chatMateHudService,
-        accountEndpointProxy);
+        accountEndpointProxy,
+        fileService.dataFolder);
     this.donationHudService = new DonationHudService(chatMateHudStore,
         donationHudStore,
         guiService,
@@ -286,7 +289,7 @@ public class ChatMate {
     if (this.isDev) {
       config.getChatMateEnabledEmitter().set(true);
     } else {
-      chatMateEndpointProxy.getStatusAsync(res -> {
+      streamerEndpointProxy.getStatusAsync(res -> {
         if (res.livestreamStatus != null && res.livestreamStatus.livestream.status == LivestreamStatus.Live) {
           config.getChatMateEnabledEmitter().set(true);
         }

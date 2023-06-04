@@ -15,9 +15,9 @@ import javax.annotation.Nullable;
 import java.util.Date;
 import java.util.function.Consumer;
 
-public class ChatMateEndpointProxy extends EndpointProxy {
-  public ChatMateEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
-    super(logService, apiRequestService, basePath + "/chatMate");
+public class StreamerEndpointProxy extends EndpointProxy {
+  public StreamerEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
+    super(logService, apiRequestService, basePath + "/streamer");
   }
 
   public void getStatusAsync(Consumer<GetStatusResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {

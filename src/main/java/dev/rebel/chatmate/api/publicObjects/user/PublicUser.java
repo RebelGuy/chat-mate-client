@@ -12,6 +12,7 @@ public class PublicUser {
   public PublicChannel channel;
   public PublicLevelInfo levelInfo;
   public PublicUserRank[] activeRanks;
+  public Long firstSeen;
 
   public PublicUserRank[] getActivePunishments() {
     return Arrays.stream(activeRanks).filter(r -> r.rank.group == PublicRank.RankGroup.PUNISHMENT).toArray(PublicUserRank[]::new);

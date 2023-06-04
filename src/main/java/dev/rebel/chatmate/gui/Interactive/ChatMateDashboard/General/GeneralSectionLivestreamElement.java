@@ -13,7 +13,7 @@ import dev.rebel.chatmate.api.models.chatMate.GetStatusResponse.GetStatusRespons
 import dev.rebel.chatmate.api.models.chatMate.SetActiveLivestreamRequest;
 import dev.rebel.chatmate.api.models.chatMate.SetActiveLivestreamResponse.SetActiveLivestreamResponseData;
 import dev.rebel.chatmate.api.publicObjects.status.PublicLivestreamStatus;
-import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.util.TaskWrapper;
 import dev.rebel.chatmate.util.TextHelpers;
@@ -26,7 +26,7 @@ import java.util.Timer;
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
 
 public class GeneralSectionLivestreamElement extends ContainerElement {
-  private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final StreamerEndpointProxy streamerEndpointProxy;
 
   private final LabelElement label;
   private final TextInputElement livestreamInputField;
@@ -39,11 +39,11 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
   private @Nonnull String livestream;
 
-  public GeneralSectionLivestreamElement(InteractiveContext context, IElement parent, ChatMateEndpointProxy chatMateEndpointProxy) {
+  public GeneralSectionLivestreamElement(InteractiveContext context, IElement parent, StreamerEndpointProxy streamerEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
     super.setName("GeneralSectionLivestreamElement");
 
-    this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.streamerEndpointProxy = streamerEndpointProxy;
 
     this.label = new LabelElement(context, this)
         .setText("Active livestream:")
@@ -142,12 +142,12 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
   private void onConfirm() {
     this.enableLoadingState();
     SetActiveLivestreamRequest request = new SetActiveLivestreamRequest(Objects.equals(this.livestream, "") ? null : this.livestream);
-    this.chatMateEndpointProxy.setActiveLivestreamAsync(request, this::onSetLivestreamSuccess, this::onSetLivestreamError);
+    this.streamerEndpointProxy.setActiveLivestreamAsync(request, this::onSetLivestreamSuccess, this::onSetLivestreamError);
   }
 
   private void onRefresh() {
     this.enableLoadingState();
-    this.chatMateEndpointProxy.getStatusAsync(this::onGetStatusSuccess, this::onGetStatusError, true);
+    this.streamerEndpointProxy.getStatusAsync(this::onGetStatusSuccess, this::onGetStatusError, true);
   }
 
   private void onCopy() {

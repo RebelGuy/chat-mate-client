@@ -8,6 +8,7 @@ public class PublicChannel {
   public String externalIdOrUserName;
   public Platform platform;
   public String displayName;
+  public String channelUrl;
 
   public enum Platform {
     @SerializedName("youtube") YOUTUBE,

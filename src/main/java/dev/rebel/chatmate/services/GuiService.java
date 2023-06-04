@@ -14,7 +14,7 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudScreen;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.api.proxy.ChatMateEndpointProxy;
+import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
 import dev.rebel.chatmate.services.KeyBindingService.ChatMateKeyEvent;
@@ -50,7 +50,7 @@ public class GuiService {
   private final KeyboardEventService keyboardEventService;
   private final ClipboardService clipboardService;
   private final UrlService urlService;
-  private final ChatMateEndpointProxy chatMateEndpointProxy;
+  private final StreamerEndpointProxy streamerEndpointProxy;
   private final Environment environment;
   private final MinecraftChatService minecraftChatService;
   private final CustomGuiIngame customGuiIngame;
@@ -72,6 +72,7 @@ public class GuiService {
   private final DonationHudStore donationHudStore;
   private final ChatMateHudService chatMateHudService;
   private final AccountEndpointProxy accountEndpointProxy;
+  private final String dataFolder;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -89,7 +90,7 @@ public class GuiService {
                     KeyboardEventService keyboardEventService,
                     ClipboardService clipboardService,
                     UrlService urlService,
-                    ChatMateEndpointProxy chatMateEndpointProxy,
+                    StreamerEndpointProxy streamerEndpointProxy,
                     Environment environment,
                     MinecraftChatService minecraftChatService,
                     CustomGuiIngame customGuiIngame,
@@ -110,7 +111,8 @@ public class GuiService {
                     ImageService imageService,
                     DonationHudStore donationHudStore,
                     ChatMateHudService chatMateHudService,
-                    AccountEndpointProxy accountEndpointProxy) {
+                    AccountEndpointProxy accountEndpointProxy,
+                    String dataFolder) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -127,7 +129,7 @@ public class GuiService {
     this.keyboardEventService = keyboardEventService;
     this.clipboardService = clipboardService;
     this.urlService = urlService;
-    this.chatMateEndpointProxy = chatMateEndpointProxy;
+    this.streamerEndpointProxy = streamerEndpointProxy;
     this.environment = environment;
     this.minecraftChatService = minecraftChatService;
     this.customGuiIngame = customGuiIngame;
@@ -149,6 +151,7 @@ public class GuiService {
     this.donationHudStore = donationHudStore;
     this.chatMateHudService = chatMateHudService;
     this.accountEndpointProxy = accountEndpointProxy;
+    this.dataFolder = dataFolder;
 
     this.addEventHandlers();
   }
@@ -168,14 +171,15 @@ public class GuiService {
         context,
         screen,
         route,
-        this.chatMateEndpointProxy,
+        this.streamerEndpointProxy,
         this.statusService,
         this.apiRequestService,
         this.userEndpointProxy,
         this.messageService,
         this.config,
         this.chatMateHudService,
-        this.accountEndpointProxy)
+        this.accountEndpointProxy,
+        this.dataFolder)
     );
     return screen;
   }

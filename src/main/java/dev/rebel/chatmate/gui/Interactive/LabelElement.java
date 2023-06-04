@@ -20,6 +20,9 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+
+import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class LabelElement extends SingleElement {
   private String text;
@@ -29,7 +32,7 @@ public class LabelElement extends SingleElement {
   private Dim multiLinePadding;
   private boolean processNewlineCharacters;
   private Font font;
-  private @Nullable Font hoverFont;
+  private Function<Font, Font> hoverFontUpdater;
   private float fontScale;
   private @Nullable Integer maxOverflowLines;
 
@@ -45,7 +48,7 @@ public class LabelElement extends SingleElement {
     this.overflowLinePadding = context.dimFactory.fromGui(1);
     this.multiLinePadding = context.dimFactory.fromGui(2);
     this.font = new Font();
-    this.hoverFont = null;
+    this.hoverFontUpdater = font -> font;
     this.fontScale = 1.0f;
     this.maxOverflowLines = null;
     this.processNewlineCharacters = false;
@@ -110,7 +113,12 @@ public class LabelElement extends SingleElement {
   }
 
   public LabelElement setHoverFont(Font hoverFont) {
-    this.hoverFont = hoverFont;
+    this.hoverFontUpdater = font -> hoverFont;
+    return this;
+  }
+
+  public LabelElement setHoverFont(Function<Font, Font> fontUpdater) {
+    this.hoverFontUpdater = fontUpdater;
     return this;
   }
 
@@ -206,7 +214,13 @@ public class LabelElement extends SingleElement {
   protected void renderElement() {
     FontEngine fontEngine = this.context.fontEngine;
 
-    Font font = super.isHovering() && this.hoverFont != null ? this.hoverFont : this.font;
+    Font font;
+    if (super.isHovering()) {
+      font = firstOrNull(this.hoverFontUpdater.apply(this.font), this.font);
+    } else {
+      font = this.font;
+    }
+
     Dim fontHeight = fontEngine.FONT_HEIGHT_DIM.times(this.fontScale);
     DimRect box = this.getContentBox();
     Dim availableHeight = box.getHeight();

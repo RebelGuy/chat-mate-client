@@ -24,6 +24,7 @@ public class Asset {
 
   public static Texture LOGO_YOUTUBE = new Texture(320, 320, "textures/logo_youtube.png");
   public static Texture LOGO_TWITCH = new Texture(320, 320, "textures/logo_twitch.png");
+  public static Texture STAR = new Texture(64, 64, "textures/star.png");
 
   public static CursorImage CURSOR_DEFAULT = new CursorImage(0, 0, "textures/cursor_default.png");
   public static CursorImage CURSOR_TIP = new CursorImage(0, 0, "textures/cursor_tip.png");
