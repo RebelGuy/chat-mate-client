@@ -51,7 +51,7 @@ public class RankAdapters extends Adapters {
 
     @Override
     protected void _getRanks(int userId, Consumer<List<PublicUserRank>> onLoad, @Nullable Consumer<Throwable> onError) {
-      this.rankApiStore.loadUserRanks(userId, ranks -> onLoad.accept(Collections.filter(ranks, r -> r.isActive)), onError, false);
+      this.rankApiStore.loadUserRanks(userId, ranks -> onLoad.accept(Collections.filter(ranks, r -> r.isActive && r.rank.group != RankGroup.PUNISHMENT)), onError, false);
     }
 
     @Override
