@@ -223,7 +223,14 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     DimRect screenRect = new DimRect(factory.zeroGui(), factory.zeroGui(), maxX, maxY);
     DimRect mainRect = ElementHelpers.alignElementInBox(mainSize, screenRect, this.mainElement.getHorizontalAlignment(), this.mainElement.getVerticalAlignment());
     mainRect = mainRect.clamp(screenRect);
-    this.mainElement.setBox(mainRect);
+
+    try {
+      this.mainElement.setBox(mainRect);
+    } catch (Exception e) {
+      context.logService.logError(this, "encountered an error during box setting:", e);
+      this.onCloseScreen();
+      return;
+    }
 
     // it is possible that running side effects (or calling calculateSize/setBox) changed the layout
     this._recalculateLayout(depth + 1);
@@ -239,6 +246,10 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     }
 
     this.recalculateLayout();
+    if (this.shouldCloseScreen) {
+      this.doCloseScreen();
+      return;
+    }
 
     this.context.renderer.clear();
     this.mainElement.render(null);

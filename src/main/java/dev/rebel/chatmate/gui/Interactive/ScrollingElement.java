@@ -53,6 +53,11 @@ public class ScrollingElement extends SingleElement { // use a single element be
     return this;
   }
 
+  /** Gets the underlying element. */
+  public @Nullable IElement getElement() {
+    return this.childElement;
+  }
+
   /** Start scrolling once the element's height exceeds this value. */
   public ScrollingElement setMaxHeight(@Nullable Dim maxHeight) {
     if (!Objects.equals(this.maxHeight, maxHeight)) {
@@ -139,6 +144,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
       DimPoint childSize = this.childElement.calculateSize(maxChildSize);
       return new DimPoint(childSize.getX().plus(barSize.getX()), this.maxHeight);
     } else {
+      this.scrollingPosition = null;
       return fullChildSize;
     }
   }
@@ -161,7 +167,7 @@ public class ScrollingElement extends SingleElement { // use a single element be
 
       DimRect barBox = super.getContentBox()
           .withTranslation(new DimPoint(childBox.getWidth(), ZERO)) // scrollbar is to the right of the child
-          .withSize(this.scrollbarElement.getLastCalculatedSize());
+          .withSize(this.scrollbarElement.getLastCalculatedSizeOrZero());
       this.scrollbarElement.setBox(barBox);
 
     } else if (this.childElement != null) {
