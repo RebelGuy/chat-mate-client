@@ -105,6 +105,11 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.26 - The Open Source Update [23/6/2023]
+- Added documentation
+- Added scrolling to the ranks/punishments list
+- Fixed livestream element on the General Dashboard page showing an error when logged-in session is invalid
+
 ## V1.25 - The Multistream Update [27/5/2023]
 - First-time chatters are now announced in the chat, and new (<24 hours) channels are highlighted using a star
 - Right-clicking a user now allows the option to go to the user's channel
