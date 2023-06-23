@@ -5,6 +5,8 @@ ChatMate is a helper tool for livestreamers and viewers. It consists of three ma
 
 For more info about the Client, refer to the [features document](./docs/features.md) or take a look at the [custom UI framework documentation](./docs/interactive-screen.md).
 
+Want to contribute? Check out the [contribution guide](./docs/contributing.md) for more info.
+
 # Project Details
 This project was initialised using the `ForgeTemplate` repository for 1.8.9. Please excuse the unstructured nature of this section - I have no idea what I'm doing.
 
