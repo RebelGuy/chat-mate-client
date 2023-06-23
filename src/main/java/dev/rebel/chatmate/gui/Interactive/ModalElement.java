@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
+import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -42,7 +43,8 @@ public abstract class ModalElement extends ContainerElement {
     this.borderSize = gui(1);
     this.cornerRadius = gui(5);
     this.shadowDistance = gui(3);
-    super.setPadding(new Layout.RectExtension(context.dimFactory.fromGui(10)));
+    super.setPadding(new RectExtension(gui(10)));
+    super.setMargin(new RectExtension(gui(10)));
     super.setBorder(new RectExtension(this.borderSize));
     super.setHorizontalAlignment(HorizontalAlignment.CENTRE);
     super.setVerticalAlignment(VerticalAlignment.MIDDLE);
@@ -68,7 +70,7 @@ public abstract class ModalElement extends ContainerElement {
         .setPadding(new RectExtension(ZERO, gui(4)));
 
     this.divider = new HorizontalDivider(context, this)
-        .setMode(FillMode.PARENT_FULL);
+        .setMode(FillMode.PARENT_COLLISION);
 
     this.closeButton = new TextButtonElement(context, this)
         .setText("Close")
@@ -105,6 +107,10 @@ public abstract class ModalElement extends ContainerElement {
     return this;
   }
 
+  public IElement getBody() {
+    return this.bodyElement.getUnderlyingElement();
+  }
+
   /** Do not call this from the constructor. */
   public ModalElement setTitle(String title) {
     this.title.setText(title);
@@ -121,6 +127,19 @@ public abstract class ModalElement extends ContainerElement {
   public ModalElement setCloseText(String closeText) {
     this.closeButton.setText(closeText);
     return this;
+  }
+
+  /* The modal does not enforce a maximum height and so it is possible for overflow to occur.
+  If you think your content may overflow, you can get the maximum (full) height of the body element and modify its content accordingly. */
+  public Dim getMaxBodyHeight() {
+    Dim contentHeightWithoutBody = this.title.getLastCalculatedSize().getY()
+        .plus(this.errorLabel.getLastCalculatedSizeOrZero().getY())
+        .plus(this.divider.getLastCalculatedSize().getY())
+        .plus(this.footer.getLastCalculatedSize().getY());
+    Dim fullHeightWithoutBody = super.getFullBoxHeight(contentHeightWithoutBody);
+    Dim screenHeight = super.context.dimFactory.getMinecraftSize().getY().setAnchor(Dim.DimAnchor.GUI);
+
+    return screenHeight.minus(fullHeightWithoutBody);
   }
 
   /** Should return true/false if the modal's submit button can be pressed, or null to hide the submit button. */

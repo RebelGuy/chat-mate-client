@@ -345,6 +345,10 @@ public abstract class ElementBase implements IElement {
     return this.lastCalculatedSize;
   }
 
+  public final DimPoint getLastCalculatedSizeOrZero() {
+    return this.lastCalculatedSize != null ? this.lastCalculatedSize : new DimPoint(gui(0), gui(0));
+  }
+
   // todo: ideally this should be final, but an element might want to hook into this so they can deal with the new rect in some way.
   // since it is easy to forget to call `super.setBox`, make a onBoxSet() virtual method instead.
   @Override

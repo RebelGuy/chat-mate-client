@@ -16,6 +16,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.rank.Adapters.*;
 import dev.rebel.chatmate.gui.Interactive.rank.Adapters.EndpointAdapter.RankResult;
+import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange;
@@ -64,6 +66,34 @@ public class ManageRanksModal extends ModalElement {
   }
 
   @Override
+  protected DimPoint calculateThisSize(Dim maxContentSize) {
+    DimPoint size = super.calculateThisSize(maxContentSize);
+
+    // if showing the rank list, limit the table's height to prevent vertical overflow
+    Dim maxHeight = super.getMaxBodyHeight();
+    IElement body = super.getBody();
+    if (body instanceof RankList) {
+      RankList rankList = (RankList)body;
+      @Nullable IElement listElement = rankList.listReference.getUnderlyingElement();
+
+      if (listElement instanceof TableElement) {
+        TableElement<?> table = (TableElement<?>)listElement;
+
+        // the modal contents consists of the header and table
+        Dim rankListHeight = rankList.getLastCalculatedSize().getY();
+        Dim tableVerticalWhitespace = table.getPadding().getExtendedHeight()
+            .plus(table.getBorder().getExtendedHeight())
+            .plus(table.getMargin().getExtendedHeight());
+        Dim requiredHeight = rankListHeight.minus(table.getLastCalculatedSize().getY().minus(tableVerticalWhitespace));
+        Dim maxTableHeight = maxHeight.minus(requiredHeight);
+        table.setMaxHeight(maxTableHeight);
+      }
+    }
+
+    return size;
+  }
+
+  @Override
   protected @Nullable Boolean validate() {
     if (this.onValidate == null) {
       return null;
@@ -98,7 +128,7 @@ public class ManageRanksModal extends ModalElement {
     private final TextButtonElement createNewRankButton;
     private final DropdownMenu createNewRankDropdown;
     private final WrapperElement listWrapper;
-    private final ElementReference listReference;
+    public final ElementReference listReference;
 
     public RankList(InteractiveContext context, ManageRanksModal parent, PublicUser user, Adapters adapters) {
       super(context, parent, LayoutMode.INLINE);
@@ -124,7 +154,6 @@ public class ManageRanksModal extends ModalElement {
           .setHorizontalAlignment(HorizontalAlignment.RIGHT)
           .cast();
 
-      // todo: move into CreateRank element
       this.createNewRankDropdown = new DropdownMenu(context, this.createNewRankButton, AnchorBoxSizing.CONTENT)
           .setHorizontalPosition(HorizontalPosition.LEFT)
           .setBorder(new RectExtension(gui(1)))

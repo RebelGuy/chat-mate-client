@@ -14,7 +14,7 @@ public class RequireLoggedInElement extends WrapperElement {
   public RequireLoggedInElement(InteractiveScreen.InteractiveContext context, IElement parent, IElement content) {
     super(context, parent, content);
 
-    this.context.config.getLoginInfoEmitter().onChange(this._onLoginChange, this);
+    this.context.config.getLoginInfoEmitter().onChange(this._onLoginChange, this, true);
     super.addDisposer(() -> super.context.config.getLoginInfoEmitter().off(this));
   }
 

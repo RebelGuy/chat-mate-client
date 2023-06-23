@@ -9,6 +9,8 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
 import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 
 import java.util.function.Supplier;
 
@@ -23,6 +25,7 @@ public class TotalDonationsElement extends ContainerElement {
 
     this.totalDonationsElement = new LabelElement(context, this)
         .setText(this.getTotalDonationText())
+        .setFont(new Font().withShadow(new Shadow(context.dimFactory)))
         .setOverflow(LabelElement.TextOverflow.SPLIT)
         .setSizingMode(SizingMode.FILL)
         .cast();
