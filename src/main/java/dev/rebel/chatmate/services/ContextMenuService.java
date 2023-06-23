@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.ContextMenuStore;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.*;
+import dev.rebel.chatmate.gui.Interactive.BulkSendMessagesModal.BulkSendMessagesModal;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
 import dev.rebel.chatmate.gui.Interactive.CounterModal.CounterModal;
@@ -157,6 +158,7 @@ public class ContextMenuService {
       new ContextMenuOption("Add countdown title", this::onAddCountdownTitle),
       new ContextMenuOption("Add counter element", this::onAddCounterElement),
       new ContextMenuOption("Add donation element", this::onAddDonationElement),
+      new ContextMenuOption("Bulk-send messages", this::onBulkSendMessages),
       this.config.getDebugModeEnabledEmitter().get() ? new ContextMenuOption("Generate fake donation", this::onGenerateFakeDonation) : null
     );
   }
@@ -199,6 +201,10 @@ public class ContextMenuService {
 
   private void onAddDonationElement() {
     this.displayElementInScreen((context, screen) -> new DonationHudModal(context, screen, this.chatMateHudStore, this.statusService));
+  }
+
+  private void onBulkSendMessages() {
+    this.displayElementInScreen(BulkSendMessagesModal::new);
   }
 
   private void displayElementInScreen(BiFunction<InteractiveContext, InteractiveScreen, IElement> elementFactory) {
