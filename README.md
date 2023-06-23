@@ -1,9 +1,14 @@
-The ChatMate mod uses the `chat-mate-server` (deployed to Azure) as an interface to get near real-time YouTube and Twitch livestream chat messages. Messages are displayed in Minecraft chat.
-It also features a collection of streaming and messaging management tools.
+ChatMate is a helper tool for livestreamers and viewers. It consists of three main parts:
+- Server (`[/chat-mate](https://github.com/RebelGuy/chat-mate)/projects/server`): Node.js express app that runs the core logic for ChatMate and directly interacts with YouTube (via [Masterchat](https://github.com/sigvt/masterchat/)), Twitch (via [Twurple](https://github.com/twurple/twurple)), and the MySQL database (via [Prisma](https://github.com/prisma/prisma)). Exposes a collection of REST API endpoints.
+- Studio (`[/chat-mate](https://github.com/RebelGuy/chat-mate)/projects/studio`): [React](https://github.com/facebook/react) web interface for managing streamer and viewer data. It communicates with the server API endpoints.
+- Client (this repo): Minecraft 1.8.9 mod for viewing and managing livestreams and viewers. Contains additional streamer tools that do not communicate with the server.
+
+For more info about the Client, refer to the [features document](./docs/features.md) or take a look at the [custom UI framework documentation](./docs/interactive-screen.md).
+
+Want to contribute? Check out the [contribution guide](./docs/contributing.md) for more info.
 
 # Project Details
-
-This project was initialised using the `ForgeTemplate` repository for 1.8.9.
+This project was initialised using the `ForgeTemplate` repository for 1.8.9. Please excuse the unstructured nature of this section - I have no idea what I'm doing.
 
 ## Windows
 Before starting, ensure the latest JRE from https://www.java.com/en/download/ is installed (fixes :applyBinaryPatches error). If, at any point, something goes wrong during setup, the workspace can be reset with `gradlew clean cleanCache --refresh-dependencies` (fixes :fixMcSources error). Alternatively, the Gradle cache can be manually deleted under `C:\Users\<User>\.gradle`. If some files are locked for being in use, task-kill "Open JDK Platform Binary" and end the "java.exe" process from the Resource Monitor -> CPU section.
@@ -53,6 +58,7 @@ In order to allow characters such as `'§'`, Java files must be encoding using U
 ## Building
 To build the project, use `gradlew build -Penv=[local|debug|release]`. If the `env` project property is omitted, it will
 default to `local`.
+
 Environment properties are defined in `config.groovy`. Currently, there is no known method of setting the environment
 when debugging locally - it will default to `local`. To debug using other environments, the configuration file must be
 temporarily modified directly.
@@ -62,7 +68,7 @@ Build output: `chat-mate-client/build/libs/*.jar`.
 Debug partial .minecraft folder: `chat-mate-client/run/`.
 
 ## CI
-Github Actions is used for automatically building and testing the Client when pushed.
+GitHub Actions are used for automatically building and testing the Client when pushed.
 
 If the string `--skip-tests` is included in the commit message, the `test` project will not be built and unit tests will be skipped on Github.
 
@@ -75,8 +81,8 @@ Once started, Minecraft can be profiled within VisualVM via the `GradleStart` ap
 recorded within the `Sampler` tab.
 
 ## Custom Chat
-We use a custom implementation of the `GuiNewChat` gui object (this is what renders the chat lines,
-handles `IChatComponents`, etc). There is a couple of points to note on how this works:
+We use a custom implementation of the `GuiNewChat` gui object (this is what renders the chat lines, emojis,
+handles `IChatComponents`, manages smooth scrolling, etc). There is a couple of points to note on how this works:
 
 The `GuiIngame` object (this is what renders all the overlay components such as chat, health bar, etc) holds its own
 private final version of the `GuiNewChat`, which it uses internally, and exposes publicly via `GetChatGUI()`.
@@ -99,6 +105,11 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.26 - The Open Source Update [23/6/2023]
+- Added documentation
+- Added scrolling to the ranks/punishments list
+- Fixed livestream element on the General Dashboard page showing an error when logged-in session is invalid
+
 ## V1.25 - The Multistream Update [27/5/2023]
 - First-time chatters are now announced in the chat, and new (<24 hours) channels are highlighted using a star
 - Right-clicking a user now allows the option to go to the user's channel

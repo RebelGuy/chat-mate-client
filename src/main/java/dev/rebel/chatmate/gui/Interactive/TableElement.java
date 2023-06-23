@@ -32,6 +32,7 @@ public class TableElement<T> extends ContainerElement {
   private List<T> items;
   private final List<LabelElement> headerLabels;
   private final RowElement headerRow;
+  private final ScrollingElement bodyElement;
   private final Function<T, List<IElement>> rowGetter;
   private @Nonnull List<RowElement> rows;
   /** Normalised sizings. */
@@ -40,6 +41,7 @@ public class TableElement<T> extends ContainerElement {
   private List<Dim> columnWidths;
 
   private Dim minHeight;
+  private @Nullable Dim maxHeight;
   private @Nullable Consumer<T> onClickItem;
 
   public TableElement(InteractiveContext context, IElement parent, List<T> items, List<Column> columns, Function<T, List<IElement>> rowGetter) {
@@ -56,6 +58,10 @@ public class TableElement<T> extends ContainerElement {
     this.headerRow = new RowElement(context, this, this.headerLabels);
     super.addElement(this.headerRow);
 
+    this.bodyElement = new ScrollingElement(context, this)
+        .setElement(new BlockElement(context, this));
+    super.addElement(this.bodyElement);
+
     this.rowGetter = rowGetter;
     this.setItems(items);
 
@@ -63,10 +69,38 @@ public class TableElement<T> extends ContainerElement {
     this.columns = Collections.map(columns, c -> new Column(c.header, c.fontScale, c.width / sum, c.fitWidth));
 
     this.minHeight = ZERO;
+    this.maxHeight = null;
   }
 
   public TableElement<T> setMinHeight(Dim minHeight) {
-    this.minHeight = minHeight;
+    if (this.maxHeight != null && minHeight.gt(this.maxHeight)) {
+      throw new RuntimeException("minHeight cannot be great than maxHeight");
+    }
+
+    if (!java.util.Objects.equals(this.minHeight, minHeight)) {
+      this.minHeight = minHeight;
+      super.onInvalidateSize();
+    }
+
+    return this;
+  }
+
+  /** If set, the table will add a scrollbar to the contents if the total table height would exceed this value. */
+  public TableElement<T> setMaxHeight(@Nullable Dim maxHeight) {
+    if (maxHeight != null && maxHeight.lt(this.minHeight)) {
+      throw new RuntimeException("maxHeight cannot be less than maxHeight");
+    }
+
+    if (!java.util.Objects.equals(this.maxHeight, maxHeight)) {
+      this.maxHeight = maxHeight;
+      super.onInvalidateSize();
+    }
+
+    if (this.maxHeight == null) {
+      // disable scrolling
+      this.bodyElement.setMaxHeight(null);
+    }
+
     return this;
   }
 
@@ -80,10 +114,10 @@ public class TableElement<T> extends ContainerElement {
       items = new ArrayList<>();
     }
 
-    this.rows.forEach(super::removeElement);
+    this.rows.forEach(el -> this.getRowContainer().removeElement(el));
     this.items = items;
     this.rows = Collections.map(items, item -> new RowElement(context, this, item, this.rowGetter.apply(item)));
-    this.rows.forEach(super::addElement);
+    this.rows.forEach(el -> this.getRowContainer().addElement(el));
     super.onInvalidateSize();
     return this;
   }
@@ -100,11 +134,17 @@ public class TableElement<T> extends ContainerElement {
     }
 
     // have to replace all rows in the container element so that the order of the new row element is correct.
-    this.rows.forEach(super::removeElement);
+    this.rows.forEach(el -> this.getRowContainer().removeElement(el));
     this.rows.remove(index);
     this.rows.add(index, new RowElement(context, this, item, newRow));
-    this.rows.forEach(super::addElement);
+    this.rows.forEach(el -> this.getRowContainer().addElement(el));
     super.onInvalidateSize();
+  }
+
+  private ContainerElement getRowContainer() {
+    ContainerElement body = (ContainerElement)this.bodyElement.getElement();
+    assert body != null;
+    return body;
   }
 
   private List<Dim> getColumnWidths(Dim maxRowWidth) {
@@ -163,7 +203,18 @@ public class TableElement<T> extends ContainerElement {
   protected DimPoint calculateThisSize(Dim maxWidth) {
     this.columnWidths = this.getColumnWidths(maxWidth);
     DimPoint calculatedSize = super.calculateThisSize(maxWidth);
-    return new DimPoint(calculatedSize.getX(), Dim.max(this.minHeight, calculatedSize.getY()));
+
+    // add scrolling to rows, if required
+    Dim effectiveHeight = Dim.max(this.minHeight, calculatedSize.getY());
+    if (this.maxHeight != null && effectiveHeight.gt(this.maxHeight)) {
+      effectiveHeight = this.maxHeight;
+
+      Dim headerHeight = this.headerRow.lastCalculatedSize.getY();
+      Dim maxContentHeight = effectiveHeight.minus(headerHeight);
+      this.bodyElement.setMaxHeight(maxContentHeight);
+    }
+
+    return new DimPoint(calculatedSize.getX(), effectiveHeight);
   }
 
   public static class Column {
@@ -181,7 +232,7 @@ public class TableElement<T> extends ContainerElement {
       this.fitWidth = fitWidth;
     }
   }
-  
+
   private class RowElement extends ContainerElement {
     private final boolean isHeader;
     private final @Nullable T item; // for non-headers

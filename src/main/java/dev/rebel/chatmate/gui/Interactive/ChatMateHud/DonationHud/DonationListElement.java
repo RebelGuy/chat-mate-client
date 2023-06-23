@@ -7,6 +7,8 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Memoiser;
 
@@ -32,6 +34,7 @@ public class DonationListElement extends ContainerElement {
 
     this.header = new LabelElement(context, this)
         .setText(header)
+        .setFont(new Font().withShadow(new Shadow(context.dimFactory)))
         .setSizingMode(SizingMode.FILL)
         .cast();
     this.listedElements = new ArrayList<>();
@@ -54,6 +57,7 @@ public class DonationListElement extends ContainerElement {
     String name = donation.linkedUser != null ? donation.linkedUser.channel.displayName : donation.name;
     return new LabelElement(super.context, this)
         .setText(String.format("%d: %s by %s", index + 1, donation.formattedAmount, name))
+        .setFont(new Font().withShadow(new Shadow(context.dimFactory)))
         .setOverflow(LabelElement.TextOverflow.SPLIT)
         .setFontScale(this.scale.get())
         .setMargin(new RectExtension(gui(10), ZERO, ZERO, ZERO))
