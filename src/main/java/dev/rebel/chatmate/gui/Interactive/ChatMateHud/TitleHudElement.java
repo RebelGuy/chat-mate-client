@@ -32,6 +32,7 @@ public class TitleHudElement extends SimpleHudElementWrapper<BlockElement> {
     super(context, parent);
     super.setCanDrag(true);
     super.setCanScale(true);
+    context.logService.logInfo(this, super.name, "CHAT-505 instantiating TitleHudElement with minecraft rect", context.dimFactory.getMinecraftRect().toString(), "and centre", context.dimFactory.getMinecraftRect().getCentre().toString());
     super.setDefaultPosition(context.dimFactory.getMinecraftRect().getCentre(), Anchor.MIDDLE);
     super.setScrollResizeAnchor(Anchor.MIDDLE);
     super.setContentResizeAnchor(Anchor.MIDDLE);
