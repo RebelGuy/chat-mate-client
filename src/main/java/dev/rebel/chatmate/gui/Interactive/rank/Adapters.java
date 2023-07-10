@@ -10,6 +10,7 @@ import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.gui.Interactive.TableElement.RowContents;
 import dev.rebel.chatmate.stores.RankApiStore;
 
 import javax.annotation.Nonnull;
@@ -118,7 +119,7 @@ public class Adapters {
 
     public String getLoadingFailedMessage(String apiErrorMessage) { return "Failed to load ranks: " + apiErrorMessage; };
     public abstract List<Column> getColumns();
-    public abstract List<IElement> getRow(InteractiveContext context, IElement parent, PublicUserRank rank);
+    public abstract RowContents<PublicUserRank> getRow(InteractiveContext context, IElement parent, PublicUserRank rank);
   }
 
   public static class DetailsAdapter {

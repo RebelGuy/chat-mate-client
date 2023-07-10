@@ -15,6 +15,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.Interactive.TableElement.RowContents;
+import dev.rebel.chatmate.gui.Interactive.TableElement.RowElement;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
@@ -204,7 +206,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     }
 
     // the complexity of this function escalated very quickly and I apologise
-    private List<IElement> getRow(PublicDonation donation, boolean isUpdating) {
+    private RowContents getRow(PublicDonation donation, boolean isUpdating) {
       String dateStr = dateToDayAccuracy(donation.time);
 
       IElement actionElement;
@@ -244,7 +246,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             .addElement(cancelIconButton);
       } else {
         Texture linkIcon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_BIN_ICON;
-        Texture refundIcon = Asset.GUI_COPY_ICON;
+        Texture refundIcon = Asset.GUI_DOLLAR_ICON;
         boolean disableLinkButton = Collections.any(this.getDonationsWithLinkIdentifier(donation), d -> this.editingDonations.containsKey(d));
         IconButtonElement linkIconButton = new IconButtonElement(super.context, this)
             .setImage(linkIcon)
@@ -259,6 +261,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         linkIconButton.image.setPadding(new RectExtension(ZERO));
         IconButtonElement refundIconButton = new IconButtonElement(super.context, this)
             .setImage(refundIcon)
+            .setDisabledColour(Colour.GREY25)
             .setEnabled(this, !donation.isRefunded)
             .setOnClick(() -> this.onRefund(donation))
             .setTargetHeight(iconHeight)
@@ -306,20 +309,26 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         userNameElement = new LabelElement(super.context, this)
             .setText(user)
             .setFontScale(0.75f)
-            .setColour(this.getDonationTextColour(donation))
             .setOverflow(TextOverflow.SPLIT);
 
         // clean up, in case we are transitioning from editing to non-editing
         this.editedUsernameElements.remove(donation);
       }
 
-      return Collections.list(
-          new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f).setColour(this.getDonationTextColour(donation)),
+      List<IElement> rowElements = Collections.list(
+          new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f),
           userNameElement,
-          new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setColour(this.getDonationTextColour(donation)).setAlignment(TextAlignment.CENTRE),
-          new MessagePartsElement(super.context, this).setMessageParts(Collections.list(donation.messageParts)).setScale(0.75f).setColour(this.getDonationTextColour(donation)),
+          new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setAlignment(TextAlignment.CENTRE),
+          new MessagePartsElement(super.context, this).setMessageParts(Collections.list(donation.messageParts)).setScale(0.75f),
           actionElement
       );
+
+      @Nullable Consumer<RowElement<PublicDonation>> rowElementModifier = null;
+      if (donation.isRefunded || this.editingDonations.containsKey(donation) && this.editingDonations.get(donation).type == EditingType.REFUND) {
+        rowElementModifier = row -> row.setBackgroundColour(Colour.RED.withAlpha(0.07f));
+      }
+
+      return new RowContents<>(rowElements, rowElementModifier);
     }
 
     public DonationsTable setDonations(@Nullable List<PublicDonation> donations) {
@@ -345,14 +354,6 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       }
 
       return super.setVisible(visible);
-    }
-
-    private Colour getDonationTextColour(PublicDonation donation) {
-      if (donation.isRefunded || this.editingDonations.containsKey(donation) && this.editingDonations.get(donation).type == EditingType.REFUND) {
-        return Colour.GREY25;
-      } else {
-        return Colour.WHITE;
-      }
     }
 
     private void onLinkOrUnlink(PublicDonation donation) {

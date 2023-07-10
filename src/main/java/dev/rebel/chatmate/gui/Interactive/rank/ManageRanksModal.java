@@ -1,7 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.rank;
 
 import dev.rebel.chatmate.Asset;
-import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.api.publicObjects.user.PublicChannel.Platform;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
