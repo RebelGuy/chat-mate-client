@@ -206,7 +206,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     }
 
     // the complexity of this function escalated very quickly and I apologise
-    private RowContents getRow(PublicDonation donation, boolean isUpdating) {
+    private RowContents<PublicDonation> getRow(PublicDonation donation, boolean isUpdating) {
       String dateStr = dateToDayAccuracy(donation.time);
 
       IElement actionElement;
