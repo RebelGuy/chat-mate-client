@@ -15,6 +15,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
+import dev.rebel.chatmate.gui.Interactive.TableElement.RowContents;
+import dev.rebel.chatmate.gui.Interactive.TableElement.RowElement;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
@@ -27,6 +29,7 @@ import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.StatusService;
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
 
 import javax.annotation.Nullable;
 
@@ -43,6 +46,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
 
   private final CheckboxInputElement unlinkedDonationsCheckbox;
   private final CheckboxInputElement currentLivestreamCheckbox;
+  private final CheckboxInputElement excludeRefundedCheckbox;
   private final LoadingSpinnerElement loadingSpinner;
   private final LabelElement errorLabel;
   private final DonationsTable donationsTable;
@@ -72,6 +76,12 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         .setLabel("Show only donations from the current livestream")
         .setScale(0.75f)
         .setEnabled(this, isActiveLivestream)
+        .cast();
+    this.excludeRefundedCheckbox = SharedElements.CHECKBOX_LIGHT.create(context, this)
+        .setChecked(true)
+        .onCheckedChanged(this::onFilterChanged)
+        .setLabel("Exclude refunded donations")
+        .setScale(0.75f)
         .setMargin(new RectExtension(ZERO, ZERO, gui(2), gui(8)))
         .cast();
 
@@ -95,6 +105,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     // todo: save checkbox values in config
     super.addElement(this.unlinkedDonationsCheckbox);
     super.addElement(this.currentLivestreamCheckbox);
+    super.addElement(this.excludeRefundedCheckbox);
     super.addElement(this.loadingSpinner);
     super.addElement(this.donationsTable);
     super.addElement(this.errorLabel);
@@ -123,7 +134,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
   }
 
   private void onFilterChanged(boolean x) {
-    this.donationsTable.setFilter(this.currentLivestreamCheckbox.getChecked(), this.unlinkedDonationsCheckbox.getChecked());
+    this.donationsTable.setFilter(
+        this.currentLivestreamCheckbox.getChecked(),
+        this.unlinkedDonationsCheckbox.getChecked(),
+        this.excludeRefundedCheckbox.getChecked()
+    );
   }
 
   @Override
@@ -146,10 +161,12 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     private final MessageService messageService;
 
     private @Nullable List<PublicDonation> donations = null;
-    private Map<PublicDonation, PublicUser> editingDonations = new HashMap<>();
-    private Map<PublicDonation, IElement> editingElements = new HashMap<>();
+    private Map<PublicDonation, EditingState> editingDonations = new HashMap<>();
+    // caches the username element while it is being edited
+    private Map<PublicDonation, IElement> editedUsernameElements = new HashMap<>();
     private boolean showCurrentLivestreamOnly = true;
     private boolean showUnlinkedOnly = true;
+    private boolean excludeRefunded = true;
 
     private final TableElement<PublicDonation> table;
     private final LabelElement nothingToShowLabel;
@@ -189,21 +206,26 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     }
 
     // the complexity of this function escalated very quickly and I apologise
-    private List<IElement> getRow(PublicDonation donation, boolean isUpdating) {
+    private RowContents getRow(PublicDonation donation, boolean isUpdating) {
       String dateStr = dateToDayAccuracy(donation.time);
 
       IElement actionElement;
       Dim iconHeight = super.context.fontEngine.FONT_HEIGHT_DIM;
       if (isUpdating) {
-        actionElement = new LoadingSpinnerElement(super.context, this).setTargetHeight(iconHeight).setHorizontalAlignment(HorizontalAlignment.CENTRE).setVerticalAlignment(VerticalAlignment.MIDDLE);
+        actionElement = new LoadingSpinnerElement(super.context, this)
+            .setLineWidth(gui(1))
+            .setTargetHeight(iconHeight)
+            .setHorizontalAlignment(HorizontalAlignment.CENTRE)
+            .setVerticalAlignment(VerticalAlignment.MIDDLE);
       } else if (this.editingDonations.containsKey(donation)) {
         // it is invalid to try to link to a null user
-        boolean valid = donation.linkedUser != null || donation.linkedUser == null && this.editingDonations.get(donation) != null;
+        EditingState state = this.editingDonations.get(donation);
+        boolean valid = state.type == EditingType.LINK && (donation.linkedUser != null || donation.linkedUser == null && state.user != null) || state.type == EditingType.REFUND;
         IconButtonElement confirmIconButton = new IconButtonElement(super.context, this)
             .setImage(Asset.GUI_TICK_ICON)
             .setEnabledColour(Colour.GREEN)
             .setEnabled(this, valid)
-            .setOnClick(() -> this.onConfirmLinkOrUnlink(donation))
+            .setOnClick(() -> this.onConfirmEdit(donation))
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
@@ -213,7 +235,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         IconButtonElement cancelIconButton = new IconButtonElement(super.context, this)
             .setImage(Asset.GUI_CLEAR_ICON)
             .setEnabledColour(Colour.RED)
-            .setOnClick(() -> this.onCancelLinkOrUnlink(donation))
+            .setOnClick(() -> this.onCancelEdit(donation))
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
@@ -223,33 +245,50 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             .addElement(confirmIconButton)
             .addElement(cancelIconButton);
       } else {
-        Texture icon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_BIN_ICON;
-        Runnable onClick = () -> this.onLinkOrUnlink(donation);
-        boolean disableButton = Collections.any(this.getDonationsWithLinkIdentifier(donation), d -> this.editingDonations.containsKey(d));
-        actionElement = new IconButtonElement(super.context, this)
-            .setImage(icon)
-            .setEnabled(this, !disableButton)
-            .setOnClick(onClick)
+        Texture linkIcon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_BIN_ICON;
+        Texture refundIcon = Asset.GUI_DOLLAR_ICON;
+        boolean disableLinkButton = Collections.any(this.getDonationsWithLinkIdentifier(donation), d -> this.editingDonations.containsKey(d));
+        IconButtonElement linkIconButton = new IconButtonElement(super.context, this)
+            .setImage(linkIcon)
+            .setEnabled(this, !disableLinkButton)
+            .setOnClick(() -> this.onLinkOrUnlink(donation))
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
-            .setTooltip(disableButton ? null : donation.linkedUser == null ? "Link donation to a user" : "Unlink current user from donation");
+            .setMargin(new RectExtension(ZERO, gui(2), ZERO, ZERO))
+            .setTooltip(disableLinkButton ? null : donation.linkedUser == null ? "Link donation to a user" : "Unlink current user from donation")
+            .cast();
+        linkIconButton.image.setPadding(new RectExtension(ZERO));
+        IconButtonElement refundIconButton = new IconButtonElement(super.context, this)
+            .setImage(refundIcon)
+            .setDisabledColour(Colour.GREY25)
+            .setEnabled(this, !donation.isRefunded)
+            .setOnClick(() -> this.onRefund(donation))
+            .setTargetHeight(iconHeight)
+            .setBorder(new RectExtension(ZERO))
+            .setPadding(new RectExtension(ZERO))
+            .setTooltip(donation.isRefunded ? "You refunded this donation" : "Mark this donation as refunded")
+            .cast();
+        refundIconButton.image.setPadding(new RectExtension(ZERO));
+        actionElement = new InlineElement(context, this)
+            .addElement(linkIconButton)
+            .addElement(refundIconButton);
         casted(IconButtonElement.class, actionElement, el -> el.image.setPadding(new RectExtension(ZERO)));
       }
 
       IElement userNameElement;
-      if (this.editingDonations.containsKey(donation) && donation.linkedUser == null) {
-        if (this.editingElements.containsKey(donation)) {
+      if (this.editingDonations.containsKey(donation) && this.editingDonations.get(donation).type == EditingType.LINK && donation.linkedUser == null) {
+        if (this.editedUsernameElements.containsKey(donation)) {
           // this saves the state of the element over multiple calls to `getRow`
-          userNameElement = this.editingElements.get(donation);
+          userNameElement = this.editedUsernameElements.get(donation);
         } else {
           Consumer<PublicUser> onUserSelected = newUser -> {
-            this.editingDonations.put(donation, newUser);
+            this.editingDonations.put(donation, EditingState.forLink(newUser));
             this.updateDonation(donation);
           };
           userNameElement = new UserPickerElement(super.context, this, donation.linkedUser, onUserSelected, this.userEndpointProxy, this.messageService)
               .setFontScale(0.75f);
-          this.editingElements.put(donation, userNameElement);
+          this.editedUsernameElements.put(donation, userNameElement);
         }
       } else {
 
@@ -257,8 +296,9 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         PublicUser userToShow = donation.linkedUser;
         if (!this.editingDonations.containsKey(donation)) {
           for (PublicDonation editingDonation : this.editingDonations.keySet()) {
-            if (Objects.equals(editingDonation.linkIdentifier, donation.linkIdentifier)) {
-              userToShow = this.editingDonations.get(editingDonation);
+            EditingState state = this.editingDonations.get(editingDonation);
+            if (state.type == EditingType.LINK && Objects.equals(editingDonation.linkIdentifier, donation.linkIdentifier)) {
+              userToShow = state.user;
               break;
             }
           }
@@ -266,19 +306,29 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
 
         // when we are editing this donation, just fallback to the default name in all cases for simplicity (it might be overwritten by the text box)
         String user = userToShow == null || this.editingDonations.containsKey(donation) ? donation.name : userToShow.channel.displayName;
-        userNameElement = new LabelElement(super.context, this).setText(user).setFontScale(0.75f).setOverflow(TextOverflow.SPLIT);
+        userNameElement = new LabelElement(super.context, this)
+            .setText(user)
+            .setFontScale(0.75f)
+            .setOverflow(TextOverflow.SPLIT);
 
         // clean up, in case we are transitioning from editing to non-editing
-        this.editingElements.remove(donation);
+        this.editedUsernameElements.remove(donation);
       }
 
-      return Collections.list(
+      List<IElement> rowElements = Collections.list(
           new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f),
           userNameElement,
           new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setAlignment(TextAlignment.CENTRE),
           new MessagePartsElement(super.context, this).setMessageParts(Collections.list(donation.messageParts)).setScale(0.75f),
           actionElement
       );
+
+      @Nullable Consumer<RowElement<PublicDonation>> rowElementModifier = null;
+      if (donation.isRefunded || this.editingDonations.containsKey(donation) && this.editingDonations.get(donation).type == EditingType.REFUND) {
+        rowElementModifier = row -> row.setBackgroundColour(Colour.RED.withAlpha(0.07f));
+      }
+
+      return new RowContents<>(rowElements, rowElementModifier);
     }
 
     public DonationsTable setDonations(@Nullable List<PublicDonation> donations) {
@@ -287,9 +337,10 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       return this;
     }
 
-    public DonationsTable setFilter(boolean showCurrentLivestreamOnly, boolean showUnlinkedOnly) {
+    public DonationsTable setFilter(boolean showCurrentLivestreamOnly, boolean showUnlinkedOnly, boolean excludeRefunded) {
       this.showCurrentLivestreamOnly = showCurrentLivestreamOnly;
       this.showUnlinkedOnly = showUnlinkedOnly;
+      this.excludeRefunded = excludeRefunded;
       this.updateTable();
       return this;
     }
@@ -298,7 +349,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     public ContainerElement setVisible(boolean visible) {
       if (!visible) {
         // do some cleaning up, since donation object references will no longer match when we next fetch the donations
-        this.editingElements.clear();
+        this.editedUsernameElements.clear();
         this.editingDonations.clear();
       }
 
@@ -307,43 +358,65 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
 
     private void onLinkOrUnlink(PublicDonation donation) {
       // show the editing UI
-      this.editingDonations.put(donation, null);
+      this.editingDonations.put(donation, EditingState.forLink(null));
       this.updateDonation(donation);
     }
 
-    private void onConfirmLinkOrUnlink(PublicDonation donation) {
-      if (donation.linkedUser == null) {
-        PublicUser userToLink = this.editingDonations.get(donation);
-        if (userToLink == null) {
-          // this should never happen
-          this.onError.accept(new Exception("No user selected"));
-          return;
+    private void onConfirmEdit(PublicDonation donation) {
+      EditingState state = this.editingDonations.get(donation);
+      if (state == null) {
+        this.onError.accept(new Exception("Donation is not being edited"));
+        return;
+      }
+
+      if (state.type == EditingType.LINK) {
+        if (donation.linkedUser == null) {
+          PublicUser userToLink = state.user;
+          if (userToLink == null) {
+            // this should never happen
+            this.onError.accept(new Exception("No user selected"));
+            return;
+          }
+          super.context.donationApiStore.linkUser(
+              donation.id,
+              userToLink.primaryUserId,
+              r -> this.onResponse(true, userToLink.primaryUserId, r.updatedDonation, null),
+              e -> this.onResponse(true, userToLink.primaryUserId, donation, e)
+          );
+        } else {
+          super.context.donationApiStore.unlinkUser(
+              donation.id,
+              r -> this.onResponse(true, donation.linkedUser.primaryUserId, r.updatedDonation, null),
+              e -> this.onResponse(true, donation.linkedUser.primaryUserId, donation, e)
+          );
         }
-        super.context.donationApiStore.linkUser(
+      } else if (state.type == EditingType.REFUND) {
+        super.context.donationApiStore.refundDonation(
             donation.id,
-            userToLink.primaryUserId,
-            r -> this.onResponse(userToLink.primaryUserId, r.updatedDonation, null),
-            e -> this.onResponse(userToLink.primaryUserId, donation, e)
+            r -> this.onResponse(false, donation.linkedUser == null ? -1 : donation.linkedUser.primaryUserId, r.updatedDonation, null),
+            e -> this.onResponse(false, donation.linkedUser == null ? -1 : donation.linkedUser.primaryUserId, donation, e)
         );
       } else {
-        super.context.donationApiStore.unlinkUser(
-            donation.id,
-            r -> this.onResponse(donation.linkedUser.primaryUserId, r.updatedDonation, null),
-            e -> this.onResponse(donation.linkedUser.primaryUserId, donation, e)
-        );
+        throw EnumHelpers.<EditingType>assertUnreachable(state.type);
       }
 
       // show loading spinner
       this.table.updateItem(donation, this.getRow(donation, true));
     }
 
-    private void onCancelLinkOrUnlink(PublicDonation donation) {
+    private void onCancelEdit(PublicDonation donation) {
       // hide the editing UI
       this.editingDonations.remove(donation);
       this.updateDonation(donation);
     }
 
-    private void onResponse(int affectedUserId, PublicDonation donation, @Nullable Throwable e) {
+    private void onRefund(PublicDonation donation) {
+      // show the editing UI
+      this.editingDonations.put(donation, EditingState.forRefund());
+      this.updateDonation(donation);
+    }
+
+    private void onResponse(boolean isForLink, int affectedUserId, PublicDonation donation, @Nullable Throwable e) {
       super.context.rankApiStore.invalidateUserRanks(affectedUserId);
       super.context.renderer.runSideEffect(() -> {
         if (e != null) {
@@ -352,14 +425,16 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
           this.editingDonations.keySet().removeIf(d -> Objects.equals(d.id, donation.id));
           this.donations = Collections.replaceOne(this.donations, donation, d -> Objects.equals(d.id, donation.id));
 
-          // all donations that share the linkIdentifier have also been linked/unlinked - update these as well so we don't need to make another server request
-          for (PublicDonation linkedDonation : this.getDonationsWithLinkIdentifier(donation)) {
-            if (linkedDonation == donation) {
-              continue;
-            }
+          if (isForLink) {
+            // all donations that share the linkIdentifier have also been linked/unlinked - update these as well so we don't need to make another server request
+            for (PublicDonation linkedDonation : this.getDonationsWithLinkIdentifier(donation)) {
+              if (linkedDonation == donation) {
+                continue;
+              }
 
-            linkedDonation.linkedUser = donation.linkedUser;
-            linkedDonation.linkedAt = donation.linkedAt;
+              linkedDonation.linkedUser = donation.linkedUser;
+              linkedDonation.linkedAt = donation.linkedAt;
+            }
           }
         }
         this.updateTable();
@@ -368,6 +443,10 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
 
     private void updateTable() {
       List<PublicDonation> donationsToShow = Collections.filter(this.donations, d -> {
+        if (this.excludeRefunded && d.isRefunded) {
+          return false;
+        }
+
         // filter doesn't apply if livestream hasn't started, or there is no active livestream
         if (this.showCurrentLivestreamOnly &&
             this.livestreamStatus != null &&
@@ -396,5 +475,30 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       this.table.updateItem(donation, this.getRow(donation, false));
       this.getDonationsWithLinkIdentifier(donation).forEach(d -> this.table.updateItem(d, this.getRow(d, false)));
     }
+  }
+
+  private static class EditingState {
+    public final EditingType type;
+
+    /** If `this.type == LINK`, the user we are linking to (null if we are removing the linked user). */
+    public final @Nullable PublicUser user;
+
+    private EditingState(EditingType type, @Nullable PublicUser user) {
+      this.type = type;
+      this.user = user;
+    }
+
+    public static EditingState forLink(@Nullable PublicUser user) {
+      return new EditingState(EditingType.LINK, user);
+    }
+
+    public static EditingState forRefund() {
+      return new EditingState(EditingType.REFUND, null);
+    }
+  }
+
+  private enum EditingType {
+    LINK,
+    REFUND
   }
 }

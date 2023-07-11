@@ -1,7 +1,15 @@
 package dev.rebel.chatmate.gui.Interactive.rank;
 
-import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
+import dev.rebel.chatmate.api.models.punishment.*;
+import dev.rebel.chatmate.api.proxy.PunishmentEndpointProxy;
+import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankGroup;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
+import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicChannel.Platform;
+import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
@@ -9,17 +17,9 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
-import dev.rebel.chatmate.api.models.punishment.*;
-import dev.rebel.chatmate.api.publicObjects.rank.PublicChannelRankChange;
-import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
-import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankGroup;
-import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
-import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
-import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.api.proxy.PunishmentEndpointProxy;
-import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
-import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.gui.Interactive.TableElement.RowContents;
 import dev.rebel.chatmate.stores.RankApiStore;
+import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -115,15 +115,16 @@ public class PunishmentAdapters extends Adapters {
     }
 
     @Override
-    public List<IElement> getRow(InteractiveContext context, IElement parent, PublicUserRank punishment) {
+    public RowContents<PublicUserRank> getRow(InteractiveContext context, IElement parent, PublicUserRank punishment) {
       String dateStr = dateToDayAccuracy(punishment.issuedAt);
-      return Collections.list(
+      List<IElement> rowElements = Collections.list(
           new LabelElement(context, parent).setText(dateStr).setOverflow(TextOverflow.TRUNCATE).setFontScale(super.fontScale).setHorizontalAlignment(HorizontalAlignment.LEFT),
           new LabelElement(context, parent).setText(toSentenceCase(punishment.rank.displayNameNoun)).setOverflow(TextOverflow.TRUNCATE).setFontScale(super.fontScale).setHorizontalAlignment(HorizontalAlignment.LEFT),
           new LabelElement(context, parent).setText(punishment.message).setOverflow(TextOverflow.SPLIT).setFontScale(super.fontScale).setHorizontalAlignment(HorizontalAlignment.LEFT).setSizingMode(SizingMode.FILL),
           new LabelElement(context, parent).setText(punishment.expirationTime == null ? "Yes" : "No").setOverflow(TextOverflow.TRUNCATE).setFontScale(super.fontScale),
           new LabelElement(context, parent).setText(punishment.isActive ? "Yes" : "No").setOverflow(TextOverflow.TRUNCATE).setFontScale(super.fontScale)
       );
+      return new RowContents<>(rowElements);
     }
   }
 

@@ -2,16 +2,15 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHud;
 
 import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.gui.Interactive.ContainerElement;
-import dev.rebel.chatmate.gui.Interactive.DonationHudModal.TimeframeSelectionElement;
-import dev.rebel.chatmate.gui.Interactive.DonationHudModal.TimeframeSelectionElement.TimeframeModel;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
-import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
+import dev.rebel.chatmate.util.Collections;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 public class TotalDonationsElement extends ContainerElement {
@@ -53,7 +52,8 @@ public class TotalDonationsElement extends ContainerElement {
 
   private String getTotalDonationText() {
     float totalDonations = 0;
-    for (PublicDonation donation : super.context.donationApiStore.getDonations()) {
+    List<PublicDonation> donations = Collections.filter(super.context.donationApiStore.getDonations(), d -> !d.isRefunded);
+    for (PublicDonation donation : donations) {
       if (donation.time >= this.startTime.get()) {
         totalDonations += donation.amount;
       }

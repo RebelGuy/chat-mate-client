@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.stores;
 
 import dev.rebel.chatmate.api.models.donation.LinkUserResponse.LinkUserResponseData;
+import dev.rebel.chatmate.api.models.donation.RefundDonationResponse.RefundDonationResponseData;
 import dev.rebel.chatmate.api.models.donation.UnlinkUserResponse.UnlinkUserResponseData;
 import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
@@ -86,6 +87,16 @@ public class DonationApiStore {
 
   public void unlinkUser(int donationId, Consumer<UnlinkUserResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     this.donationEndpointProxy.unlinkUserAsync(
+        donationId,
+        res -> {
+          this.updateDonation(res.updatedDonation);
+          callback.accept(res);
+        }, errorHandler
+    );
+  }
+
+  public void refundDonation(int donationId, Consumer<RefundDonationResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.donationEndpointProxy.refundDonation(
         donationId,
         res -> {
           this.updateDonation(res.updatedDonation);

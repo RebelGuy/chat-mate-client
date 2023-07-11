@@ -4,6 +4,8 @@ import dev.rebel.chatmate.api.models.donation.GetDonationsResponse;
 import dev.rebel.chatmate.api.models.donation.GetDonationsResponse.GetDonationsResponseData;
 import dev.rebel.chatmate.api.models.donation.LinkUserResponse;
 import dev.rebel.chatmate.api.models.donation.LinkUserResponse.LinkUserResponseData;
+import dev.rebel.chatmate.api.models.donation.RefundDonationResponse;
+import dev.rebel.chatmate.api.models.donation.RefundDonationResponse.RefundDonationResponseData;
 import dev.rebel.chatmate.api.models.donation.UnlinkUserResponse;
 import dev.rebel.chatmate.api.models.donation.UnlinkUserResponse.UnlinkUserResponseData;
 import dev.rebel.chatmate.services.ApiRequestService;
@@ -29,5 +31,10 @@ public class DonationEndpointProxy extends EndpointProxy {
   public void unlinkUserAsync(int donationId, Consumer<UnlinkUserResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     String url = String.format("/link?donationId=%d", donationId);
     this.makeRequestAsync(Method.DELETE, url, UnlinkUserResponse.class, callback, errorHandler, true);
+  }
+
+  public void refundDonation(int donationId, Consumer<RefundDonationResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    String url = String.format("/refund?donationId=%d", donationId);
+    this.makeRequestAsync(Method.POST, url, RefundDonationResponse.class, callback, errorHandler, true);
   }
 }
