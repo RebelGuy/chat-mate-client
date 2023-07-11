@@ -18,6 +18,7 @@ import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankGroup;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.gui.Interactive.TableElement.RowContents;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.stores.RankApiStore;
 
@@ -115,14 +116,15 @@ public class RankAdapters extends Adapters {
     }
 
     @Override
-    public List<IElement> getRow(InteractiveContext context, IElement parent, PublicUserRank rank) {
+    public RowContents<PublicUserRank> getRow(InteractiveContext context, IElement parent, PublicUserRank rank) {
       String dateStr = dateToDayAccuracy(rank.issuedAt);
-      return Collections.list(
+      List<IElement> rowElements = Collections.list(
           new LabelElement(context, parent).setText(toSentenceCase(rank.rank.displayNameNoun)).setOverflow(TextOverflow.TRUNCATE).setFontScale(super.fontScale).setHorizontalAlignment(HorizontalAlignment.LEFT),
           new LabelElement(context, parent).setText(dateStr).setOverflow(TextOverflow.TRUNCATE).setFontScale(super.fontScale).setHorizontalAlignment(HorizontalAlignment.LEFT),
           new LabelElement(context, parent).setText(rank.message).setOverflow(TextOverflow.SPLIT).setFontScale(super.fontScale).setHorizontalAlignment(HorizontalAlignment.LEFT).setSizingMode(SizingMode.FILL),
           new LabelElement(context, parent).setText(rank.expirationTime == null ? "Yes" : "No").setOverflow(TextOverflow.TRUNCATE).setFontScale(super.fontScale)
       );
+      return new RowContents<>(rowElements);
     }
   }
 

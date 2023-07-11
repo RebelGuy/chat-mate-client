@@ -44,7 +44,7 @@ public abstract class ContainerElement extends ElementBase {
     this.children.addAll(this.initialChildren);
   }
 
-  public ContainerElement addElement(IElement element) {
+  public ContainerElement addElement(@Nullable IElement element) {
     if (element == null) {
       return this;
     }

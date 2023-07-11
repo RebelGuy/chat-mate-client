@@ -197,6 +197,7 @@ public class ButtonElement extends InputElement {
     public final ImageElement image;
 
     private @Nullable Colour enabledColour = null;
+    private @Nullable Colour disabledColour = null;
 
     public IconButtonElement(InteractiveContext context, IElement parent) {
       super(context, parent);
@@ -250,6 +251,11 @@ public class ButtonElement extends InputElement {
       return this;
     }
 
+    public IconButtonElement setDisabledColour(@Nullable Colour colour) {
+      this.disabledColour = colour;
+      return this;
+    }
+
     @Override
     public IconButtonElement setEnabled(Object key, boolean enabled) {
       if (this.image != null) {
@@ -264,7 +270,7 @@ public class ButtonElement extends InputElement {
     protected void renderElement() {
       Colour colour;
       if (!super.getEnabled()) {
-        colour = new Colour(10526880);
+        colour = this.disabledColour != null ? this.disabledColour : DISABLED_COLOUR;
       } else if (super.isHovering()) {
         colour = new Colour(16777120);
       } else if (this.enabledColour != null) {

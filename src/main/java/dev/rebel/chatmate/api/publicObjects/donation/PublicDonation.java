@@ -16,4 +16,5 @@ public class PublicDonation {
   public String linkIdentifier;
   public @Nullable PublicUser linkedUser;
   public @Nullable Long linkedAt;
+  public Boolean isRefunded;
 }
