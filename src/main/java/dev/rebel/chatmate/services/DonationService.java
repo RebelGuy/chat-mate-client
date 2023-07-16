@@ -45,7 +45,7 @@ public class DonationService {
 
     // memoised so we don't do this every frame for every user in chat
     long showEffectUntil = this.memoiser.memoise(String.valueOf(userId), () -> {
-      List<PublicDonation> donations = Collections.filter(allDonations, d -> d.linkedUser != null && Objects.equals(d.linkedUser.primaryUserId, userId) && !d.isRefunded);
+      List<PublicDonation> donations = Collections.filter(allDonations, d -> d.linkedUser != null && Objects.equals(d.linkedUser.primaryUserId, userId) && d.refundedAt == null);
       if (donations.size() == 0) {
         return -1L;
       }

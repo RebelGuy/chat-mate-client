@@ -262,12 +262,12 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         IconButtonElement refundIconButton = new IconButtonElement(super.context, this)
             .setImage(refundIcon)
             .setDisabledColour(Colour.GREY25)
-            .setEnabled(this, !donation.isRefunded)
+            .setEnabled(this, donation.refundedAt == null)
             .setOnClick(() -> this.onRefund(donation))
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
-            .setTooltip(donation.isRefunded ? "You refunded this donation" : "Mark this donation as refunded")
+            .setTooltip(donation.refundedAt != null ? "You refunded this donation" : "Mark this donation as refunded")
             .cast();
         refundIconButton.image.setPadding(new RectExtension(ZERO));
         actionElement = new InlineElement(context, this)
@@ -324,7 +324,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       );
 
       @Nullable Consumer<RowElement<PublicDonation>> rowElementModifier = null;
-      if (donation.isRefunded || this.editingDonations.containsKey(donation) && this.editingDonations.get(donation).type == EditingType.REFUND) {
+      if (donation.refundedAt != null || this.editingDonations.containsKey(donation) && this.editingDonations.get(donation).type == EditingType.REFUND) {
         rowElementModifier = row -> row.setBackgroundColour(Colour.RED.withAlpha(0.07f));
       }
 
@@ -443,7 +443,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
 
     private void updateTable() {
       List<PublicDonation> donationsToShow = Collections.filter(this.donations, d -> {
-        if (this.excludeRefunded && d.isRefunded) {
+        if (this.excludeRefunded && d.refundedAt != null) {
           return false;
         }
 
