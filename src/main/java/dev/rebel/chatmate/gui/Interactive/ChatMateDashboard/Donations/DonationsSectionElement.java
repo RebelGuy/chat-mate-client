@@ -25,6 +25,7 @@ import dev.rebel.chatmate.api.publicObjects.status.PublicLivestreamStatus;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.api.proxy.UserEndpointProxy;
+import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.MessageService;
 import dev.rebel.chatmate.services.StatusService;
@@ -211,6 +212,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
 
       IElement actionElement;
       Dim iconHeight = super.context.fontEngine.FONT_HEIGHT_DIM;
+      Font font = new Font();
       if (isUpdating) {
         actionElement = new LoadingSpinnerElement(super.context, this)
             .setLineWidth(gui(1))
@@ -220,7 +222,10 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       } else if (this.editingDonations.containsKey(donation)) {
         // it is invalid to try to link to a null user
         EditingState state = this.editingDonations.get(donation);
-        boolean valid = state.type == EditingType.LINK && (donation.linkedUser != null || donation.linkedUser == null && state.user != null) || state.type == EditingType.REFUND;
+        font = font.withStrikethrough(state.type == EditingType.DELETE);
+        boolean valid = state.type == EditingType.LINK && (donation.linkedUser != null || donation.linkedUser == null && state.user != null)
+            || state.type == EditingType.REFUND
+            || state.type == EditingType.DELETE;
         IconButtonElement confirmIconButton = new IconButtonElement(super.context, this)
             .setImage(Asset.GUI_TICK_ICON)
             .setEnabledColour(Colour.GREEN)
@@ -230,6 +235,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
             .setMargin(new RectExtension(ZERO, gui(2), ZERO, ZERO))
+            .setTooltip(this.getConfirmTooltip(state))
             .cast();
         confirmIconButton.image.setPadding(new RectExtension(ZERO));
         IconButtonElement cancelIconButton = new IconButtonElement(super.context, this)
@@ -245,8 +251,9 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             .addElement(confirmIconButton)
             .addElement(cancelIconButton);
       } else {
-        Texture linkIcon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_BIN_ICON;
+        Texture linkIcon = donation.linkedUser == null ? Asset.GUI_LINK_ICON : Asset.GUI_UNLINK_ICON;
         Texture refundIcon = Asset.GUI_DOLLAR_ICON;
+        Texture deleteIcon = Asset.GUI_BIN_ICON;
         boolean disableLinkButton = Collections.any(this.getDonationsWithLinkIdentifier(donation), d -> this.editingDonations.containsKey(d));
         IconButtonElement linkIconButton = new IconButtonElement(super.context, this)
             .setImage(linkIcon)
@@ -267,12 +274,25 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             .setTargetHeight(iconHeight)
             .setBorder(new RectExtension(ZERO))
             .setPadding(new RectExtension(ZERO))
-            .setTooltip(donation.refundedAt != null ? "You refunded this donation" : "Mark this donation as refunded")
+            .setMargin(new RectExtension(ZERO, gui(2), ZERO, ZERO))
+            .setTooltip(donation.refundedAt != null ? "You refunded this donation" : "Mark this donation as refunded (this cannot be undone)")
             .cast();
         refundIconButton.image.setPadding(new RectExtension(ZERO));
+        IconButtonElement deleteIconButton = new IconButtonElement(super.context, this)
+            .setImage(deleteIcon)
+            .setDisabledColour(Colour.GREY25)
+            .setEnabled(this, true)
+            .setOnClick(() -> this.onDelete(donation))
+            .setTargetHeight(iconHeight)
+            .setBorder(new RectExtension(ZERO))
+            .setPadding(new RectExtension(ZERO))
+            .setTooltip("Delete this donation (this cannot be undone)")
+            .cast();
+        deleteIconButton.image.setPadding(new RectExtension(ZERO));
         actionElement = new InlineElement(context, this)
             .addElement(linkIconButton)
-            .addElement(refundIconButton);
+            .addElement(refundIconButton)
+            .addElement(deleteIconButton);
         casted(IconButtonElement.class, actionElement, el -> el.image.setPadding(new RectExtension(ZERO)));
       }
 
@@ -309,6 +329,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         userNameElement = new LabelElement(super.context, this)
             .setText(user)
             .setFontScale(0.75f)
+            .setFont(font)
             .setOverflow(TextOverflow.SPLIT);
 
         // clean up, in case we are transitioning from editing to non-editing
@@ -316,16 +337,19 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       }
 
       List<IElement> rowElements = Collections.list(
-          new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f),
+          new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f).setFont(font),
           userNameElement,
-          new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setAlignment(TextAlignment.CENTRE),
-          new MessagePartsElement(super.context, this).setMessageParts(Collections.list(donation.messageParts)).setScale(0.75f),
+          new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setFont(font).setAlignment(TextAlignment.CENTRE),
+          new MessagePartsElement(super.context, this).setMessageParts(Collections.list(donation.messageParts)).setFont(font).setScale(0.75f),
           actionElement
       );
 
       @Nullable Consumer<RowElement<PublicDonation>> rowElementModifier = null;
       if (donation.refundedAt != null || this.editingDonations.containsKey(donation) && this.editingDonations.get(donation).type == EditingType.REFUND) {
         rowElementModifier = row -> row.setBackgroundColour(Colour.RED.withAlpha(0.07f));
+      }
+      if (this.editingDonations.containsKey(donation) && this.editingDonations.get(donation).type == EditingType.DELETE) {
+        rowElementModifier = row -> row.setBackgroundColour(Colour.DARK_RED.withAlpha(0.3f));
       }
 
       return new RowContents<>(rowElements, rowElementModifier);
@@ -354,6 +378,16 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       }
 
       return super.setVisible(visible);
+    }
+
+    private @Nullable String getConfirmTooltip(EditingState state) {
+      if (state.type == EditingType.REFUND) {
+        return "Are you sure you want to refund this donation? This cannot be undone.";
+      } else if (state.type == EditingType.DELETE) {
+        return "Are you sure you want to delete this donation? This cannot be undone.";
+      }
+
+      return null;
     }
 
     private void onLinkOrUnlink(PublicDonation donation) {
@@ -396,6 +430,15 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
             r -> this.onResponse(false, donation.linkedUser == null ? -1 : donation.linkedUser.primaryUserId, r.updatedDonation, null),
             e -> this.onResponse(false, donation.linkedUser == null ? -1 : donation.linkedUser.primaryUserId, donation, e)
         );
+      } else if (state.type == EditingType.DELETE) {
+        super.context.donationApiStore.deleteDonation(
+            donation.id,
+            r -> {
+              donation.deletedAt = new Date().getTime();
+              this.onResponse(false, donation.linkedUser == null ? -1 : donation.linkedUser.primaryUserId, donation, null);
+            },
+            e -> this.onResponse(false, donation.linkedUser == null ? -1 : donation.linkedUser.primaryUserId, donation, e)
+        );
       } else {
         throw EnumHelpers.<EditingType>assertUnreachable(state.type);
       }
@@ -416,6 +459,12 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       this.updateDonation(donation);
     }
 
+    private void onDelete(PublicDonation donation) {
+      // show the editing UI
+      this.editingDonations.put(donation, EditingState.forDeletion());
+      this.updateDonation(donation);
+    }
+
     private void onResponse(boolean isForLink, int affectedUserId, PublicDonation donation, @Nullable Throwable e) {
       super.context.rankApiStore.invalidateUserRanks(affectedUserId);
       super.context.renderer.runSideEffect(() -> {
@@ -423,7 +472,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
           this.onError.accept(e);
         } else {
           this.editingDonations.keySet().removeIf(d -> Objects.equals(d.id, donation.id));
-          this.donations = Collections.replaceOne(this.donations, donation, d -> Objects.equals(d.id, donation.id));
+          if (donation.deletedAt == null) {
+            this.donations = Collections.replaceOne(this.donations, donation, d -> Objects.equals(d.id, donation.id));
+          } else {
+            this.donations = Collections.filter(this.donations, d -> !Objects.equals(d.id, donation.id));
+          }
 
           if (isForLink) {
             // all donations that share the linkIdentifier have also been linked/unlinked - update these as well so we don't need to make another server request
@@ -495,10 +548,15 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     public static EditingState forRefund() {
       return new EditingState(EditingType.REFUND, null);
     }
+
+    public static EditingState forDeletion() {
+      return new EditingState(EditingType.DELETE, null);
+    }
   }
 
   private enum EditingType {
     LINK,
-    REFUND
+    REFUND,
+    DELETE
   }
 }

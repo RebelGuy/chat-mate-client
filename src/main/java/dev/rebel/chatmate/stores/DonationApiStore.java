@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.stores;
 
+import dev.rebel.chatmate.api.models.donation.DeleteDonationResponse.DeleteDonationResponseData;
 import dev.rebel.chatmate.api.models.donation.LinkUserResponse.LinkUserResponseData;
 import dev.rebel.chatmate.api.models.donation.RefundDonationResponse.RefundDonationResponseData;
 import dev.rebel.chatmate.api.models.donation.UnlinkUserResponse.UnlinkUserResponseData;
@@ -100,6 +101,20 @@ public class DonationApiStore {
         donationId,
         res -> {
           this.updateDonation(res.updatedDonation);
+          callback.accept(res);
+        }, errorHandler
+    );
+  }
+
+  public void deleteDonation(int donationId, Consumer<DeleteDonationResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.donationEndpointProxy.deleteDonation(
+        donationId,
+        res -> {
+          if (this.donations != null) {
+            this.donations = new CopyOnWriteArrayList<>(
+                Collections.filter(Collections.list(this.donations), d -> !Objects.equals(d.id, donationId))
+            );
+          }
           callback.accept(res);
         }, errorHandler
     );
