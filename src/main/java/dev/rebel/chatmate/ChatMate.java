@@ -268,7 +268,8 @@ public class ChatMate {
         dimFactory,
         soundService,
         chatMateEventService,
-        logService);
+        logService,
+        donationApiStore);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

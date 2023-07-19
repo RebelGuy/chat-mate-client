@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
+import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -9,6 +10,10 @@ import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.SoundService;
 import dev.rebel.chatmate.events.ChatMateEventService;
 import dev.rebel.chatmate.events.models.DonationEventData;
+import dev.rebel.chatmate.stores.DonationApiStore;
+import dev.rebel.chatmate.util.Collections;
+
+import java.util.Objects;
 
 public class DonationHudService implements DonationHudStore.IDonationHudStoreListener {
   private final DonationHudStore donationHudStore;
@@ -18,6 +23,7 @@ public class DonationHudService implements DonationHudStore.IDonationHudStoreLis
   private final SoundService soundService;
   private final ChatMateEventService chatMateEventService;
   private final LogService logService;
+  private final DonationApiStore donationApiStore;
 
   public DonationHudService(ChatMateHudStore chatMateHudStore,
                             DonationHudStore donationHudStore,
@@ -25,7 +31,8 @@ public class DonationHudService implements DonationHudStore.IDonationHudStoreLis
                             DimFactory dimFactory,
                             SoundService soundService,
                             ChatMateEventService chatMateEventService,
-                            LogService logService) {
+                            LogService logService,
+                            DonationApiStore donationApiStore) {
     this.donationHudStore = donationHudStore;
     this.chatMateHudStore = chatMateHudStore;
     this.guiService = guiService;
@@ -33,6 +40,7 @@ public class DonationHudService implements DonationHudStore.IDonationHudStoreLis
     this.soundService = soundService;
     this.chatMateEventService = chatMateEventService;
     this.logService = logService;
+    this.donationApiStore = donationApiStore;
 
     chatMateEventService.onDonation(this::onNewDonation);
     donationHudStore.addListener(this);
@@ -55,7 +63,16 @@ public class DonationHudService implements DonationHudStore.IDonationHudStoreLis
   }
 
   private void onNewDonation(Event<DonationEventData> event) {
-    this.donationHudStore.addDonation(event.getData().donation);
+    PublicDonationData newDonation = event.getData().donation;
+
+    // if we already know about the donation, there is a very high chance (close to 100%) that the user created it
+    // within the client just before. in that case, showing the notification is unnecessary.
+    if (Collections.any(this.donationApiStore.getDonations(), d -> Objects.equals(d.id, newDonation.id))) {
+      this.logService.logInfo(this, "Ignoring donation with id", newDonation.id, "because we already know about it.");
+      return;
+    }
+
+    this.donationHudStore.addDonation(newDonation);
   }
 
   private void onOpenDashboard(PublicDonationData donation) {
