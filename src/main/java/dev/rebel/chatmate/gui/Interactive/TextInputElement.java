@@ -144,7 +144,8 @@ public class TextInputElement extends InputElement {
     return this;
   }
 
-  /** Careful - not validated. Does not call the `onTextChange` callback. */
+  /** Careful - not validated. Does not call the `onTextChange` callback.
+   * Suitable for initialising the text when first creating the element. */
   public TextInputElement setTextUnsafe(String text) {
     this.text = text;
     if (super.hasFocus()) {

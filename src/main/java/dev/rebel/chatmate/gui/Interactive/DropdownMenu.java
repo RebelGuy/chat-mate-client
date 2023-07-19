@@ -14,10 +14,10 @@ import dev.rebel.chatmate.util.EnumHelpers;
 
 /** Attaches itself to the specified parent. */
 public class DropdownMenu extends OverlayElement {
-  private final IElement anchorElement;
   private final BlockElement itemsElement;
   private final AnchorBoxSizing anchorBoxSizing;
 
+  private IElement anchorElement;
   private HorizontalPosition horizontalPosition;
   private VerticalPosition verticalPosition;
   private Colour background;
@@ -70,6 +70,16 @@ public class DropdownMenu extends OverlayElement {
 
   public DropdownMenu setBackground(Colour background) {
     this.background = background;
+    return this;
+  }
+
+  /** Updates the element to which this dropdown menu is anchored, respecting the `AnchorBoxSizing` that is set. */
+  public DropdownMenu setAnchorElement(IElement element) {
+    if (this.anchorElement != element) {
+      this.anchorElement = element;
+      super.onInvalidateSize();
+    }
+
     return this;
   }
 

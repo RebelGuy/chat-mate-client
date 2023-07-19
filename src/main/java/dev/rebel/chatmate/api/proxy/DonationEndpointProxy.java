@@ -1,7 +1,9 @@
 package dev.rebel.chatmate.api.proxy;
 
 import dev.rebel.chatmate.api.models.donation.*;
+import dev.rebel.chatmate.api.models.donation.CreateDonationResponse.CreateDonationsResponseData;
 import dev.rebel.chatmate.api.models.donation.DeleteDonationResponse.DeleteDonationResponseData;
+import dev.rebel.chatmate.api.models.donation.GetCurrenciesResponse.GetCurrenciesResponseData;
 import dev.rebel.chatmate.api.models.donation.GetDonationsResponse.GetDonationsResponseData;
 import dev.rebel.chatmate.api.models.donation.LinkUserResponse.LinkUserResponseData;
 import dev.rebel.chatmate.api.models.donation.RefundDonationResponse.RefundDonationResponseData;
@@ -19,6 +21,14 @@ public class DonationEndpointProxy extends EndpointProxy {
 
   public void getDonationsAsync(Consumer<GetDonationsResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
     this.makeRequestAsync(Method.GET, "", GetDonationsResponse.class, callback, errorHandler, isActiveRequest);
+  }
+
+  public void createDonationAsync(CreateDonationRequest request, Consumer<CreateDonationsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(Method.POST, "", request, CreateDonationResponse.class, callback, errorHandler, true);
+  }
+
+  public void getCurrenciesAsync(Consumer<GetCurrenciesResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
+    this.makeRequestAsync(Method.GET, "/currencies", GetCurrenciesResponse.class, callback, errorHandler, isActiveRequest);
   }
 
   public void linkUserAsync(int donationId, int userId, Consumer<LinkUserResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

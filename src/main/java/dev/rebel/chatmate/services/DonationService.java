@@ -133,6 +133,11 @@ public class DonationService {
   }
 
   private void onNewDonation(Event<DonationEventData> in) {
+    // check whether we already know about this donation (this can happen if we manually created the donation)
+    if (Collections.any(this.donationApiStore.getDonations(), d -> Objects.equals(d.id, in.getData().donation.id))) {
+      return;
+    }
+
     this.donationApiStore.clear();
   }
 

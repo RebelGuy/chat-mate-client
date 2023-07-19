@@ -4,7 +4,7 @@ import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.IconButtonElement;
-import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.ChatMateDashboardElement.ISectionElement;
+import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.DonationRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.LinkDonationRoute;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 import static dev.rebel.chatmate.util.Objects.casted;
 import static dev.rebel.chatmate.util.TextHelpers.dateToDayAccuracy;
 
-public class DonationsSectionElement extends ContainerElement implements ISectionElement {
+public class DonationsListElement extends ContainerElement {
   private final @Nullable Integer highlightDonation;
   private final ApiRequestService apiRequestService;
   private final Consumer<Boolean> _onApiServiceActive = this::onApiServiceActive;
@@ -48,17 +48,19 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
   private final CheckboxInputElement unlinkedDonationsCheckbox;
   private final CheckboxInputElement currentLivestreamCheckbox;
   private final CheckboxInputElement excludeRefundedCheckbox;
+  private final TextButtonElement createDonationButton;
   private final LoadingSpinnerElement loadingSpinner;
   private final LabelElement errorLabel;
   private final DonationsTable donationsTable;
 
-  public DonationsSectionElement(InteractiveContext context,
-                                 IElement parent,
-                                 @Nullable DonationRoute route,
-                                 StatusService statusService,
-                                 ApiRequestService apiRequestService,
-                                 UserEndpointProxy userEndpointProxy,
-                                 MessageService messageService) {
+  public DonationsListElement(InteractiveContext context,
+                              IElement parent,
+                              @Nullable DonationRoute route,
+                              StatusService statusService,
+                              ApiRequestService apiRequestService,
+                              UserEndpointProxy userEndpointProxy,
+                              MessageService messageService,
+                              Runnable onCreateDonation) {
     super(context, parent, LayoutMode.BLOCK);
     super.setSizingMode(SizingMode.FILL);
 
@@ -85,6 +87,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
         .setScale(0.75f)
         .setMargin(new RectExtension(ZERO, ZERO, gui(2), gui(8)))
         .cast();
+    this.createDonationButton = SharedElements.TEXT_BUTTON_LIGHT.create(context, this)
+        .setText("Create donation")
+        .setOnClick(onCreateDonation)
+        .setMargin(new RectExtension(ZERO, ZERO, gui(2), gui(8)))
+        .cast();
 
     this.loadingSpinner = new LoadingSpinnerElement(this.context, this)
         .setHorizontalAlignment(HorizontalAlignment.CENTRE)
@@ -107,6 +114,7 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     super.addElement(this.unlinkedDonationsCheckbox);
     super.addElement(this.currentLivestreamCheckbox);
     super.addElement(this.excludeRefundedCheckbox);
+    super.addElement(this.createDonationButton);
     super.addElement(this.loadingSpinner);
     super.addElement(this.donationsTable);
     super.addElement(this.errorLabel);
@@ -142,13 +150,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
     );
   }
 
-  @Override
   public void onShow() {
-    super.context.donationApiStore.loadDonations(this::onGetDonations, this::onError, false);
     this.loadingSpinner.setVisible(true);
+    super.context.donationApiStore.loadDonations(this::onGetDonations, this::onError, false);
   }
 
-  @Override
   public void onHide() {
     this.errorLabel.setVisible(false);
     this.donationsTable.setVisible(false);
@@ -185,11 +191,11 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       this.messageService = messageService;
 
       List<TableElement.Column> columns = Collections.list(
-          new TableElement.Column("Date", 0.75f, 1, true),
+          new TableElement.Column("Date", 0.75f, 1.2f, true),
           new TableElement.Column("User", 0.75f, 2, false),
           new TableElement.Column("Amount", 0.75f, 1, true),
           new TableElement.Column("Message", 0.75f, 3, false),
-          new TableElement.Column("", 0.75f, 0.75f, true)
+          new TableElement.Column("", 0.75f, 0.9f, true)
       );
       this.table = new TableElement<>(context, this, new ArrayList<>(), columns, don -> this.getRow(don, false));
 
@@ -337,9 +343,9 @@ public class DonationsSectionElement extends ContainerElement implements ISectio
       }
 
       List<IElement> rowElements = Collections.list(
-          new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f).setFont(font),
+          new LabelElement(super.context, this).setText(dateStr).setFontScale(0.75f).setFont(font).setOverflow(TextOverflow.SPLIT),
           userNameElement,
-          new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setFont(font).setAlignment(TextAlignment.CENTRE),
+          new LabelElement(super.context, this).setText(donation.formattedAmount).setFontScale(0.75f).setFont(font).setOverflow(TextOverflow.SPLIT).setAlignment(TextAlignment.CENTRE),
           new MessagePartsElement(super.context, this).setMessageParts(Collections.list(donation.messageParts)).setFont(font).setScale(0.75f),
           actionElement
       );
