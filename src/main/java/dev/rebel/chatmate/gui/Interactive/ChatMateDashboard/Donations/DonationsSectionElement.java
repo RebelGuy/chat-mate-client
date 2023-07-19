@@ -13,20 +13,20 @@ import dev.rebel.chatmate.services.StatusService;
 
 import javax.annotation.Nullable;
 
-public class DonationsSectionMainElement extends ContainerElement implements ChatMateDashboardElement.ISectionElement {
+public class DonationsSectionElement extends ContainerElement implements ChatMateDashboardElement.ISectionElement {
   private final DonationEndpointProxy donationEndpointProxy;
 
   private final DonationsListElement donationsListElement;
   private @Nullable CreateDonationElement createDonationElement;
 
-  public DonationsSectionMainElement(InteractiveScreen.InteractiveContext context,
-                                     IElement parent,
-                                     @Nullable DashboardRoute.DonationRoute route,
-                                     StatusService statusService,
-                                     ApiRequestService apiRequestService,
-                                     UserEndpointProxy userEndpointProxy,
-                                     MessageService messageService,
-                                     DonationEndpointProxy donationEndpointProxy) {
+  public DonationsSectionElement(InteractiveScreen.InteractiveContext context,
+                                 IElement parent,
+                                 @Nullable DashboardRoute.DonationRoute route,
+                                 StatusService statusService,
+                                 ApiRequestService apiRequestService,
+                                 UserEndpointProxy userEndpointProxy,
+                                 MessageService messageService,
+                                 DonationEndpointProxy donationEndpointProxy) {
     super(context, parent, LayoutMode.BLOCK);
     this.donationEndpointProxy = donationEndpointProxy;
 
