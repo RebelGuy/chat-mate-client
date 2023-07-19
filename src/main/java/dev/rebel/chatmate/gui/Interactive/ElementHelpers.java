@@ -91,6 +91,23 @@ public class ElementHelpers {
     return true;
   }
 
+  /** Returns true if the element is a child of the InteractiveScreen (i.e. it's mounted). */
+  public static boolean isMounted(IElement element) {
+    IElement originalElement = element;
+    while (!(element instanceof InteractiveScreen)) {
+      if (element == null) {
+        return false;
+      }
+
+      element = element.getParent();
+    }
+
+    // my original idea was to check the children of each parent in the loop above, but it turns out that not all
+    // parents correctly report their children (e.g. ScrollingElement), so we will flatten all children instead which
+    // is certainly less efficient, but somehow achieves the same result.
+    return getAllChildren(element).contains(originalElement);
+  }
+
   public static List<IElement> getAllChildren(IElement parent) {
     List<IElement> result = Collections.list(parent);
 
@@ -184,6 +201,10 @@ public class ElementHelpers {
   }
 
   public static void renderDebugInfo(IElement element, InteractiveContext context) {
+    if (!isMounted(element)) {
+      return;
+    }
+
     IElement parent = element.getParent();
     Dim ZERO = context.dimFactory.zeroGui();
 
