@@ -42,6 +42,7 @@ public class Objects {
     return type.isAssignableFrom(obj.getClass()) ? (T)obj : null;
   }
 
+  @SafeVarargs
   public static @Nullable <T> T firstOrNull(T... objects) {
     for (T obj : objects) {
       if (obj != null) {

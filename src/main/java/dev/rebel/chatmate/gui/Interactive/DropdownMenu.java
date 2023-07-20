@@ -4,6 +4,7 @@ import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -15,6 +16,7 @@ import dev.rebel.chatmate.util.EnumHelpers;
 /** Attaches itself to the specified parent. */
 public class DropdownMenu extends OverlayElement {
   private final BlockElement itemsElement;
+  private final ScrollingElement scrollingContainer;
   private final AnchorBoxSizing anchorBoxSizing;
 
   private IElement anchorElement;
@@ -35,7 +37,9 @@ public class DropdownMenu extends OverlayElement {
     this.itemsElement = new BlockElement(context, this)
         .setSizingMode(SizingMode.FILL) // so `block` hitboxes in the event boundary are consistent with the drawn background
         .cast();
-    super.addElement(this.itemsElement);
+    this.scrollingContainer = new ScrollingElement(context, this)
+        .setElement(this.itemsElement);
+    super.addElement(this.scrollingContainer);
   }
 
   public DropdownMenu addOption(IElement element) {
@@ -124,13 +128,13 @@ public class DropdownMenu extends OverlayElement {
   }
 
   @Override
-  public void setBox(DimRect box) {
+  public void setBox(DimRect _box) {
     // the box won't be positioned where we want it (its placement was determined by the normal Container layout algorithm), but it will have the correct size
     DimPoint size = super.lastCalculatedSize;
 
     Dim x;
     if (this.horizontalPosition == HorizontalPosition.LEFT) {
-      x = this.getAnchorBox().getX();
+      x = this.getAnchorBox().getLeft();
     } else {
       x = this.getAnchorBox().getRight().minus(size.getX());
     }
@@ -140,10 +144,25 @@ public class DropdownMenu extends OverlayElement {
     if (this.verticalPosition == VerticalPosition.BELOW) {
       y = fullAnchorBox.getBottom();
     } else {
-      y = fullAnchorBox.getY().minus(size.getY());
+      y = fullAnchorBox.getTop().minus(size.getY());
     }
 
-    super.setBox(new DimRect(new DimPoint(x, y), size));
+    DimRect box = new DimRect(new DimPoint(x, y), size);
+
+    // limit the height of the dropdown menu to prevent it from clipping outside the visible area
+    DimRect visibleRect = super.getVisibleBox();
+    if (visibleRect != null) {
+      visibleRect = new RectExtension(gui(4)).applySubtractive(visibleRect);
+      Dim maxHeight;
+      if (this.verticalPosition == VerticalPosition.BELOW) {
+        maxHeight = visibleRect.getBottom().minus(fullAnchorBox.getBottom());
+      } else {
+        maxHeight = visibleRect.getTop().minus(fullAnchorBox.getTop());
+      }
+      this.scrollingContainer.setMaxHeight(maxHeight);
+    }
+
+    super.setBox(box);
   }
 
   @Override

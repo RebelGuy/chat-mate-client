@@ -14,9 +14,11 @@ import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+import static dev.rebel.chatmate.util.Objects.castedVoid;
 import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class CreateDonationElement extends ContainerElement {
@@ -178,7 +180,7 @@ public class CreateDonationElement extends ContainerElement {
       // hack: the dropdown selection box is narrow, but we want dropdown menu items to be wider to display more info.
       // to get around this, add an invisible, wide element to which the dropdown menu should be anchored.
       IElement dropdownAnchorElement = new EmptyElement(context, this)
-          .setWidth(gui(100))
+          .setWidth(gui(50))
           .setLayoutGroup(LayoutGroup.CHILDREN)
           .setVerticalAlignment(VerticalAlignment.BOTTOM)
           .setMargin(RectExtension.fromLeft(gui(8)));
@@ -224,7 +226,7 @@ public class CreateDonationElement extends ContainerElement {
     private void onGetCurrenciesResponse(GetCurrenciesResponseData data) {
       super.context.renderer.runSideEffect(() -> {
         this.currencyDropdown.setEnabled(this, true);
-        this.currencyDropdown.dropdownMenu.setMinWidth(gui(50));
+        //this.currencyDropdown.dropdownMenu.setMinWidth(gui(25));
 
         for (PublicCurrency currency : data.currencies) {
           this.currencyDropdown.addOption(
@@ -232,6 +234,7 @@ public class CreateDonationElement extends ContainerElement {
                   .addElement(new LabelElement(context, this)
                       .setText(currency.code)
                       .setFontScale(0.75f)
+                      .setSizingMode(SizingMode.FILL)
                   ).addElement(new LabelElement(context, this)
                       .setText(currency.description)
                       .setColour(Colour.GREY50)
@@ -241,6 +244,10 @@ public class CreateDonationElement extends ContainerElement {
               currency,
               this::onSelectCurrency,
               (el, isSelected) -> {
+                List<IElement> children = firstOrNull(el.getChildren(), Collections.list());
+                assert children != null;
+                castedVoid(LabelElement.class, children.get(0), label -> label.setColour(isSelected ? Colour.LIGHT_YELLOW : Colour.WHITE));
+                castedVoid(LabelElement.class, children.get(1), label -> label.setColour(isSelected ? Colour.GREY75 : Colour.GREY50));
               },
               c -> c.code
           );

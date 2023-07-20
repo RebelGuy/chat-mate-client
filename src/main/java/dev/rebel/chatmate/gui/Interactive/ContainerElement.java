@@ -463,6 +463,10 @@ public abstract class ContainerElement extends ElementBase {
 
     DimRect contentBox = this.getContentBox();
     for (IElement element : this.children) {
+      if (!element.getVisible()) {
+        continue;
+      }
+
       DimRect relBox = this.childrenRelBoxes.get(element);
       if (relBox == null) {
         continue;
