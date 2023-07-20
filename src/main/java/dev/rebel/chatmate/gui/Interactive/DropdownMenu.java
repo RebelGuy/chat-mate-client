@@ -157,7 +157,7 @@ public class DropdownMenu extends OverlayElement {
       if (this.verticalPosition == VerticalPosition.BELOW) {
         maxHeight = visibleRect.getBottom().minus(fullAnchorBox.getBottom());
       } else {
-        maxHeight = visibleRect.getTop().minus(fullAnchorBox.getTop());
+        maxHeight = fullAnchorBox.getTop().minus(visibleRect.getTop());
       }
       this.scrollingContainer.setMaxHeight(maxHeight);
     }
