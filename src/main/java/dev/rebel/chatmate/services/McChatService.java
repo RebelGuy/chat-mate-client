@@ -120,7 +120,7 @@ public class McChatService {
 
       IChatComponent platform = new PlatformViewerTagComponent(this.dimFactory, this.config, item.platform, greyOut);
 
-      IChatComponent rank = this.messageService.getRankComponent(Collections.map(Collections.list(item.author.activeRanks), r -> r.rank));
+      IChatComponent rank = this.messageService.getRankComponent(Collections.list(item.author.activeRanks));
       if (greyOut) {
         rank = rank.setChatStyle(rank.getChatStyle().setColor(EnumChatFormatting.DARK_GRAY));
       }

@@ -12,4 +12,5 @@ public class PublicUserRank {
   public @Nullable String message;
   public @Nullable Long revokedAt;
   public @Nullable String revokeMessage;
+  public @Nullable String customRankName;
 }
