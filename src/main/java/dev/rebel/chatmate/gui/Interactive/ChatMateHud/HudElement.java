@@ -204,7 +204,6 @@ public abstract class HudElement extends ElementBase {
       } else {
         // no persistence - use defaults
         box = setBoxPositionAtAnchor(new DimRect(this.defaultPosition, super.lastCalculatedSize), this.defaultPosition, this.defaultPositionAnchor);
-        super.context.logService.logInfo(this, super.name, "CHAT-505 First box default position:", this.defaultPosition.toString(), "last size:", super.lastCalculatedSize, "box:", box.toString());
         this.setBoxUnsafe(box);
 
         // since elements start off with a scale of 1, we have to notify listeners of the resizing so they can handle it as required
@@ -228,7 +227,6 @@ public abstract class HudElement extends ElementBase {
 
       // if there's no resize, the box will stay the same.
       box = resizeBox(super.getBox(), this.lastCalculatedSize.getX(), this.lastCalculatedSize.getY(), Objects.firstOrNull(resizeAnchor, this.autoAnchor));
-      super.context.logService.logInfo(this, super.name, "CHAT-505 Subsequent box last size:", this.lastCalculatedSize, "box:", box.toString());
     }
 
     this.isScrolling = false;
