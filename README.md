@@ -1,6 +1,6 @@
 ChatMate is a helper tool for livestreamers and viewers. It consists of three main parts:
-- Server (`[/chat-mate](https://github.com/RebelGuy/chat-mate)/projects/server`): Node.js express app that runs the core logic for ChatMate and directly interacts with YouTube (via [Masterchat](https://github.com/sigvt/masterchat/)), Twitch (via [Twurple](https://github.com/twurple/twurple)), and the MySQL database (via [Prisma](https://github.com/prisma/prisma)). Exposes a collection of REST API endpoints.
-- Studio (`[/chat-mate](https://github.com/RebelGuy/chat-mate)/projects/studio`): [React](https://github.com/facebook/react) web interface for managing streamer and viewer data. It communicates with the server API endpoints.
+- Server ([`/chat-mate`](https://github.com/RebelGuy/chat-mate)`/projects/server`): Node.js express app that runs the core logic for ChatMate and directly interacts with YouTube (via [Masterchat](https://github.com/sigvt/masterchat/)), Twitch (via [Twurple](https://github.com/twurple/twurple)), and the MySQL database (via [Prisma](https://github.com/prisma/prisma)). Exposes a collection of REST API endpoints.
+- Studio ([`/chat-mate`](https://github.com/RebelGuy/chat-mate)`/projects/studio`): [React](https://github.com/facebook/react) web interface for managing streamer and viewer data. It communicates with the server API endpoints.
 - Client (this repo): Minecraft 1.8.9 mod for viewing and managing livestreams and viewers. Contains additional streamer tools that do not communicate with the server.
 
 For more info about the Client, refer to the [features document](./docs/features.md) or take a look at the [custom UI framework documentation](./docs/interactive-screen.md).
@@ -105,6 +105,13 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.27 - The Donation Update v3 [4/8/2023]
+- Updated the donations page in the Dashboard
+  - Donations can now be manually created
+  - Donations can now be refunded
+  - Donations can now be deleted
+- If set, custom rank names are displayed as part of a user's chat message
+
 ## v1.26 - The Open Source Update [23/6/2023]
 - Added documentation
 - Added scrolling to the ranks/punishments list

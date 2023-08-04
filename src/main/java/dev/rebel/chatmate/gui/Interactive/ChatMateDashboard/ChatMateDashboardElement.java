@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
 import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
+import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Chat.ChatSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardRoute.*;
@@ -73,7 +74,8 @@ public class ChatMateDashboardElement extends ContainerElement {
                                   Config config,
                                   ChatMateHudService chatMateHudService,
                                   AccountEndpointProxy accountEndpointProxy,
-                                  String dataFolder) {
+                                  String dataFolder,
+                                  DonationEndpointProxy donationEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
@@ -90,7 +92,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.generalSection = new GeneralSectionElement(context, this, castOrNull(GeneralRoute.class, route), this.streamerEndpointProxy, config, accountEndpointProxy);
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
-    this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService);
+    this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService, donationEndpointProxy);
     this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route), config, context.urlService, dataFolder);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)

@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
@@ -9,6 +10,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
 import dev.rebel.chatmate.stores.RankApiStore;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 import org.junit.Assert;
@@ -57,7 +59,6 @@ public class MessageServiceTests {
     IChatComponent result = this.messageService.ensureNonempty(component, "Test");
 
     Assert.assertEquals(component, result);
-
   }
 
   @Test
@@ -102,5 +103,20 @@ public class MessageServiceTests {
     IChatComponent result = this.messageService.getUserComponent(user);
 
     Assert.assertEquals("User 5", result.getUnformattedText());
+  }
+
+  @Test
+  public void getRankComponent_UsesCustomRankNameIfAvailable() {
+    String rankName = "test";
+    PublicUserRank userRank = new PublicUserRank() {{
+      customRankName = rankName;
+      rank = new PublicRank() {{
+        name = RankName.DONATOR;
+      }};
+    }};
+
+    IChatComponent result = this.messageService.getRankComponent(Collections.list(userRank));
+
+    Assert.assertEquals(rankName, result.getUnformattedText());
   }
 }

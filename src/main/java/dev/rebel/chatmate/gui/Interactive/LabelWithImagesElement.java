@@ -1,27 +1,19 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.Asset.Texture;
-import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart;
-import dev.rebel.chatmate.api.publicObjects.chat.PublicMessagePart.MessagePartType;
-import dev.rebel.chatmate.api.publicObjects.chat.PublicMessageText;
-import dev.rebel.chatmate.api.publicObjects.emoji.PublicCustomEmoji;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
-import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.style.Font;
-import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.TextHelpers;
-import org.w3c.dom.Text;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.util.Objects.casted;
 
@@ -31,18 +23,12 @@ public class LabelWithImagesElement extends InlineElement {
   private final List<LabelElement> labelElements = new ArrayList<>();
   private final List<ImageElement> imageElements = new ArrayList<>();
   private boolean colouriseImage = false;
-  private Colour colour = Colour.WHITE;
+  private Font font = new Font();
   private @Nullable BiConsumer<ImageElement, Integer> imageProcessor = null;
   private HorizontalAlignment horizontalAlignment = HorizontalAlignment.LEFT;
 
   public LabelWithImagesElement(InteractiveContext context, IElement parent) {
     super(context, parent);
-  }
-
-  /** Applies the given colour to all text and, if `colouriseImage` is true, images as well. */
-  public LabelWithImagesElement setColour(Colour colour) {
-    this.colour = colour;
-    return this;
   }
 
   /** If true, images will be colourised according to the colour set in `setColour()`. */
@@ -131,11 +117,17 @@ public class LabelWithImagesElement extends InlineElement {
     return this;
   }
 
+  /** Set the font to apply on top of all text and, if `colouriseImage` is true, the colour of which to apply to images as well. */
+  public LabelWithImagesElement setFont(Font font) {
+    this.font = font;
+    return this;
+  }
+
   private LabelElement createLabelElement(TextPart part) {
     return new LabelElement(super.context, this)
         .setText(part.text)
         .setFontScale(this.scale)
-        .setFont(part.font.withColour(c -> this.colour == null ? c : this.colour))
+        .setFont(Font.merge(part.font, this.font))
         .setPadding(this.getPaddingForParts())
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .setHorizontalAlignment(this.horizontalAlignment)
@@ -151,7 +143,7 @@ public class LabelWithImagesElement extends InlineElement {
         .cast();
 
     if (this.colouriseImage) {
-      return element.setColour(colour);
+      return element.setColour(this.font.getColour());
     } else {
       return element;
     }

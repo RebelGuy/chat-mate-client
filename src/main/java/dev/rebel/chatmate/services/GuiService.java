@@ -179,7 +179,8 @@ public class GuiService {
         this.config,
         this.chatMateHudService,
         this.accountEndpointProxy,
-        this.dataFolder)
+        this.dataFolder,
+        this.donationEndpointProxy)
     );
     return screen;
   }

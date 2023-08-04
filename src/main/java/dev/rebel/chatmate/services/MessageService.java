@@ -352,9 +352,9 @@ public class MessageService {
     return new ContainerChatComponent(component, user);
   }
 
-  public IChatComponent getRankComponent(List<PublicRank> activeRanks) {
+  public IChatComponent getRankComponent(List<PublicUserRank> activeRanks) {
     @Nullable RankName rankToShow = EnumHelpers.getFirst(
-        dev.rebel.chatmate.util.Collections.map(activeRanks, r -> r.name),
+        dev.rebel.chatmate.util.Collections.map(activeRanks, r -> r.rank.name),
         RankName.OWNER,
         RankName.ADMIN,
         RankName.MOD,
@@ -363,8 +363,8 @@ public class MessageService {
         RankName.DONATOR,
         RankName.FAMOUS
     );
-    @Nullable PublicRank matchingRank = dev.rebel.chatmate.util.Collections.first(activeRanks, r -> r.name == rankToShow);
-    String rankText = matchingRank == null ? "VIEWER" : matchingRank.displayNameNoun.toUpperCase();
+    @Nullable PublicUserRank matchingRank = dev.rebel.chatmate.util.Collections.first(activeRanks, r -> r.rank.name == rankToShow);
+    String rankText = matchingRank == null ? "VIEWER" : matchingRank.customRankName == null ? matchingRank.rank.displayNameNoun.toUpperCase() : matchingRank.customRankName.trim();
     return styledText(rankText, VIEWER_RANK_STYLE.get());
   }
 

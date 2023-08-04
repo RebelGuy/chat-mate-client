@@ -60,6 +60,10 @@ public class ScrollingElement extends SingleElement { // use a single element be
 
   /** Start scrolling once the element's height exceeds this value. */
   public ScrollingElement setMaxHeight(@Nullable Dim maxHeight) {
+    if (maxHeight != null && maxHeight.lt(gui(0))) {
+      throw new RuntimeException("Cannot set maximum height to a negative value.");
+    }
+
     if (!Objects.equals(this.maxHeight, maxHeight)) {
       this.maxHeight = maxHeight;
       super.onInvalidateSize();
