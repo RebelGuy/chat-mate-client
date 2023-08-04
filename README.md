@@ -105,6 +105,13 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.27 - The Donation Update v3 [4/8/2023]
+- Updated the donations page in the Dashboard
+  - Donations can now be manually created
+  - Donations can now be refunded
+  - Donations can now be deleted
+- If set, custom rank names are displayed as part of a user's chat message
+
 ## v1.26 - The Open Source Update [23/6/2023]
 - Added documentation
 - Added scrolling to the ranks/punishments list

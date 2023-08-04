@@ -64,7 +64,7 @@ public class DonationCardElement extends ContainerElement {
     titleParts.add(new TextPart(titleRemaining, titleFont));
 
     LabelWithImagesElement titleElement = new LabelWithImagesElement(super.context, this)
-        .setColour(Colour.YELLOW)
+        .setFont(new Font().withColour(Colour.YELLOW))
         .setColouriseImage(true)
         .setChildrenHorizontalAlignment(HorizontalAlignment.CENTRE)
         .setImageProcessor((img, i) -> {

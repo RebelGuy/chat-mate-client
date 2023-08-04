@@ -1,5 +1,8 @@
 package dev.rebel.chatmate.stores;
 
+import dev.rebel.chatmate.api.models.donation.CreateDonationRequest;
+import dev.rebel.chatmate.api.models.donation.CreateDonationResponse.CreateDonationsResponseData;
+import dev.rebel.chatmate.api.models.donation.DeleteDonationResponse.DeleteDonationResponseData;
 import dev.rebel.chatmate.api.models.donation.LinkUserResponse.LinkUserResponseData;
 import dev.rebel.chatmate.api.models.donation.RefundDonationResponse.RefundDonationResponseData;
 import dev.rebel.chatmate.api.models.donation.UnlinkUserResponse.UnlinkUserResponseData;
@@ -47,7 +50,7 @@ public class DonationApiStore {
 
     this.loading = true;
     this.donationEndpointProxy.getDonationsAsync(res -> {
-      this.donations = new CopyOnWriteArrayList<>(Collections.orderBy(Collections.list(res.donations), d -> d.time));
+      this.donations = new CopyOnWriteArrayList<>(Collections.reverse(Collections.orderBy(Collections.list(res.donations), d -> d.time)));
       this.getDonationsError = null;
       this.loading = false;
       callback.accept(this.donations);
@@ -100,6 +103,35 @@ public class DonationApiStore {
         donationId,
         res -> {
           this.updateDonation(res.updatedDonation);
+          callback.accept(res);
+        }, errorHandler
+    );
+  }
+
+  public void deleteDonation(int donationId, Consumer<DeleteDonationResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.donationEndpointProxy.deleteDonation(
+        donationId,
+        res -> {
+          if (this.donations != null) {
+            this.donations = new CopyOnWriteArrayList<>(
+                Collections.filter(Collections.list(this.donations), d -> !Objects.equals(d.id, donationId))
+            );
+          }
+          callback.accept(res);
+        }, errorHandler
+    );
+  }
+
+  public void createDonation(CreateDonationRequest request, Consumer<CreateDonationsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.donationEndpointProxy.createDonationAsync(
+        request,
+        res -> {
+          if (this.donations == null) {
+            this.donations = new CopyOnWriteArrayList<>(Collections.list(res.newDonation));
+          } else {
+            // add at the beginning -> newest donation
+            this.donations.add(0, res.newDonation);
+          }
           callback.accept(res);
         }, errorHandler
     );

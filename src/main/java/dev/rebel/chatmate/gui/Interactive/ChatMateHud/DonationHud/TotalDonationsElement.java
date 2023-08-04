@@ -52,7 +52,7 @@ public class TotalDonationsElement extends ContainerElement {
 
   private String getTotalDonationText() {
     float totalDonations = 0;
-    List<PublicDonation> donations = Collections.filter(super.context.donationApiStore.getDonations(), d -> !d.isRefunded);
+    List<PublicDonation> donations = Collections.filter(super.context.donationApiStore.getDonations(), d -> d.refundedAt == null);
     for (PublicDonation donation : donations) {
       if (donation.time >= this.startTime.get()) {
         totalDonations += donation.amount;

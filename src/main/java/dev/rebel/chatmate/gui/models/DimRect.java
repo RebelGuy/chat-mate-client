@@ -35,9 +35,9 @@ public class DimRect {
     return this.height;
   }
 
-  public Dim getLeft() { return this.x.plus(this.x); }
+  public Dim getLeft() { return this.x; }
 
-  public Dim getTop() { return this.y.plus(this.y); }
+  public Dim getTop() { return this.y; }
 
   public Dim getRight() { return this.x.plus(this.width); }
 
