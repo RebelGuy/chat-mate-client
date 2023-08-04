@@ -226,7 +226,6 @@ public class CreateDonationElement extends ContainerElement {
     private void onGetCurrenciesResponse(GetCurrenciesResponseData data) {
       super.context.renderer.runSideEffect(() -> {
         this.currencyDropdown.setEnabled(this, true);
-        //this.currencyDropdown.dropdownMenu.setMinWidth(gui(25));
 
         for (PublicCurrency currency : data.currencies) {
           this.currencyDropdown.addOption(
