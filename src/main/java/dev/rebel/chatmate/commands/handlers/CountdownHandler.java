@@ -46,7 +46,8 @@ public class CountdownHandler {
     this.title = title;
     this.timer = new Timer();
     this.titleHudElement = this.chatMateHudStore.addElement(TitleHudElement::new);
-    this.timer.scheduleAtFixedRate(new TaskWrapper(this::updateCountdown), 0, 1000);
+    this.updateCountdown();
+    this.timer.scheduleAtFixedRate(new TaskWrapper(this::updateCountdown), 1000, 1000);
   }
 
   public void stop() {
