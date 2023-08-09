@@ -2,6 +2,8 @@ package dev.rebel.chatmate.stores;
 
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.LruCache;
 import dev.rebel.chatmate.util.Memoiser;
@@ -19,12 +21,14 @@ public class RankApiStore {
   private final LruCache<String, CopyOnWriteArrayList<PublicUserRank>> cache;
   private final Memoiser memoiser;
 
-  public RankApiStore(RankEndpointProxy rankEndpointProxy) {
+  public RankApiStore(RankEndpointProxy rankEndpointProxy, Config config) {
     this.rankEndpointProxy = rankEndpointProxy;
 
     this.loading = new HashSet<>();
     this.cache = new LruCache<>(100);
     this.memoiser = new Memoiser();
+
+    config.getLoginInfoEmitter().onChange(_info -> this.clear(), new ConfigEventOptions<>(info -> info.loginToken == null));
   }
 
   public void clear() {

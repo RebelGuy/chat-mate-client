@@ -4,6 +4,8 @@ import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.api.models.chat.GetCommandStatusResponse.CommandStatus;
 import dev.rebel.chatmate.api.models.chat.GetCommandStatusResponse.GetCommandStatusResponseData;
 import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.util.LruCache;
 import scala.Tuple2;
 
@@ -20,11 +22,12 @@ public class CommandApiStore {
 
   private final Set<Integer> loading = new HashSet<>();
 
-  // only stores successful responses
   private final LruCache<Integer, Tuple2<Long, GetCommandStatusResponseData>> cache = new LruCache<>(100);
 
-  public CommandApiStore(ChatEndpointProxy chatEndpointProxy) {
+  public CommandApiStore(ChatEndpointProxy chatEndpointProxy, Config config) {
     this.chatEndpointProxy = chatEndpointProxy;
+
+    config.getLoginInfoEmitter().onChange(_info -> this.clear(), new ConfigEventOptions<>(info -> info.loginToken == null));
   }
 
   public void clear() {
