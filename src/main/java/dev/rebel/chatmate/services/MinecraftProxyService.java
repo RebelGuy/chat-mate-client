@@ -9,12 +9,15 @@ import net.minecraft.client.audio.ISound;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.util.Tuple;
+import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 // if we try to access/modify the Minecraft world on a separate thread, we may get a concurrency-related crash.
 // the solution is to schedule work on the minecraft thread, so it can be executed when safe.
@@ -26,8 +29,9 @@ public class MinecraftProxyService {
   private final ForgeEventService forgeEventService;
   private final CustomGuiNewChat customGuiNewChat;
 
-  private final List<Tuple<String, IChatComponent>> pendingChat;
-  private final List<IChatComponent> pendingDeletionChat;
+  private final List<Tuple<String, IChatComponent>> pendingChatAdditions;
+  private final List<IChatComponent> pendingChatDeletions;
+  private final List<Tuple2<Predicate<IChatComponent>, UnaryOperator<IChatComponent>>> pendingChatReplacements;
   private boolean refreshChat;
 
   public MinecraftProxyService(Minecraft minecraft, LogService logService, ForgeEventService forgeEventService, CustomGuiNewChat customGuiNewChat) {
@@ -36,8 +40,9 @@ public class MinecraftProxyService {
     this.forgeEventService = forgeEventService;
     this.customGuiNewChat = customGuiNewChat;
 
-    this.pendingChat = Collections.synchronizedList(new ArrayList<>());
-    this.pendingDeletionChat = Collections.synchronizedList(new ArrayList<>());
+    this.pendingChatAdditions = Collections.synchronizedList(new ArrayList<>());
+    this.pendingChatDeletions = Collections.synchronizedList(new ArrayList<>());
+    this.pendingChatReplacements = Collections.synchronizedList(new ArrayList<>());
     this.refreshChat = false;
 
     this.forgeEventService.onRenderChatGameOverlay(this::onRenderChatGameOverlay, null);
@@ -49,8 +54,8 @@ public class MinecraftProxyService {
 
   /** Prints the chat message immediately, or holds on to the message until the chat GUI is visible again. */
   public void printChatMessage(String type, IChatComponent component) {
-    synchronized (this.pendingChat) {
-      this.pendingChat.add(new Tuple<>(type, component));
+    synchronized (this.pendingChatAdditions) {
+      this.pendingChatAdditions.add(new Tuple<>(type, component));
     }
   }
 
@@ -60,8 +65,14 @@ public class MinecraftProxyService {
   }
 
   public void deleteComponentFromChat(IChatComponent component) {
-    synchronized (this.pendingDeletionChat) {
-      this.pendingDeletionChat.add(component);
+    synchronized (this.pendingChatDeletions) {
+      this.pendingChatDeletions.add(component);
+    }
+  }
+
+  public void replaceComponentInChat(Predicate<IChatComponent> predicate, UnaryOperator<IChatComponent> componentGenerator) {
+    synchronized (this.pendingChatReplacements) {
+      this.pendingChatReplacements.add(new Tuple2<>(predicate, componentGenerator));
     }
   }
 
@@ -83,8 +94,8 @@ public class MinecraftProxyService {
       return;
     }
 
-    synchronized (this.pendingChat) {
-      for (Tuple<String, IChatComponent> chatItem : this.pendingChat) {
+    synchronized (this.pendingChatAdditions) {
+      for (Tuple<String, IChatComponent> chatItem : this.pendingChatAdditions) {
         String type = chatItem.getFirst();
         IChatComponent component = chatItem.getSecond();
         String error = null;
@@ -101,16 +112,27 @@ public class MinecraftProxyService {
         }
       }
 
-      this.pendingChat.clear();
+      this.pendingChatAdditions.clear();
     }
 
-    synchronized (this.pendingDeletionChat) {
-      for (IChatComponent chatItem : this.pendingDeletionChat) {
+    synchronized (this.pendingChatDeletions) {
+      for (IChatComponent chatItem : this.pendingChatDeletions) {
         this.customGuiNewChat.deleteComponent(chatItem);
         this.refreshChat = true;
       }
 
-      this.pendingDeletionChat.clear();
+      this.pendingChatDeletions.clear();
+    }
+
+    synchronized (this.pendingChatReplacements) {
+      for (Tuple2<Predicate<IChatComponent>, UnaryOperator<IChatComponent>> args : this.pendingChatReplacements) {
+        Predicate<IChatComponent> predicate = args._1;
+        UnaryOperator<IChatComponent> componentGenerator = args._2;
+        this.customGuiNewChat.replaceLine(abstractChatLine -> predicate.test(abstractChatLine.getChatComponent()), componentGenerator);
+        this.refreshChat = true;
+      }
+
+      this.pendingChatReplacements.clear();
     }
 
     if (this.refreshChat) {

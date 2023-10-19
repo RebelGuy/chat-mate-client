@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
 
@@ -713,6 +714,22 @@ public class CustomGuiNewChat extends GuiNewChat {
 
     // this ensures that the bottom lines will shift upwards to fill the gap, if we are currently scrolled
     this.scroll(-removed, true);
+  }
+
+  public void replaceLine(Predicate<AbstractChatLine> predicate, UnaryOperator<IChatComponent> componentGenerator) {
+    this.abstractChatLines.replaceAll(abstractChatLine -> {
+      if (predicate.test(abstractChatLine)) {
+        IChatComponent newComponent = componentGenerator.apply(abstractChatLine.getChatComponent());
+        return abstractChatLine.withComponentReplaced(newComponent);
+      } else {
+        return abstractChatLine;
+      }
+    });
+
+    // todo: since the physical number of lines might be different for the old and new compeonent, we must scroll up/down.
+    // do this such that, if the replacement happens out of view, it doesn't affect our current view.
+    // currently large message below the screen getting reduced cause a change in the position
+    // test also while scrolling
   }
 
   private void disposeComponentsInLine(AbstractChatLine chatLine) {

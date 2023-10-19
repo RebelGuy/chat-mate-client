@@ -7,13 +7,10 @@ import dev.rebel.chatmate.api.publicObjects.event.PublicChatMateEvent.ChatMateEv
 import dev.rebel.chatmate.api.models.chatMate.GetEventsResponse.GetEventsResponseData;
 import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
-import dev.rebel.chatmate.events.models.NewViewerEventData;
+import dev.rebel.chatmate.events.models.*;
 import dev.rebel.chatmate.services.DateTimeService;
 import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.events.models.DonationEventData;
-import dev.rebel.chatmate.events.models.LevelUpEventData;
-import dev.rebel.chatmate.events.models.NewTwitchFollowerEventData;
 import dev.rebel.chatmate.util.ApiPoller;
 import dev.rebel.chatmate.util.ApiPoller.PollType;
 import dev.rebel.chatmate.util.ApiPollerFactory;
@@ -55,6 +52,10 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
 
   public void onNewViewer(EventCallback<NewViewerEventData> handler) {
     this.addListener(ChatMateEventType.NEW_VIEWER, 0, handler, null);
+  }
+
+  public void onChatMessageDeleted(EventCallback<ChatMessageDeletedEventData> handler) {
+    this.addListener(ChatMateEventType.CHAT_MESSAGE_DELETED, 0, handler, null);
   }
 
   private void onMakeRequest(Consumer<GetEventsResponseData> callback, Consumer<Throwable> onError) {
@@ -100,6 +101,13 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
         for (EventHandler<NewViewerEventData, ?> handler : this.getListeners(eventType, NewViewerEventData.class)) {
           PublicNewViewerData data = event.newViewerData;
           NewViewerEventData eventData = new NewViewerEventData(new Date(event.timestamp), data);
+          this.safeDispatch(eventType, handler, new Event<>(eventData));
+        }
+      } else if (event.type == ChatMateEventType.CHAT_MESSAGE_DELETED) {
+        ChatMateEventType eventType = ChatMateEventType.CHAT_MESSAGE_DELETED;
+        for (EventHandler<ChatMessageDeletedEventData, ?> handler : this.getListeners(eventType, ChatMessageDeletedEventData.class)) {
+          PublicChatMessageDeletedData data = event.chatMessageDeletedData;
+          ChatMessageDeletedEventData eventData = new ChatMessageDeletedEventData(new Date(event.timestamp), data);
           this.safeDispatch(eventType, handler, new Event<>(eventData));
         }
       } else {
