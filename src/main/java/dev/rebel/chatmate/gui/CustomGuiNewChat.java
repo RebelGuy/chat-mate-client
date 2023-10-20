@@ -19,6 +19,7 @@ import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.MinecraftChatEventService;
 import dev.rebel.chatmate.events.MouseEventService;
 import dev.rebel.chatmate.events.MouseEventService.MouseEventType;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.GlStateManager;
@@ -440,7 +441,7 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.updateHoveredLine();
   }
 
-  /** Adds the ChatLine to the `drawnChatLines`. */
+  /** Adds the ChatLine to the `drawnChatLines`. If `autoScroll` is true, will attempt to retain the current chat window view by adjusting the scroll target. */
   private void pushDrawnChatLine(ChatLine line, boolean autoScroll) {
     this.chatLines.add(0, line);
 
@@ -716,20 +717,34 @@ public class CustomGuiNewChat extends GuiNewChat {
     this.scroll(-removed, true);
   }
 
+  /** Replaces the component of the given line. Note that you must call `refreshChat` for the changes to come into effect. */
   public void replaceLine(Predicate<AbstractChatLine> predicate, UnaryOperator<IChatComponent> componentGenerator) {
+    float currentScroll = this.scrollPos.getTarget();
+    float highestVisibleLine = currentScroll + this.getLineCount();
+    State<Integer> scrollDelta = new State<>(0); // how many printed lines we added (positive) or removed (negative)
     this.abstractChatLines.replaceAll(abstractChatLine -> {
       if (predicate.test(abstractChatLine)) {
+        List<ChatLine> oldMessageLines = Collections.filter(this.chatLines, line -> line.getParent() == abstractChatLine);
+        ChatLine highestChatLine = Collections.last(oldMessageLines);
+
+        int lineWidth = this.getLineWidth();
         IChatComponent newComponent = componentGenerator.apply(abstractChatLine.getChatComponent());
+        List<IChatComponent> splitComponents = ComponentHelpers.splitText(newComponent, lineWidth, this.fontEngine);
+
+        // only update the scroll position if the replacement happened in or below our current view.
+        // if the update is in our view, this causes the lines below the replaced lines to update position, but fixes the top ones in place.
+        if (this.chatLines.indexOf(highestChatLine) < highestVisibleLine) {
+          int thisDelta = splitComponents.size() - oldMessageLines.size();
+          scrollDelta.setState(delta -> delta + thisDelta);
+        }
+
         return abstractChatLine.withComponentReplaced(newComponent);
       } else {
         return abstractChatLine;
       }
     });
 
-    // todo: since the physical number of lines might be different for the old and new compeonent, we must scroll up/down.
-    // do this such that, if the replacement happens out of view, it doesn't affect our current view.
-    // currently large message below the screen getting reduced cause a change in the position
-    // test also while scrolling
+    this.scroll(scrollDelta.getState(), true);
   }
 
   private void disposeComponentsInLine(AbstractChatLine chatLine) {
