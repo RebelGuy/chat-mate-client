@@ -129,8 +129,6 @@ public class PunishmentAdapters extends Adapters {
   }
 
   public static class PunishmentCreateAdapter extends CreateAdapter {
-    private final static int MIN_DURATION_TIMEOUT_SECONDS = 60 * 5; // this is the minimum masterchat/youtube timeout period
-
     @Override
     public boolean shouldIncludeRank(PublicRank rank) {
       return rank.group == RankGroup.PUNISHMENT;
@@ -158,13 +156,12 @@ public class PunishmentAdapters extends Adapters {
 
     @Override
     public String getExpirationSubtitle(PublicRank rank) {
-      return rank.name == RankName.TIMEOUT ? "(must be at least 5 minutes)" : String.format("(leave blank for indefinite %s)", rank.displayNameNoun);
+      return rank.name == RankName.TIMEOUT ? "" : String.format("(leave blank for indefinite %s)", rank.displayNameNoun);
     }
 
     @Override
     public boolean validateExpirationTime(RankName rank, int seconds) {
-      int minSeconds = rank == RankName.TIMEOUT ? MIN_DURATION_TIMEOUT_SECONDS : 0;
-      return seconds >= minSeconds;
+      return seconds >= 1;
     }
   }
 
