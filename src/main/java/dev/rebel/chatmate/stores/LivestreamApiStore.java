@@ -3,6 +3,8 @@ package dev.rebel.chatmate.stores;
 import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.api.proxy.LivestreamEndpointProxy;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nonnull;
@@ -19,16 +21,20 @@ public class LivestreamApiStore {
   private @Nullable String error;
   private boolean loading;
 
-  public LivestreamApiStore(LivestreamEndpointProxy livestreamEndpointProxy) {
+  public LivestreamApiStore(LivestreamEndpointProxy livestreamEndpointProxy, Config config) {
     this.livestreamEndpointProxy = livestreamEndpointProxy;
 
     this.livestreams = null;
     this.error = null;
     this.loading = false;
+
+    config.getLoginInfoEmitter().onChange(_info -> this.clear(), new ConfigEventOptions<>(info -> info.loginToken == null));
   }
 
   public void clear() {
     this.livestreams = null;
+    this.error = null;
+    this.loading = false;
   }
 
   /** Fetches livestreams from the server. */

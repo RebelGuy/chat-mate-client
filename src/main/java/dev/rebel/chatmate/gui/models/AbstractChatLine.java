@@ -22,6 +22,10 @@ public class AbstractChatLine
     this.chatLineID = chatLineID;
   }
 
+  public AbstractChatLine withComponentReplaced(IChatComponent newComponent) {
+    return new AbstractChatLine(this.updateCounterCreated, newComponent, this.chatLineID);
+  }
+
   public IChatComponent getChatComponent() {
     return this.component;
   }

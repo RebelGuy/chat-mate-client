@@ -20,6 +20,7 @@ import dev.rebel.chatmate.gui.Interactive.TableElement.Column;
 import dev.rebel.chatmate.gui.Interactive.TableElement.RowContents;
 import dev.rebel.chatmate.stores.RankApiStore;
 import dev.rebel.chatmate.util.Collections;
+import scala.Int;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -129,7 +130,7 @@ public class PunishmentAdapters extends Adapters {
   }
 
   public static class PunishmentCreateAdapter extends CreateAdapter {
-    private final static int MIN_DURATION_TIMEOUT_SECONDS = 60 * 5; // this is the minimum masterchat/youtube timeout period
+    private final static int MAX_DURATION_TIMEOUT_SECONDS = 3600 * 24; // imposed to us by the fantastic youtube API
 
     @Override
     public boolean shouldIncludeRank(PublicRank rank) {
@@ -158,13 +159,13 @@ public class PunishmentAdapters extends Adapters {
 
     @Override
     public String getExpirationSubtitle(PublicRank rank) {
-      return rank.name == RankName.TIMEOUT ? "(must be at least 5 minutes)" : String.format("(leave blank for indefinite %s)", rank.displayNameNoun);
+      return rank.name == RankName.TIMEOUT ? "(must be at most 1 day)" : String.format("(leave blank for indefinite %s)", rank.displayNameNoun);
     }
 
     @Override
     public boolean validateExpirationTime(RankName rank, int seconds) {
-      int minSeconds = rank == RankName.TIMEOUT ? MIN_DURATION_TIMEOUT_SECONDS : 0;
-      return seconds >= minSeconds;
+      int maxSeconds = rank == RankName.TIMEOUT ? MAX_DURATION_TIMEOUT_SECONDS : Int.MaxValue();
+      return seconds >= 1 && seconds <= maxSeconds;
     }
   }
 
