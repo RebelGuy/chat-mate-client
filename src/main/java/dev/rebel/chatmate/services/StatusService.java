@@ -39,15 +39,15 @@ public class StatusService {
   }
 
   public SimpleStatus getYoutubeSimpleStatus() {
-    GetStatusResponseData status = this.lastStatusResponse;
+    @Nullable GetStatusResponseData status = this.lastStatusResponse;
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.livestreamStatus == null) {
+    } else if (status.livestreamStatus.youtubeLivestream == null) {
       return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.youtubeApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
-    } else if (status.livestreamStatus.livestream.status == LivestreamStatus.Live) {
+    } else if (status.livestreamStatus.youtubeLivestream.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
       return SimpleStatus.OK_OFFLINE;
@@ -55,15 +55,15 @@ public class StatusService {
   }
 
   public SimpleStatus getTwitchSimpleStatus() {
-    GetStatusResponseData status = this.lastStatusResponse;
+    @Nullable GetStatusResponseData status = this.lastStatusResponse;
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.livestreamStatus == null) {
-      return SimpleStatus.OK_NO_LIVESTREAM;
+    } else if (status.livestreamStatus.twitchLivestream == null) {
+      return SimpleStatus.OK_OFFLINE;
     } else if (status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
-    } else if (status.livestreamStatus.livestream.status == LivestreamStatus.Live) {
+    } else if (status.livestreamStatus.twitchLivestream.status == LivestreamStatus.Live) {
       return SimpleStatus.OK_LIVE;
     } else {
       return SimpleStatus.OK_OFFLINE;
@@ -71,17 +71,13 @@ public class StatusService {
   }
 
   public SimpleStatus getAggregateSimpleStatus() {
-    GetStatusResponseData status = this.lastStatusResponse;
+    @Nullable GetStatusResponseData status = this.lastStatusResponse;
 
     if (status == null) {
       return SimpleStatus.SERVER_UNREACHABLE;
-    } else if (status.livestreamStatus == null) {
-      // we show "OK" even if the platforms are unreachable because, from the client's perspective, we only care about
-      // reachability during active livestreams, and it's more useful to show the OK_NO_LIVESTREAM status in this case.
-      return SimpleStatus.OK_NO_LIVESTREAM;
     } else if (status.youtubeApiStatus.status == ApiStatus.Error || status.twitchApiStatus.status == ApiStatus.Error) {
       return SimpleStatus.PLATFORM_UNREACHABLE;
-    } else if (status.livestreamStatus.livestream.status == LivestreamStatus.Live) {
+    } else if (status.livestreamStatus.isYoutubeLive() || status.livestreamStatus.isTwitchLive()) {
       return SimpleStatus.OK_LIVE;
     } else {
       return SimpleStatus.OK_OFFLINE;
@@ -89,9 +85,9 @@ public class StatusService {
   }
 
   public @Nullable Integer getYoutubeLiveViewerCount() {
-    GetStatusResponseData status = this.lastStatusResponse;
+    @Nullable GetStatusResponseData status = this.lastStatusResponse;
 
-    if (status == null || status.livestreamStatus == null) {
+    if (status == null) {
       return null;
     } else {
       return status.livestreamStatus.youtubeLiveViewers;
@@ -99,9 +95,9 @@ public class StatusService {
   }
 
   public @Nullable Integer getTwitchLiveViewerCount() {
-    GetStatusResponseData status = this.lastStatusResponse;
+    @Nullable GetStatusResponseData status = this.lastStatusResponse;
 
-    if (status == null || status.livestreamStatus == null) {
+    if (status == null) {
       return null;
     } else {
       return status.livestreamStatus.twitchLiveViewers;
@@ -130,9 +126,14 @@ public class StatusService {
   private void onApiResponse(GetStatusResponseData response) {
     // reload livestreams if something's changed
     if (this.lastStatusResponse != null) {
-      @Nullable PublicLivestreamStatus prevStatus = this.lastStatusResponse.livestreamStatus;
-      @Nullable PublicLivestreamStatus newStatus = response.livestreamStatus;
-      if ((prevStatus == null) != (newStatus == null) || prevStatus != null && newStatus != null && prevStatus.livestream.status != newStatus.livestream.status) {
+      PublicLivestreamStatus prevStatus = this.lastStatusResponse.livestreamStatus;
+      PublicLivestreamStatus newStatus = response.livestreamStatus;
+
+      @Nullable LivestreamStatus prevYoutubeStatus = prevStatus.youtubeLivestream == null ? null : prevStatus.youtubeLivestream.status;
+      @Nullable LivestreamStatus newYoutubeStatus = newStatus.youtubeLivestream == null ? null : newStatus.youtubeLivestream.status;
+      @Nullable LivestreamStatus prevTwitchStatus = prevStatus.twitchLivestream == null ? null : prevStatus.twitchLivestream.status;
+      @Nullable LivestreamStatus newTwitchStatus = newStatus.twitchLivestream == null ? null : newStatus.twitchLivestream.status;
+      if (prevYoutubeStatus != newYoutubeStatus || prevTwitchStatus != newTwitchStatus) {
         this.livestreamApiStore.clear();
       }
     }
