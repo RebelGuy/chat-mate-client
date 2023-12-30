@@ -574,6 +574,7 @@ public class CustomGuiNewChat extends GuiNewChat {
         if (lineX.gt(x)) {
           return originalComponent;
         }
+
       } else if (component instanceof PrecisionChatComponent) {
         PrecisionChatComponent precisionComponent = (PrecisionChatComponent)component;
 
@@ -600,6 +601,13 @@ public class CustomGuiNewChat extends GuiNewChat {
       } else if (component instanceof InteractiveElementChatComponent) {
         InteractiveElementChatComponent interactiveElementChatComponent = (InteractiveElementChatComponent)component;
         lineX = lineX.plus(interactiveElementChatComponent.getLastWidth());
+        if (lineX.gt(x)) {
+          return originalComponent;
+        }
+
+      } else if (component instanceof PlatformRankChatComponent) {
+        PlatformRankChatComponent platformRankChatComponent = (PlatformRankChatComponent)component;
+        lineX = lineX.plus(this.fontEngine.getStringWidthDim(getFormattedText(platformRankChatComponent.getChatComponentText())));
         if (lineX.gt(x)) {
           return originalComponent;
         }

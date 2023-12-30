@@ -11,7 +11,7 @@ public class SoundService {
   private final Config config;
 
   public SoundService(LogService logService, MinecraftProxyService minecraftProxyService, Config config) {
-    // see https://minecraft.fandom.com/wiki/Sounds.json for all possible ResourceLocations.
+    // see https://www.minecraftforum.net/forums/mapping-and-modding-java-edition/mapping-and-modding-tutorials/2213619-1-8-all-playsound-sound-arguments for all possible ResourceLocations.
     // there is also a list in .minecraft/assets/indexes/1.8.json
     // testing can be done in-game with commands enabled using
     // /playsound <resource.location> @a ~ ~ ~ <volume> <pitch>
@@ -34,6 +34,14 @@ public class SoundService {
 
   public void playDragonKill(float pitch) {
     this.playSound("mob.enderdragon.end", pitch);
+  }
+
+  public void playFireworkBlast(float pitch) {
+    this.playSound("fireworks.largeBlast", pitch);
+  }
+
+  public void playThunder(float pitch) {
+    this.playSound("ambient.weather.thunder", pitch);
   }
 
   private void playSound(String resourceLocation) {

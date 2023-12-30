@@ -2,8 +2,7 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.events.Event;
-import dev.rebel.chatmate.events.models.ChatMessageDeletedEventData;
-import dev.rebel.chatmate.events.models.NewViewerEventData;
+import dev.rebel.chatmate.events.models.*;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -20,8 +19,6 @@ import dev.rebel.chatmate.api.publicObjects.user.PublicRankedUser;
 import dev.rebel.chatmate.events.ChatMateChatService;
 import dev.rebel.chatmate.events.ChatMateEventService;
 import dev.rebel.chatmate.events.MinecraftChatEventService;
-import dev.rebel.chatmate.events.models.LevelUpEventData;
-import dev.rebel.chatmate.events.models.NewTwitchFollowerEventData;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.util.Collections;
@@ -89,6 +86,7 @@ public class McChatService {
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower);
     this.chatMateEventService.onNewViewer(this::onNewViewer);
     this.chatMateEventService.onChatMessageDeleted(this::onChatMessageDeleted);
+    this.chatMateEventService.onRankUpdated(this::onRankUpdated);
     this.config.getShowChatPlatformIconEmitter().onChange(_value -> this.minecraftProxyService.refreshChat());
 
     chatMateChatService.onNewChat(newChat -> {
@@ -255,6 +253,20 @@ public class McChatService {
     };
 
     this.minecraftProxyService.replaceComponentInChat(predicate, componentGenerator);
+  }
+
+  public void onRankUpdated(Event<RankUpdatedEventData> event) {
+    this.soundService.playLevelUp(1.75f);
+
+    RankUpdatedEventData data = event.getData();
+
+    try {
+      IChatComponent message = this.messageService.getRankUpdatedMessage(data.rankName, data.isAdded, data.user, data.platformRanks);
+      this.minecraftProxyService.printChatMessage("Rank updated", message);
+
+    } catch (Exception e) {
+      this.logService.logError(this, String.format("Could not print rank updated message for '%s'", data.user.channel.displayName));
+    }
   }
 
   public void printLeaderboard(PublicRankedUser[] users, @Nullable Integer highlightIndex) {
