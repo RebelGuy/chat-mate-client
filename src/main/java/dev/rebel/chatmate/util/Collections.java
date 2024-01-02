@@ -136,6 +136,21 @@ public class Collections {
     return list.stream().filter(filter).collect(Collectors.toList());
   }
 
+  public static <T> List<T> filter(List<T> list, BiPredicate<T, Integer> filter) {
+    if (list == null) {
+      return new ArrayList<>();
+    }
+
+    List<T> result =  new ArrayList<>();
+    for (int i = 0; i < list.size(); i++) {
+      T item = list.get(i);
+      if (filter.test(item, i)) {
+        result.add(item);
+      }
+    }
+    return result;
+  }
+
   public static <T> List<T> trim(List<T> list, @Nullable Integer maxItems) {
     if (maxItems == null || list.size() <= maxItems) {
       return list;
@@ -181,6 +196,14 @@ public class Collections {
   public static <T> boolean any(@Nullable List<T> list) { return list != null && list.size() != 0; }
 
   public static <T> boolean any(@Nullable List<T> list, Predicate<T> predicate) {
+    if (list == null || list.size() == 0) {
+      return false;
+    } else {
+      return Collections.filter(list, predicate).size() > 0;
+    }
+  }
+
+  public static <T> boolean any(@Nullable List<T> list, BiPredicate<T, Integer> predicate) {
     if (list == null || list.size() == 0) {
       return false;
     } else {
