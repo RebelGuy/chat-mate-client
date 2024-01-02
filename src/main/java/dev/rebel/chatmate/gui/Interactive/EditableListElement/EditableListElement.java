@@ -4,25 +4,31 @@ import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.util.Collections;
 import scala.Tuple2;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EditableListElement<TItem, TListElement extends IElement> extends BlockElement implements IEditableListAdapter<TItem, TListElement> {
-  private final List<Tuple2<TItem, ListItemElement<TItem, TListElement>>> itemElements;
+  private List<Tuple2<TItem, ListItemElement<TItem, TListElement>>> itemElements;
   private final IEditableListAdapter<TItem, TListElement> adapter;
+  private final @Nullable List<TItem> initialItems;
 
-  public EditableListElement(InteractiveScreen.InteractiveContext context, IElement parent, IEditableListAdapter<TItem, TListElement> adapter) {
+  public EditableListElement(InteractiveScreen.InteractiveContext context, IElement parent, @Nullable List<TItem> initialItems, IEditableListAdapter<TItem, TListElement> adapter) {
     super(context, parent);
 
     this.adapter = adapter;
     this.itemElements = new ArrayList<>();
+    this.initialItems = initialItems;
   }
 
-  // we can't add the first item in the constructor, otherwise the adapter methods won't be able to know about the current instance yet
+  // we can't add the initial items in the constructor, otherwise the adapter methods have no way yet of knowing about the current instance
   @Override
   public void onInitialise() {
     super.onInitialise();
-    this.onItemAdded(this.adapter.onCreateItem(0), 0);
+
+    if (Collections.any(initialItems)) {
+      Collections.forEach(initialItems, this::onItemAdded);
+    }
   }
 
   public List<TItem> getItems() {
@@ -33,14 +39,24 @@ public class EditableListElement<TItem, TListElement extends IElement> extends B
     return Collections.map(this.itemElements, ie -> ie._2);
   }
 
+  public void replaceItem(int index, TItem newItem) {
+    this.itemElements = Collections.map(this.itemElements, (el, i) -> {
+      if (i == index) {
+        return new Tuple2<>(newItem, el._2);
+      } else {
+        return new Tuple2<>(el._1, el._2);
+      }
+    });
+  }
+
   @Override
   public TItem onCreateItem(int newIndex) {
     return this.adapter.onCreateItem(newIndex);
   }
 
   @Override
-  public TListElement onCreateContents(TItem fromItem, int fromIndex) {
-    return this.adapter.onCreateContents(fromItem, fromIndex);
+  public TListElement onCreateContents(TItem fromItem, int forIndex) {
+    return this.adapter.onCreateContents(fromItem, forIndex);
   }
 
   @Override

@@ -151,6 +151,18 @@ public class Collections {
     return result;
   }
 
+  public static <T> void forEach(List<T> list, Consumer<T> processor) {
+    for (T item : list) {
+      processor.accept(item);
+    }
+  }
+
+  public static <T> void forEach(List<T> list, BiConsumer<T, Integer> processor) {
+    for (int i = 0; i < list.size(); i++) {
+      processor.accept(list.get(i), i);
+    }
+  }
+
   public static <T> List<T> trim(List<T> list, @Nullable Integer maxItems) {
     if (maxItems == null || list.size() <= maxItems) {
       return list;
@@ -167,6 +179,10 @@ public class Collections {
     List<T> list = new ArrayList<>();
     collection.forEach(list::add);
     return list;
+  }
+
+  public static <T> T[] toArray(List<T> collection, T[] array) {
+    return collection.toArray(array);
   }
 
   public static @Nullable <T> T first(@Nullable List<T> list) {
@@ -273,5 +289,25 @@ public class Collections {
 
     int index = list.indexOf(item);
     return list.subList(index + 1, list.size());
+  }
+
+  public static <T> List<T> unique(@Nullable List<T> list) {
+    if (list == null) {
+      return null;
+    }
+
+    // we need to iterate like this to retain the order of the unique values
+    List<T> result = new ArrayList<>();
+    HashSet<T> visited = new HashSet<>();
+    for (T item : list) {
+      if (visited.contains(item)) {
+        continue;
+      }
+
+      visited.add(item);
+      result.add(item);
+    }
+
+    return result;
   }
 }

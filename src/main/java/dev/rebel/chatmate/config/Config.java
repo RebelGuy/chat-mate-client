@@ -79,6 +79,9 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<LoginInfo> loginInfo;
   public StatefulEmitter<LoginInfo> getLoginInfoEmitter() { return this.loginInfo; }
 
+  private final StatefulEmitter<List<String>> chatMentionFilter;
+  public StatefulEmitter<List<String>> getChatMentionFilter() { return this.chatMentionFilter; }
+
   /** Listeners are notified whenever any change has been made to the config. */
   private final List<Callback> updateListeners;
 
@@ -201,6 +204,12 @@ public class Config extends EventServiceBase<ConfigType> {
         data == null ? new LoginInfo(null, null) : data.loginInfo.deserialise(),
         this::onUpdate
     );
+    this.chatMentionFilter = new StatefulEmitter<>(
+        ConfigType.CHAT_MENTION_FILTER,
+        (Class<List<String>>)(Object)List.class,
+        data == null ? new ArrayList<>() : data.chatMentionFilter,
+        this::onUpdate
+    );
   }
 
   public void listenAny(Callback callback) {
@@ -239,7 +248,8 @@ public class Config extends EventServiceBase<ConfigType> {
           this.lastGetChatResponse.get(),
           this.lastGetChatMateEventsResponse.get(),
           dev.rebel.chatmate.util.Collections.map(this.hudTransforms.get(), SerialisedConfigV6.SerialisedHudElementTransform::new), // no import aliasing in Java..
-          new SerialisedConfigV6.SerialisedLoginInfo(this.loginInfo.get())
+          new SerialisedConfigV6.SerialisedLoginInfo(this.loginInfo.get()),
+          this.chatMentionFilter.get()
       );
       this.configPersistorService.save(serialisedConfig);
     } catch (Exception e) {
@@ -433,6 +443,7 @@ public class Config extends EventServiceBase<ConfigType> {
     LAST_GET_CHAT_RESPONSE,
     LAST_GET_CHAT_MATE_EVENTS_RESPONSE,
     HUD_TRANSFORMS,
-    LOGIN_INFO
+    LOGIN_INFO,
+    CHAT_MENTION_FILTER
   }
 }

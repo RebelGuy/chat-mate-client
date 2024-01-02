@@ -362,7 +362,8 @@ public class McChatService {
       }
 
       if (msg.type == MessagePartType.text) {
-        WordFilter[] mentionFilter = TextHelpers.makeWordFilters("[rebel_guy]", "[rebel guy]", "[rebel]");
+        String[] stringArray = Collections.toArray(this.config.getChatMentionFilter().get(), new String[0]); // i'm feeling sick 🤮🤮🤮
+        WordFilter[] mentionFilter = TextHelpers.makeWordFilters(stringArray);
         StringMask mentionMask = FilterService.filterWords(text, mentionFilter);
 
         ChatStyle mentionStyle = MENTION_TEXT_STYLE.get();

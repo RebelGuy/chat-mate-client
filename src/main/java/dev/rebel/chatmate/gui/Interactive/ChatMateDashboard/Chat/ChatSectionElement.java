@@ -91,10 +91,14 @@ public class ChatSectionElement extends ContainerElement implements ISectionElem
           (el, selected) -> el.setColour(selected ? Colour.LIGHT_YELLOW : Colour.WHITE),
           stringifyVisibility);
     }
+
     super.addElement(new InlineElement(context, this)
         .addElement(commandVisibilityLabel)
         .addElement(this.commandVisibilityDropdown)
+        .setMargin(RectExtension.fromBottom(gui(8)))
     );
+
+    super.addElement(new ChatMentionElement(context, this));
 
     context.config.getCommandMessageChatVisibilityEmitter().onChange(this._onChangeConfig, this, true);
     super.addDisposer(() -> super.context.config.getCommandMessageChatVisibilityEmitter().off(this));

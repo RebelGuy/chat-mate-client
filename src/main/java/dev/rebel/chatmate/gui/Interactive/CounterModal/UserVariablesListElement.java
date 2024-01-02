@@ -21,7 +21,8 @@ public class UserVariablesListElement extends BlockElement implements IEditableL
     super(context, parent);
     this.controller = controller;
 
-    this.variableListElement = new EditableListElement<>(context, this, this);
+    UserVariable initialVariable = new UserVariable("x", "");
+    this.variableListElement = new EditableListElement<>(context, this, Collections.list(initialVariable), this);
 
     super.addElement(this.variableListElement);
   }
@@ -36,12 +37,12 @@ public class UserVariablesListElement extends BlockElement implements IEditableL
 
   @Override
   public UserVariable onCreateItem(int newIndex) {
-    return new UserVariable(newIndex == 0 ? "x" : "", "");
+    return new UserVariable("", "");
   }
 
   @Override
-  public UserVariableElement onCreateContents(UserVariable fromItem, int fromIndex) {
-    return this.createUserVariableElement(fromItem, fromIndex);
+  public UserVariableElement onCreateContents(UserVariable fromItem, int forIndex) {
+    return this.createUserVariableElement(fromItem, forIndex);
   }
 
   @Override
