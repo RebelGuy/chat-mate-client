@@ -33,7 +33,12 @@ Streamers can search for registered usernames or YouTube/Twitch channel names vi
 The search functionality provides a consistent way for streamers to view or manage a particular user, even if not running an active livestream or even if the user is not currently present.
 
 ## Leaderboard
-The chat experience leaderboard compares viewers' chat levels. The full leaderboard of all of the streamers' viewers can be accessed via the `/cm ranks` command. A partial leaderboard can be accessed by right clicking on a user and selecting the "Reveal on leaderboard" option.
+The chat experience leaderboard compares viewers' chat levels. The full leaderboard of all of the streamers' viewers can be accessed via the `/cm ranks` command. A partial leaderboard can be accessed by right-clicking on a user and selecting the "Reveal on leaderboard" option.
+
+## Chat Mentions
+Streamers can define words that, when sent by a viewer in the Youtube/Twitch chat, will trigger a chat-mention notification. The notification highlights the matched text in orange and is accompanied by a "ding" sound. The filter can be edited and tested on the Dashboard -> Chat screen:
+
+<img src="./assets/chat-mention-filter.png">
 
 ## UX
 ChatMate modifies the Minecraft chat window to allow for smooth scrolling for a more pleasant user experience, and also keeps track of a longer chat history than vanilla Minecraft. Right-clicking on any message brings up the option to delete that message from the chat window. In the future, more chat functionality will be added, such as the ability to search for keywords, view timestamps, filter messages by user, or persist the chat log.
