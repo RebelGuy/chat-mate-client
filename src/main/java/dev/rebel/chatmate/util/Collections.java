@@ -185,6 +185,15 @@ public class Collections {
     return collection.toArray(array);
   }
 
+  // they have to be fucking kidding us
+  public static List<Boolean> fromPrimitiveArray(boolean[] array) {
+    List<Boolean> result = new ArrayList<>();
+    for (boolean item : array) {
+      result.add(item);
+    }
+    return result;
+  }
+
   public static @Nullable <T> T first(@Nullable List<T> list) {
     return (list == null || list.size() == 0) ? null : list.get(0);
   }

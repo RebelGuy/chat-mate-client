@@ -5,7 +5,10 @@ import dev.rebel.chatmate.gui.Interactive.EditableListElement.EditableListElemen
 import dev.rebel.chatmate.gui.Interactive.EditableListElement.IEditableListAdapter;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.services.FilterService;
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.TextHelpers;
+import net.minecraft.util.IChatComponent;
 import scala.Tuple2;
 
 import javax.annotation.Nullable;
@@ -14,9 +17,13 @@ import java.util.List;
 import java.util.function.BiConsumer;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
+import static dev.rebel.chatmate.gui.chat.Styles.MENTION_TEXT_STYLE;
+import static dev.rebel.chatmate.gui.chat.Styles.YT_CHAT_MESSAGE_TEXT_STYLE;
+import static dev.rebel.chatmate.util.ChatHelpers.styledTextWithMask;
 
 public class ChatMentionElement extends BlockElement implements IEditableListAdapter<String, ChatMentionElement.ChatMentionItem> {
   private final EditableListElement<String, ChatMentionItem> listElement;
+  private final LabelElement mentionStatusLabel;
 
   public ChatMentionElement(InteractiveScreen.InteractiveContext context, IElement parent) {
     super(context, parent);
@@ -41,9 +48,35 @@ public class ChatMentionElement extends BlockElement implements IEditableListAda
     }
     this.listElement = new EditableListElement<>(context, this, initialValues, this)
         .setPadding(Layout.RectExtension.fromTop(gui(4)))
+        .setMargin(Layout.RectExtension.fromBottom(gui(8)))
         .cast();
 
     super.addElement(this.listElement);
+
+    super.addElement(new TextInputElement(context, this)
+        .setPlaceholder("Type something to test notification")
+        .setTextFormatter(this::testingFormatter)
+        .setMaxWidth(gui(250))
+    );
+
+    this.mentionStatusLabel = new LabelElement(context, this)
+        .setFontScale(SCALE)
+        .setColour(Colour.GREY50)
+        .setPadding(Layout.RectExtension.fromTop(gui(2)))
+        .cast();
+    super.addElement(this.mentionStatusLabel);
+  }
+
+  private List<Tuple2<String, Font>> testingFormatter(String text) {
+    // copied from the McChatService
+    String[] stringArray = Collections.toArray(super.context.config.getChatMentionFilter().get(), new String[0]);
+    TextHelpers.WordFilter[] mentionFilter = TextHelpers.makeWordFilters(stringArray);
+    TextHelpers.StringMask mentionMask = FilterService.filterWords(text, mentionFilter);
+
+    this.mentionStatusLabel.setText(Collections.any(Collections.fromPrimitiveArray(mentionMask.mask), x -> x) ? "Found match" : "No match found");
+
+    List<IChatComponent> components = Collections.list(styledTextWithMask(text, YT_CHAT_MESSAGE_TEXT_STYLE.get(), mentionMask, MENTION_TEXT_STYLE.get()));
+    return Collections.map(components, c -> new Tuple2<>(c.getUnformattedText(), Font.fromChatStyle(c.getChatStyle(), super.context.dimFactory)));
   }
 
   @Override
@@ -94,7 +127,7 @@ public class ChatMentionElement extends BlockElement implements IEditableListAda
   }
 
   protected static class ChatMentionItem extends InlineElement {
-    public int index;
+    protected int index;
     private final TextInputElement inputElement;
     private final BiConsumer<Integer, String> onUpdate;
 
