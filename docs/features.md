@@ -4,7 +4,7 @@ See [here](interactive-screen.md) for a more technical description of how the Ch
 Most administrative actions are conducted via the ChatMate Dashboard. It is accessible via the Forge mod list or directly via the Minecraft pause menu. The streamer should first log in to their registered ChatMate account in the Dashboard's General page to unlock all features. Only then does ChatMate listen for new livestream messages, events, and allows the streamer to manager their data.
 
 # ChatMate HUD
-The HUD is a screen overlay for displaying HUD elements. The elements' layout and content is completely customisable by the user via the ChatMate HUD Screen. The HUD screen can be accessed by pressing `Y` (configurable keybinding) and closed by pressing `ESC`. Right clicking the HUD screen will bring up the HUD context menu:
+The HUD is a screen overlay for displaying HUD elements. The elements' layout and content is completely customisable by the user via the ChatMate HUD Screen. The HUD screen can be accessed by pressing `Y` (configurable keybinding) and closed by pressing `ESC`. Right-clicking the HUD screen will bring up the HUD context menu:
 
 <img src="./assets/hud-context.png">
 
@@ -14,7 +14,7 @@ ChatMate saves the layout of status-related HUD elements relative to the Minecra
 
 The status indicator can be in 4 states:
 - Red: Can't connect to the ChatMate server.
-- Dark blue: Connection to the server established, but no livestream has been set.
+- Dark blue: Connection to the server established, but no Youtube livestream has been set. (only relevant for Youtube streamers).
 - Cyan: Livestream has been set, but is not currently live.
 - Green: Livestream is live.
 
