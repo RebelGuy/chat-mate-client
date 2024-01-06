@@ -2,11 +2,12 @@ package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.models.ChatMessageDeletedEventData;
 import dev.rebel.chatmate.events.models.NewViewerEventData;
 import dev.rebel.chatmate.gui.CustomGuiNewChat;
 import dev.rebel.chatmate.gui.FontEngine;
-import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.chat.UserSearchResultRowRenderer.AggregatedUserSearchResult;
 import dev.rebel.chatmate.gui.models.DimFactory;
@@ -32,11 +33,14 @@ import net.minecraft.util.*;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import static dev.rebel.chatmate.gui.chat.Styles.*;
 import static dev.rebel.chatmate.api.proxy.EndpointProxy.getApiErrorMessage;
 import static dev.rebel.chatmate.util.ChatHelpers.joinComponents;
 import static dev.rebel.chatmate.util.ChatHelpers.styledTextWithMask;
+import static dev.rebel.chatmate.util.Objects.*;
 
 public class McChatService {
   private final MinecraftProxyService minecraftProxyService;
@@ -84,6 +88,7 @@ public class McChatService {
     this.chatMateEventService.onLevelUp(this::onLevelUp);
     this.chatMateEventService.onNewTwitchFollower(this::onNewTwitchFollower);
     this.chatMateEventService.onNewViewer(this::onNewViewer);
+    this.chatMateEventService.onChatMessageDeleted(this::onChatMessageDeleted);
     this.config.getShowChatPlatformIconEmitter().onChange(_value -> this.minecraftProxyService.refreshChat());
 
     chatMateChatService.onNewChat(newChat -> {
@@ -144,9 +149,12 @@ public class McChatService {
       if (isCommand) {
         components.add(new ChatCommandChatComponent(this.interactiveContext, item.commandId));
       }
-      IChatComponent message = joinComponents(" ", components, c -> c == platform);
 
-      this.minecraftProxyService.printChatMessage("YouTube chat", message);
+      // if you change the structure of the chat message component, ensure deleteStreamChatItem() still works
+      IChatComponent message = joinComponents(" ", components, c -> c == platform);
+      ContainerChatComponent component = new ContainerChatComponent(message, item);
+
+      this.minecraftProxyService.printChatMessage("YouTube chat", component);
       if (mcChatResult.includesMention) {
         this.soundService.playDing();
       }
@@ -203,6 +211,50 @@ public class McChatService {
     } catch (Exception e) {
       this.logService.logError(this, String.format("Could not print new viewer message for '%s'", data.newViewer.user.channel.displayName));
     }
+  }
+
+  public void onChatMessageDeleted(Event<ChatMessageDeletedEventData> event) {
+    ChatMessageDeletedEventData data = event.getData();
+    int deletedMessageId = data.chatMessageDeletedData.chatMessageId;
+
+    Predicate<IChatComponent> predicate = oldComponent -> {
+      Boolean match = casted(ContainerChatComponent.class, oldComponent, containerComponent ->
+          casted(PublicChatItem.class, containerComponent.getData(), chatItem ->
+              chatItem.id == deletedMessageId
+          )
+      );
+
+      return match != null && match;
+    };
+    UnaryOperator<IChatComponent> componentGenerator = oldComponent -> {
+      // the structure of chat messages is known. we want to retain all sibling components up to the user's name, and replace everything after (the message part)
+      ContainerChatComponent containerChatComponent = (ContainerChatComponent)oldComponent;
+      ChatComponentText innerComponent = (ChatComponentText)containerChatComponent.getComponent();
+
+      IChatComponent newComponent = innerComponent.getSiblings().get(0);
+      State<Integer> skipIndexAfter = new State<>(innerComponent.getSiblings().size());
+      for (int i = 1; i < innerComponent.getSiblings().size(); i++) {
+        if (i > skipIndexAfter.getState()) {
+          continue;
+        }
+
+        IChatComponent sibling = innerComponent.getSiblings().get(i);
+        newComponent.appendSibling(sibling);
+
+        State<Integer> index = new State<>(i);
+        castedVoid(ContainerChatComponent.class, sibling, container -> {
+          castedVoid(UserNameChatComponent.class, container.getComponent(), c -> {
+            // +1 to append the padding component before the message component
+            skipIndexAfter.setState(index.getState() + 1);
+          });
+        });
+      }
+      newComponent.appendSibling(styledText("Message deleted.", INFO_SUBTLE_MSG_STYLE.get()));
+
+      return newComponent;
+    };
+
+    this.minecraftProxyService.replaceComponentInChat(predicate, componentGenerator);
   }
 
   public void printLeaderboard(PublicRankedUser[] users, @Nullable Integer highlightIndex) {

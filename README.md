@@ -105,6 +105,11 @@ never has a chance to interact with its private `GuiNewChat` object (which remai
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.28 - The Youtube Update [20/11/23]
+- Chat messages that are deleted by a user externally are now marked as deleted in the Minecraft chat
+- Caches are now invalidated when the user logs out
+- Removed the 5-minute restriction for issuing timeouts
+
 ## v1.27 - The Donation Update v3 [4/8/2023]
 - Updated the donations page in the Dashboard
   - Donations can now be manually created

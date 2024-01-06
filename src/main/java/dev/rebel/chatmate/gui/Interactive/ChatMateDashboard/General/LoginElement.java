@@ -5,17 +5,13 @@ import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.config.Config.LoginInfo;
 import dev.rebel.chatmate.events.Event;
-import dev.rebel.chatmate.events.EventHandler;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
-import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.TextInputElement.InputType;
-
-import java.util.function.Function;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.ERROR_LABEL;
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
@@ -149,6 +145,9 @@ public class LoginElement extends BlockElement {
 
   private void onLogout() {
     super.context.config.getLoginInfoEmitter().set(new LoginInfo(null, null));
+
+    this.usernameInput.setText("");
+    this.passwordInput.setText("");
   }
 
   private void onResponseError(Throwable e) {

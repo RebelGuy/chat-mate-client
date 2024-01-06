@@ -413,6 +413,7 @@ public class TextInputElement extends InputElement {
           if (this.onSubmit == null) {
             return false;
           } else {
+            super.context.focusedElement = null;
             this.onSubmit.run();
             return true;
           }

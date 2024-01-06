@@ -9,6 +9,10 @@ import dev.rebel.chatmate.api.models.donation.UnlinkUserResponse.UnlinkUserRespo
 import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.Config.LoginInfo;
+import dev.rebel.chatmate.events.Event;
+import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nonnull;
@@ -26,16 +30,20 @@ public class DonationApiStore {
   private @Nullable String getDonationsError;
   private boolean loading;
 
-  public DonationApiStore(DonationEndpointProxy donationEndpointProxy) {
+  public DonationApiStore(DonationEndpointProxy donationEndpointProxy, Config config) {
     this.donationEndpointProxy = donationEndpointProxy;
 
     this.donations = null;
     this.getDonationsError = null;
     this.loading = false;
+
+    config.getLoginInfoEmitter().onChange(_info -> this.clear(), new ConfigEventOptions<>(info -> info.loginToken == null));
   }
 
   public void clear() {
     this.donations = null;
+    this.getDonationsError = null;
+    this.loading = false;
   }
 
   /** Fetches donations from the server. */

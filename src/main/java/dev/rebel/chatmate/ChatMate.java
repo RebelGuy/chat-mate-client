@@ -101,10 +101,10 @@ public class ChatMate {
     DonationEndpointProxy donationEndpointProxy = new DonationEndpointProxy(logService, apiRequestService, apiPath);
     LivestreamEndpointProxy livestreamEndpointProxy = new LivestreamEndpointProxy(logService, apiRequestService, apiPath);
 
-    LivestreamApiStore livestreamApiStore = new LivestreamApiStore(livestreamEndpointProxy);
-    DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy);
-    RankApiStore rankApiStore = new RankApiStore(rankEndpointProxy);
-    CommandApiStore commandApiStore = new CommandApiStore(chatEndpointProxy);
+    LivestreamApiStore livestreamApiStore = new LivestreamApiStore(livestreamEndpointProxy, config);
+    DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy, config);
+    RankApiStore rankApiStore = new RankApiStore(rankEndpointProxy, config);
+    CommandApiStore commandApiStore = new CommandApiStore(chatEndpointProxy, config);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));

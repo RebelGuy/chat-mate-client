@@ -3,6 +3,8 @@ package dev.rebel.chatmate.stores;
 import dev.rebel.chatmate.api.models.rank.GetUserRanksResponse.GetUserRanksResponseData;
 import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.config.Config.LoginInfo;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,15 +19,20 @@ import java.util.function.Consumer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class RankApiStoreTests {
   @Mock RankEndpointProxy rankEndpointProxy;
+  @Mock Config config;
+  @Mock Config.StatefulEmitter<LoginInfo> mockLoginInfoEmitter;
   RankApiStore rankApiStore;
 
   @Before
   public void setup() {
-    this.rankApiStore = new RankApiStore(this.rankEndpointProxy);
+    when(this.config.getLoginInfoEmitter()).thenReturn(this.mockLoginInfoEmitter);
+
+    this.rankApiStore = new RankApiStore(this.rankEndpointProxy, this.config);
   }
 
   @Test
