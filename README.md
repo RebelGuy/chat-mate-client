@@ -84,6 +84,10 @@ recorded within the `Sampler` tab.
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.29 - The Publication Update [6/1/23]
+- Added customisable chat mentions that can be tested in the Dashboard -> Chat section
+- Rank update events are now shown in chat, including, upon hover, a crude summary of applied/failed external actions
+
 ## v1.28 - The Youtube Update [20/11/23]
 - Chat messages that are deleted by a user externally are now marked as deleted in the Minecraft chat
 - Caches are now invalidated when the user logs out
