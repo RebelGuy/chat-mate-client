@@ -72,7 +72,8 @@ public class DonationsListElement extends ContainerElement {
         .onCheckedChanged(this::onFilterChanged)
         .setLabel("Show only unlinked donations")
         .setScale(0.75f);
-    boolean isActiveLivestream = statusService.getLivestreamStatus() != null && statusService.getLivestreamStatus().livestream.status == LivestreamStatus.Live;
+    boolean isActiveLivestream = statusService.getLivestreamStatus() != null
+        && (statusService.getLivestreamStatus().isYoutubeLive() || statusService.getLivestreamStatus().isTwitchLive());
     this.currentLivestreamCheckbox = SharedElements.CHECKBOX_LIGHT.create(context, this)
         .setChecked(isActiveLivestream)
         .onCheckedChanged(this::onFilterChanged)
@@ -509,8 +510,12 @@ public class DonationsListElement extends ContainerElement {
         // filter doesn't apply if livestream hasn't started, or there is no active livestream
         if (this.showCurrentLivestreamOnly &&
             this.livestreamStatus != null &&
-            this.livestreamStatus.livestream.status == LivestreamStatus.Live &&
-            d.time < this.livestreamStatus.livestream.startTime) {
+            (this.livestreamStatus.youtubeLivestream != null && this.livestreamStatus.youtubeLivestream.status == LivestreamStatus.Live ||
+                this.livestreamStatus.twitchLivestream != null && this.livestreamStatus.twitchLivestream.status == LivestreamStatus.Live) &&
+            d.time < Math.min(
+                this.livestreamStatus.youtubeLivestream == null || this.livestreamStatus.youtubeLivestream.startTime == null ? Long.MAX_VALUE : this.livestreamStatus.youtubeLivestream.startTime,
+                this.livestreamStatus.twitchLivestream == null || this.livestreamStatus.twitchLivestream.startTime == null ? Long.MAX_VALUE : this.livestreamStatus.twitchLivestream.startTime
+            )) {
           return false;
         }
 

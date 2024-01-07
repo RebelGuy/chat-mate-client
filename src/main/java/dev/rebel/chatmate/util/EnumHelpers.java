@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.util;
 
-import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
+import scala.Tuple2;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -37,6 +37,21 @@ public class EnumHelpers {
     try {
       return T.valueOf(clazz, stringValue);
     } catch (IllegalArgumentException e) {
+      return defaultValue;
+    }
+  }
+
+  @SafeVarargs
+  public static <T extends Enum<T>, U> U mapEnum(T item, @Nullable U defaultValue, Tuple2<T, U>... pairs) {
+    for (Tuple2<T, U> pair : pairs) {
+      if (pair._1 == item) {
+        return pair._2;
+      }
+    }
+
+    if (defaultValue == null) {
+      throw new RuntimeException(String.format("Unable to map enum %s of type %s because no value has been provided.", item.getClass().getSimpleName(), item));
+    } else {
       return defaultValue;
     }
   }

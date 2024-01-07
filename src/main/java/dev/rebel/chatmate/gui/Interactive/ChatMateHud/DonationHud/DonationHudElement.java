@@ -89,10 +89,13 @@ public class DonationHudElement extends HudElement {
   private long getStartTime() {
     if (this.timeframeModel.thisStreamOnly) {
       @Nullable PublicLivestreamStatus status = this.statusService.getLivestreamStatus();
-      if (status == null || status.livestream.startTime == null) {
+      if (status == null) {
         return Long.MAX_VALUE;
       } else {
-        return status.livestream.startTime;
+        return Math.min(
+            status.getYoutubeStartTime() == null ? Long.MAX_VALUE : status.getYoutubeStartTime(),
+            status.getTwitchStartTime() == null ? Long.MAX_VALUE : status.getTwitchStartTime()
+        );
       }
     } else {
       return this.timeframeModel.since;

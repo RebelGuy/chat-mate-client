@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 public class PublicLivestream {
   public Integer id;
+  public Platform platform;
   public String livestreamLink;
   public LivestreamStatus status;
   public @Nullable Long startTime;
@@ -15,5 +16,10 @@ public class PublicLivestream {
     @SerializedName("not_started") NotStarted,
     @SerializedName("live") Live,
     @SerializedName("finished") Finished,
+  }
+
+  public enum Platform {
+    @SerializedName("youtube") Youtube,
+    @SerializedName("twitch") Twitch
   }
 }

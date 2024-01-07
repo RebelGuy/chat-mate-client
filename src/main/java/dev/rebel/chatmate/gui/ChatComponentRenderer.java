@@ -1,17 +1,11 @@
 package dev.rebel.chatmate.gui;
 
 import dev.rebel.chatmate.Asset.Texture;
-import dev.rebel.chatmate.gui.Interactive.RendererHelpers;
-import dev.rebel.chatmate.gui.StateManagement.State;
-import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
-import dev.rebel.chatmate.gui.chat.ImageChatComponent;
-import dev.rebel.chatmate.gui.chat.InteractiveElementChatComponent;
-import dev.rebel.chatmate.gui.chat.UserNameChatComponent;
-import dev.rebel.chatmate.gui.models.DimPoint;
-import dev.rebel.chatmate.gui.style.Colour;
+import dev.rebel.chatmate.gui.chat.*;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import net.minecraft.client.Minecraft;
@@ -19,7 +13,6 @@ import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
-import org.lwjgl.opengl.GL11;
 
 import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
 
@@ -101,6 +94,13 @@ public class ChatComponentRenderer extends Gui {
     } else if (component instanceof InteractiveElementChatComponent) {
       InteractiveElementChatComponent interactiveChatComponent = (InteractiveElementChatComponent)component;
       return interactiveChatComponent.render(x, y, opacity, chatRect);
+
+    } else if (component instanceof PlatformRankChatComponent) {
+      PlatformRankChatComponent platformRankChatComponent = (PlatformRankChatComponent)component;
+      String formattedText = getFormattedText(platformRankChatComponent.getChatComponentText());
+      Font font = new Font().withColour(Colour.WHITE.withAlpha(opacity)).withShadow(new Shadow(this.dimFactory));
+      this.fontEngine.drawString(formattedText, x, y, font);
+      return this.fontEngine.getStringWidthDim(formattedText);
 
     } else {
       throw new RuntimeException("Cannot draw chat component of type " + component.getClass().getSimpleName());

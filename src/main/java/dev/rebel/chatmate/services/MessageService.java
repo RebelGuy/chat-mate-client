@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.event.PublicPlatformRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicChannel;
 import dev.rebel.chatmate.gui.ChatComponentRenderer;
 import dev.rebel.chatmate.gui.FontEngine;
@@ -31,6 +32,7 @@ import java.util.stream.IntStream;
 
 import static dev.rebel.chatmate.gui.chat.Styles.*;
 import static dev.rebel.chatmate.util.ChatHelpers.*;
+import static dev.rebel.chatmate.util.EnumHelpers.mapEnum;
 import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class MessageService {
@@ -258,6 +260,20 @@ public class MessageService {
     list.add(this.getUserComponent(user));
     list.add(styledText("to the livestream!", INFO_MSG_STYLE.get()));
     return joinComponents(" ", list);
+  }
+
+  public IChatComponent getRankUpdatedMessage(RankName rankName, boolean isAdded, PublicUser user, List<PublicPlatformRank> platformRanks) {
+    List<IChatComponent> list = new ArrayList<>();
+    list.add(INFO_PREFIX);
+    list.add(new ChatComponentText(" "));
+
+    // hide the punishment indicator
+    list.add(this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), user.channel.displayName, false, true, false, false));
+    list.add(styledText(" has been ", INFO_MSG_STYLE.get()));
+    list.add(new PlatformRankChatComponent(rankName, isAdded, platformRanks).setChatStyle(HIGHLIGHT_MSG_STYLE.get()));
+    list.add(styledText(".", INFO_MSG_STYLE.get()));
+
+    return joinComponents("", list);
   }
 
   private IChatComponent getLargeLevelUpIntro(PublicUser user, int newLevel) {

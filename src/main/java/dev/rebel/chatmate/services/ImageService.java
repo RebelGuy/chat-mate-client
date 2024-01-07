@@ -33,7 +33,7 @@ public class ImageService {
       BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(decodedBytes));
       ResourceLocation location = this.minecraft.getTextureManager().getDynamicTextureLocation("test", new DynamicTexture(bufferedImage));
       return new Texture(bufferedImage.getWidth(), bufferedImage.getHeight(), location);
-    } catch (IOException e) {
+    } catch (Exception e) {
       // todo: log
       return null;
     }

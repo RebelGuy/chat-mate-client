@@ -10,6 +10,7 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.util.EnumHelpers;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -28,6 +29,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
   public final long lastGetChatMateEventsResponse;
   public final Map<String, SerialisedHudElementTransform> hudTransforms;
   public final SerialisedLoginInfo loginInfo;
+  public final List<String> chatMentionFilter;
 
   public SerialisedConfigV6(boolean soundEnabled,
                             int chatVerticalDisplacement,
@@ -42,7 +44,8 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
                             long lastGetChatResponse,
                             long lastGetChatMateEventsResponse,
                             Map<String, SerialisedHudElementTransform> hudTransforms,
-                            SerialisedLoginInfo loginInfo) {
+                            SerialisedLoginInfo loginInfo,
+                            List<String> chatMentionFilter) {
     this.soundEnabled = soundEnabled;
     this.chatVerticalDisplacement = chatVerticalDisplacement;
     this.commandMessageChatVisibility = commandMessageChatVisibility;
@@ -57,6 +60,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
     this.lastGetChatMateEventsResponse = lastGetChatMateEventsResponse;
     this.hudTransforms = hudTransforms;
     this.loginInfo = loginInfo;
+    this.chatMentionFilter = chatMentionFilter;
   }
 
   @Override
