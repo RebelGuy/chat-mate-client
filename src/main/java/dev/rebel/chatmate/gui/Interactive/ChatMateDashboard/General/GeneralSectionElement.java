@@ -38,6 +38,12 @@ public class GeneralSectionElement extends ContainerElement implements ISectionE
         .onCheckedChanged(config.getSoundEnabledEmitter()::set)
         .setScale(0.75f)
     );
+    super.addElement(CHECKBOX_LIGHT.create(context, this)
+        .setLabel("Show ChatMate options in the pause menu")
+        .setChecked(config.getShowChatMateOptionsInPauseMenuEmitter().get())
+        .onCheckedChanged(config.getShowChatMateOptionsInPauseMenuEmitter()::set)
+        .setScale(0.75f)
+    );
 
     this.livestreamElement = new GeneralSectionLivestreamElement(context, this, streamerEndpointProxy)
         .setMargin(new RectExtension(ZERO, ZERO, ZERO, gui(6)))
