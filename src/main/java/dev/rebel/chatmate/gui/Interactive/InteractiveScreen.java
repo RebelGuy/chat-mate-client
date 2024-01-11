@@ -690,6 +690,9 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public void onInitialise() { }
 
   @Override
+  public boolean isInitialised() { return true; }
+
+  @Override
   public void onDisposed() { }
 
   @Override

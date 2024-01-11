@@ -19,6 +19,7 @@ public interface IElement {
   /** Called automatically at some point before the first render or `calculateThisSize` call. If implementing, ALWAYS
    * call `super.onInitialise()` to prevent null-reference exceptions or similar errors from occurring. */
   void onInitialise();
+  boolean isInitialised();
 
   // the event data is determined by the event type
   void onEvent(EventType type, InteractiveEvent<?> event);
