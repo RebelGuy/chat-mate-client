@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build-client:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -36,15 +36,18 @@ jobs:
           path: ./build/libs/*.jar
 
   # following the example at https://github.com/actions/upload-release-asset
-  deploy:
+  deploy-client:
     if: ${{ (github.ref_name == 'master' || github.ref_name == 'develop') && !contains(github.event.head_commit.message, '--skip-deploy') }}
-    needs: [build-and-deploy]
+    needs: [build-client]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v2
         with:
           name: built-jar
+
+      - name: Debug
+        run: pwd && ls /home/runner/work/chat-mate-client/chat-mate-client
 
       - name: Unzip .jar
         run: unzip ./artifact.zip
