@@ -83,7 +83,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # release names and tags have to be unique. just tack on the commit number to the full version to guarantee this (assuming the job doesn't get started manually on github actions)
-            tag_name: v${{ env.VERSION }}.${{ env.COMMIT_NUMBER }}${{ github.ref_name == 'master' && '' || ' (Sandbox)' }}
+            tag_name: v${{ env.VERSION }}.${{ env.COMMIT_NUMBER }}${{ github.ref_name == 'master' && '' || '-Sandbox' }}
             release_name: ChatMate v${{ env.VERSION }}${{ github.ref_name == 'master' && '' || ' (Sandbox)' }}
             prerelease: ${{ github.ref_name == 'master' && 'false' || 'true' }}
 
