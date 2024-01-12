@@ -49,6 +49,9 @@ jobs:
         with:
           name: built-jar
 
+      - name: Rename downloaded .jar file to ChatMate.jar
+        run: rm ./*.jar ChatMate.jar
+
         # - the grep regex didn't recognise \d, and + had to be escaped for some reason lol
         # - for sed:
         #   - s tells sed to do substitution
@@ -69,15 +72,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
             tag_name: ${{ env.VERSION }}
-            release_name: ${{ github.ref_name == 'master' && 'Release' || 'Sandbox' }} ${{ env.VERSION }}
+            release_name: ChatMate ${{ env.VERSION }}${{ github.ref_name == 'master' && '' || ' (Sandbox)' }}
             prerelease: ${{ github.ref_name == 'master' && 'false' || 'true' }}
 
-      - name: Release .jar
+      - name: Release ChatMate.jar
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ./*.jar
-          asset_name: ChatMate ${{ env.VERSION }}${{ github.ref_name == 'master' && '' || ' (Sandbox)'}}.zip
+          asset_path: ./ChatMate.jar
+          asset_name: ChatMate ${{ env.VERSION }}${{ github.ref_name == 'master' && '' || ' (Sandbox)'}}.jar
           asset_content_type: application/java-archive
