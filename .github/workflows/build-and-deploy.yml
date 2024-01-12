@@ -50,7 +50,7 @@ jobs:
           name: built-jar
 
       - name: Rename downloaded .jar file to ChatMate.jar
-        run: rm ./*.jar ChatMate.jar
+        run: mv ./*.jar ChatMate.jar
 
         # - the grep regex didn't recognise \d, and + had to be escaped for some reason lol
         # - for sed:
