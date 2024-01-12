@@ -46,12 +46,6 @@ jobs:
         with:
           name: built-jar
 
-      - name: Debug
-        run: pwd && ls /home/runner/work/chat-mate-client/chat-mate-client
-
-      - name: Unzip .jar
-        run: unzip ./artifact.zip
-
         # - the grep regex didn't recognise \d, and + had to be escaped for some reason lol
         # - for sed:
         #   - s tells sed to do substitution
@@ -81,6 +75,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ./${{ env.VERSION }}.jar
+          asset_path: ./*.jar
           asset_name: ChatMate ${{ env.VERSION }}${{ github.ref_name == 'master' && '' || ' (Sandbox)'}}.zip
           asset_content_type: application/java-archive
