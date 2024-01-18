@@ -76,6 +76,11 @@ jobs:
           COMMIT_NUMBER=$(git rev-list HEAD --count)
           echo "COMMIT_NUMBER=$COMMIT_NUMBER" >> $GITHUB_ENV
 
+          echo ref_name ${{ github.ref_name }}
+          echo ref ${{ github.ref }}
+          echo head_ref ${{ github.head_ref }}
+          echo base_ref ${{ github.base_ref }}
+
       - name: Create Release
         id: create-release
         uses: actions/create-release@v1
