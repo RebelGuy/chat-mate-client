@@ -12,12 +12,14 @@ public class PublicChatMateEvent {
   public @Nullable PublicDonationData donationData;
   public @Nullable PublicNewViewerData newViewerData;
   public @Nullable PublicChatMessageDeletedData chatMessageDeletedData;
+  public @Nullable PublicRankUpdateData rankUpdateData;
 
   public enum ChatMateEventType {
     @SerializedName("levelUp") LEVEL_UP,
     @SerializedName("newTwitchFollower") NEW_TWITCH_FOLLOWER,
     @SerializedName("donation") DONATION,
     @SerializedName("newViewer") NEW_VIEWER,
-    @SerializedName("chatMessageDeleted") CHAT_MESSAGE_DELETED
+    @SerializedName("chatMessageDeleted") CHAT_MESSAGE_DELETED,
+    @SerializedName("rankUpdate") RANK_UPDATE
   }
 }

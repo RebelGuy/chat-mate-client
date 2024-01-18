@@ -14,6 +14,7 @@ import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.util.ApiPoller;
 import dev.rebel.chatmate.util.ApiPoller.PollType;
 import dev.rebel.chatmate.util.ApiPollerFactory;
+import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Objects;
 
 import javax.annotation.Nullable;
@@ -56,6 +57,10 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
 
   public void onChatMessageDeleted(EventCallback<ChatMessageDeletedEventData> handler) {
     this.addListener(ChatMateEventType.CHAT_MESSAGE_DELETED, 0, handler, null);
+  }
+
+  public void onRankUpdated(EventCallback<RankUpdatedEventData> handler) {
+    this.addListener(ChatMateEventType.RANK_UPDATE, 0, handler, null);
   }
 
   private void onMakeRequest(Consumer<GetEventsResponseData> callback, Consumer<Throwable> onError) {
@@ -103,6 +108,7 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
           NewViewerEventData eventData = new NewViewerEventData(new Date(event.timestamp), data);
           this.safeDispatch(eventType, handler, new Event<>(eventData));
         }
+
       } else if (event.type == ChatMateEventType.CHAT_MESSAGE_DELETED) {
         ChatMateEventType eventType = ChatMateEventType.CHAT_MESSAGE_DELETED;
         for (EventHandler<ChatMessageDeletedEventData, ?> handler : this.getListeners(eventType, ChatMessageDeletedEventData.class)) {
@@ -110,6 +116,16 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
           ChatMessageDeletedEventData eventData = new ChatMessageDeletedEventData(new Date(event.timestamp), data);
           this.safeDispatch(eventType, handler, new Event<>(eventData));
         }
+
+      } else if (event.type == ChatMateEventType.RANK_UPDATE) {
+        ChatMateEventType eventType = ChatMateEventType.RANK_UPDATE;
+        for (EventHandler<RankUpdatedEventData, ?> handler : this.getListeners(eventType, RankUpdatedEventData.class)) {
+          PublicRankUpdateData data = event.rankUpdateData;
+          assert data != null;
+          RankUpdatedEventData eventData = new RankUpdatedEventData(data.rankName, data.isAdded, data.user, Collections.list(data.platformRanks));
+          this.safeDispatch(eventType, handler, new Event<>(eventData));
+        }
+
       } else {
         this.logService.logError("Invalid ChatMate event of type " + event.type);
       }

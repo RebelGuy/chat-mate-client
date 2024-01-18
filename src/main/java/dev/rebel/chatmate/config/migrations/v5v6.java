@@ -1,11 +1,11 @@
 package dev.rebel.chatmate.config.migrations;
 
 import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.config.serialised.SerialisedConfigV4;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV5;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV6;
 import dev.rebel.chatmate.util.Collections;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class v5v6 extends Migration<SerialisedConfigV5, SerialisedConfigV6> {
@@ -24,7 +24,8 @@ public class v5v6 extends Migration<SerialisedConfigV5, SerialisedConfigV6> {
         data.lastGetChatResponse,
         data.lastGetChatMateEventsResponse,
         Collections.map(data.hudTransforms, SerialisedConfigV6.SerialisedHudElementTransform::new),
-        new SerialisedConfigV6.SerialisedLoginInfo(null, null)
+        new SerialisedConfigV6.SerialisedLoginInfo(null, null),
+        new ArrayList<>()
     );
   }
 

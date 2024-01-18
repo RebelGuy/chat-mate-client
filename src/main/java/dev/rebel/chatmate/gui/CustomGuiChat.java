@@ -7,6 +7,7 @@ import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButt
 import dev.rebel.chatmate.events.models.MouseEventOptions;
 import dev.rebel.chatmate.gui.chat.ChatCommandChatComponent;
 import dev.rebel.chatmate.gui.chat.ContainerChatComponent;
+import dev.rebel.chatmate.gui.chat.PlatformRankChatComponent;
 import dev.rebel.chatmate.gui.models.AbstractChatLine;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
@@ -133,6 +134,10 @@ public class CustomGuiChat extends GuiChat {
     if (component instanceof ChatCommandChatComponent) {
       ChatCommandChatComponent chatComponent = (ChatCommandChatComponent)component;
       super.drawHoveringText(Collections.list(chatComponent.hoverText), (int)mouseX.getGui(), (int)mouseY.getGui());
+      GlStateManager.disableLighting();
+    } else if (component instanceof PlatformRankChatComponent) {
+      PlatformRankChatComponent chatComponent = (PlatformRankChatComponent)component;
+      super.drawHoveringText(chatComponent.getHoverLines(), (int)mouseX.getGui(), (int)mouseY.getGui());
       GlStateManager.disableLighting();
     }
   }

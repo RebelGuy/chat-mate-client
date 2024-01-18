@@ -1,8 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
-import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream;
-import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
+import dev.rebel.chatmate.api.publicObjects.livestream.PublicAggregateLivestream;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.events.ChatMateEventService;
 import dev.rebel.chatmate.events.Event;
@@ -41,7 +40,7 @@ public class DonationService {
   // now is non-trivial.
   public boolean shouldShowDonationEffect(int userId) {
     List<PublicDonation> allDonations = this.donationApiStore.getDonations();
-    List<PublicLivestream> allLivestreams = this.livestreamApiStore.getLivestreams();
+    List<PublicAggregateLivestream> livestreams = this.livestreamApiStore.getLivestreams();
 
     // memoised so we don't do this every frame for every user in chat
     long showEffectUntil = this.memoiser.memoise(String.valueOf(userId), () -> {
@@ -55,7 +54,6 @@ public class DonationService {
         return -1L;
       }
 
-      List<PublicLivestream> livestreams = Collections.filter(allLivestreams, l -> l.status != LivestreamStatus.NotStarted);
       long now = this.dateTimeService.now();
 
       // we go forward over each donation, then over each livestream, and figure out if the user has any effect-time credited at the current instance in time.
@@ -63,7 +61,7 @@ public class DonationService {
       List<Tuple2<Long, Long>> mappedDonations = new ArrayList<>(); // (time, duration) pairs
       for (PublicDonation donation : Collections.orderBy(donations, DonationService::getLinkTime)) {
         long t = 0;
-        for (PublicLivestream livestream : livestreams) {
+        for (PublicAggregateLivestream livestream : livestreams) {
           long endTime = livestream.endTime == null ? now : livestream.endTime;
           if (donation.time < livestream.startTime) {
             // donation was made before this livestream started
@@ -103,7 +101,7 @@ public class DonationService {
       }
 
       long totalLivestreamDuration = 0;
-      for (PublicLivestream livestream : livestreams) {
+      for (PublicAggregateLivestream livestream : livestreams) {
         long endTime = livestream.endTime == null ? now : livestream.endTime;
         totalLivestreamDuration += endTime - livestream.startTime;
       }
@@ -127,7 +125,7 @@ public class DonationService {
       } else {
         return -1L;
       }
-    }, allDonations, allLivestreams, this.rankApiStore.getStateToken(userId));
+    }, allDonations, livestreams, this.rankApiStore.getStateToken(userId));
 
     return this.dateTimeService.now() < showEffectUntil;
   }

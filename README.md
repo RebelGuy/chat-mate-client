@@ -72,6 +72,8 @@ GitHub Actions are used for automatically building and testing the Client when p
 
 If the string `--skip-tests` is included in the commit message, the `test` project will not be built and unit tests will be skipped on Github.
 
+If the string `--skip-deploy` is included in the commit message, a new release will not be created, and the built .jar file will not be published. It will still be uploaded as an artifact as part of the action, though.
+
 ## Profiling
 Use the IntelliJ extension `VisualVM Launcher` from the Marketplace: `https://plugins.jetbrains.com/plugin/7115-visualvm-launcher/`.
 Start the profiling session by using the "Debug with VisualVM 'Minecraft Client'" configuration at the top. Download and extract
@@ -80,31 +82,14 @@ VisualVM and copy the path of the executable in the `/bin` folder to the empty i
 Once started, Minecraft can be profiled within VisualVM via the `GradleStart` application. A partial snapshot can be 
 recorded within the `Sampler` tab.
 
-## Custom Chat
-We use a custom implementation of the `GuiNewChat` gui object (this is what renders the chat lines, emojis,
-handles `IChatComponents`, manages smooth scrolling, etc). There is a couple of points to note on how this works:
-
-The `GuiIngame` object (this is what renders all the overlay components such as chat, health bar, etc) holds its own
-private final version of the `GuiNewChat`, which it uses internally, and exposes publicly via `GetChatGUI()`.
-
-Forge has
-its own implementation (`GuiIngameForge`) which it uses to fire overlay rendering events. Conveniently, the `GuiIngame`
-object is used only as a public settable property of `Minecraft`. So we can simply set `Minecraft.guiIngame`
-to `CustomGuiIngame extends GuiIngameForge` and override the `GetChatGUI()` so that it returns our
-own `CustomGuiNewChat` instead. Calling `Minecraft.guiIngame.GetChatGUI()` from anywhere will now return our custom
-implementation. **Important**: We have to wait to instantiate `CustomGuiIngame` until AFTER the Minecraft object has
-completely loaded because it has a getter that returns null initially, which some overlay renderers rely on.
-Also, We have to wait until right after all mods have been loaded to be able to set `Minecraft.guiIngame`, otherwise
-Forge will overwrite it (it instantiates this class very late in the intialisation cycle).
-
-Now, by listening to the chat render events fired by `GuiIngameForge`, we can prevent its default
-behaviour (i.e. `cancel` the event) and use `CustomGuiNewChat.drawChat()` instead. As a result, the `GuiIngameForge`
-never has a chance to interact with its private `GuiNewChat` object (which remains to be the default implementation).
-
 ## Misc
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.29 - The Publication Update [6/1/23]
+- Added customisable chat mentions that can be tested in the Dashboard -> Chat section
+- Rank update events are now shown in chat, including, upon hover, a crude summary of applied/failed external actions
+
 ## v1.28 - The Youtube Update [20/11/23]
 - Chat messages that are deleted by a user externally are now marked as deleted in the Minecraft chat
 - Caches are now invalidated when the user logs out

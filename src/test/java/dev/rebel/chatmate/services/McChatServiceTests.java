@@ -30,6 +30,7 @@ import dev.rebel.chatmate.stores.CommandApiStore;
 import dev.rebel.chatmate.stores.DonationApiStore;
 import dev.rebel.chatmate.stores.LivestreamApiStore;
 import dev.rebel.chatmate.stores.RankApiStore;
+import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
 import org.junit.Before;
@@ -40,6 +41,8 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyString;
 
@@ -65,11 +68,12 @@ public class McChatServiceTests {
   @Mock StatefulEmitter<Boolean> mockShowChatPlatformIconEmitter;
   @Mock StatefulEmitter<Boolean> mockDebugModeEnabledEmitter;
   @Mock StatefulEmitter<CommandMessageChatVisibility> mockCommandMessageChatVisibilityEmitter;
+  @Mock StatefulEmitter<List<String>> mockChatMentionFilterEmitter;
 
+  String mentionText = "mentionText";
   PublicUser author1 = createAuthor("Author 1");
   PublicMessagePart text1 = createText("Text 1");
   PublicMessagePart text2 = createText("Text 2");
-  PublicMessagePart textRebel = createText("Rebel");
   PublicMessagePart emoji1 = createEmoji("☺", ":smiling:");
   PublicMessagePart emoji2 = createEmoji("slightly smiling", ":slightly_smiling:");
 
@@ -88,6 +92,9 @@ public class McChatServiceTests {
 
     when(this.mockConfig.getCommandMessageChatVisibilityEmitter()).thenReturn(this.mockCommandMessageChatVisibilityEmitter);
     when(this.mockMessageService.getRankComponent(any())).thenReturn(new ChatComponentText("VIEWER"));
+
+    when(this.mockConfig.getChatMentionFilter()).thenReturn(this.mockChatMentionFilterEmitter);
+    when(this.mockChatMentionFilterEmitter.get()).thenReturn(Collections.list(this.mentionText));
   }
 
   @Test
@@ -195,8 +202,7 @@ public class McChatServiceTests {
     // but for some reason it causes everything JUnit related to break.
     // so for now just rely on the static method's implementation to work correctly (and it is tested in FilterServiceTests anyway).
 
-    // note: if this test breaks it's probably because chat mentions are no longer hardcoded
-    PublicChatItem item = createItem(author1, textRebel);
+    PublicChatItem item = createItem(author1, createText(mentionText));
     McChatService service = this.setupService();
 
     service.printStreamChatItem(item);

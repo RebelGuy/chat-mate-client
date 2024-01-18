@@ -1,6 +1,6 @@
 package dev.rebel.chatmate.stores;
 
-import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream;
+import dev.rebel.chatmate.api.publicObjects.livestream.PublicAggregateLivestream;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.api.proxy.LivestreamEndpointProxy;
 import dev.rebel.chatmate.config.Config;
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 public class LivestreamApiStore {
   private final LivestreamEndpointProxy livestreamEndpointProxy;
 
-  private @Nullable CopyOnWriteArrayList<PublicLivestream> livestreams;
+  private @Nullable CopyOnWriteArrayList<PublicAggregateLivestream> livestreams;
   private @Nullable String error;
   private boolean loading;
 
@@ -38,7 +38,7 @@ public class LivestreamApiStore {
   }
 
   /** Fetches livestreams from the server. */
-  public void loadLivestreams(Consumer<List<PublicLivestream>> callback, Consumer<Throwable> errorHandler, boolean forceLoad) {
+  public void loadLivestreams(Consumer<List<PublicAggregateLivestream>> callback, Consumer<Throwable> errorHandler, boolean forceLoad) {
     if (this.livestreams != null && !forceLoad) {
       callback.accept(this.livestreams);
       return;
@@ -49,7 +49,7 @@ public class LivestreamApiStore {
 
     this.loading = true;
     this.livestreamEndpointProxy.getLivestreams(res -> {
-      this.livestreams = new CopyOnWriteArrayList<>(Collections.list(res.livestreams));
+      this.livestreams = new CopyOnWriteArrayList<>(Collections.list(res.aggregateLivestreams));
       this.error = null;
       this.loading = false;
       callback.accept(this.livestreams);
@@ -62,7 +62,7 @@ public class LivestreamApiStore {
   }
 
   /** Gets loaded livestreams. */
-  public @Nonnull List<PublicLivestream> getLivestreams() {
+  public @Nonnull List<PublicAggregateLivestream> getLivestreams() {
     if (this.livestreams == null) {
       if (!this.loading) {
         this.loadLivestreams(r -> {}, e -> {}, false);

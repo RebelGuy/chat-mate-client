@@ -136,6 +136,33 @@ public class Collections {
     return list.stream().filter(filter).collect(Collectors.toList());
   }
 
+  public static <T> List<T> filter(List<T> list, BiPredicate<T, Integer> filter) {
+    if (list == null) {
+      return new ArrayList<>();
+    }
+
+    List<T> result =  new ArrayList<>();
+    for (int i = 0; i < list.size(); i++) {
+      T item = list.get(i);
+      if (filter.test(item, i)) {
+        result.add(item);
+      }
+    }
+    return result;
+  }
+
+  public static <T> void forEach(List<T> list, Consumer<T> processor) {
+    for (T item : list) {
+      processor.accept(item);
+    }
+  }
+
+  public static <T> void forEach(List<T> list, BiConsumer<T, Integer> processor) {
+    for (int i = 0; i < list.size(); i++) {
+      processor.accept(list.get(i), i);
+    }
+  }
+
   public static <T> List<T> trim(List<T> list, @Nullable Integer maxItems) {
     if (maxItems == null || list.size() <= maxItems) {
       return list;
@@ -152,6 +179,19 @@ public class Collections {
     List<T> list = new ArrayList<>();
     collection.forEach(list::add);
     return list;
+  }
+
+  public static <T> T[] toArray(List<T> collection, T[] array) {
+    return collection.toArray(array);
+  }
+
+  // they have to be fucking kidding us
+  public static List<Boolean> fromPrimitiveArray(boolean[] array) {
+    List<Boolean> result = new ArrayList<>();
+    for (boolean item : array) {
+      result.add(item);
+    }
+    return result;
   }
 
   public static @Nullable <T> T first(@Nullable List<T> list) {
@@ -181,6 +221,14 @@ public class Collections {
   public static <T> boolean any(@Nullable List<T> list) { return list != null && list.size() != 0; }
 
   public static <T> boolean any(@Nullable List<T> list, Predicate<T> predicate) {
+    if (list == null || list.size() == 0) {
+      return false;
+    } else {
+      return Collections.filter(list, predicate).size() > 0;
+    }
+  }
+
+  public static <T> boolean any(@Nullable List<T> list, BiPredicate<T, Integer> predicate) {
     if (list == null || list.size() == 0) {
       return false;
     } else {
@@ -250,5 +298,25 @@ public class Collections {
 
     int index = list.indexOf(item);
     return list.subList(index + 1, list.size());
+  }
+
+  public static <T> List<T> unique(@Nullable List<T> list) {
+    if (list == null) {
+      return null;
+    }
+
+    // we need to iterate like this to retain the order of the unique values
+    List<T> result = new ArrayList<>();
+    HashSet<T> visited = new HashSet<>();
+    for (T item : list) {
+      if (visited.contains(item)) {
+        continue;
+      }
+
+      visited.add(item);
+      result.add(item);
+    }
+
+    return result;
   }
 }

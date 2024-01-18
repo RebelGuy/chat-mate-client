@@ -14,7 +14,6 @@ import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.ConfigPersistorService;
-import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream.LivestreamStatus;
 import dev.rebel.chatmate.api.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
@@ -291,7 +290,7 @@ public class ChatMate {
       config.getChatMateEnabledEmitter().set(true);
     } else {
       streamerEndpointProxy.getStatusAsync(res -> {
-        if (res.livestreamStatus != null && res.livestreamStatus.livestream.status == LivestreamStatus.Live) {
+        if (res.livestreamStatus.isYoutubeLive() || res.livestreamStatus.isTwitchLive()) {
           config.getChatMateEnabledEmitter().set(true);
         }
       }, e -> {}, false);

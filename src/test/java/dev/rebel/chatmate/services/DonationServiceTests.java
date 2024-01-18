@@ -1,7 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
-import dev.rebel.chatmate.api.publicObjects.livestream.PublicLivestream;
+import dev.rebel.chatmate.api.publicObjects.livestream.PublicAggregateLivestream;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicRank.RankName;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
@@ -26,9 +26,9 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class DonationServiceTests {
-  private PublicLivestream livestream1; // from hour 0 to hour 1
-  private PublicLivestream livestream2; // from hour 2 to hour 3
-  private PublicLivestream livestream3; // from hour 4 onwards
+  private PublicAggregateLivestream livestream1; // from hour 0 to hour 1
+  private PublicAggregateLivestream livestream2; // from hour 2 to hour 3
+  private PublicAggregateLivestream livestream3; // from hour 4 onwards
   private long now; // hour 5
   private int userId;
 
@@ -44,18 +44,15 @@ public class DonationServiceTests {
     this.donationService = new DonationService(this.mockDateTimeService, this.mockDonationApiStore, this.mockLivestreamApiStore, this.mockRankApiStore, this.mockChatMateEventService);
 
     long hour = 3600 * 1000L;
-    this.livestream1 = new PublicLivestream() {{
-      status = LivestreamStatus.Finished;
+    this.livestream1 = new PublicAggregateLivestream() {{
       startTime = 0L;
       endTime = hour;
     }};
-    this.livestream2 = new PublicLivestream() {{
-      status = LivestreamStatus.Finished;
+    this.livestream2 = new PublicAggregateLivestream() {{
       startTime = 2 * hour;
       endTime = 3 * hour;
     }};
-    this.livestream3 = new PublicLivestream() {{
-      status = LivestreamStatus.Live;
+    this.livestream3 = new PublicAggregateLivestream() {{
       startTime = 4 * hour;
       endTime = null;
     }};
