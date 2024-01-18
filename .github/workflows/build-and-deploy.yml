@@ -69,17 +69,18 @@ jobs:
       - name: Define version variables
         run: |
           VERSION=$(grep -o 'version = "[0-9]\+\.[0-9]\+\.[0-9]\+"' build.gradle | sed 's/[^0-9.]//g')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
           MAIN_VERSION=$(echo $VERSION | sed 's/\.[0-9]\+$//g')
-
           COMMIT_NUMBER=$(git rev-list HEAD --count)
-          echo "COMMIT_NUMBER=$COMMIT_NUMBER" >> $GITHUB_ENV
 
-          echo ref_name ${{ github.ref_name }}
-          echo ref ${{ github.ref }}
-          echo head_ref ${{ github.head_ref }}
-          echo base_ref ${{ github.base_ref }}
+          TAG_NAME="v$VERSION.$COMMIT_NUMBER$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox')"
+          RELEASE_NAME="ChatMate v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo ' (Sandbox)')"
+          IS_PRELEASE="$([ ${{ github.ref_name }} == 'develop' ] && echo 'true' || echo 'false')"
+          ASSET_NAME="ChatMate-v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox').jar"
+
+          echo 'TAG_NAME=$TAG_NAME' >> $GITHUB_ENV
+          echo 'RELEASE_NAME=$RELEASE_NAME' >> $GITHUB_ENV
+          echo 'IS_PRELEASE=$IS_PRELEASE' >> $GITHUB_ENV
+          echo 'ASSET_NAME=$ASSET_NAME' >> $GITHUB_ENV
 
       - name: Create Release
         id: create-release
@@ -88,9 +89,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # release names and tags have to be unique. just tack on the commit number to the full version to guarantee this (assuming the job doesn't get started manually on github actions)
-            tag_name: v${{ env.VERSION }}.${{ env.COMMIT_NUMBER }}${{ github.ref_name == 'master' && '' || '-Sandbox' }}
-            release_name: ChatMate v${{ env.VERSION }}${{ github.ref_name == 'master' && '' || ' (Sandbox)' }}
-            prerelease: ${{ github.ref_name == 'master' && 'false' || 'true' }}
+            tag_name: ${{ env.TAG_NAME }}
+            release_name: ${{ env.RELEASE_NAME }}
+            prerelease: ${{ env.IS_PRELEASE }}
 
       - name: Release ChatMate.jar
         uses: actions/upload-release-asset@v1
@@ -99,5 +100,5 @@ jobs:
         with:
           upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: ./ChatMate.jar
-          asset_name: ChatMate-v${{ env.VERSION }}${{ github.ref_name == 'master' && '' || '-Sandbox'}}.jar
+          asset_name: ${{ env.ASSET_NAME }}
           asset_content_type: application/java-archive
