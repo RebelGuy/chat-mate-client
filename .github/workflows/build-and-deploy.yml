@@ -66,23 +66,18 @@ jobs:
         # - VERSION: e.g. 1.28.1
         # - MAIN_VERSION: e.g. 1.28
         # - COMMIT_NUMBER: e.g. 123
+        # note that Github Actions is being a dick and doesn't like ternaries with empty strings being returned in the `else` cases (or those cases being emitted entirely).
+        # to get around this, we have to copy the full output string in both cases, and modify only the part required.
       - name: Define version variables
         run: |
           VERSION=$(grep -o 'version = "[0-9]\+\.[0-9]\+\.[0-9]\+"' build.gradle | sed 's/[^0-9.]//g')
           MAIN_VERSION=$(echo $VERSION | sed 's/\.[0-9]\+$//g')
           COMMIT_NUMBER=$(git rev-list HEAD --count)
 
-          echo "starting test"
-          IS_PRERELEASE=$([ ${{ github.ref_name }} == 'develop' ] && echo v$VERSION.$COMMIT_NUMBER-Sandbox || echo v$VERSION.$COMMIT_NUMBER)
-          echo $IS_PRERELEASE
-          TAG_NAME="v$VERSION.$COMMIT_NUMBER$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox')"
-          echo $TAG_NAME
-          RELEASE_NAME="ChatMate v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo ' (Sandbox)')"
-          echo $RELEASE_NAME
-          IS_PRERELEASE="$([ ${{ github.ref_name }} == 'develop' ] && echo 'true' || echo 'false')"
-          echo $IS_PRERELEASE
-          ASSET_NAME="ChatMate-v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox').jar"
-          echo $ASSET_NAME
+          TAG_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo v$VERSION.$COMMIT_NUMBER-Sandbox || echo v$VERSION.$COMMIT_NUMBER)
+          RELEASE_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo 'ChatMate v$VERSION (Sandbox)' || echo 'ChatMate v$VERSION')
+          IS_PRERELEASE=$([ ${{ github.ref_name }} == 'develop' ] && echo true || echo false)
+          ASSET_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo ChatMate-v$VERSION-Sandbox || echo ChatMate-v$VERSION).jar)
 
           echo TAG_NAME=$TAG_NAME >> $GITHUB_ENV
           echo RELEASE_NAME=$RELEASE_NAME >> $GITHUB_ENV
