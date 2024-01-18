@@ -27,9 +27,11 @@ public class CustomGuiPause extends GuiIngameMenu {
   }
 
   @Override
-  public void initGui()
-  {
+  public void initGui() {
     super.initGui();
+    if (!this.config.getShowChatMateOptionsInPauseMenuEmitter().get()) {
+      return;
+    }
 
     GuiButton optionsButton = this.buttonList.stream().filter(b -> b.id == 0).findFirst().get();
     GuiButton modOptionsButton = this.buttonList.stream().filter(b -> b.id == 12).findFirst().get();
@@ -39,10 +41,10 @@ public class CustomGuiPause extends GuiIngameMenu {
     int right = modOptionsButton.xPosition + modOptionsButton.width;
     int width = right - left;
 
-    ButtonLayout optionsLayout = new ButtonLayout(optionsButton, new String[]{"10px", "50%"}, null, null);
-    ButtonLayout modOptionsLayout = new ButtonLayout(modOptionsButton, new String[]{"10px", "50%"}, null, null);
-    ButtonLayout ytLayout = new ButtonLayout(new String[] {"20px"}, this::onRenderYtButtonText, this::onClickYtButton);
-    ButtonLayout dashboardLayout = new ButtonLayout(new String[] {"20px"}, () -> "⚙", this::onClickDashboardButton);
+    ButtonLayout optionsLayout = new ButtonLayout(optionsButton, new String[]{ "10px", "50%" }, null, null);
+    ButtonLayout modOptionsLayout = new ButtonLayout(modOptionsButton, new String[]{ "10px", "50%" }, null, null);
+    ButtonLayout ytLayout = new ButtonLayout(new String[] { "20px" }, this::onRenderYtButtonText, this::onClickChatMateButton);
+    ButtonLayout dashboardLayout = new ButtonLayout(new String[] { "20px" }, () -> "⚙", this::onClickDashboardButton);
 
     this.tableLayout = new TableLayout(this.buttonList, this.labelList, left, top, width, 4, Layout.HEIGHT, 0, Layout.HORIZONTAL_PADDING)
         .withRow(optionsLayout, modOptionsLayout, ytLayout, dashboardLayout)
@@ -50,8 +52,7 @@ public class CustomGuiPause extends GuiIngameMenu {
     }
 
   @Override
-  protected void actionPerformed(GuiButton button) throws IOException
-  {
+  protected void actionPerformed(GuiButton button) throws IOException {
     if (this.tableLayout == null || !this.tableLayout.onActionPerformed(button)) {
       super.actionPerformed(button);
     }
@@ -63,12 +64,12 @@ public class CustomGuiPause extends GuiIngameMenu {
     }
   }
 
-  private void onClickYtButton(ButtonLayout.ButtonAction.ButtonActionClickData data) {
+  private void onClickChatMateButton(ButtonLayout.ButtonAction.ButtonActionClickData data) {
     this.config.getChatMateEnabledEmitter().set(!this.config.getChatMateEnabledEmitter().get());
   }
 
   private String onRenderYtButtonText() {
-    return (this.config.getChatMateEnabledEmitter().get() ? "§2" : "§4") + "YT";
+    return (this.config.getChatMateEnabledEmitter().get() ? "§2" : "§4") + "CM";
   }
 
   private void onClickDashboardButton(ButtonActionClickData buttonActionClickData) {

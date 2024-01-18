@@ -111,7 +111,10 @@ public abstract class ElementBase implements IElement {
   @Override
   public void onInitialise() { }
 
-  protected final boolean isInitialised() { return this.initialised; }
+  @Override
+  public final boolean isInitialised() {
+    return this.initialised;
+  }
 
   @Override
   public boolean getVisible() {

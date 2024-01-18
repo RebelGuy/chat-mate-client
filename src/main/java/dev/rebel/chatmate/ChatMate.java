@@ -1,5 +1,6 @@
 package dev.rebel.chatmate;
 
+import dev.rebel.chatmate.Environment.Env;
 import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.commands.*;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
@@ -281,7 +282,14 @@ public class ChatMate {
     config.getChatMateEnabledEmitter().onChange(e -> {
       boolean enabled = e.getData();
       if (enabled) {
-        mcChatService.printInfo(String.format("Enabled. [%s]", environment.env.toString().toCharArray()[0]));
+        String releaseLabel = "";
+        if (environment.env == Env.LOCAL) {
+          releaseLabel = "Local build ";
+        } else if (environment.env == Env.DEBUG) {
+          releaseLabel = "Sandbox build ";
+        }
+
+        mcChatService.printInfo(String.format("Enabled. %s%s", releaseLabel, environment.buildName));
       }
     });
 

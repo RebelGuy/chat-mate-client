@@ -105,6 +105,11 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public boolean isInitialised() {
+      return true;
+    }
+
+    @Override
     public void onDisposed () {
 
     }

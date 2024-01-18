@@ -47,8 +47,9 @@ public class SidebarElement extends ContainerElement {
         new InlineElement(context, this)
             .addElement(
                 new LabelElement(context, this)
-                  .setText("Open Studio")
+                  .setText("ChatMate Website")
                   .setColour(Colour.BLUE)
+                  .setFontScale(0.75f)
                   .setHoverFont(new Font().withColour(new Colour(64, 64, 180)).withUnderlined(true))
                   .setOnClick(this::onOpenStudio)
                 )

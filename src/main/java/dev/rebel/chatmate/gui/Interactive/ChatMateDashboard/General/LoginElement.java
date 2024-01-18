@@ -146,8 +146,13 @@ public class LoginElement extends BlockElement {
   private void onLogout() {
     super.context.config.getLoginInfoEmitter().set(new LoginInfo(null, null));
 
-    this.usernameInput.setText("");
-    this.passwordInput.setText("");
+    if (this.usernameInput.isInitialised()) {
+      this.usernameInput.setText("");
+    }
+
+    if (this.passwordInput.isInitialised()) {
+      this.passwordInput.setText("");
+    }
   }
 
   private void onResponseError(Throwable e) {

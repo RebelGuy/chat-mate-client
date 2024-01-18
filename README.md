@@ -86,6 +86,11 @@ recorded within the `Sampler` tab.
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.30 - The Cleanup Update 2 [18/1/2024]
+- The CI build process now automatically creates a release on Github with the built .jar file
+- Fixed a crash when logging out
+- Improved displayed ChatMate version
+
 ## v1.29 - The Publication Update [6/1/23]
 - Added customisable chat mentions that can be tested in the Dashboard -> Chat section
 - Rank update events are now shown in chat, including, upon hover, a crude summary of applied/failed external actions

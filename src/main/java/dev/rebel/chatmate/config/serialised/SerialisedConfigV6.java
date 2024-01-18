@@ -16,6 +16,7 @@ import java.util.Objects;
 
 public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
   public final boolean soundEnabled;
+  public final boolean showChatMateOptionsInPauseMenu;
   public final int chatVerticalDisplacement;
   public final String commandMessageChatVisibility;
   public final boolean showCommandMessageStatus;
@@ -32,6 +33,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
   public final List<String> chatMentionFilter;
 
   public SerialisedConfigV6(boolean soundEnabled,
+                            boolean showChatMateOptionsInPauseMenu,
                             int chatVerticalDisplacement,
                             String commandMessageChatVisibility,
                             boolean showCommandMessageStatus,
@@ -47,6 +49,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
                             SerialisedLoginInfo loginInfo,
                             List<String> chatMentionFilter) {
     this.soundEnabled = soundEnabled;
+    this.showChatMateOptionsInPauseMenu = showChatMateOptionsInPauseMenu;
     this.chatVerticalDisplacement = chatVerticalDisplacement;
     this.commandMessageChatVisibility = commandMessageChatVisibility;
     this.showCommandMessageStatus = showCommandMessageStatus;
