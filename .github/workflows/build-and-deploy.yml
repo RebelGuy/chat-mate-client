@@ -74,13 +74,13 @@ jobs:
 
           TAG_NAME="v$VERSION.$COMMIT_NUMBER$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox')"
           RELEASE_NAME="ChatMate v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo ' (Sandbox)')"
-          IS_PRELEASE="$([ ${{ github.ref_name }} == 'develop' ] && echo 'true' || echo 'false')"
+          IS_PRERELEASE="$([ ${{ github.ref_name }} == 'develop' ] && echo 'true' || echo 'false')"
           ASSET_NAME="ChatMate-v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox').jar"
 
-          echo 'TAG_NAME=$TAG_NAME' >> $GITHUB_ENV
-          echo 'RELEASE_NAME=$RELEASE_NAME' >> $GITHUB_ENV
-          echo 'IS_PRELEASE=$IS_PRELEASE' >> $GITHUB_ENV
-          echo 'ASSET_NAME=$ASSET_NAME' >> $GITHUB_ENV
+          echo TAG_NAME=$TAG_NAME >> $GITHUB_ENV
+          echo RELEASE_NAME=$RELEASE_NAME >> $GITHUB_ENV
+          echo IS_PRERELEASE=$IS_PRERELEASE >> $GITHUB_ENV
+          echo ASSET_NAME=$ASSET_NAME >> $GITHUB_ENV
 
       - name: Create Release
         id: create-release
@@ -91,7 +91,7 @@ jobs:
           # release names and tags have to be unique. just tack on the commit number to the full version to guarantee this (assuming the job doesn't get started manually on github actions)
             tag_name: ${{ env.TAG_NAME }}
             release_name: ${{ env.RELEASE_NAME }}
-            prerelease: ${{ env.IS_PRELEASE }}
+            prerelease: ${{ env.IS_PRERELEASE }}
 
       - name: Release ChatMate.jar
         uses: actions/upload-release-asset@v1
