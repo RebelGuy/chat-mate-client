@@ -73,7 +73,7 @@ jobs:
           COMMIT_NUMBER=$(git rev-list HEAD --count)
 
           echo "starting test"
-          IS_PRERELEASE="$([ ${{ github.ref_name }} == 'develop' ] && echo 'true' || echo '')"
+          IS_PRERELEASE="$([ ${{ github.ref_name }} == 'develop' ] && echo 'true')"
           echo $IS_PRERELEASE
           TAG_NAME="v$VERSION.$COMMIT_NUMBER$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox')"
           echo $TAG_NAME
