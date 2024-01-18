@@ -72,7 +72,7 @@ jobs:
           MAIN_VERSION=$(echo $VERSION | sed 's/\.[0-9]\+$//g')
           COMMIT_NUMBER=$(git rev-list HEAD --count)
 
-          echo "$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox')"
+          echo "$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox' || echo '')"
           TAG_NAME="v$VERSION.$COMMIT_NUMBER$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox')"
           echo $TAG_NAME
           RELEASE_NAME="ChatMate v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo ' (Sandbox)')"
