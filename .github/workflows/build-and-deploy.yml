@@ -72,10 +72,15 @@ jobs:
           MAIN_VERSION=$(echo $VERSION | sed 's/\.[0-9]\+$//g')
           COMMIT_NUMBER=$(git rev-list HEAD --count)
 
+          echo ${{ github.ref_name }}
           TAG_NAME="v$VERSION.$COMMIT_NUMBER$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox')"
+          echo $TAG_NAME
           RELEASE_NAME="ChatMate v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo ' (Sandbox)')"
+          echo $RELEASE_NAME
           IS_PRERELEASE="$([ ${{ github.ref_name }} == 'develop' ] && echo 'true' || echo 'false')"
+          echo $IS_PRERELEASE
           ASSET_NAME="ChatMate-v$VERSION$([ ${{ github.ref_name }} == 'develop' ] && echo '-Sandbox').jar"
+          echo $ASSET_NAME
 
           echo TAG_NAME=$TAG_NAME >> $GITHUB_ENV
           echo RELEASE_NAME=$RELEASE_NAME >> $GITHUB_ENV
