@@ -3,6 +3,7 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Chat;
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.EditableListElement.EditableListElement;
 import dev.rebel.chatmate.gui.Interactive.EditableListElement.IEditableListAdapter;
+import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.services.FilterService;
@@ -39,6 +40,7 @@ public class ChatMentionElement extends BlockElement implements IEditableListAda
         .setText(text)
         .setFontScale(SCALE)
         .setColour(Colour.GREY50)
+        .setOverflow(TextOverflow.SPLIT)
         .setMargin(Layout.RectExtension.fromBottom(gui(0.75f)))
     ));
 

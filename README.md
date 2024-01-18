@@ -72,6 +72,8 @@ GitHub Actions are used for automatically building and testing the Client when p
 
 If the string `--skip-tests` is included in the commit message, the `test` project will not be built and unit tests will be skipped on Github.
 
+If the string `--skip-deploy` is included in the commit message, a new release will not be created, and the built .jar file will not be published. It will still be uploaded as an artifact as part of the action, though.
+
 ## Profiling
 Use the IntelliJ extension `VisualVM Launcher` from the Marketplace: `https://plugins.jetbrains.com/plugin/7115-visualvm-launcher/`.
 Start the profiling session by using the "Debug with VisualVM 'Minecraft Client'" configuration at the top. Download and extract
