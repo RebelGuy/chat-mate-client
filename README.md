@@ -3,7 +3,9 @@ ChatMate is a helper tool for livestreamers and viewers. It consists of three ma
 - Studio ([`/chat-mate`](https://github.com/RebelGuy/chat-mate)`/projects/studio`): [React](https://github.com/facebook/react) web interface for managing streamer and viewer data. It communicates with the server API endpoints.
 - Client (this repo): Minecraft 1.8.9 mod for viewing and managing livestreams and viewers. Contains additional streamer tools that do not communicate with the server.
 
-For more info about the Client, refer to the [features document](./docs/features.md) or take a look at the [custom UI framework documentation](./docs/interactive-screen.md).
+Streamers are encouraged to peruse the [Streamer Guide](./docs/streamer-guide.md) for more info on how to use ChatMate.
+
+You might also want to read through the [features document](./docs/features.md) or take a look at the [custom UI framework documentation](./docs/interactive-screen.md).
 
 Want to contribute? Check out the [contribution guide](./docs/contributing.md) for more info.
 
