@@ -77,7 +77,7 @@ jobs:
           TAG_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo v$VERSION.$COMMIT_NUMBER-Sandbox || echo v$VERSION.$COMMIT_NUMBER)
           RELEASE_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo ChatMate v$VERSION '(Sandbox)' || echo ChatMate v$VERSION)
           IS_PRERELEASE=$([ ${{ github.ref_name }} == 'develop' ] && echo true || echo false)
-          ASSET_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo ChatMate-v$VERSION-Sandbox || echo ChatMate-v$VERSION.jar)
+          ASSET_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo ChatMate-v$VERSION-Sandbox.jar || echo ChatMate-v$VERSION.jar)
 
           echo TAG_NAME=$TAG_NAME >> $GITHUB_ENV
           echo RELEASE_NAME=$RELEASE_NAME >> $GITHUB_ENV
