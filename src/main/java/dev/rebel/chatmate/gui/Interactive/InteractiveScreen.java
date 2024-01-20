@@ -24,11 +24,8 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.*;
-import dev.rebel.chatmate.stores.CommandApiStore;
+import dev.rebel.chatmate.stores.*;
 import dev.rebel.chatmate.util.Collections;
-import dev.rebel.chatmate.stores.DonationApiStore;
-import dev.rebel.chatmate.stores.LivestreamApiStore;
-import dev.rebel.chatmate.stores.RankApiStore;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import org.lwjgl.input.Keyboard;
@@ -852,6 +849,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     public final LivestreamApiStore livestreamApiStore;
     public final DonationApiStore donationApiStore;
     public final CommandApiStore commandApiStore;
+    public final StreamerApiStore streamerApiStore;
     public final Config config;
     public final ImageService imageService;
     public final DonationHudStore donationHudStore;
@@ -886,6 +884,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
                               LivestreamApiStore livestreamApiStore,
                               DonationApiStore donationApiStore,
                               CommandApiStore commandApiStore,
+                              StreamerApiStore streamerApiStore,
                               Config config,
                               ImageService imageService,
                               DonationHudStore donationHudStore) {
@@ -909,6 +908,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       this.livestreamApiStore = livestreamApiStore;
       this.donationApiStore = donationApiStore;
       this.commandApiStore = commandApiStore;
+      this.streamerApiStore = streamerApiStore;
       this.config = config;
       this.imageService = imageService;
       this.donationHudStore = donationHudStore;

@@ -25,7 +25,7 @@ import java.util.Timer;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
 
-public class GeneralSectionLivestreamElement extends ContainerElement {
+public class LivestreamElement extends ContainerElement {
   private final StreamerEndpointProxy streamerEndpointProxy;
 
   private final LabelElement label;
@@ -39,7 +39,7 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
   private @Nonnull String livestream;
 
-  public GeneralSectionLivestreamElement(InteractiveContext context, IElement parent, StreamerEndpointProxy streamerEndpointProxy) {
+  public LivestreamElement(InteractiveContext context, IElement parent, StreamerEndpointProxy streamerEndpointProxy) {
     super(context, parent, LayoutMode.INLINE);
     super.setName("GeneralSectionLivestreamElement");
 
@@ -118,12 +118,10 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
     );
   }
 
-  public void onShow() {
+  @Override
+  public ContainerElement setVisible(boolean visible) {
     this.onRefresh();
-  }
-
-  public void onHide() {
-    // no op
+    return super.setVisible(visible);
   }
 
   private void onLoggedIn() {

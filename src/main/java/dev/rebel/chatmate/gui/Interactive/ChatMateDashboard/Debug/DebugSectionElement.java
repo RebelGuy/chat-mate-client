@@ -98,6 +98,7 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
     super.context.livestreamApiStore.clear();
     super.context.donationHudStore.clear();
     super.context.commandApiStore.clear();
+    super.context.streamerApiStore.clear();
     this.didClearStoresLabel.setVisible(true);
   }
 

@@ -19,12 +19,9 @@ import dev.rebel.chatmate.api.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.events.*;
-import dev.rebel.chatmate.stores.CommandApiStore;
+import dev.rebel.chatmate.stores.*;
 import dev.rebel.chatmate.util.FileHelpers;
 import dev.rebel.chatmate.services.ApiRequestService;
-import dev.rebel.chatmate.stores.DonationApiStore;
-import dev.rebel.chatmate.stores.LivestreamApiStore;
-import dev.rebel.chatmate.stores.RankApiStore;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import dev.rebel.chatmate.util.Objects;
 import net.minecraft.client.Minecraft;
@@ -105,6 +102,7 @@ public class ChatMate {
     DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy, config);
     RankApiStore rankApiStore = new RankApiStore(rankEndpointProxy, config);
     CommandApiStore commandApiStore = new CommandApiStore(chatEndpointProxy, config);
+    StreamerApiStore streamerApiStore = new StreamerApiStore(streamerEndpointProxy);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -163,6 +161,7 @@ public class ChatMate {
         livestreamApiStore,
         donationApiStore,
         commandApiStore,
+        streamerApiStore,
         config,
         imageService,
         donationHudStore);
@@ -212,6 +211,7 @@ public class ChatMate {
         donationHudStore,
         rankApiStore,
         commandApiStore,
+        streamerApiStore,
         livestreamApiStore,
         donationApiStore,
         customGuiNewChat,
@@ -256,6 +256,7 @@ public class ChatMate {
         donationApiStore,
         rankApiStore,
         commandApiStore,
+        streamerApiStore,
         customGuiNewChat,
         imageService,
         donationHudStore,

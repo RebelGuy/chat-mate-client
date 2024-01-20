@@ -34,10 +34,7 @@ import dev.rebel.chatmate.api.proxy.RankEndpointProxy;
 import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.KeyboardEventService;
 import dev.rebel.chatmate.events.MouseEventService;
-import dev.rebel.chatmate.stores.CommandApiStore;
-import dev.rebel.chatmate.stores.DonationApiStore;
-import dev.rebel.chatmate.stores.LivestreamApiStore;
-import dev.rebel.chatmate.stores.RankApiStore;
+import dev.rebel.chatmate.stores.*;
 import net.minecraft.client.Minecraft;
 
 import java.util.Date;
@@ -69,6 +66,7 @@ public class ContextMenuService {
   private final DonationHudStore donationHudStore;
   private final RankApiStore rankApiStore;
   private final CommandApiStore commandApiStore;
+  private final StreamerApiStore streamerApiStore;
   private final LivestreamApiStore livestreamApiStore;
   private final DonationApiStore donationApiStore;
   private final CustomGuiNewChat customGuiNewChat;
@@ -102,6 +100,7 @@ public class ContextMenuService {
                             DonationHudStore donationHudStore,
                             RankApiStore rankApiStore,
                             CommandApiStore commandApiStore,
+                            StreamerApiStore streamerApiStore,
                             LivestreamApiStore livestreamApiStore,
                             DonationApiStore donationApiStore,
                             CustomGuiNewChat customGuiNewChat,
@@ -134,6 +133,7 @@ public class ContextMenuService {
     this.donationHudStore = donationHudStore;
     this.rankApiStore = rankApiStore;
     this.commandApiStore = commandApiStore;
+    this.streamerApiStore = streamerApiStore;
     this.livestreamApiStore = livestreamApiStore;
     this.donationApiStore = donationApiStore;
     this.customGuiNewChat = customGuiNewChat;
@@ -261,6 +261,7 @@ public class ContextMenuService {
         this.livestreamApiStore,
         this.donationApiStore,
         this.commandApiStore,
+        this.streamerApiStore,
         this.config,
         this.imageService,
         this.donationHudStore);
