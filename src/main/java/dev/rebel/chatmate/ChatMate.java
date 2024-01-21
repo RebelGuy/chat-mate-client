@@ -108,7 +108,7 @@ public class ChatMate {
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
-    ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
+    ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config, streamerApiStore);
     this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory, config, dateTimeService);
 
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);

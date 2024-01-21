@@ -120,12 +120,16 @@ public class LivestreamElement extends ContainerElement {
 
   @Override
   public ContainerElement setVisible(boolean visible) {
-    this.onRefresh();
+    if (visible) {
+      this.onRefresh();
+    }
     return super.setVisible(visible);
   }
 
   private void onLoggedIn() {
-    this.onRefresh();
+    if (visible) {
+      this.onRefresh();
+    }
   }
 
   private void onChange(String livestream) {

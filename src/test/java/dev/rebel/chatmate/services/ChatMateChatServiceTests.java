@@ -55,7 +55,7 @@ public class ChatMateChatServiceTests {
     // extract the onResponse and endpoint callbacks
     ArgumentCaptor<Consumer<GetChatResponseData>> onResponseCaptor = ArgumentCaptor.forClass(Consumer.class);
     ArgumentCaptor<BiConsumer<Consumer<GetChatResponseData>, Consumer<Throwable>>> getChatEndpointCaptor = ArgumentCaptor.forClass(BiConsumer.class);
-    verify(this.mockApiPollerFactory).Create(onResponseCaptor.capture(), any(), getChatEndpointCaptor.capture(), anyLong(), any(), any(), any());
+    verify(this.mockApiPollerFactory).Create(onResponseCaptor.capture(), any(), getChatEndpointCaptor.capture(), anyLong(), any(), any(), any(), any());
 
     // simulate an endpoint call from the ApiPoller, passing through the original response callback it would have received during creation
     getChatEndpointCaptor.getValue().accept(onResponseCaptor.getValue(), null);

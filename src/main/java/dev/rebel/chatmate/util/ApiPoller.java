@@ -7,6 +7,8 @@ import dev.rebel.chatmate.config.Config.LoginInfo;
 import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.LogService;
+import dev.rebel.chatmate.stores.StreamerApiStore;
+import dev.rebel.chatmate.stores.StreamerApiStore.StreamerState;
 
 import javax.annotation.Nullable;
 import java.net.ConnectException;
@@ -23,6 +25,7 @@ public class ApiPoller<D> {
 
   private final LogService logService;
   private final Config config;
+  private final StreamerApiStore streamerApiStore;
   private final Consumer<D> callback;
   @Nullable private final Consumer<Throwable> errorHandler;
   private final BiConsumer<Consumer<D>, Consumer<Throwable>> endpoint;
@@ -30,6 +33,7 @@ public class ApiPoller<D> {
   private final PollType type;
   private final Long timeoutWaitTime;
   private final Integer maxRetries;
+  private final boolean requiresStreamer;
   private boolean requestInProgress;
   private int currentRetries;
 
@@ -45,15 +49,18 @@ public class ApiPoller<D> {
 
   public ApiPoller(LogService logService,
                    Config config,
+                   StreamerApiStore streamerApiStore,
                    Consumer<D> callback,
                    @Nullable Consumer<Throwable> errorHandler,
                    BiConsumer<Consumer<D>, Consumer<Throwable>> endpoint,
                    long interval,
                    PollType type,
                    @Nullable Long timeoutWaitTime,
-                   @Nullable Integer retries) {
+                   @Nullable Integer retries,
+                   boolean requiresStreamer) {
     this.logService = logService;
     this.config = config;
+    this.streamerApiStore = streamerApiStore;
     this.callback = callback;
     this.errorHandler = errorHandler;
     this.endpoint = endpoint;
@@ -61,6 +68,7 @@ public class ApiPoller<D> {
     this.type = type;
     this.timeoutWaitTime = timeoutWaitTime;
     this.maxRetries = retries;
+    this.requiresStreamer = requiresStreamer;
 
     this.timer = null;
     this.pauseUntil = null;
@@ -202,7 +210,25 @@ public class ApiPoller<D> {
 
   private boolean canMakeRequest() {
     boolean skipRequest = this.requestInProgress || this.pauseUntil != null && this.pauseUntil > new Date().getTime();
-    return !skipRequest;
+    if (skipRequest) {
+      return false;
+    }
+
+    if (this.requiresStreamer) {
+      return this.isStreamer();
+    }
+
+    return true;
+  }
+
+  private boolean isStreamer() {
+    @Nullable StreamerState data = this.streamerApiStore.getData();
+    @Nullable String username = this.config.getLoginInfoEmitter().get().username;
+    if (data == null || username == null) {
+      return false;
+    }
+
+    return Collections.any(data.streamers, streamer -> java.util.Objects.equals(streamer.username, username));
   }
 
   public enum PollType { CONSTANT_INTERVAL, CONSTANT_PADDING }
