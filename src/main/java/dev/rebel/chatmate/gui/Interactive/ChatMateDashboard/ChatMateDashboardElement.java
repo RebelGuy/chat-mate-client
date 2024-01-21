@@ -40,8 +40,8 @@ import static dev.rebel.chatmate.util.Objects.castOrNull;
 public class ChatMateDashboardElement extends ContainerElement {
   private final static List<Tuple2<SettingsPage, PageOptions>> pageNames = new ArrayList<Tuple2<SettingsPage, PageOptions>>() {{
     add(new Tuple2<>(SettingsPage.GENERAL, new PageOptions("General", false)));
-    add(new Tuple2<>(SettingsPage.HUD, new PageOptions("HUD", false)));
-    add(new Tuple2<>(SettingsPage.CHAT, new PageOptions("Chat", false)));
+    add(new Tuple2<>(SettingsPage.HUD, new PageOptions("HUD", true)));
+    add(new Tuple2<>(SettingsPage.CHAT, new PageOptions("Chat", true)));
     add(new Tuple2<>(SettingsPage.DONATION, new PageOptions("Donations", true)));
     add(new Tuple2<>(SettingsPage.DEBUG, new PageOptions("Debug", false)));
   }};

@@ -17,7 +17,7 @@ public class StreamerApiStore extends ApiStore<StreamerApiStore.StreamerState> {
   }
 
   @Override
-  public void loadData(Consumer<StreamerState> callback, Consumer<Throwable> errorHandler, boolean forceLoad) {
+  public void loadData(@Nullable Consumer<StreamerState> callback, @Nullable Consumer<Throwable> errorHandler, boolean forceLoad) {
     super.loadData(this::onFetchData, callback, errorHandler, forceLoad);
   }
 
@@ -26,8 +26,17 @@ public class StreamerApiStore extends ApiStore<StreamerApiStore.StreamerState> {
     return super.getData(this::onFetchData);
   }
 
-  private void onFetchData(Consumer<StreamerState> callback, Consumer<Throwable> errorHandler) {
-    this.streamerEndpointProxy.getStreamersAsync(StreamerState::new, errorHandler);
+  @Override
+  public void retry() {
+    super.loadData(this::onFetchData, null, null, true);
+  }
+
+  private void onFetchData(@Nullable Consumer<StreamerState> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.streamerEndpointProxy.getStreamersAsync(res -> {
+      if (callback != null) {
+        callback.accept(new StreamerState(res));
+      }
+    }, errorHandler);
   }
 
   public static class StreamerState {

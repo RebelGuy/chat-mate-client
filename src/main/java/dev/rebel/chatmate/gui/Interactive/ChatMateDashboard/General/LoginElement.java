@@ -7,7 +7,7 @@ import dev.rebel.chatmate.config.Config.LoginInfo;
 import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.gui.Interactive.*;
-import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
@@ -52,7 +52,7 @@ public class LoginElement extends BlockElement {
         .setMaxWidth(gui(120))
         .setMinWidth(gui(40))
         .cast();
-    this.loginButton = new TextButtonElement(context, this)
+    this.loginButton = SharedElements.TEXT_BUTTON_LIGHT.create(context, this)
         .setText("Login")
         .setTextScale(SCALE)
         .setEnabled(this.usernameInput, false)
@@ -65,7 +65,7 @@ public class LoginElement extends BlockElement {
         .setVerticalAlignment(VerticalAlignment.MIDDLE)
         .setMargin(RectExtension.fromRight(gui(4)))
         .cast();
-    this.logoutButton = new TextButtonElement(context, this)
+    this.logoutButton = SharedElements.TEXT_BUTTON_LIGHT.create(context, this)
         .setText("Logout")
         .setTextScale(SCALE)
         .setOnClick(this::onRequestLogout)

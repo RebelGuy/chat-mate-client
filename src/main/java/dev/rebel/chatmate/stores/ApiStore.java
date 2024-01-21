@@ -10,7 +10,7 @@ public abstract class ApiStore<TData> {
   public static final Long INITIAL_COUNTER = 0L;
 
   private @Nullable TData data;
-  private @Nullable String error;
+  private @Nullable Throwable error;
   private boolean loading;
   private long updateCounter;
 
@@ -29,11 +29,15 @@ public abstract class ApiStore<TData> {
   }
 
   public @Nullable String getError() {
-    return this.error;
+    if (this.error == null) {
+      return null;
+    } else {
+      return EndpointProxy.getApiErrorMessage(this.error);
+    }
   }
 
   /** Implement this for actually fetching the data. This is part of the public interface. */
-  public abstract void loadData(Consumer<TData> callback, Consumer<Throwable> errorHandler, boolean forceLoad);
+  public abstract void loadData(@Nullable Consumer<TData> callback, @Nullable Consumer<Throwable> errorHandler, boolean forceLoad);
 
   public abstract @Nullable TData getData();
 
@@ -41,13 +45,27 @@ public abstract class ApiStore<TData> {
     return this.updateCounter;
   }
 
-  protected void loadData(BiConsumer<Consumer<TData>, Consumer<Throwable>> onFetchData, Consumer<TData> callback, Consumer<Throwable> errorHandler, boolean forceLoad) {
+  public boolean isLoading() {
+    return this.loading;
+  }
+
+  public abstract void retry();
+
+  protected void loadData(BiConsumer<Consumer<TData>, Consumer<Throwable>> onFetchData, @Nullable Consumer<TData> callback, @Nullable Consumer<Throwable> errorHandler, boolean forceLoad) {
     if (this.data != null && !forceLoad) {
-      callback.accept(this.data);
+      if (callback != null) {
+        callback.accept(this.data);
+      }
       return;
+    } else if (this.error != null && !forceLoad) {
+      if (errorHandler != null) {
+        errorHandler.accept(this.error);
+      }
     } else if (this.loading) {
       // todo: only call callback after loading is done
-      callback.accept(null);
+      if (callback != null) {
+        callback.accept(null);
+      }
       return;
     }
 
@@ -58,19 +76,23 @@ public abstract class ApiStore<TData> {
       this.error = null;
       this.loading = false;
       this.updateCounter++;
-      callback.accept(data);
+      if (callback != null) {
+        callback.accept(data);
+      }
     }, err -> {
       this.data = null;
-      this.error = EndpointProxy.getApiErrorMessage(err);
+      this.error = err;
       this.loading = false;
       this.updateCounter++;
-      errorHandler.accept(err);
+      if (errorHandler != null) {
+        errorHandler.accept(err);
+      }
     });
   }
 
   protected @Nullable TData getData(BiConsumer<Consumer<TData>, Consumer<Throwable>> onFetchData) {
     if (this.data == null) {
-      if (!this.loading) {
+      if (!this.loading && this.error == null) {
         this.loadData(onFetchData, r -> {}, e -> {}, false);
       }
       return null;

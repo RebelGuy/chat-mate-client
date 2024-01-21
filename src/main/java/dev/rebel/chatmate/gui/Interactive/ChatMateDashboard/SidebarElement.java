@@ -36,8 +36,8 @@ public class SidebarElement extends ContainerElement {
 
     for (Tuple2<SettingsPage, PageOptions> page : pages) {
       SidebarOption option = new SidebarOption(context, this, store, page._1, page._2.name);
-      if (page._2.requiredLoggedIn) {
-        super.addElement(new RequireLoggedInElement(super.context, this, option));
+      if (page._2.requiredStreamer) {
+        super.addElement(new RequireStreamerElement(super.context, this, option, false, false, false));
       } else {
         super.addElement(option);
       }
@@ -178,11 +178,11 @@ public class SidebarElement extends ContainerElement {
 
   public static class PageOptions {
     public final String name;
-    public final boolean requiredLoggedIn;
+    public final boolean requiredStreamer;
 
-    public PageOptions(String name, boolean requiredLoggedIn) {
+    public PageOptions(String name, boolean requiredStreamer) {
       this.name = name;
-      this.requiredLoggedIn = requiredLoggedIn;
+      this.requiredStreamer = requiredStreamer;
     }
   }
 }
