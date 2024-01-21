@@ -157,7 +157,7 @@ public class McChatService {
         this.soundService.playDing();
       }
     } catch (Exception e) {
-      this.logService.logError(this, String.format("Could not print %s chat message with id '%s': %s", item.platform, item.id, e.getMessage()));
+      this.logService.logError(this, String.format("Could not print %s chat message with id '%s': %s", item.platform, item.id, e.getMessage()), e);
     }
   }
 
