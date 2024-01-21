@@ -2,6 +2,7 @@ package dev.rebel.chatmate.util;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -179,6 +180,10 @@ public class Collections {
     List<T> list = new ArrayList<>();
     collection.forEach(list::add);
     return list;
+  }
+
+  public static <T> CopyOnWriteArrayList<T> safeList(T... items) {
+    return new CopyOnWriteArrayList<>(Collections.list(items));
   }
 
   public static <T> T[] toArray(List<T> collection, T[] array) {

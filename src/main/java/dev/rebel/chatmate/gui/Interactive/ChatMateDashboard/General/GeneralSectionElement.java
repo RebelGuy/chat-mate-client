@@ -87,8 +87,8 @@ public class GeneralSectionElement extends ContainerElement implements ISectionE
     }
 
     this.loadingSpinner.setVisible(true);
-    super.context.streamerApiStore.loadStreamers(
-        streamers -> super.context.renderer.runSideEffect(() -> this.onGetStreamers(streamers)),
+    super.context.streamerApiStore.loadData(
+        data -> super.context.renderer.runSideEffect(() -> this.onGetStreamers(data.streamers)),
         err -> super.context.renderer.runSideEffect(() -> this.onError(err)),
         false
     );

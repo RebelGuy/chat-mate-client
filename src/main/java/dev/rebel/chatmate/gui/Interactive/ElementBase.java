@@ -14,18 +14,16 @@ import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.events.models.MouseEventData;
+import dev.rebel.chatmate.stores.ApiStore;
 import dev.rebel.chatmate.util.EnumHelpers;
 import net.minecraft.client.renderer.GlStateManager;
 
 import javax.annotation.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementHelpers.alignElementInBox;
-import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 // a note about box size terminology:
 // the full box includes contents, surrounded by padding, surrounded by border, surrounded by margin. it is the box used when calculating any sort of layout.
@@ -66,6 +64,7 @@ public abstract class ElementBase implements IElement {
   private @Nullable Dim targetContentHeight;
   private @Nullable CursorType cursor;
   private List<Runnable> disposers;
+  private Map<ApiStore<?>, Long> registeredStores;
 
   public ElementBase(InteractiveContext context, IElement parent) {
     ID++;
@@ -97,6 +96,7 @@ public abstract class ElementBase implements IElement {
     this.targetFullHeight = null;
     this.cursor = null;
     this.disposers = new ArrayList<>();
+    this.registeredStores = new HashMap<>();
   }
 
   @Override
@@ -297,6 +297,38 @@ public abstract class ElementBase implements IElement {
     this.disposers.add(disposer);
   }
 
+  /** Register stores as a dependency of this element. If any of these stores update, `onStoreUpdate` will be called. */
+  protected void registerStore(ApiStore<?> store, boolean fireInitialUpdate) {
+    if (this.isInitialised()) {
+      throw new RuntimeException("Cannot register stores after the element is already initialised.");
+    }
+
+    this.registeredStores.put(store, fireInitialUpdate ? ApiStore.INITIAL_COUNTER - 1 : ApiStore.INITIAL_COUNTER);
+  }
+
+  /** Called when any of the registered stores' state updates. This will ALWAYS be called as a side effect. */
+  protected void onStoreUpdate() {}
+
+  private void checkStoresForUpdates() {
+    if (!this.visible) {
+      return;
+    }
+
+    // no need to worry about concurrency since this map doesn't change after the element was initialised.
+    boolean hasUpdates = false;
+    for (ApiStore<?> store : this.registeredStores.keySet()) {
+      Long currentCounter = store.getUpdateCounter();
+      if (!Objects.equals(this.registeredStores.get(store), currentCounter)) {
+        hasUpdates = true;
+        this.registeredStores.put(store, currentCounter);
+      }
+    }
+
+    if (hasUpdates) {
+      this.context.renderer.runSideEffect(this::onStoreUpdate);
+    }
+  }
+
   /** Called when a critical error occurs. Only do clean-up logic if overriding this. No guarantee is made about the initialisation of state. */
   public void onError() {}
 
@@ -372,6 +404,8 @@ public abstract class ElementBase implements IElement {
   @Override
   public final void render(@Nullable Consumer<Runnable> renderContextWrapper) {
     initialiseIfRequired();
+    checkStoresForUpdates();
+
     if (!this.visible) {
       return;
     }
