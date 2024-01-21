@@ -127,6 +127,13 @@ public class SidebarElement extends ContainerElement {
       }
     }
 
+    @Override
+    public ContainerElement setVisible(boolean visible) {
+      super.setVisible(visible);
+      this.setSelected(this.store.getSettingsPage() == this.page);
+      return this;
+    }
+
     private void onSettingsPageChange(SettingsPage settingsPage) {
       this.setSelected(this.page == settingsPage);
     }
