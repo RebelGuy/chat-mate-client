@@ -52,4 +52,12 @@ public class Objects {
 
     return null;
   }
+
+  public static @Nullable <T, U> U ifNotNull(@Nullable T obj, Function<T, U> selector) {
+    if (obj == null) {
+      return null;
+    } else {
+      return selector.apply(obj);
+    }
+  }
 }

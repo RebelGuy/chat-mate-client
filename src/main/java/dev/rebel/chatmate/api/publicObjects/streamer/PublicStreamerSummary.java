@@ -11,4 +11,12 @@ public class PublicStreamerSummary {
   public @Nullable PublicLivestream currentTwitchLivestream;
   public @Nullable PublicChannel youtubeChannel;
   public @Nullable PublicChannel twitchChannel;
+
+  public boolean isYoutubeLive() {
+    return this.currentYoutubeLivestream != null && this.currentYoutubeLivestream.status == PublicLivestream.LivestreamStatus.Live;
+  }
+
+  public boolean isTwitchLive() {
+    return this.currentTwitchLivestream != null && this.currentTwitchLivestream.status == PublicLivestream.LivestreamStatus.Live;
+  }
 }
