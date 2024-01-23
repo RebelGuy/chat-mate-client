@@ -21,31 +21,27 @@ public class RequireStreamerElement extends BlockElement {
 
   private final IElement streamerElement;
   private final @Nullable LoadingSpinnerElement loadingSpinner;
-  private final @Nullable LabelElement notStreamerLabel;
+  private final @Nullable NotStreamerElement notStreamerElement;
   private final @Nullable ErrorElement errorElement;
 
-  public RequireStreamerElement(InteractiveScreen.InteractiveContext context, IElement parent, IElement streamerElement, boolean showLoadingSpinner, boolean showNotStreamerLabel, boolean showError) {
+  public RequireStreamerElement(InteractiveScreen.InteractiveContext context, IElement parent, IElement streamerElement, RequireStreamerOptions options) {
     super(context, parent);
     this.isStreamer = false;
     this.onIsStreamer = null;
 
     this.streamerElement = streamerElement.setVisible(false);
-    this.loadingSpinner = !showLoadingSpinner ? null : new LoadingSpinnerElement(this.context, this)
+    this.loadingSpinner = !options.showLoadingSpinner ? null : new LoadingSpinnerElement(context, this)
         .setHorizontalAlignment(Layout.HorizontalAlignment.CENTRE)
         .setMaxContentWidth(gui(16))
         .setMargin(new Layout.RectExtension(gui(8)))
-        .setVisible(false)
         .setSizingMode(Layout.SizingMode.FILL)
         .cast();
-    this.notStreamerLabel = !showNotStreamerLabel ? null : SharedElements.INFO_LABEL.create(context, this)
-        .setText("You are not a streamer. Please head over to the ChatMate website to become a streamer.")
-        .setVisible(false)
-        .cast();
-    this.errorElement = !showError ? null : new ErrorElement(context, this, context.streamerApiStore::retry);
+    this.notStreamerElement = !options.showNotStreamerLabel ? null : new NotStreamerElement(context, this, options.showRefreshButton ? context.streamerApiStore::retry : null);
+    this.errorElement = !options.showError ? null : new ErrorElement(context, this, context.streamerApiStore::retry);
 
     super.addElement(this.streamerElement);
     super.addElement(this.loadingSpinner);
-    super.addElement(this.notStreamerLabel);
+    super.addElement(this.notStreamerElement);
     super.addElement(this.errorElement);
 
     super.registerStore(context.streamerApiStore, true);
@@ -57,9 +53,15 @@ public class RequireStreamerElement extends BlockElement {
 
   @Override
   public ContainerElement setVisible(boolean visible) {
-    super.setVisible(visible);
+    //don't call super.setVisible(true) because it will set the streamer element visible, which may be erroneous if we are not a streamer
     if (!visible) {
+      super.setVisible(false);
       return this;
+    } else {
+      if (!this.visible) {
+        super.onInvalidateSize();
+      }
+      this.visible = true;
     }
 
     this.loadData();
@@ -124,8 +126,8 @@ public class RequireStreamerElement extends BlockElement {
 
     this.streamerElement.setVisible(username != null && this.isStreamer && !isLoading && error == null);
 
-    if (this.notStreamerLabel != null) {
-      this.notStreamerLabel.setVisible(username != null && !this.isStreamer && !isLoading && error == null);
+    if (this.notStreamerElement != null) {
+      this.notStreamerElement.setVisible(username != null && !this.isStreamer && !isLoading && error == null);
     }
 
     if (this.loadingSpinner != null) {
@@ -142,6 +144,48 @@ public class RequireStreamerElement extends BlockElement {
     return this;
   }
 
+  public static class RequireStreamerOptions {
+    public final boolean showLoadingSpinner;
+    public final boolean showNotStreamerLabel;
+    public final boolean showError;
+    public final boolean showRefreshButton;
+
+    public RequireStreamerOptions(boolean showLoadingSpinner, boolean showNotStreamerLabel, boolean showError, boolean showRefreshButton) {
+      this.showLoadingSpinner = showLoadingSpinner;
+      this.showNotStreamerLabel = showNotStreamerLabel;
+      this.showError = showError;
+      this.showRefreshButton = showRefreshButton;
+    }
+
+    public static RequireStreamerOptions forInline() {
+      return new RequireStreamerOptions(false, false, false, false);
+    }
+
+    public static RequireStreamerOptions forBlockSection() {
+      return new RequireStreamerOptions(true, true, true, true);
+    }
+  }
+
+  private static class NotStreamerElement extends BlockElement {
+    private final LabelElement notStreamerLabel;
+    private final @Nullable TextButtonElement refreshButton;
+
+    public NotStreamerElement(InteractiveScreen.InteractiveContext context, IElement parent, @Nullable Runnable onRefresh) {
+      super(context, parent);
+
+      this.notStreamerLabel = SharedElements.INFO_LABEL.create(context, this)
+          .setText("You are not a streamer. Please head over to the ChatMate website to become a streamer.");
+      this.refreshButton = onRefresh == null ? null : SharedElements.TEXT_BUTTON_LIGHT.create(context, this)
+          .setText("Retry")
+          .setTextScale(SCALE)
+          .setOnClick(onRefresh)
+          .cast();
+
+      super.addElement(this.notStreamerLabel);
+      super.addElement(this.refreshButton);
+    }
+  }
+
   private static class ErrorElement extends BlockElement {
     private final LabelElement errorLabel;
     private final TextButtonElement retryButton;
@@ -151,7 +195,7 @@ public class RequireStreamerElement extends BlockElement {
 
       this.errorLabel = SharedElements.ERROR_LABEL.create(context, this);
       this.retryButton = SharedElements.TEXT_BUTTON_LIGHT.create(context, this)
-          .setText("Retry")
+          .setText("Refresh")
           .setTextScale(SCALE)
           .setOnClick(onRetry)
           .cast();

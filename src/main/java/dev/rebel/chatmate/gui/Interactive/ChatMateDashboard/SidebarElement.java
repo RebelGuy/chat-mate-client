@@ -14,6 +14,7 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.RequireStreamerElement.RequireStreamerOptions;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -37,7 +38,7 @@ public class SidebarElement extends ContainerElement {
     for (Tuple2<SettingsPage, PageOptions> page : pages) {
       SidebarOption option = new SidebarOption(context, this, store, page._1, page._2.name);
       if (page._2.requiredStreamer) {
-        super.addElement(new RequireStreamerElement(super.context, this, option, false, false, false));
+        super.addElement(new RequireStreamerElement(super.context, this, option, RequireStreamerOptions.forInline()));
       } else {
         super.addElement(option);
       }

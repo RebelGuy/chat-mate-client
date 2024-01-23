@@ -10,6 +10,7 @@ import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.RequireStreamerElement;
+import dev.rebel.chatmate.gui.Interactive.RequireStreamerElement.RequireStreamerOptions;
 
 import javax.annotation.Nullable;
 
@@ -25,7 +26,7 @@ public class GeneralSectionElement extends ContainerElement implements ISectionE
         .setMargin(RectExtension.fromBottom(gui(4)))
     );
 
-    this.streamerElement = new RequireStreamerElement(context, this, new StreamerElement(context, this, streamerEndpointProxy, config), true, true, true);
+    this.streamerElement = new RequireStreamerElement(context, this, new StreamerElement(context, this, streamerEndpointProxy, config), RequireStreamerOptions.forBlockSection());
     IElement enableDebugModeCheckbox = CHECKBOX_LIGHT.create(context, this)
         .setLabel("Enable Debug Mode")
         .setChecked(config.getDebugModeEnabledEmitter().get())
