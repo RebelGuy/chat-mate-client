@@ -188,7 +188,7 @@ public class TextHelpers {
     return String.format("%d %s%s", value, unit, value == 1 ? "" : "s");
   }
 
-  /** Like `String::split`, except it actually works as expected. */
+  /** Like `String::split`, except it actually works as expected. (" ".split(" ") returns an empty array instead of an array with an empty string, fuck you java) */
   public static List<String> split(String text, String splitAt) {
     List<Integer> indexes = getAllOccurrences(text, new WordFilter(splitAt), false);
 
@@ -200,7 +200,7 @@ public class TextHelpers {
     }
 
     // add the remainder
-    if (beginIndex < text.length()) {
+    if (beginIndex <= text.length()) {
       parts.add(text.substring(beginIndex));
     }
 
