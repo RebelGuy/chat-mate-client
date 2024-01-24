@@ -46,14 +46,7 @@ public class SidebarElement extends ContainerElement {
 
     super.addElement(
         new InlineElement(context, this)
-            .addElement(
-                new LabelElement(context, this)
-                  .setText("ChatMate Website")
-                  .setColour(Colour.BLUE)
-                  .setFontScale(0.75f)
-                  .setHoverFont(new Font().withColour(new Colour(64, 64, 180)).withUnderlined(true))
-                  .setOnClick(this::onOpenStudio)
-                )
+            .addElement(new UrlElement(context, this, "ChatMate Website", context.environment.studioUrl))
             .addElement(
                 new ImageElement(context, this)
                     .setImage(Asset.GUI_EXTERNAL_ICON)
@@ -73,14 +66,6 @@ public class SidebarElement extends ContainerElement {
         .setPadding(new RectExtension(gui(0), gui(0), gui(4), gui(0)))
         .setMargin(new RectExtension(gui(0), gui(0), gui(0), gui(-8))) // this actually works... wow!
     );
-  }
-
-  private void onOpenStudio() {
-    try {
-      super.context.urlService.openUrl(new URI(super.context.environment.studioUrl));
-    } catch (Exception e) {
-      super.context.logService.logError(this, "Unable to open Studio in the web browser", e);
-    }
   }
 
   private static class SidebarOption extends ContainerElement {

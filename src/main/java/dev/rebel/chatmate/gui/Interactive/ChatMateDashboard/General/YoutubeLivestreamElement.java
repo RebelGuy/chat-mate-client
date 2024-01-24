@@ -25,7 +25,7 @@ import java.util.Timer;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
 
-public class LivestreamElement extends ContainerElement {
+public class YoutubeLivestreamElement extends InlineElement {
   private final StreamerEndpointProxy streamerEndpointProxy;
 
   private final LabelElement label;
@@ -39,8 +39,8 @@ public class LivestreamElement extends ContainerElement {
 
   private @Nonnull String livestream;
 
-  public LivestreamElement(InteractiveContext context, IElement parent, StreamerEndpointProxy streamerEndpointProxy) {
-    super(context, parent, LayoutMode.INLINE);
+  public YoutubeLivestreamElement(InteractiveContext context, IElement parent, StreamerEndpointProxy streamerEndpointProxy) {
+    super(context, parent);
     super.setName("GeneralSectionLivestreamElement");
 
     this.streamerEndpointProxy = streamerEndpointProxy;
@@ -104,18 +104,14 @@ public class LivestreamElement extends ContainerElement {
 
     this.livestream = "";
 
-    super.addElement(
-        new RequireLoggedInElement(context, this, new InlineElement(context, this)
-          .addElement(this.label)
-          .addElement(this.livestreamInputField)
-          .addElement(this.clearButton)
-          .addElement(this.confirmButton)
-          .addElement(this.refreshButton)
-          .addElement(this.copyButton)
-          .addElement(this.openInBrowserButton)
-          .addElement(this.errorLabel)
-        ).onLoggedIn(this::onLoggedIn)
-    );
+    super.addElement(this.label);
+    super.addElement(this.livestreamInputField);
+    super.addElement(this.clearButton);
+    super.addElement(this.confirmButton);
+    super.addElement(this.refreshButton);
+    super.addElement(this.copyButton);
+    super.addElement(this.openInBrowserButton);
+    super.addElement(this.errorLabel);
   }
 
   @Override
@@ -124,12 +120,6 @@ public class LivestreamElement extends ContainerElement {
       this.onRefresh();
     }
     return super.setVisible(visible);
-  }
-
-  private void onLoggedIn() {
-    if (visible) {
-      this.onRefresh();
-    }
   }
 
   private void onChange(String livestream) {

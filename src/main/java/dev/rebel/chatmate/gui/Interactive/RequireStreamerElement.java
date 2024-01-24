@@ -176,7 +176,7 @@ public class RequireStreamerElement extends BlockElement {
       this.notStreamerLabel = SharedElements.INFO_LABEL.create(context, this)
           .setText("You are not a streamer. Please head over to the ChatMate website to become a streamer.");
       this.refreshButton = onRefresh == null ? null : SharedElements.TEXT_BUTTON_LIGHT.create(context, this)
-          .setText("Retry")
+          .setText("Refresh")
           .setTextScale(SCALE)
           .setOnClick(onRefresh)
           .cast();

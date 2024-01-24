@@ -158,6 +158,10 @@ public abstract class ElementBase implements IElement {
     return this;
   }
 
+  protected @Nullable CursorType getCursor() {
+    return this.cursor;
+  }
+
   @Override
   public final void onEvent(EventType type, InteractiveEvent<?> event) {
     if (event.getPhase() == EventPhase.TARGET) {
@@ -467,6 +471,10 @@ public abstract class ElementBase implements IElement {
       this.setCursor(CursorType.CLICK);
     }
     return this;
+  }
+
+  protected @Nullable Runnable getOnClick() {
+    return this.onClick;
   }
 
   @Override

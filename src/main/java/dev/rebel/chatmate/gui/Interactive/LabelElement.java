@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.gui.FontEngine;
+import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.style.Colour;
@@ -10,8 +11,6 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
-import dev.rebel.chatmate.services.CursorService;
-import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.TextHelpers;
@@ -39,7 +38,7 @@ public class LabelElement extends SingleElement {
   /** Inner list: overflow line breaks. Outer list: user-defined lines */
   private List<List<String>> lines;
 
-  public LabelElement(InteractiveScreen.InteractiveContext context, IElement parent) {
+  public LabelElement(InteractiveContext context, IElement parent) {
     super(context, parent);
     this.text = "";
     this.alignment = TextAlignment.LEFT;
@@ -145,6 +144,58 @@ public class LabelElement extends SingleElement {
     List<Dim> widths = Collections.map(Collections.list(this.text.split(" ")), str -> this.context.fontEngine.getStringWidthDim(str, this.font));
     Dim maxWidth = Dim.max(widths).times(this.fontScale);
     return super.getFullBoxWidth(maxWidth);
+  }
+
+  public static InlineElement merge(LabelElement... labelElements) {
+    if (labelElements.length == 0) {
+      throw new RuntimeException("Cannot merge 0 label elements...");
+    }
+
+    InteractiveContext context = labelElements[0].context;
+    InlineElement result = new InlineElement(context, labelElements[0]);
+
+    List<LabelElement> elements = new ArrayList<>();
+    for (LabelElement labelElement : labelElements) {
+      elements.addAll(labelElement.splitWords(result));
+    }
+
+    elements.get(0).setPadding(elements.get(0).getPadding().left(context.dimFactory.zeroGui()));
+    elements.get(elements.size() - 1).setPadding(elements.get(0).getPadding().right(context.dimFactory.zeroGui()));
+    return result;
+  }
+
+  /** Splits the words of a single-line label into individual label elements, intended to be used as the children of an inline element.
+   * Strips out any formatting (i.e. copies only label-specific properties such as colour/onClick handler). */
+  public List<LabelElement> splitWords(IElement parent) {
+    List<LabelElement> result = new ArrayList<>();
+    List<String> words = TextHelpers.split(this.text, " ");
+    for (int j = 0; j < words.size(); j++) {
+      boolean isFirstWord = j == 0;
+      boolean isLastWord = j == words.size() - 1;
+
+      float paddingLeft = isFirstWord ? 0 : this.fontScale * 2;
+      float paddingRight = isLastWord ? 0 : this.fontScale * 2;
+      Layout.RectExtension padding = new Layout.RectExtension(
+          context.dimFactory.fromGui(paddingLeft),
+          context.dimFactory.fromGui(paddingRight),
+          context.dimFactory.zeroGui(),
+          context.dimFactory.zeroGui()
+      );
+
+      result.add(new LabelElement(super.context, parent)
+          .setText(words.get(j))
+          .setFont(this.font)
+          .setHoverFont(this.hoverFontUpdater)
+          .setFontScale(this.fontScale)
+          .setCursor(super.getCursor())
+          .setTooltip(super.getTooltip())
+          .setOnClick(super.getOnClick())
+          .setPadding(padding)
+          .cast()
+      );
+    }
+
+    return result;
   }
 
   @Override

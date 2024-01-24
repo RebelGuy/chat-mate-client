@@ -60,4 +60,9 @@ public class TextHelpersTests {
     Assert.assertEquals("1 day", TextHelpers.approximateDuration(day + hour + minute + second));
     Assert.assertEquals("2 days", TextHelpers.approximateDuration(day * 2));
   }
+
+  @Test
+  public void splitString_doesNotIgnorePaddingEmptySpace() {
+    Assert.assertArrayEquals(new String[] { "", "abc", "def", "" }, TextHelpers.split(" abc def ", " ").toArray());
+  }
 }

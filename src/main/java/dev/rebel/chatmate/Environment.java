@@ -46,5 +46,9 @@ public class Environment {
     );
   }
 
+  public String getStudioStreamerManagerUrl() {
+    return this.studioUrl + "/manager";
+  }
+
   public enum Env { LOCAL, DEBUG, RELEASE }
 }
