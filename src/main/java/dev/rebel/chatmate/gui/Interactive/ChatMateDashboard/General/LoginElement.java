@@ -131,11 +131,11 @@ public class LoginElement extends BlockElement {
   }
 
   private void onRequestLogout() {
-    this.onRequestStart();
+    this.onLogout();
 
     this.accountEndpointProxy.logoutAsync(
-        r -> super.context.renderer.runSideEffect(() -> { this.onLogout(); this.onRequestEnd(); }),
-        e -> super.context.renderer.runSideEffect(() -> { this.onResponseError(e); this.onRequestEnd(); })
+        r -> super.context.logService.logInfo(this, "Successfully logged out."),
+        e -> super.context.logService.logError(this, "Failed to log out:", e)
     );
   }
 
