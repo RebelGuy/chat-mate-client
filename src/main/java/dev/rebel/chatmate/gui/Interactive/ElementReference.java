@@ -94,6 +94,11 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public boolean isInitialised() {
+    return this.underlyingElement == null ? false : this.underlyingElement.isInitialised();
+  }
+
+  @Override
   public void onDisposed() {
     if (this.underlyingElement != null) {
       this.underlyingElement.onDisposed();

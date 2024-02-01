@@ -24,7 +24,7 @@ public class StatusService {
 
   public StatusService(StreamerEndpointProxy streamerEndpointProxy, ApiPollerFactory apiPollerFactory, LivestreamApiStore livestreamApiStore) {
     this.streamerEndpointProxy = streamerEndpointProxy;
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, INTERVAL, PollType.CONSTANT_INTERVAL, null, null);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, INTERVAL, PollType.CONSTANT_INTERVAL, null, null, true);
     this.livestreamApiStore = livestreamApiStore;
 
     this.lastStatusResponse = null;

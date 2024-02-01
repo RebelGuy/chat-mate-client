@@ -4,7 +4,7 @@ plugins {
     id "net.minecraftforge.gradle.forge" version "6f53277"
 }
 
-version = "1.29.0"
+version = "1.30.0"
 group = "dev.rebel"
 archivesBaseName = "ChatMate"
 
@@ -20,15 +20,19 @@ def loadProperties() {
     def configFile = file('config.groovy')
     def config = new ConfigSlurper(environment).parse(configFile.toURL())
 
-    def numCommits
-    def proc = "git rev-list HEAD --count".execute()
-    proc.in.eachLine { line -> numCommits = line }
-    proc.err.eachLine { line -> println line }
-    proc.waitFor()
+    def numCommits = ""
+    def proc1 = "git rev-list HEAD --count".execute()
+    proc1.in.eachLine { line -> numCommits = line }
+    proc1.err.eachLine { line -> println line }
+    proc1.waitFor()
 
-    def splitVersion = project.version.toString().split(/\./)
-    splitVersion[2] = numCommits
-    config.setProperty('BUILD_NAME', 'ChatMate v' + splitVersion.join("."))
+    def commitHash = ""
+    def proc2 = "git rev-parse --short HEAD".execute()
+    proc2.in.eachLine { line -> commitHash = line }
+    proc2.err.eachLine { line -> println line }
+    proc2.waitFor()
+
+    config.setProperty('BUILD_NAME', "v${project.version}.${numCommits} (${commitHash})")
 
     project.ext.config = config
 }

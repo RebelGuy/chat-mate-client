@@ -1,6 +1,8 @@
 package dev.rebel.chatmate;
 
+import dev.rebel.chatmate.Environment.Env;
 import dev.rebel.chatmate.api.ChatMateApiException;
+import dev.rebel.chatmate.api.publicObjects.streamer.PublicStreamerSummary;
 import dev.rebel.chatmate.commands.*;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
 import dev.rebel.chatmate.commands.handlers.CounterHandler;
@@ -18,12 +20,10 @@ import dev.rebel.chatmate.api.proxy.*;
 import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.events.*;
-import dev.rebel.chatmate.stores.CommandApiStore;
+import dev.rebel.chatmate.stores.*;
+import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.FileHelpers;
 import dev.rebel.chatmate.services.ApiRequestService;
-import dev.rebel.chatmate.stores.DonationApiStore;
-import dev.rebel.chatmate.stores.LivestreamApiStore;
-import dev.rebel.chatmate.stores.RankApiStore;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import dev.rebel.chatmate.util.Objects;
 import net.minecraft.client.Minecraft;
@@ -35,7 +35,10 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
+import javax.annotation.Nullable;
 import java.util.function.Supplier;
+
+import static dev.rebel.chatmate.util.Objects.ifNotNull;
 
 // refer to mcmod.info for more settings.
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
@@ -104,12 +107,13 @@ public class ChatMate {
     DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy, config);
     RankApiStore rankApiStore = new RankApiStore(rankEndpointProxy, config);
     CommandApiStore commandApiStore = new CommandApiStore(chatEndpointProxy, config);
+    StreamerApiStore streamerApiStore = new StreamerApiStore(streamerEndpointProxy);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
-    ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config);
+    ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config, streamerApiStore);
     this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory, config, dateTimeService);
 
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
@@ -162,6 +166,7 @@ public class ChatMate {
         livestreamApiStore,
         donationApiStore,
         commandApiStore,
+        streamerApiStore,
         config,
         imageService,
         donationHudStore);
@@ -211,6 +216,7 @@ public class ChatMate {
         donationHudStore,
         rankApiStore,
         commandApiStore,
+        streamerApiStore,
         livestreamApiStore,
         donationApiStore,
         customGuiNewChat,
@@ -255,6 +261,7 @@ public class ChatMate {
         donationApiStore,
         rankApiStore,
         commandApiStore,
+        streamerApiStore,
         customGuiNewChat,
         imageService,
         donationHudStore,
@@ -278,22 +285,45 @@ public class ChatMate {
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 
+    apiRequestService.setGetStreamers(() -> ifNotNull(streamerApiStore.getData(), d -> d.streamers));
+
     config.getChatMateEnabledEmitter().onChange(e -> {
       boolean enabled = e.getData();
       if (enabled) {
-        mcChatService.printInfo(String.format("Enabled. [%s]", environment.env.toString().toCharArray()[0]));
+        String releaseLabel = "";
+        if (environment.env == Env.LOCAL) {
+          releaseLabel = "Local build ";
+        } else if (environment.env == Env.DEBUG) {
+          releaseLabel = "Sandbox build ";
+        }
+
+        mcChatService.printInfo(String.format("Enabled. %s%s", releaseLabel, environment.buildName));
+      }
+    });
+
+    // disable ChatMate when logging out, since we hide the checkbox UI to do this manually
+    config.getLoginInfoEmitter().onChange(e -> {
+      if (e.getData().username == null) {
+        config.getChatMateEnabledEmitter().set(false);
       }
     });
 
     // to make our life easier, auto enable when in a dev environment or if a livestream is running
     if (this.isDev) {
       config.getChatMateEnabledEmitter().set(true);
-    } else {
-      streamerEndpointProxy.getStatusAsync(res -> {
-        if (res.livestreamStatus.isYoutubeLive() || res.livestreamStatus.isTwitchLive()) {
+    } else if (config.getLoginInfoEmitter().get().username != null) {
+      streamerEndpointProxy.getStreamersAsync(streamerRes -> {
+
+        String username = config.getLoginInfoEmitter().get().username;
+        @Nullable PublicStreamerSummary streamer = Collections.first(Collections.list(streamerRes.streamers), str -> java.util.Objects.equals(str.username, username));
+        if (streamer != null && (streamer.isYoutubeLive() || streamer.isTwitchLive())) {
+          logService.logInfo(this, "Auto-enabling ChatMate since the logged in user is a streamer that is currently live");
           config.getChatMateEnabledEmitter().set(true);
         }
-      }, e -> {}, false);
+
+      }, streamerErr -> {
+        logService.logError(this, "Unable to get streamer list during initialisation", streamerErr);
+      });
     }
   }
 

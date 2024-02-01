@@ -33,7 +33,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     super(EventType.class, logService);
 
     this.chatEndpointProxy = chatEndpointProxy;
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
     this.config = config;
     this.dateTimeService = dateTimeService;
   }

@@ -1,13 +1,14 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.streamer.PublicStreamerSummary;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.CursorService.CursorType;
+import dev.rebel.chatmate.stores.StreamerApiStore;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ApiRequestService {
   private final CursorService cursorService;
@@ -15,10 +16,15 @@ public class ApiRequestService {
   private final Object lock = new Object();
   private final Set<Consumer<Boolean>> listeners = Collections.newSetFromMap(new WeakHashMap<>());
   private int activeRequests = 0;
+  private Supplier<List<PublicStreamerSummary>> getStreamers;
 
   public ApiRequestService(CursorService cursorService, Config config) {
     this.cursorService = cursorService;
     this.config = config;
+  }
+
+  public void setGetStreamers(Supplier<List<PublicStreamerSummary>> getStreamers) {
+    this.getStreamers = getStreamers;
   }
 
   /** Call this when dispatching manual API requests, and run the provided Runnable once the request is complete. */
@@ -50,8 +56,14 @@ public class ApiRequestService {
   }
 
   public @Nullable String getStreamer() {
-    // at the moment, we assume that the logged-in user is also the streamer. if we ever distribute the mod to non-streamers, this assumption no longer holds.
-    return this.config.getLoginInfoEmitter().get().username;
+    @Nullable String username = this.config.getLoginInfoEmitter().get().username;
+    @Nullable List<PublicStreamerSummary> streamers = this.getStreamers.get();
+
+    if (username == null || streamers == null) {
+      return null;
+    }
+
+    return dev.rebel.chatmate.util.Collections.any(streamers, streamer -> Objects.equals(streamer.username, username)) ? username : null;
   }
 
   private void updateListeners(int delta) {

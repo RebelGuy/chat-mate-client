@@ -40,6 +40,9 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<Boolean> soundEnabled;
   public StatefulEmitter<Boolean> getSoundEnabledEmitter() { return this.soundEnabled; }
 
+  private final StatefulEmitter<Boolean> showChatMateOptionsInPauseMenu;
+  public StatefulEmitter<Boolean> getShowChatMateOptionsInPauseMenuEmitter() { return this.showChatMateOptionsInPauseMenu; }
+
   private final StatefulEmitter<Integer> chatVerticalDisplacement;
   public StatefulEmitter<Integer> getChatVerticalDisplacementEmitter() { return this.chatVerticalDisplacement; }
 
@@ -114,6 +117,12 @@ public class Config extends EventServiceBase<ConfigType> {
         ConfigType.ENABLE_SOUND,
         Boolean.class,
         data == null ? true : data.soundEnabled,
+        this::onUpdate
+    );
+    this.showChatMateOptionsInPauseMenu = new StatefulEmitter<>(
+        ConfigType.SHOW_CHAT_MATE_OPTIONS_IN_PAUSE_MENU,
+        Boolean.class,
+        data == null ? false : data.showChatMateOptionsInPauseMenu,
         this::onUpdate
     );
     this.chatVerticalDisplacement = new StatefulEmitter<>(
@@ -234,6 +243,7 @@ public class Config extends EventServiceBase<ConfigType> {
     try {
       SerialisedConfigV6 serialisedConfig = new SerialisedConfigV6(
           this.soundEnabled.get(),
+          this.showChatMateOptionsInPauseMenu.get(),
           this.chatVerticalDisplacement.get(),
           this.commandMessageChatVisibility.get().toString(),
           this.showCommandMessageStatus.get(),
@@ -429,6 +439,7 @@ public class Config extends EventServiceBase<ConfigType> {
   public enum ConfigType {
     ENABLE_CHAT_MATE,
     ENABLE_SOUND,
+    SHOW_CHAT_MATE_OPTIONS_IN_PAUSE_MENU,
     CHAT_VERTICAL_DISPLACEMENT,
     COMMAND_MESSAGE_CHAT_VISIBILITY,
     SHOW_COMMAND_MESSAGE_STATUS,

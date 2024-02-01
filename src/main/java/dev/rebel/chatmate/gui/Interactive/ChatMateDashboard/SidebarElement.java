@@ -14,6 +14,7 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.RequireStreamerElement.RequireStreamerOptions;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -36,8 +37,8 @@ public class SidebarElement extends ContainerElement {
 
     for (Tuple2<SettingsPage, PageOptions> page : pages) {
       SidebarOption option = new SidebarOption(context, this, store, page._1, page._2.name);
-      if (page._2.requiredLoggedIn) {
-        super.addElement(new RequireLoggedInElement(super.context, this, option));
+      if (page._2.requiredStreamer) {
+        super.addElement(new RequireStreamerElement(super.context, this, option, RequireStreamerOptions.forInline()));
       } else {
         super.addElement(option);
       }
@@ -45,13 +46,7 @@ public class SidebarElement extends ContainerElement {
 
     super.addElement(
         new InlineElement(context, this)
-            .addElement(
-                new LabelElement(context, this)
-                  .setText("Open Studio")
-                  .setColour(Colour.BLUE)
-                  .setHoverFont(new Font().withColour(new Colour(64, 64, 180)).withUnderlined(true))
-                  .setOnClick(this::onOpenStudio)
-                )
+            .addElement(new UrlElement(context, this, "ChatMate Website", context.environment.studioUrl))
             .addElement(
                 new ImageElement(context, this)
                     .setImage(Asset.GUI_EXTERNAL_ICON)
@@ -71,14 +66,6 @@ public class SidebarElement extends ContainerElement {
         .setPadding(new RectExtension(gui(0), gui(0), gui(4), gui(0)))
         .setMargin(new RectExtension(gui(0), gui(0), gui(0), gui(-8))) // this actually works... wow!
     );
-  }
-
-  private void onOpenStudio() {
-    try {
-      super.context.urlService.openUrl(new URI(super.context.environment.studioUrl));
-    } catch (Exception e) {
-      super.context.logService.logError(this, "Unable to open Studio in the web browser", e);
-    }
   }
 
   private static class SidebarOption extends ContainerElement {
@@ -124,6 +111,13 @@ public class SidebarElement extends ContainerElement {
         context.config.getDebugModeEnabledEmitter().onChange(this._onChangeDebugModeEnabled, this, true);
         super.addDisposer(() -> super.context.config.getDebugModeEnabledEmitter().off(this));
       }
+    }
+
+    @Override
+    public ContainerElement setVisible(boolean visible) {
+      super.setVisible(visible);
+      this.setSelected(this.store.getSettingsPage() == this.page);
+      return this;
     }
 
     private void onSettingsPageChange(SettingsPage settingsPage) {
@@ -177,11 +171,11 @@ public class SidebarElement extends ContainerElement {
 
   public static class PageOptions {
     public final String name;
-    public final boolean requiredLoggedIn;
+    public final boolean requiredStreamer;
 
-    public PageOptions(String name, boolean requiredLoggedIn) {
+    public PageOptions(String name, boolean requiredStreamer) {
       this.name = name;
-      this.requiredLoggedIn = requiredLoggedIn;
+      this.requiredStreamer = requiredStreamer;
     }
   }
 }

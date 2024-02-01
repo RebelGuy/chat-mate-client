@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 
 import static dev.rebel.chatmate.gui.Interactive.ElementBase.*;
 import static dev.rebel.chatmate.gui.Interactive.ElementBase.getBorderBox;
+import static dev.rebel.chatmate.util.Objects.casted;
 
 public class ElementHelpers {
 
@@ -241,7 +242,7 @@ public class ElementHelpers {
 
     List<IElement> siblings = parent == null ? Collections.list() : Collections.filter(Collections.without(parent.getChildren(), element), IElement::getVisible);
     int nChildren = Collections.size(element.getChildren());
-    lines.add(String.format("%s (with %d %s and %d %s)", element.getClass().getSimpleName(), nChildren, nChildren == 1 ? "child" : "children", siblings.size(), siblings.size() == 1 ? "sibling" : "siblings"));
+    lines.add(String.format("%s (with %d %s and %d %s)", getElementName(element), nChildren, nChildren == 1 ? "child" : "children", siblings.size(), siblings.size() == 1 ? "sibling" : "siblings"));
 
     while (parent != null) {
       List<IElement> children = Collections.filter(parent.getChildren(), IElement::getVisible);
@@ -249,7 +250,7 @@ public class ElementHelpers {
         children = new ArrayList<>();
       }
 
-      lines.add(String.format("%s (with %d %s)", parent.getClass().getSimpleName(), children.size(), children.size() == 1 ? "child" : "children"));
+      lines.add(String.format("%s (with %d %s)", getElementName(parent), children.size(), children.size() == 1 ? "child" : "children"));
       parent = parent.getParent();
     }
 
@@ -265,5 +266,13 @@ public class ElementHelpers {
         y += fontEngine.FONT_HEIGHT;
       }
     });
+  }
+
+  public static String getElementName(IElement element) {
+    if (element instanceof ElementBase) {
+      return casted(ElementBase.class, element, el -> el.name);
+    } else {
+      return element.getClass().getSimpleName();
+    }
   }
 }

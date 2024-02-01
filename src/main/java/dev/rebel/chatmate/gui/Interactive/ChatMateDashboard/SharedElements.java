@@ -24,9 +24,17 @@ public class SharedElements {
       .setMaxOverflowLines(4)
       .setColour(Colour.RED)
       .setAlignment(TextAlignment.LEFT)
-      .setFontScale(0.75f)
+      .setFontScale(SCALE)
       .setSizingMode(SizingMode.FILL)
       .setVisible(false)
+      .cast();
+
+  public static ElementFactory<LabelElement> INFO_LABEL = (context, parent) -> new LabelElement(context, parent)
+      .setOverflow(TextOverflow.SPLIT)
+      .setAlignment(TextAlignment.LEFT)
+      .setColour(Colour.GREY50)
+      .setFontScale(SCALE)
+      .setSizingMode(SizingMode.FILL)
       .cast();
 
   /** Light-themed checkbox. */

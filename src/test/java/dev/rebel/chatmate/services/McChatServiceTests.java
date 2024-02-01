@@ -26,10 +26,7 @@ import dev.rebel.chatmate.api.publicObjects.rank.PublicRank;
 import dev.rebel.chatmate.api.publicObjects.rank.PublicUserRank;
 import dev.rebel.chatmate.api.publicObjects.user.PublicLevelInfo;
 import dev.rebel.chatmate.api.publicObjects.user.PublicUser;
-import dev.rebel.chatmate.stores.CommandApiStore;
-import dev.rebel.chatmate.stores.DonationApiStore;
-import dev.rebel.chatmate.stores.LivestreamApiStore;
-import dev.rebel.chatmate.stores.RankApiStore;
+import dev.rebel.chatmate.stores.*;
 import dev.rebel.chatmate.util.Collections;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ChatComponentText;
@@ -272,6 +269,7 @@ public class McChatServiceTests {
             Mockito.mock(LivestreamApiStore.class),
             Mockito.mock(DonationApiStore.class),
             Mockito.mock(CommandApiStore.class),
+            Mockito.mock(StreamerApiStore.class),
             this.mockConfig,
             Mockito.mock(ImageService.class),
             Mockito.mock(DonationHudStore.class)

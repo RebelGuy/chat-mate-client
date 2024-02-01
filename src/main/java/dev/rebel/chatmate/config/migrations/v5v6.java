@@ -12,6 +12,7 @@ public class v5v6 extends Migration<SerialisedConfigV5, SerialisedConfigV6> {
   @Override
   public SerialisedConfigV6 up(SerialisedConfigV5 data) {
     return new SerialisedConfigV6(data.soundEnabled,
+        false,
         data.chatVerticalDisplacement,
         Config.CommandMessageChatVisibility.SHOWN.toString(),
         true,

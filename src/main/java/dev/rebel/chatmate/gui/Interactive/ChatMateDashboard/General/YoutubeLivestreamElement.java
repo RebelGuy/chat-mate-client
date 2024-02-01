@@ -25,7 +25,7 @@ import java.util.Timer;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
 
-public class GeneralSectionLivestreamElement extends ContainerElement {
+public class YoutubeLivestreamElement extends InlineElement {
   private final StreamerEndpointProxy streamerEndpointProxy;
 
   private final LabelElement label;
@@ -39,8 +39,8 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
   private @Nonnull String livestream;
 
-  public GeneralSectionLivestreamElement(InteractiveContext context, IElement parent, StreamerEndpointProxy streamerEndpointProxy) {
-    super(context, parent, LayoutMode.INLINE);
+  public YoutubeLivestreamElement(InteractiveContext context, IElement parent, StreamerEndpointProxy streamerEndpointProxy) {
+    super(context, parent);
     super.setName("GeneralSectionLivestreamElement");
 
     this.streamerEndpointProxy = streamerEndpointProxy;
@@ -104,30 +104,22 @@ public class GeneralSectionLivestreamElement extends ContainerElement {
 
     this.livestream = "";
 
-    super.addElement(
-        new RequireLoggedInElement(context, this, new InlineElement(context, this)
-          .addElement(this.label)
-          .addElement(this.livestreamInputField)
-          .addElement(this.clearButton)
-          .addElement(this.confirmButton)
-          .addElement(this.refreshButton)
-          .addElement(this.copyButton)
-          .addElement(this.openInBrowserButton)
-          .addElement(this.errorLabel)
-        ).onLoggedIn(this::onLoggedIn)
-    );
+    super.addElement(this.label);
+    super.addElement(this.livestreamInputField);
+    super.addElement(this.clearButton);
+    super.addElement(this.confirmButton);
+    super.addElement(this.refreshButton);
+    super.addElement(this.copyButton);
+    super.addElement(this.openInBrowserButton);
+    super.addElement(this.errorLabel);
   }
 
-  public void onShow() {
-    this.onRefresh();
-  }
-
-  public void onHide() {
-    // no op
-  }
-
-  private void onLoggedIn() {
-    this.onRefresh();
+  @Override
+  public ContainerElement setVisible(boolean visible) {
+    if (visible) {
+      this.onRefresh();
+    }
+    return super.setVisible(visible);
   }
 
   private void onChange(String livestream) {

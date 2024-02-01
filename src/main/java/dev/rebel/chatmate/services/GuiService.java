@@ -22,10 +22,7 @@ import dev.rebel.chatmate.events.ForgeEventService;
 import dev.rebel.chatmate.events.KeyboardEventService;
 import dev.rebel.chatmate.events.MouseEventService;
 import dev.rebel.chatmate.events.models.OpenGuiEventData;
-import dev.rebel.chatmate.stores.CommandApiStore;
-import dev.rebel.chatmate.stores.DonationApiStore;
-import dev.rebel.chatmate.stores.LivestreamApiStore;
-import dev.rebel.chatmate.stores.RankApiStore;
+import dev.rebel.chatmate.stores.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.gui.GuiScreen;
@@ -67,6 +64,7 @@ public class GuiService {
   private final DonationApiStore donationApiStore;
   private final RankApiStore rankApiStore;
   private final CommandApiStore commandApiStore;
+  private final StreamerApiStore streamerApiStore;
   private final CustomGuiNewChat customGuiNewChat;
   private final ImageService imageService;
   private final DonationHudStore donationHudStore;
@@ -107,6 +105,7 @@ public class GuiService {
                     DonationApiStore donationApiStore,
                     RankApiStore rankApiStore,
                     CommandApiStore commandApiStore,
+                    StreamerApiStore streamerApiStore,
                     CustomGuiNewChat customGuiNewChat,
                     ImageService imageService,
                     DonationHudStore donationHudStore,
@@ -146,6 +145,7 @@ public class GuiService {
     this.donationApiStore = donationApiStore;
     this.rankApiStore = rankApiStore;
     this.commandApiStore = commandApiStore;
+    this.streamerApiStore = streamerApiStore;
     this.customGuiNewChat = customGuiNewChat;
     this.imageService = imageService;
     this.donationHudStore = donationHudStore;
@@ -285,6 +285,7 @@ public class GuiService {
         this.livestreamApiStore,
         this.donationApiStore,
         this.commandApiStore,
+        this.streamerApiStore,
         this.config,
         this.imageService,
         this.donationHudStore);

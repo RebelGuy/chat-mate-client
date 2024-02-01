@@ -7,6 +7,10 @@ import dev.rebel.chatmate.api.models.chatMate.GetStatusResponse.GetStatusRespons
 import dev.rebel.chatmate.api.models.chatMate.SetActiveLivestreamRequest;
 import dev.rebel.chatmate.api.models.chatMate.SetActiveLivestreamResponse;
 import dev.rebel.chatmate.api.models.chatMate.SetActiveLivestreamResponse.SetActiveLivestreamResponseData;
+import dev.rebel.chatmate.api.models.streamer.GetPrimaryChannelsResponse;
+import dev.rebel.chatmate.api.models.streamer.GetPrimaryChannelsResponse.GetPrimaryChannelsResponseData;
+import dev.rebel.chatmate.api.models.streamer.GetStreamersResponse;
+import dev.rebel.chatmate.api.models.streamer.GetStreamersResponse.GetStreamersResponseData;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.ApiRequestService;
 
@@ -34,5 +38,13 @@ public class StreamerEndpointProxy extends EndpointProxy {
 
   public void setActiveLivestreamAsync(@Nonnull SetActiveLivestreamRequest request, Consumer<SetActiveLivestreamResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     this.makeRequestAsync(Method.PATCH, "/livestream", request, SetActiveLivestreamResponse.class, callback, errorHandler);
+  }
+
+  public void getStreamersAsync(Consumer<GetStreamersResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(Method.GET, "/", GetStreamersResponse.class, callback, errorHandler, false);
+  }
+
+  public void getPrimaryChannelsAsync(Consumer<GetPrimaryChannelsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
+    this.makeRequestAsync(Method.GET, "/primaryChannels", GetPrimaryChannelsResponse.class, callback, errorHandler);
   }
 }

@@ -6,6 +6,7 @@ import dev.rebel.chatmate.events.EventHandler.EventCallback;
 
 import javax.annotation.Nullable;
 
+/** Only renders the content element if the user is logged in. */
 public class RequireLoggedInElement extends WrapperElement {
   private final EventCallback<LoginInfo> _onLoginChange = this::onLoginChange;
   @Nullable private Runnable onLoggedIn;
