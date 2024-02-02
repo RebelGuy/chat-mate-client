@@ -6,7 +6,7 @@ This document is intended as a guide for streamers wishing to use ChatMate to en
 
 ChatMate offers a free Minecraft mod that integrates your livestream into Minecraft and allows you to perform administration tasks, such as banning users and managing ranks. **Currently, the mod runs only on Minecraft Java Edition 1.8.9 and has not been tested with other popular mods, such as LabyMod or Lunar Client.** You can download the mod [here](https://github.com/RebelGuy/chat-mate-client/releases/latest).
 
-To start, ensure you have followed the [instructions for setting up your account and stream](https://github.com/RebelGuy/chat-mate/blob/master/docs/streamer-guide.md). Install Minecraft Forge, and place the ChatMate `.jar` into your `.minecraft/mods` folder. Open the ChatMate Dashboard within Minecraft to log in to your ChatMate account. Once logged in, you have access to streamer features.
+To start, ensure you have followed the [instructions for setting up your account and stream](https://github.com/RebelGuy/chat-mate/blob/master/docs/streamer-guide.md). Install Minecraft Forge, and place the ChatMate `.jar` into your `.minecraft/mods` folder. Open the ChatMate Dashboard within Minecraft to log in to your ChatMate account. Once logged in, make sure the "Enable ChatMate" option is checked, and you will now have access to streamer features.
 
 ![Click on the "Mods" button in the Minecraft main menu](enable-chat-mate-1.png)
 
@@ -15,6 +15,8 @@ To start, ensure you have followed the [instructions for setting up your account
 ![Enter your account details and click "Login".](enable-chat-mate-3.png)
 
 You are now ready to go live and should see your livestream messages appear in your Minecraft chat window.
+
+Note that ChatMate is disabled by default when you start Minecraft, unless you are currently live. If your live chat is not showing, ensure the "Enable ChatMate" option is checked.
 
 ## Features
 
