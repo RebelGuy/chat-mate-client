@@ -438,7 +438,23 @@ public abstract class ElementBase implements IElement {
     try {
       this.renderElement();
     } catch (Exception e) {
-      context.logService.logError(this, this.name, "encountered an error during rendering:", e);
+      List<String> ancestry = new ArrayList<>();
+
+      IElement lastElement = this;
+      while (lastElement.getParent() != null) {
+        ancestry.add(lastElement.getName());
+        lastElement = lastElement.getParent();
+      }
+
+      StringBuilder names = new StringBuilder();
+      for (String name : dev.rebel.chatmate.util.Collections.reverse(ancestry)) {
+        if (names.length() > 0) {
+          names.append(" -> ");
+        }
+        names.append(name);
+      }
+
+      context.logService.logError(this, names.toString(), "encountered an error during rendering:", e);
     }
   }
 
@@ -633,6 +649,11 @@ public abstract class ElementBase implements IElement {
   public IElement setName(String name) {
     this.name = name;
     return this;
+  }
+
+  @Override
+  public String getName() {
+    return name;
   }
 
   @Override

@@ -798,6 +798,9 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public IElement setName(String name) { return null; }
 
   @Override
+  public String getName() { return null; }
+
+  @Override
   public IElement setMaxWidth(@Nullable Dim maxWidth) { return null; }
 
   @Override

@@ -41,7 +41,6 @@ public class YoutubeLivestreamElement extends InlineElement {
 
   public YoutubeLivestreamElement(InteractiveContext context, IElement parent, StreamerEndpointProxy streamerEndpointProxy) {
     super(context, parent);
-    super.setName("GeneralSectionLivestreamElement");
 
     this.streamerEndpointProxy = streamerEndpointProxy;
 
