@@ -64,6 +64,9 @@ public class Config extends EventServiceBase<ConfigType> {
   private final StatefulEmitter<SeparableHudElement> viewerCount;
   public StatefulEmitter<SeparableHudElement> getViewerCountEmitter() { return this.viewerCount; }
 
+  private final StatefulEmitter<Boolean> onlyShowIndicatorsWhenLive;
+  public StatefulEmitter<Boolean> getOnlyShowIndicatorsWhenLive() { return this.onlyShowIndicatorsWhenLive; }
+
   private final StatefulEmitter<Boolean> debugModeEnabled;
   public StatefulEmitter<Boolean> getDebugModeEnabledEmitter() { return this.debugModeEnabled; }
 
@@ -172,6 +175,12 @@ public class Config extends EventServiceBase<ConfigType> {
             : data.viewerCount.deserialise(),
         this::onUpdate
     );
+    this.onlyShowIndicatorsWhenLive = new StatefulEmitter<>(
+        ConfigType.ONLY_SHOW_INDICATORS_WHEN_LIVE,
+        Boolean.class,
+        data == null ? false : data.onlyShowIndicatorsWhenLive,
+        this::onUpdate
+    );
     this.debugModeEnabled = new StatefulEmitter<>(
         ConfigType.DEBUG_MODE_ENABLED,
         Boolean.class,
@@ -252,6 +261,7 @@ public class Config extends EventServiceBase<ConfigType> {
           new SerialisedConfigV6.SerialisedSeparableHudElement(this.statusIndicator.get()),
           new SerialisedConfigV6.SerialisedSeparableHudElement(this.viewerCount.get()),
           this.debugModeEnabled.get(),
+          this.onlyShowIndicatorsWhenLive.get(),
           dev.rebel.chatmate.util.Collections.map(
               dev.rebel.chatmate.util.Collections.list(this.logLevels.get()), Enum::toString
           ).toArray(new String[0]),
@@ -449,6 +459,7 @@ public class Config extends EventServiceBase<ConfigType> {
     SHOW_CHAT_PLATFORM_ICON,
     STATUS_INDICATOR,
     VIEWER_COUNT,
+    ONLY_SHOW_INDICATORS_WHEN_LIVE,
     DEBUG_MODE_ENABLED,
     LOG_LEVEL,
     LAST_GET_CHAT_RESPONSE,

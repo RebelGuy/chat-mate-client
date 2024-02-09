@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
 
 import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.api.publicObjects.status.PublicLivestreamStatus;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.Config.HudElementTransform;
 import dev.rebel.chatmate.config.Config.SeparableHudElement.PlatformIconPosition;
@@ -183,6 +184,20 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
       // we have finished our second pass (or don't need to do it), set the anchor back to the default
       super.setContentResizeAnchor(Anchor.TOP_LEFT);
     }
+  }
+
+  private boolean isLive() {
+    PublicLivestreamStatus status = super.context.statusService.getLivestreamStatus();
+    return status != null && (status.isYoutubeLive() || status.isTwitchLive());
+  }
+
+  @Override
+  public void onRenderElement() {
+    if (super.context.config.getOnlyShowIndicatorsWhenLive().get() && !this.isLive()) {
+      return;
+    }
+
+    super.onRenderElement();
   }
 
   public interface ISeparableElement extends IElement {

@@ -853,6 +853,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     public final Config config;
     public final ImageService imageService;
     public final DonationHudStore donationHudStore;
+    public final StatusService statusService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -887,7 +888,8 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
                               StreamerApiStore streamerApiStore,
                               Config config,
                               ImageService imageService,
-                              DonationHudStore donationHudStore) {
+                              DonationHudStore donationHudStore,
+                              StatusService statusService) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -912,6 +914,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       this.config = config;
       this.imageService = imageService;
       this.donationHudStore = donationHudStore;
+      this.statusService = statusService;
     }
 
     public void addFocusListener(IFocusListener focusListener) {

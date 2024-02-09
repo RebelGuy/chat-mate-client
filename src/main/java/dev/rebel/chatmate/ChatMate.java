@@ -169,7 +169,8 @@ public class ChatMate {
         streamerApiStore,
         config,
         imageService,
-        donationHudStore);
+        donationHudStore,
+        statusService);
 
     McChatService mcChatService = new McChatService(minecraftProxyService,
         logService,

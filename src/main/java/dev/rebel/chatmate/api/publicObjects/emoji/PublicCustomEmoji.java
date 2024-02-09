@@ -10,4 +10,5 @@ public class PublicCustomEmoji {
   public Integer version;
   public Boolean isActive;
   public Integer[] whitelistedRanks;
+  public Integer sortOrder;
 }
