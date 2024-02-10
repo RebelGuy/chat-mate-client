@@ -283,7 +283,22 @@ public abstract class ElementBase implements IElement {
   // todo: move this into the context as a callback method instead. it's confusing that this is a mandatory bubble-up callback
   @Override
   public final void onInvalidateSize() {
-    this.parent.onInvalidateSize();
+    if (!this.context.minecraft.isCallingFromMinecraftThread()) {
+      this.context.logService.logWarning(this, this.getFullName(), "Size was invalidated from a thread other than the Minecraft thread. This could cause issues. Did you forget to run the update as a side effect?");
+    } else if (this.context.renderingStage == InteractiveScreen.RenderingStage.RENDERING) {
+      this.context.logService.logWarning(this, this.getFullName(), "Size was invalidated during the rendering stage. This could cause issues. Did you forget to run the update as a side effect?");
+    }
+
+    this._onInvalidateSize();
+  }
+
+  private void _onInvalidateSize() {
+    // this ensures we don't log the same warnings as above when the size invalidation bubbles up the element tree.
+    if (this.parent instanceof ElementBase) {
+      ((ElementBase)this.parent)._onInvalidateSize();
+    } else {
+      this.parent.onInvalidateSize();
+    }
   }
 
   @Override
@@ -438,24 +453,28 @@ public abstract class ElementBase implements IElement {
     try {
       this.renderElement();
     } catch (Exception e) {
-      List<String> ancestry = new ArrayList<>();
-
-      IElement lastElement = this;
-      while (lastElement.getParent() != null) {
-        ancestry.add(lastElement.getName());
-        lastElement = lastElement.getParent();
-      }
-
-      StringBuilder names = new StringBuilder();
-      for (String name : dev.rebel.chatmate.util.Collections.reverse(ancestry)) {
-        if (names.length() > 0) {
-          names.append(" -> ");
-        }
-        names.append(name);
-      }
-
-      context.logService.logError(this, names.toString(), "encountered an error during rendering:", e);
+      context.logService.logError(this, this.getFullName(), "encountered an error during rendering:", e);
     }
+  }
+
+  private String getFullName() {
+    List<String> ancestry = new ArrayList<>();
+
+    IElement lastElement = this;
+    while (lastElement.getParent() != null) {
+      ancestry.add(lastElement.getName());
+      lastElement = lastElement.getParent();
+    }
+
+    StringBuilder names = new StringBuilder();
+    for (String name : dev.rebel.chatmate.util.Collections.reverse(ancestry)) {
+      if (names.length() > 0) {
+        names.append(" -> ");
+      }
+      names.append(name);
+    }
+
+    return names.toString();
   }
 
   /** You should never call super.render() from this element, as it will cause an infinite loop.

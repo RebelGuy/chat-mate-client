@@ -451,10 +451,7 @@ public abstract class ContainerElement extends ElementBase {
   @Override
   protected void renderElement() {
     for (IElement element : this.children) {
-      // we also check that the box exists because it's possible the element was not visible at the time of setting the box, but its visibility has since been updated.
-      // without the check, it's possible to render the element without first setting its box.
-      // this is technically a bug, because this should be a side effect that gets executed *after* the rendering sequence has completed, but I can't figure it out lol
-      if (element.getVisible() && element.getBox() != null) {
+      if (element.getVisible()) {
         element.render(null);
       }
     }
