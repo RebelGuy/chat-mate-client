@@ -272,7 +272,8 @@ public class McChatServiceTests {
             Mockito.mock(StreamerApiStore.class),
             this.mockConfig,
             Mockito.mock(ImageService.class),
-            Mockito.mock(DonationHudStore.class)
+            Mockito.mock(DonationHudStore.class),
+            Mockito.mock(StatusService.class)
         ));
   }
 
