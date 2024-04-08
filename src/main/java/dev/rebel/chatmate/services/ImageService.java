@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.util.ResolvableTexture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
@@ -41,20 +42,22 @@ public class ImageService {
     }
   }
 
-  public @Nullable Texture createTextureFromUrl(String imageUrl) {
-    try {
-      byte[] imageBytes = this.downloadImage(imageUrl);
-      @Nullable BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
-      if (bufferedImage == null) {
-        throw new Exception("Buffered image is null - probably corrupt data.");
-      }
+  /** Creates a texture from a HTTP image URL. Can be run on any thread. */
+  public ResolvableTexture createTextureFromUrl(int width, int height, String imageUrl) {
+    return new ResolvableTexture(this.minecraft, width, height, () -> {
+      try {
+        byte[] imageBytes = this.downloadImage(imageUrl);
+        @Nullable BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+        if (bufferedImage == null) {
+          throw new RuntimeException("Buffered image is null - probably corrupt data.");
+        }
 
-      ResourceLocation location = this.minecraft.getTextureManager().getDynamicTextureLocation("test", new DynamicTexture(bufferedImage));
-      return new Texture(bufferedImage.getWidth(), bufferedImage.getHeight(), location);
-    } catch (Exception e) {
-      this.logService.logError(this, "Unable to create texture from the given url:", e);
-      return null;
-    }
+        return bufferedImage;
+      } catch (Exception e) {
+        this.logService.logError(this, "Unable to create texture from the given url:", e);
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   private byte[] downloadImage(String url) throws Exception {

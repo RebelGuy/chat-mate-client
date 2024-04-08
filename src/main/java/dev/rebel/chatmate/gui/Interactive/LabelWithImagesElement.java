@@ -7,6 +7,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
+import dev.rebel.chatmate.util.ResolvableTexture;
 import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
@@ -59,10 +61,10 @@ public class LabelWithImagesElement extends InlineElement {
 
         // when transitioning between text and images that are explicitly separated by a space, remove that
         // space because the padding between the label and image elements already leads to an implicit space.
-        if (type == Type.TEXT && nextType == Type.IMAGE && Objects.equals(casted(TextPart.class, Collections.last(splitParts), p -> p.text), "")) {
+        if (type == Type.TEXT && (nextType == Type.IMAGE || nextType == Type.RESOLVABLE_IMAGE) && Objects.equals(casted(TextPart.class, Collections.last(splitParts), p -> p.text), "")) {
           // text -> image: discard the last text part (we know it's of type text because it was split from the current part, which is of type text)
           splitParts = splitParts.subList(0, splitParts.size() - 1);
-        } else if (prevType == Type.IMAGE && part.getType() == Type.TEXT && Objects.equals(casted(TextPart.class, Collections.first(splitParts), p -> p.text), "")) {
+        } else if ((prevType == Type.IMAGE || prevType == Type.RESOLVABLE_IMAGE) && part.getType() == Type.TEXT && Objects.equals(casted(TextPart.class, Collections.first(splitParts), p -> p.text), "")) {
           // custom emoji -> text: discard the first text part
           splitParts = splitParts.subList(1, splitParts.size());
         }
@@ -76,8 +78,12 @@ public class LabelWithImagesElement extends InlineElement {
             ImageElement imageElement = this.createImageElement((ImagePart)subPart);
             this.imageElements.add(imageElement);
             super.addElement(imageElement);
+          } else if (subPart.getType() == Type.RESOLVABLE_IMAGE) {
+            ImageElement imageElement = this.createImageElement((ResolvableImagePart)subPart);
+            this.imageElements.add(imageElement);
+            super.addElement(imageElement);
           } else {
-            throw new RuntimeException("MessagePartsElement only support text and custom emoji parts at the moment");
+            throw EnumHelpers.<LabelWithImagesElement.Type>assertUnreachable(subPart.getType(), "MessagePartsElement only support text and custom emoji parts at the moment");
           }
         }
       }
@@ -135,8 +141,12 @@ public class LabelWithImagesElement extends InlineElement {
   }
 
   private ImageElement createImageElement(ImagePart part) {
+    return this.createImageElement(new ResolvableImagePart(new ResolvableTexture(part.texture)));
+  }
+
+  private ImageElement createImageElement(ResolvableImagePart part) {
     ImageElement element = new ImageElement(super.context, this)
-        .setImage(part.texture)
+        .setImage((part.resolvableTexture))
         .setTargetContentHeight(super.context.fontEngine.FONT_HEIGHT_DIM.times(this.scale))
         .setPadding(this.getPaddingForParts())
         .setHorizontalAlignment(this.horizontalAlignment)
@@ -169,7 +179,7 @@ public class LabelWithImagesElement extends InlineElement {
     Type getType();
   }
 
-  public enum Type { TEXT, IMAGE }
+  public enum Type { TEXT, IMAGE, RESOLVABLE_IMAGE }
 
   public static class TextPart implements IPart {
     public final String text;
@@ -196,6 +206,19 @@ public class LabelWithImagesElement extends InlineElement {
     @Override
     public Type getType() {
       return Type.IMAGE;
+    }
+  }
+
+  public static class ResolvableImagePart implements IPart {
+    public final ResolvableTexture resolvableTexture;
+
+    public ResolvableImagePart(ResolvableTexture resolvableTexture) {
+      this.resolvableTexture = resolvableTexture;
+    }
+
+    @Override
+    public Type getType() {
+      return Type.RESOLVABLE_IMAGE;
     }
   }
 }

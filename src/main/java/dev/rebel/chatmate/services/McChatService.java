@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.emoji.PublicCustomEmoji;
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.models.*;
@@ -337,7 +338,13 @@ public class McChatService {
         prevText = null;
 
         assert msg.customEmojiData != null;
-        ImageChatComponent imageChatComponent = new ImageChatComponent(() -> this.imageService.createTextureFromUrl(msg.customEmojiData.customEmoji.imageUrl), this.dimFactory.fromGui(1), this.dimFactory.fromGui(1), greyOut);
+        PublicCustomEmoji customEmoji = msg.customEmojiData.customEmoji;
+        ImageChatComponent imageChatComponent = new ImageChatComponent(
+            this.imageService.createTextureFromUrl(customEmoji.imageWidth, customEmoji.imageHeight, customEmoji.imageUrl),
+            this.dimFactory.fromGui(1),
+            this.dimFactory.fromGui(1),
+            greyOut
+        );
         components.add(imageChatComponent);
         continue;
 

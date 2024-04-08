@@ -5,8 +5,8 @@ public class PublicCustomEmoji {
   public String name;
   public String symbol;
   public String imageUrl;
-  public String imageWidth;
-  public String imageHeight;
+  public Integer imageWidth;
+  public Integer imageHeight;
   public Integer levelRequirement;
   public Boolean canUseInDonationMessage;
   public Integer version;
