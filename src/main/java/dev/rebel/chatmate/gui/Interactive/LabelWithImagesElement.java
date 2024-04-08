@@ -61,10 +61,10 @@ public class LabelWithImagesElement extends InlineElement {
 
         // when transitioning between text and images that are explicitly separated by a space, remove that
         // space because the padding between the label and image elements already leads to an implicit space.
-        if (type == Type.TEXT && (nextType == Type.IMAGE || nextType == Type.RESOLVABLE_IMAGE) && Objects.equals(casted(TextPart.class, Collections.last(splitParts), p -> p.text), "")) {
+        if (type == Type.TEXT && nextType == Type.IMAGE && Objects.equals(casted(TextPart.class, Collections.last(splitParts), p -> p.text), "")) {
           // text -> image: discard the last text part (we know it's of type text because it was split from the current part, which is of type text)
           splitParts = splitParts.subList(0, splitParts.size() - 1);
-        } else if ((prevType == Type.IMAGE || prevType == Type.RESOLVABLE_IMAGE) && part.getType() == Type.TEXT && Objects.equals(casted(TextPart.class, Collections.first(splitParts), p -> p.text), "")) {
+        } else if (prevType == Type.IMAGE && part.getType() == Type.TEXT && Objects.equals(casted(TextPart.class, Collections.first(splitParts), p -> p.text), "")) {
           // custom emoji -> text: discard the first text part
           splitParts = splitParts.subList(1, splitParts.size());
         }
@@ -76,10 +76,6 @@ public class LabelWithImagesElement extends InlineElement {
             super.addElement(labelElement);
           } else if (subPart.getType() == Type.IMAGE) {
             ImageElement imageElement = this.createImageElement((ImagePart)subPart);
-            this.imageElements.add(imageElement);
-            super.addElement(imageElement);
-          } else if (subPart.getType() == Type.RESOLVABLE_IMAGE) {
-            ImageElement imageElement = this.createImageElement((ResolvableImagePart)subPart);
             this.imageElements.add(imageElement);
             super.addElement(imageElement);
           } else {
@@ -141,12 +137,8 @@ public class LabelWithImagesElement extends InlineElement {
   }
 
   private ImageElement createImageElement(ImagePart part) {
-    return this.createImageElement(new ResolvableImagePart(new ResolvableTexture(part.texture)));
-  }
-
-  private ImageElement createImageElement(ResolvableImagePart part) {
     ImageElement element = new ImageElement(super.context, this)
-        .setImage((part.resolvableTexture))
+        .setImage(part.resolvableTexture)
         .setTargetContentHeight(super.context.fontEngine.FONT_HEIGHT_DIM.times(this.scale))
         .setPadding(this.getPaddingForParts())
         .setHorizontalAlignment(this.horizontalAlignment)
@@ -179,7 +171,7 @@ public class LabelWithImagesElement extends InlineElement {
     Type getType();
   }
 
-  public enum Type { TEXT, IMAGE, RESOLVABLE_IMAGE }
+  public enum Type { TEXT, IMAGE }
 
   public static class TextPart implements IPart {
     public final String text;
@@ -197,28 +189,19 @@ public class LabelWithImagesElement extends InlineElement {
   }
 
   public static class ImagePart implements IPart {
-    public final Texture texture;
-
-    public ImagePart(Texture texture) {
-      this.texture = texture;
-    }
-
-    @Override
-    public Type getType() {
-      return Type.IMAGE;
-    }
-  }
-
-  public static class ResolvableImagePart implements IPart {
     public final ResolvableTexture resolvableTexture;
 
-    public ResolvableImagePart(ResolvableTexture resolvableTexture) {
+    public ImagePart(Texture texture) {
+      this(new ResolvableTexture(texture));
+    }
+
+    public ImagePart(ResolvableTexture resolvableTexture) {
       this.resolvableTexture = resolvableTexture;
     }
 
     @Override
     public Type getType() {
-      return Type.RESOLVABLE_IMAGE;
+      return Type.IMAGE;
     }
   }
 }

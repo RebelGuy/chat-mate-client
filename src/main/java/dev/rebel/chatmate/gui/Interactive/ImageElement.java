@@ -87,6 +87,8 @@ public class ImageElement extends SingleElement {
       return new DimPoint(ZERO, ZERO);
     }
 
+    this.image.begin();
+
     // dimensions before culling
     Dim width = gui(this.image.width).times(this.scale);
     Dim height = gui(this.image.height).times(this.scale);
