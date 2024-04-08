@@ -337,7 +337,7 @@ public class McChatService {
         prevText = null;
 
         assert msg.customEmojiData != null;
-        ImageChatComponent imageChatComponent = new ImageChatComponent(() -> this.imageService.createTexture(msg.customEmojiData.customEmoji.imageData), this.dimFactory.fromGui(1), this.dimFactory.fromGui(1), greyOut);
+        ImageChatComponent imageChatComponent = new ImageChatComponent(() -> this.imageService.createTextureFromUrl(msg.customEmojiData.customEmoji.imageUrl), this.dimFactory.fromGui(1), this.dimFactory.fromGui(1), greyOut);
         components.add(imageChatComponent);
         continue;
 

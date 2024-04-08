@@ -30,7 +30,8 @@ public class MessagePartsElement extends LabelWithImagesElement {
             .withItalic(part.textData.isItalics);
         return new TextPart(part.textData.text, font);
       } else if (part.type == MessagePartType.customEmoji) {
-        return new ImagePart(super.context.imageService.createTexture(part.customEmojiData.customEmoji.imageData));
+        assert part.customEmojiData != null;
+        return new ImagePart(super.context.imageService.createTextureFromUrl(part.customEmojiData.customEmoji.imageUrl));
       } else {
         throw new RuntimeException("MessagePartsElement only support text and custom emoji parts at the moment");
       }
