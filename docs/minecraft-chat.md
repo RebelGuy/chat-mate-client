@@ -26,3 +26,10 @@ Forge will overwrite it (it instantiates this class very late in the intialisati
 Now, by listening to the chat render events fired by `GuiIngameForge`, we can prevent its default
 behaviour (i.e. `cancel` the event) and use `CustomGuiNewChat.drawChat()` instead. As a result, the `GuiIngameForge`
 never has a chance to interact with its private `GuiNewChat` object (which remains to be the default implementation).
+
+# Emojis
+Custom ChatMate emojis are rendered according to the URL returned by the server. Upon first encountering a new emoji, the Client will download and cache the image to the data folder. Any subsequent requests will then attempt to retrieve the data from the cache, instead of making another download request. This cache system is especially effective for custom emojis due to their immutability - every version of every emoji will never change, and we will never have to invalidate emoji-version caches.
+
+The emojis are cached in the `/custom-emoji` folder within the Mod's data folder.
+
+Internally, custom emojis are rendered in chat using the `ResolvableTexture` class. This class uses a placeholder to reserve space in the chat window, and asynchronously loads the required data from the web or file system. If multiple requests are fired off at the same time, all sets of read/write operations for a given emoji-version are done in series (using a queue system), multiple sets of operations for different emoji-versions are done in parallel. The logic for this is implemented in the `PersistentCacheService`.
