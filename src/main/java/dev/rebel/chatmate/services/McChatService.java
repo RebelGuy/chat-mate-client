@@ -340,7 +340,7 @@ public class McChatService {
         assert msg.customEmojiData != null;
         PublicCustomEmoji customEmoji = msg.customEmojiData.customEmoji;
         ImageChatComponent imageChatComponent = new ImageChatComponent(
-            this.imageService.createTextureFromUrl(customEmoji.imageWidth, customEmoji.imageHeight, customEmoji.imageUrl),
+            this.imageService.createCacheableTextureFromUrl(customEmoji.imageWidth, customEmoji.imageHeight, customEmoji.imageUrl, customEmoji.getCacheKey()),
             this.dimFactory.fromGui(1),
             this.dimFactory.fromGui(1),
             greyOut

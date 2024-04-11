@@ -1,6 +1,8 @@
 package dev.rebel.chatmate.util;
 
 import dev.rebel.chatmate.Asset.Texture;
+import dev.rebel.chatmate.services.ImageService;
+import dev.rebel.chatmate.services.PersistentCacheService;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.util.ResourceLocation;
@@ -16,24 +18,39 @@ public class ResolvableTexture {
   public final int height;
   private boolean hasStarted;
   private final @Nullable Minecraft minecraft;
+  private final @Nullable PersistentCacheService cacheService;
+  private final @Nullable ImageService imageService;
   private @Nullable Texture resolvedTexture;
   private final @Nullable Supplier<BufferedImage> resolvableImage;
+  private final @Nullable String cacheKey;
   private @Nullable Consumer<Texture> onResolveCallback;
   private @Nullable Consumer<Throwable> onErrorCallback;
 
   /** The width and height must be the same as the resolved texture's width and height. */
-  public ResolvableTexture(@Nonnull Minecraft minecraft, int width, int height, @Nonnull Supplier<BufferedImage> resolvableImage) {
+  public ResolvableTexture(@Nonnull Minecraft minecraft,
+                           @Nullable PersistentCacheService cacheService,
+                           @Nullable ImageService imageService,
+                           int width,
+                           int height,
+                           @Nonnull Supplier<BufferedImage> resolvableImage,
+                           @Nullable String cacheKey) {
     this.width = width;
     this.height = height;
     this.minecraft = minecraft;
+    this.cacheService = cacheService;
+    this.imageService = imageService;
     this.resolvableImage = resolvableImage;
+    this.cacheKey = cacheKey;
   }
 
   public ResolvableTexture(Texture resolvedTexture) {
     this.width = resolvedTexture.width;
     this.height = resolvedTexture.height;
     this.minecraft = null;
+    this.cacheService = null;
+    this.imageService = null;
     this.resolvableImage = null;
+    this.cacheKey = null;
     this.resolvedTexture = resolvedTexture;
   }
 
@@ -57,28 +74,51 @@ public class ResolvableTexture {
     }
 
     this.hasStarted = true;
-    Thread thread = new Thread(() -> {
-      try {
-        BufferedImage bufferedImage = this.resolvableImage.get();
 
-        // generating the texture must happen on the main thread, where we have access to openGl
-        assert this.minecraft != null;
-        this.minecraft.addScheduledTask(() -> {
-          ResourceLocation resourceLocation = this.minecraft.getTextureManager().getDynamicTextureLocation("test", new DynamicTexture(bufferedImage));
-          this.resolvedTexture = new Texture(this.width, this.height, resourceLocation);
-        });
+    assert this.resolvableImage != null;
 
-        if (this.onResolveCallback != null) {
-          this.onResolveCallback.accept(this.resolvedTexture);
-        }
+    // use caching if available
+    if (this.cacheService != null && this.cacheKey != null) {
+      this.cacheService.getValueForKey(this.cacheKey, this::onGetTextureBytes, this::onReceivedTextureBytes);
+    } else {
+      byte[] bytes = this.onGetTextureBytes();
+      this.onReceivedTextureBytes(bytes);
+    }
+  }
 
-      } catch (Exception e) {
-        if (this.onErrorCallback != null) {
-          this.onErrorCallback.accept(e);
-        }
+  private byte[] onGetTextureBytes() {
+    assert this.imageService != null;
+
+    BufferedImage bufferedImage = this.resolvableImage.get();
+    try {
+      return this.imageService.bytesFromBufferedImage(bufferedImage);
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  private void onReceivedTextureBytes(byte[] result) {
+    assert this.imageService != null;
+
+    try {
+      BufferedImage bufferedImage = this.imageService.bufferedImageFromBytes(result);
+
+      // generating the texture must happen on the main thread, where we have access to openGl
+      assert this.minecraft != null;
+      this.minecraft.addScheduledTask(() -> {
+        ResourceLocation resourceLocation = this.minecraft.getTextureManager().getDynamicTextureLocation("test", new DynamicTexture(bufferedImage));
+        this.resolvedTexture = new Texture(this.width, this.height, resourceLocation);
+      });
+
+      if (this.onResolveCallback != null) {
+        this.onResolveCallback.accept(this.resolvedTexture);
       }
-    });
-    thread.start();
+
+    } catch (Exception e) {
+      if (this.onErrorCallback != null) {
+        this.onErrorCallback.accept(e);
+      }
+    }
   }
 
   public @Nullable Texture getResolvedTexture() {

@@ -136,7 +136,8 @@ public class ChatMate {
     ChatMateEventService chatMateEventService = new ChatMateEventService(logService, streamerEndpointProxy, apiPollerFactory, config, dateTimeService);
     DonationService donationService = new DonationService(dateTimeService, donationApiStore, livestreamApiStore, rankApiStore, chatMateEventService);
     MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore, chatComponentRenderer, dateTimeService);
-    ImageService imageService = new ImageService(minecraft, logService);
+    PersistentCacheService persistentCacheService = new PersistentCacheService(logService, fileService);
+    ImageService imageService = new ImageService(minecraft, logService, persistentCacheService);
     StatusService statusService = new StatusService(streamerEndpointProxy, apiPollerFactory, livestreamApiStore);
 
     KeyBindingService keyBindingService = new KeyBindingService(forgeEventService);

@@ -90,7 +90,7 @@ public class LogService {
 
     System.out.println(message);
     try {
-      this.fileService.writeFile(this.getLogFileName(), message, true);
+      this.fileService.writeTextFile(this.getLogFileName(), message, true);
     } catch (Exception e) {
       System.out.println("Error logging line to the file: " + e.getMessage());
     }

@@ -24,7 +24,7 @@ public class MessagePartsElement extends LabelWithImagesElement {
       } else if (part.type == MessagePartType.customEmoji) {
         assert part.customEmojiData != null;
         PublicCustomEmoji customEmoji = part.customEmojiData.customEmoji;
-        return new ImagePart(super.context.imageService.createTextureFromUrl(customEmoji.imageWidth, customEmoji.imageHeight, customEmoji.imageUrl));
+        return new ImagePart(super.context.imageService.createCacheableTextureFromUrl(customEmoji.imageWidth, customEmoji.imageHeight, customEmoji.imageUrl, customEmoji.getCacheKey()));
       } else {
         throw new RuntimeException("MessagePartsElement only support text and custom emoji parts at the moment");
       }

@@ -21,10 +21,12 @@ public class ImageService {
 
   private final Minecraft minecraft;
   private final LogService logService;
+  private final PersistentCacheService persistentCacheService;
 
-  public ImageService(Minecraft minecraft, LogService logService) {
+  public ImageService(Minecraft minecraft, LogService logService, PersistentCacheService persistentCacheService) {
     this.minecraft = minecraft;
     this.logService = logService;
+    this.persistentCacheService = persistentCacheService;
   }
 
   /** Creates a texture from the base64 image data. IMPORTANT: MUST BE RUN ON THE MAIN RENDER THREAD. */
@@ -32,8 +34,7 @@ public class ImageService {
     try {
       byte[] encodedBytes = imageData.getBytes(StandardCharsets.UTF_8);
       byte[] decodedBytes = Base64.getDecoder().decode(encodedBytes);
-
-      BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(decodedBytes));
+      BufferedImage bufferedImage = this.bufferedImageFromBytes(decodedBytes);
       ResourceLocation location = this.minecraft.getTextureManager().getDynamicTextureLocation("test", new DynamicTexture(bufferedImage));
       return new Texture(bufferedImage.getWidth(), bufferedImage.getHeight(), location);
     } catch (Exception e) {
@@ -42,25 +43,47 @@ public class ImageService {
     }
   }
 
-  /** Creates a texture from a HTTP image URL. Can be run on any thread. */
-  public ResolvableTexture createTextureFromUrl(int width, int height, String imageUrl) {
-    return new ResolvableTexture(this.minecraft, width, height, () -> {
-      try {
-        byte[] imageBytes = this.downloadImage(imageUrl);
-        @Nullable BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
-        if (bufferedImage == null) {
-          throw new RuntimeException("Buffered image is null - probably corrupt data.");
-        }
-
-        return bufferedImage;
-      } catch (Exception e) {
-        this.logService.logError(this, "Unable to create texture from the given url:", e);
-        throw new RuntimeException(e);
-      }
-    });
+  public BufferedImage bufferedImageFromBytes(byte[] imageData) {
+    try {
+      return ImageIO.read(new ByteArrayInputStream(imageData));
+    } catch (Exception e) {
+      this.logService.logError(this, "Unable to create texture from the given imageData:", e);
+      return null;
+    }
   }
 
-  private byte[] downloadImage(String url) throws Exception {
+  public byte[] bytesFromBufferedImage(BufferedImage image) throws Exception {
+    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+    try {
+      ImageIO.write(image, "png", stream);
+      return stream.toByteArray();
+    } catch (Exception e) {
+      this.logService.logError(this, "Unable to convert the buffered image to a string:", e);
+      throw e;
+    }
+  }
+
+  /** Creates a texture from a HTTP image URL. Can be run on any thread. */
+  public ResolvableTexture createCacheableTextureFromUrl(int width, int height, String imageUrl, @Nullable String cacheKey) {
+    return new ResolvableTexture(this.minecraft, this.persistentCacheService, this, width, height, () -> this.downloadBufferedImage(imageUrl), cacheKey);
+  }
+
+  private BufferedImage downloadBufferedImage(String imageUrl) {
+    try {
+      byte[] imageBytes = this.downloadImageBytes(imageUrl);
+      @Nullable BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+      if (bufferedImage == null) {
+        throw new RuntimeException("Buffered image is null - probably corrupt data.");
+      }
+
+      return bufferedImage;
+    } catch (Exception e) {
+      this.logService.logError(this, "Unable to create texture from the given url:", e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  private byte[] downloadImageBytes(String url) throws Exception {
     // copied from a random SO answer, I hope this works lol
     // https://stackoverflow.com/a/45560205
     URL imageUrl = new URL(url);
