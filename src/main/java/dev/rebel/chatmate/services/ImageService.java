@@ -35,6 +35,11 @@ public class ImageService {
       byte[] encodedBytes = imageData.getBytes(StandardCharsets.UTF_8);
       byte[] decodedBytes = Base64.getDecoder().decode(encodedBytes);
       BufferedImage bufferedImage = this.bufferedImageFromBytes(decodedBytes);
+      if (bufferedImage == null) {
+        this.logService.logError(this, "Unable to convert the image bytes to a buffered image - probably corrupt data.");
+        return null;
+      }
+
       ResourceLocation location = this.minecraft.getTextureManager().getDynamicTextureLocation("test", new DynamicTexture(bufferedImage));
       return new Texture(bufferedImage.getWidth(), bufferedImage.getHeight(), location);
     } catch (Exception e) {
@@ -43,60 +48,57 @@ public class ImageService {
     }
   }
 
-  public BufferedImage bufferedImageFromBytes(byte[] imageData) {
+  /** Returns null if something went wrong. */
+  public @Nullable BufferedImage bufferedImageFromBytes(byte[] bytes) {
     try {
-      return ImageIO.read(new ByteArrayInputStream(imageData));
+      @Nullable BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+      if (image == null) {
+        this.logService.logError(this, "Unable to create a texture from the given image bytes. Image may be corrupted.");
+      }
+      return image;
+
     } catch (Exception e) {
-      this.logService.logError(this, "Unable to create texture from the given imageData:", e);
+      this.logService.logError(this, "Unable to create texture from the given image bytes:", e);
       return null;
     }
   }
 
-  public byte[] bytesFromBufferedImage(BufferedImage image) throws Exception {
+  /** Returns null if something went wrong. */
+  public @Nullable byte[] bytesFromBufferedImage(BufferedImage image) {
     ByteArrayOutputStream stream = new ByteArrayOutputStream();
     try {
       ImageIO.write(image, "png", stream);
       return stream.toByteArray();
     } catch (Exception e) {
       this.logService.logError(this, "Unable to convert the buffered image to a string:", e);
-      throw e;
+      return null;
     }
   }
 
   /** Creates a texture from a HTTP image URL. Can be run on any thread. */
   public ResolvableTexture createCacheableTextureFromUrl(int width, int height, String imageUrl, @Nullable String cacheKey) {
-    return new ResolvableTexture(this.minecraft, this.persistentCacheService, this, width, height, () -> this.downloadBufferedImage(imageUrl), cacheKey);
+    return new ResolvableTexture(this.minecraft, this.persistentCacheService, this, width, height, () -> this.downloadImageBytes(imageUrl), cacheKey);
   }
 
-  private BufferedImage downloadBufferedImage(String imageUrl) {
-    try {
-      byte[] imageBytes = this.downloadImageBytes(imageUrl);
-      @Nullable BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
-      if (bufferedImage == null) {
-        throw new RuntimeException("Buffered image is null - probably corrupt data.");
-      }
-
-      return bufferedImage;
-    } catch (Exception e) {
-      this.logService.logError(this, "Unable to create texture from the given url:", e);
-      throw new RuntimeException(e);
-    }
-  }
-
-  private byte[] downloadImageBytes(String url) throws Exception {
+  private byte[] downloadImageBytes(String url) {
     // copied from a random SO answer, I hope this works lol
     // https://stackoverflow.com/a/45560205
-    URL imageUrl = new URL(url);
-    URLConnection connection = imageUrl.openConnection();
-    InputStream inputStream = connection.getInputStream();
-    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    byte[] buffer = new byte[1024];
-    int read;
-    while ((read = inputStream.read(buffer, 0, buffer.length)) != -1) {
-      outputStream.write(buffer, 0, read);
-    }
-    outputStream.flush();
+    try {
+      URL imageUrl = new URL(url);
+      URLConnection connection = imageUrl.openConnection();
+      InputStream inputStream = connection.getInputStream();
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      byte[] buffer = new byte[1024];
+      int read;
+      while ((read = inputStream.read(buffer, 0, buffer.length)) != -1) {
+        outputStream.write(buffer, 0, read);
+      }
+      outputStream.flush();
 
-    return outputStream.toByteArray();
+      return outputStream.toByteArray();
+    } catch (Exception e) {
+      this.logService.logError(this, "Unable to download image bytes from", url, e);
+      return null;
+    }
   }
 }

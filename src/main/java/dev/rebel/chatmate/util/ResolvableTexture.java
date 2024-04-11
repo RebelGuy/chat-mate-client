@@ -21,7 +21,7 @@ public class ResolvableTexture {
   private final @Nullable PersistentCacheService cacheService;
   private final @Nullable ImageService imageService;
   private @Nullable Texture resolvedTexture;
-  private final @Nullable Supplier<BufferedImage> resolvableImage;
+  private final @Nullable Supplier<byte[]> resolvableImage;
   private final @Nullable String cacheKey;
   private @Nullable Consumer<Texture> onResolveCallback;
   private @Nullable Consumer<Throwable> onErrorCallback;
@@ -32,7 +32,7 @@ public class ResolvableTexture {
                            @Nullable ImageService imageService,
                            int width,
                            int height,
-                           @Nonnull Supplier<BufferedImage> resolvableImage,
+                           @Nonnull Supplier<byte[]> resolvableImage,
                            @Nullable String cacheKey) {
     this.width = width;
     this.height = height;
@@ -81,27 +81,40 @@ public class ResolvableTexture {
     if (this.cacheService != null && this.cacheKey != null) {
       this.cacheService.getValueForKey(this.cacheKey, this::onGetTextureBytes, this::onReceivedTextureBytes);
     } else {
-      byte[] bytes = this.onGetTextureBytes();
+      @Nullable byte[] bytes = this.onGetTextureBytes();
       this.onReceivedTextureBytes(bytes);
     }
   }
 
-  private byte[] onGetTextureBytes() {
-    assert this.imageService != null;
+  private @Nullable byte[] onGetTextureBytes() {
+    assert this.resolvableImage != null;
 
-    BufferedImage bufferedImage = this.resolvableImage.get();
     try {
-      return this.imageService.bytesFromBufferedImage(bufferedImage);
+      return this.resolvableImage.get();
     } catch (Exception e) {
       return null;
     }
   }
 
-  private void onReceivedTextureBytes(byte[] result) {
+  private void onReceivedTextureBytes(@Nullable byte[] result) {
     assert this.imageService != null;
 
+    if (result == null) {
+      if (this.onErrorCallback != null) {
+        this.onErrorCallback.accept(new Exception("Received texture byte array was null"));
+      }
+      return;
+    }
+
     try {
-      BufferedImage bufferedImage = this.imageService.bufferedImageFromBytes(result);
+      @Nullable BufferedImage bufferedImage = this.imageService.bufferedImageFromBytes(result);
+      if (bufferedImage == null) {
+        if (this.onErrorCallback != null) {
+          this.onErrorCallback.accept(new Exception("Unable to convert the given bytes to a buffered image"));
+        }
+
+        return;
+      }
 
       // generating the texture must happen on the main thread, where we have access to openGl
       assert this.minecraft != null;
