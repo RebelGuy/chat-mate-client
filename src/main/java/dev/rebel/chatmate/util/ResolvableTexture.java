@@ -14,8 +14,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ResolvableTexture {
-  public final int width;
-  public final int height;
+  public int width;
+  public int height;
   private boolean hasStarted;
   private final @Nullable Minecraft minecraft;
   private final @Nullable PersistentCacheService cacheService;
@@ -26,7 +26,7 @@ public class ResolvableTexture {
   private @Nullable Consumer<Texture> onResolveCallback;
   private @Nullable Consumer<Throwable> onErrorCallback;
 
-  /** The width and height must be the same as the resolved texture's width and height. */
+  /** The width and height should be the same as the resolved texture's width and height to avoid items shifting in chat. */
   public ResolvableTexture(@Nonnull Minecraft minecraft,
                            @Nullable PersistentCacheService cacheService,
                            @Nullable ImageService imageService,
@@ -115,6 +115,9 @@ public class ResolvableTexture {
 
         return;
       }
+
+      this.width = bufferedImage.getWidth();
+      this.height = bufferedImage.getHeight();
 
       // generating the texture must happen on the main thread, where we have access to openGl
       assert this.minecraft != null;

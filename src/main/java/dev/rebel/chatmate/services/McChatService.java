@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatImage;
 import dev.rebel.chatmate.api.publicObjects.emoji.PublicCustomEmoji;
 import dev.rebel.chatmate.config.Config.CommandMessageChatVisibility;
 import dev.rebel.chatmate.events.Event;
@@ -320,17 +321,34 @@ public class McChatService {
 
       } else if (msg.type == MessagePartType.emoji) {
         assert msg.emojiData != null;
-        String name = msg.emojiData.name;
-        char[] nameChars = name.toCharArray();
 
-        // the name could be the literal emoji unicode character
-        // check if the resource pack supports it - if so, use it!
-        if (nameChars.length == 1 && fontEngine.getCharWidth(nameChars[0]).getGui() > 0) {
-          text = name;
-          style = YT_CHAT_MESSAGE_TEXT_STYLE.get();
+        if (msg.emojiData.image.url != null) {
+          // render the emoji
+          PublicChatImage image = msg.emojiData.image;
+          ImageChatComponent imageChatComponent = new ImageChatComponent(
+              // if we don't have dimensions (e.g. svg), we assume a square image. this is true in most cases.
+              // if our guess is wrong, we can expect some slight re-shifting of items in chat, which is acceptable
+              this.imageService.createCacheableTextureFromUrl(firstNonNull(image.width, 64), firstNonNull(image.height, 64), image.url, msg.emojiData.getCacheKey()),
+              this.dimFactory.fromGui(1),
+              this.dimFactory.fromGui(1),
+              greyOut
+          );
+          components.add(imageChatComponent);
+          continue;
         } else {
-          text = msg.emojiData.label; // e.g. :slightly_smiling:
-          style = YT_CHAT_MESSAGE_EMOJI_STYLE.get();
+          // draw the name/label of the emoji
+          String name = msg.emojiData.name;
+          char[] nameChars = name.toCharArray();
+
+          // the name could be the literal emoji unicode character
+          // check if the resource pack supports it - if so, use it!
+          if (nameChars.length == 1 && fontEngine.getCharWidth(nameChars[0]).getGui() > 0) {
+            text = name;
+            style = YT_CHAT_MESSAGE_TEXT_STYLE.get();
+          } else {
+            text = msg.emojiData.label; // e.g. :slightly_smiling:
+            style = YT_CHAT_MESSAGE_EMOJI_STYLE.get();
+          }
         }
 
       } else if (msg.type == MessagePartType.customEmoji) {
