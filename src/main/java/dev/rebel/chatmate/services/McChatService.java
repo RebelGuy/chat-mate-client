@@ -322,13 +322,13 @@ public class McChatService {
       } else if (msg.type == MessagePartType.emoji) {
         assert msg.emojiData != null;
 
-        if (msg.emojiData.image.url != null) {
+        if (msg.emojiData.image != null) {
           // render the emoji
           PublicChatImage image = msg.emojiData.image;
           ImageChatComponent imageChatComponent = new ImageChatComponent(
               // if we don't have dimensions (e.g. svg), we assume a square image. this is true in most cases.
               // if our guess is wrong, we can expect some slight re-shifting of items in chat, which is acceptable
-              this.imageService.createCacheableTextureFromUrl(firstNonNull(image.width, 64), firstNonNull(image.height, 64), image.url, msg.emojiData.getCacheKey()),
+              this.imageService.createCacheableTextureFromUrl(image.width, image.height, image.url, msg.emojiData.getCacheKey()),
               this.dimFactory.fromGui(1),
               this.dimFactory.fromGui(1),
               greyOut
