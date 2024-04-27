@@ -88,7 +88,16 @@ recorded within the `Sampler` tab.
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
-## v1.30 - The Cleanup Update 2 [18/1/2024]
+## v1.31 - The Emoji Update v2
+- Public emojis are now rendered in chat
+  - This feature is enabled only for chat users with a donator rank
+  - While fetching the emoji image, a blank placeholder is reserved in the chat window and will be filled in once the emoji has finished loading
+  - Emojis are cached in the ChatMate data folder for better efficiency
+  - Custom emojis are now also cached for better efficiency
+- There is now an option to only show the livestream-related ChatMate HUD indicators (live status and live viewers) while livestreaming
+- Improved the debuggability of Interactive Elements
+
+## v1.30 - The Cleanup Update v2 [18/1/2024]
 - The CI build process now automatically creates a release on Github with the built .jar file
 - Fixed a crash when logging out
 - Improved displayed ChatMate version
