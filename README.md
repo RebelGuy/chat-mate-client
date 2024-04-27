@@ -88,7 +88,7 @@ recorded within the `Sampler` tab.
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
-## v1.31 - The Emoji Update v2
+## v1.31 - The Emoji Update v2 [28/04/2024]
 - Public emojis are now rendered in chat
   - This feature is enabled only for chat users with a donator rank
   - While fetching the emoji image, a blank placeholder is reserved in the chat window and will be filled in once the emoji has finished loading
