@@ -14,6 +14,8 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 
+import javax.annotation.Nullable;
+
 import static dev.rebel.chatmate.gui.chat.ComponentHelpers.getFormattedText;
 
 public class ChatComponentRenderer extends Gui {
@@ -41,13 +43,14 @@ public class ChatComponentRenderer extends Gui {
 
     } else if (component instanceof ImageChatComponent) {
       ImageChatComponent imageComponent = (ImageChatComponent)component;
-      Texture texture = imageComponent.getTexture();
-      if (texture == null) {
-        return x.setGui(0);
-      }
+      @Nullable Texture texture = imageComponent.getTexture();
 
       Dim lineHeight = fontEngine.FONT_HEIGHT_DIM;
       Dim requiredWidth = imageComponent.getRequiredWidth(lineHeight);
+      if (texture == null) {
+        return requiredWidth;
+      }
+
       Dim currentHeight = this.dimFactory.fromScreen(texture.height);
       Dim effectiveHeight = imageComponent.getEffectiveHeight(lineHeight);
       Dim imageX = x.plus(imageComponent.paddingGuiLeft);

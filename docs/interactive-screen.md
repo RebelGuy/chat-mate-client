@@ -106,3 +106,8 @@ The following event handlers are available for elements inheriting `ElementBase`
 - `onMouseEnter`/`onCaptureMouseEnter`: Invoked when the mouse pointer first enters the element's collision box. Note that propagation is only cancelable in the capture phase. If propagation is cancelled, the element will be cached for blocking propagation until the mouse has exited its collision box. In other words, all elements beneath it will not receive the event, but may instead receive the `onMouseExit` event. If a previously blocked element under the mouse cursor is no longer blocked, it will immediately receive the `onMouseEnter` event without the option to cancel.
 - `onMouseExit`: Invoked when the mouse pointer first exits the element's collision box. The `InteractiveScreen` automatically decides which elements should be notified of this event. Propagation cannot be cancelled. The order in which elemets are notified is undefined.
 - `onWindowResize`: Invoked when the Minecraft screen size has changed. The event is sent straight to all elements and cannot be cancelled.
+
+# Troubleshooting
+
+## The `box` is null during rendering, leading to an exception
+Either you have not called `setBox` on all of your element's children, or you have performed a side effect without calling `context.renderer.runSideEffect()`.

@@ -287,6 +287,11 @@ public class ElementReference implements IElement {
   }
 
   @Override
+  public String getName() {
+    return this.underlyingElement == null ? this.getName() : this.underlyingElement.getName();
+  }
+
+  @Override
   public IElement setMaxWidth(@Nullable Dim maxWidth) {
     return this.underlyingElement == null ? this : this.underlyingElement.setMaxWidth(maxWidth);
   }

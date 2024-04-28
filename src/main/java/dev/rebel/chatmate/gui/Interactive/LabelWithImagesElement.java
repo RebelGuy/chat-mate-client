@@ -7,6 +7,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.EnumHelpers;
+import dev.rebel.chatmate.util.ResolvableTexture;
 import dev.rebel.chatmate.util.TextHelpers;
 
 import javax.annotation.Nullable;
@@ -77,7 +79,7 @@ public class LabelWithImagesElement extends InlineElement {
             this.imageElements.add(imageElement);
             super.addElement(imageElement);
           } else {
-            throw new RuntimeException("MessagePartsElement only support text and custom emoji parts at the moment");
+            throw EnumHelpers.<LabelWithImagesElement.Type>assertUnreachable(subPart.getType(), "MessagePartsElement only support text and custom emoji parts at the moment");
           }
         }
       }
@@ -136,7 +138,7 @@ public class LabelWithImagesElement extends InlineElement {
 
   private ImageElement createImageElement(ImagePart part) {
     ImageElement element = new ImageElement(super.context, this)
-        .setImage(part.texture)
+        .setImage(part.resolvableTexture)
         .setTargetContentHeight(super.context.fontEngine.FONT_HEIGHT_DIM.times(this.scale))
         .setPadding(this.getPaddingForParts())
         .setHorizontalAlignment(this.horizontalAlignment)
@@ -187,10 +189,14 @@ public class LabelWithImagesElement extends InlineElement {
   }
 
   public static class ImagePart implements IPart {
-    public final Texture texture;
+    public final ResolvableTexture resolvableTexture;
 
     public ImagePart(Texture texture) {
-      this.texture = texture;
+      this(new ResolvableTexture(texture));
+    }
+
+    public ImagePart(ResolvableTexture resolvableTexture) {
+      this.resolvableTexture = resolvableTexture;
     }
 
     @Override

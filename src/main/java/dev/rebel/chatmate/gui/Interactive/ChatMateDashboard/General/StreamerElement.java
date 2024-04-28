@@ -78,14 +78,18 @@ public class StreamerElement extends BlockElement {
   }
 
   private void onGetPrimaryChannelsError(Throwable error) {
-    this.errorLabel.setText(EndpointProxy.getApiErrorMessage(error)).setVisible(true);
+    super.context.renderer.runSideEffect(() -> {
+      this.errorLabel.setText(EndpointProxy.getApiErrorMessage(error)).setVisible(true);
+    });
   }
 
   private void onGetPrimaryChannelsResponse(GetPrimaryChannelsResponseData response) {
-    if (!response.hasPrimaryYoutubeChannel() && !response.hasPrimaryTwitchChannel()) {
-      this.noPrimaryLivestreamsElement.setVisible(true);
-    } else if (response.hasPrimaryYoutubeChannel()) {
-      this.youtubeLivestreamElement.setVisible(true);
-    }
+    super.context.renderer.runSideEffect(() -> {
+      if (!response.hasPrimaryYoutubeChannel() && !response.hasPrimaryTwitchChannel()) {
+        this.noPrimaryLivestreamsElement.setVisible(true);
+      } else if (response.hasPrimaryYoutubeChannel()) {
+        this.youtubeLivestreamElement.setVisible(true);
+      }
+    });
   }
 }

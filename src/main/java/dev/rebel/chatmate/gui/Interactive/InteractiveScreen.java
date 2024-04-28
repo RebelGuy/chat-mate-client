@@ -242,15 +242,19 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       return;
     }
 
+    this.context.renderingStage = RenderingStage.PRE_RENDERING;
     this.recalculateLayout();
     if (this.shouldCloseScreen) {
       this.doCloseScreen();
       return;
     }
 
+    this.context.renderingStage = RenderingStage.RENDERING;
     this.context.renderer.clear();
     this.mainElement.render(null);
     this.context.renderer._executeRender();
+
+    this.context.renderingStage = RenderingStage.POST_RENDERING;
 
     // add one last side effect: fire a synthetic mouse event since elements that previously depended on the mouse position may have been moved as a side effect.
     // we have to check if there was an actual recalculation (can't just check `this.shouldRecalculateLayout` because that may have already been reset)
@@ -268,6 +272,8 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     if (this.context.debugElement != null) {
       ElementHelpers.renderDebugInfo(this.context.debugElement, this.context);
     }
+
+    this.context.renderingStage = RenderingStage.IDLE;
   }
 
   @Override
@@ -798,6 +804,9 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   public IElement setName(String name) { return null; }
 
   @Override
+  public String getName() { return null; }
+
+  @Override
   public IElement setMaxWidth(@Nullable Dim maxWidth) { return null; }
 
   @Override
@@ -828,6 +837,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
 
   public static class InteractiveContext {
     private List<IFocusListener> focusListeners = new ArrayList<>();
+    public RenderingStage renderingStage = RenderingStage.IDLE;
 
     public final ScreenRenderer renderer;
     public final MouseEventService mouseEventService;
@@ -853,6 +863,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     public final Config config;
     public final ImageService imageService;
     public final DonationHudStore donationHudStore;
+    public final StatusService statusService;
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
@@ -887,7 +898,8 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
                               StreamerApiStore streamerApiStore,
                               Config config,
                               ImageService imageService,
-                              DonationHudStore donationHudStore) {
+                              DonationHudStore donationHudStore,
+                              StatusService statusService) {
       this.renderer = renderer;
       this.mouseEventService = mouseEventService;
       this.keyboardEventService = keyboardEventService;
@@ -912,6 +924,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       this.config = config;
       this.imageService = imageService;
       this.donationHudStore = donationHudStore;
+      this.statusService = statusService;
     }
 
     public void addFocusListener(IFocusListener focusListener) {
@@ -1048,6 +1061,13 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
     PUBLIC,
     /** Minecraft does not know about this screen and we have to manage its lifecycle ourselves. */
     PRIVATE
+  }
+
+  public enum RenderingStage {
+    IDLE,
+    PRE_RENDERING,
+    RENDERING,
+    POST_RENDERING
   }
 }
 
