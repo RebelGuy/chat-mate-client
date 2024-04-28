@@ -264,6 +264,7 @@ public class ContextMenuService {
         this.streamerApiStore,
         this.config,
         this.imageService,
-        this.donationHudStore);
+        this.donationHudStore,
+        this.statusService);
   }
 }

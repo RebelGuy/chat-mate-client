@@ -20,6 +20,7 @@ public class v5v6 extends Migration<SerialisedConfigV5, SerialisedConfigV6> {
         data.showChatPlatformIcon,
         new SerialisedConfigV6.SerialisedSeparableHudElement(data.statusIndicator.enabled, data.statusIndicator.separatePlatforms, data.statusIndicator.showPlatformIcon, data.statusIndicator.platformIconPosition),
         new SerialisedConfigV6.SerialisedSeparableHudElement(data.viewerCount.enabled, data.viewerCount.separatePlatforms, data.viewerCount.showPlatformIcon, data.viewerCount.platformIconPosition),
+        false,
         data.debugModeEnabled,
         new String[0],
         data.lastGetChatResponse,

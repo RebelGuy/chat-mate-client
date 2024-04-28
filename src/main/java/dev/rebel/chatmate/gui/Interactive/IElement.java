@@ -80,6 +80,7 @@ public interface IElement {
   IElement setOnClick(@Nullable Runnable onClick);
 
   IElement setName(String name);
+  String getName();
 
   /** If set, the element's full width will never exceed this value. */
   IElement setMaxWidth(@Nullable Dim maxWidth);

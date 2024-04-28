@@ -3,9 +3,11 @@ package dev.rebel.chatmate.gui.chat;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.style.Colour;
+import dev.rebel.chatmate.util.ResolvableTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.IChatComponent;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
@@ -15,16 +17,33 @@ public class ImageChatComponent extends ChatComponentBase {
   private final @Nullable Dim maxHeight;
   private @Nullable Texture texture;
   private Colour colour;
-  private final Supplier<Texture> textureSupplier;
+  private final @Nullable Supplier<Texture> textureSupplier;
+  private final @Nullable ResolvableTexture resolvableTexture;
   private final boolean greyScale;
 
   public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale) {
     this(textureSupplier, paddingGuiLeft, paddingGuiRight, greyScale, null);
   }
 
-  public ImageChatComponent(Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale, @Nullable Dim maxHeight) {
+  public ImageChatComponent(@Nonnull Supplier<Texture> textureSupplier, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale, @Nullable Dim maxHeight) {
     super();
     this.textureSupplier = textureSupplier;
+    this.resolvableTexture = null;
+    this.paddingGuiLeft = paddingGuiLeft;
+    this.paddingGuiRight = paddingGuiRight;
+    this.maxHeight = maxHeight;
+    this.greyScale = greyScale;
+    this.colour = new Colour(1.0f, 1.0f, 1.0f);
+  }
+
+  public ImageChatComponent(ResolvableTexture resolvableTexture, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale) {
+    this(resolvableTexture, paddingGuiLeft, paddingGuiRight, greyScale, null);
+  }
+
+  public ImageChatComponent(@Nonnull ResolvableTexture resolvableTexture, Dim paddingGuiLeft, Dim paddingGuiRight, boolean greyScale, @Nullable Dim maxHeight) {
+    super();
+    this.textureSupplier = null;
+    this.resolvableTexture = resolvableTexture;
     this.paddingGuiLeft = paddingGuiLeft;
     this.paddingGuiRight = paddingGuiRight;
     this.maxHeight = maxHeight;
@@ -33,24 +52,49 @@ public class ImageChatComponent extends ChatComponentBase {
   }
 
   /** This must be called from the Minecraft thread, as it may initialise the texture and requires the OpenGL context. */
-  public Texture getTexture() {
-    if (this.texture == null) {
-      this.texture = this.textureSupplier.get();
-    }
+  public @Nullable Texture getTexture() {
+    if (this.textureSupplier != null) {
+      if (this.texture == null) {
+        this.texture = this.textureSupplier.get();
+      }
 
-    return this.texture;
+      return this.texture;
+    } else if (this.resolvableTexture != null) {
+      this.resolvableTexture.begin();
+      return this.resolvableTexture.getResolvedTexture();
+    } else {
+      throw new RuntimeException("Unable to get texture (did not expect to get here)");
+    }
   }
 
   public void destroy(TextureManager textureManager) {
     if (this.texture != null) {
       textureManager.deleteTexture(this.texture.resourceLocation);
     }
+
+    if (this.resolvableTexture != null && this.resolvableTexture.getResolvedTexture() == null) {
+      this.resolvableTexture.abort();
+    }
   }
 
   /** Returns the image width, in GUI units. */
   public Dim getImageWidth(Dim guiHeight) {
-    Texture texture = this.getTexture();
-    float aspectRatio = (float)texture.width / texture.height;
+    @Nullable Texture texture = this.getTexture();
+    int width;
+    int height;
+
+    if (texture != null) {
+      width = texture.width;
+      height = texture.height;
+    } else if (this.resolvableTexture != null) {
+      width = this.resolvableTexture.width;
+      height = this.resolvableTexture.height;
+    } else {
+      // this should be impossible
+      throw new RuntimeException("Unable to get image width (did not expect to get here)");
+    }
+
+    float aspectRatio = (float)width / height;
     Dim effectiveHeight = this.getEffectiveHeight(guiHeight);
     return effectiveHeight.times(aspectRatio);
   }

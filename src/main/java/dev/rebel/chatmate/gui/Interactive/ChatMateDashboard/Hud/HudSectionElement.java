@@ -36,6 +36,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
 
   private final CheckboxInputElement enableHudCheckbox;
   private final CheckboxInputElement showStatusIndicatorCheckbox;
+  private final CheckboxInputElement onlyShowIndicatorsWhenLiveCheckbox;
   private final ExpandableElement statusIndicatorSubElement;
   private final CheckboxInputElement showViewerCountCheckbox;
   private final ExpandableElement viewerCountSubElement;
@@ -56,7 +57,13 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
     this.enableHudCheckbox = CHECKBOX_WITH_CONFIG.apply(config.getHudEnabledEmitter(), CHECKBOX_LIGHT.create(context, this)
         .setLabel("Enable ChatMate HUD")
     );
+    this.onlyShowIndicatorsWhenLiveCheckbox = CHECKBOX_LIGHT.create(context, this)
+        .setChecked(config.getOnlyShowIndicatorsWhenLive().get())
+        .onCheckedChanged(enabled -> config.getOnlyShowIndicatorsWhenLive().set(enabled))
+        .setScale(SCALE)
+        .setLabel("Only show indicators when live");
     super.addElement(this.enableHudCheckbox);
+    super.addElement(this.onlyShowIndicatorsWhenLiveCheckbox);
 
     this.showStatusIndicatorCheckbox = CHECKBOX_LIGHT.create(context, this)
         .setChecked(this.statusIndicatorEmitter.get().enabled)
@@ -122,6 +129,7 @@ public class HudSectionElement extends ContainerElement implements ISectionEleme
   private void onChangeHudEnabled(Event<Boolean> event) {
     boolean enabled = event.getData();
     this.enableHudCheckbox.setChecked(enabled, true);
+    this.onlyShowIndicatorsWhenLiveCheckbox.setEnabled(this, enabled);
     this.showStatusIndicatorCheckbox.setEnabled(this, enabled);
     this.statusIndicatorSubElement.separatePlatformsElement.setEnabled(this, enabled); // nice use of the key functionality of setEnabled!
     this.statusIndicatorSubElement.showPlatformIconElement.setEnabled(this, enabled);

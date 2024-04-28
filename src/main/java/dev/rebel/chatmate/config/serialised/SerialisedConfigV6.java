@@ -24,6 +24,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
   public final boolean showChatPlatformIcon;
   public final SerialisedSeparableHudElement statusIndicator;
   public final SerialisedSeparableHudElement viewerCount;
+  public final boolean onlyShowIndicatorsWhenLive;
   public final boolean debugModeEnabled;
   public final String[] logLevels;
   public final long lastGetChatResponse;
@@ -41,6 +42,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
                             boolean showChatPlatformIcon,
                             SerialisedSeparableHudElement statusIndicator,
                             SerialisedSeparableHudElement viewerCount,
+                            boolean onlyShowIndicatorsWhenLive,
                             boolean debugModeEnabled,
                             String[] logLevels,
                             long lastGetChatResponse,
@@ -57,6 +59,7 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
     this.showChatPlatformIcon = showChatPlatformIcon;
     this.statusIndicator = statusIndicator;
     this.viewerCount = viewerCount;
+    this.onlyShowIndicatorsWhenLive = onlyShowIndicatorsWhenLive;
     this.debugModeEnabled = debugModeEnabled;
     this.logLevels = logLevels;
     this.lastGetChatResponse = lastGetChatResponse;

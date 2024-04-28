@@ -150,7 +150,7 @@ public class TextInputElement extends InputElement {
     this.text = text;
     if (super.hasFocus()) {
       this.setCursorPositionToEnd();
-    } else if (super.isInitialised()) {
+    } else if (super.isInitialised() && super.getBox() != null) {
       this.setCursorIndex(0);
     }
     return this;

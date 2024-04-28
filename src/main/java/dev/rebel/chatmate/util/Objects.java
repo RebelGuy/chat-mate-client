@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.util;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -51,6 +52,18 @@ public class Objects {
     }
 
     return null;
+  }
+
+  /** You better make sure none of the arguments are null... */
+  @SafeVarargs
+  public static @Nonnull <T> T firstNonNull(T... objects) {
+    for (T obj : objects) {
+      if (obj != null) {
+        return obj;
+      }
+    }
+
+    throw new RuntimeException("Object was null...");
   }
 
   public static @Nullable <T, U> U ifNotNull(@Nullable T obj, Function<T, U> selector) {

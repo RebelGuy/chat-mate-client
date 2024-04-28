@@ -286,6 +286,11 @@ public class ChatMateHudStore {
     }
 
     @Override
+    public String getName() {
+      return null;
+    }
+
+    @Override
     public IElement setMaxWidth(@Nullable Dim maxWidth) {
       return null;
     }

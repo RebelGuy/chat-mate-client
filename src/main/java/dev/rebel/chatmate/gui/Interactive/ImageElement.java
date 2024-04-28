@@ -7,6 +7,7 @@ import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
+import dev.rebel.chatmate.util.ResolvableTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 
 import javax.annotation.Nullable;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class ImageElement extends SingleElement {
-  private @Nullable Texture image;
+  private @Nullable ResolvableTexture image;
   protected float scale;
   private @Nullable Colour colour;
 
@@ -27,6 +28,26 @@ public class ImageElement extends SingleElement {
   }
 
   public ImageElement setImage(@Nullable Texture image) {
+    if (image == null) {
+      if (this.image != null) {
+        this.image = null;
+        super.onInvalidateSize();
+      }
+
+      return this;
+    }
+
+    ResolvableTexture resolvableTexture = new ResolvableTexture(image);
+    @Nullable Texture currentTexture = this.image == null ? null : this.image.getResolvedTexture();
+
+    if (!Objects.equals(currentTexture, image)) {
+      this.image = resolvableTexture;
+      super.onInvalidateSize();
+    }
+    return this;
+  }
+
+  public ImageElement setImage(@Nullable ResolvableTexture image) {
     if (!Objects.equals(this.image, image)) {
       this.image = image;
       super.onInvalidateSize();
@@ -65,6 +86,8 @@ public class ImageElement extends SingleElement {
     if (this.image == null) {
       return new DimPoint(ZERO, ZERO);
     }
+
+    this.image.begin();
 
     // dimensions before culling
     Dim width = gui(this.image.width).times(this.scale);
@@ -105,7 +128,7 @@ public class ImageElement extends SingleElement {
 
   @Override
   protected void renderElement() {
-    if (this.image == null) {
+    if (this.image == null || this.image.getResolvedTexture() == null) {
       return;
     }
 
@@ -113,6 +136,6 @@ public class ImageElement extends SingleElement {
     DimRect imageBox = ElementHelpers.alignElementInBox(size, super.getContentBox(), super.getHorizontalAlignment(), super.getVerticalAlignment());
     float effectiveScale = imageBox.getWidth().over(gui(this.image.width));
     TextureManager textureManager = super.context.minecraft.getTextureManager();
-    RendererHelpers.drawTexture(textureManager, super.context.dimFactory, this.image, imageBox.getTopLeft(), effectiveScale, this.colour);
+    RendererHelpers.drawTexture(textureManager, super.context.dimFactory, this.image.getResolvedTexture(), imageBox.getTopLeft(), effectiveScale, this.colour);
   }
 }
