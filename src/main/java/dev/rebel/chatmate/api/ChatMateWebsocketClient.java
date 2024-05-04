@@ -11,18 +11,25 @@ import dev.rebel.chatmate.api.models.websocket.server.EventMessageData;
 import dev.rebel.chatmate.api.models.websocket.server.ServerMessage;
 import dev.rebel.chatmate.api.models.websocket.server.ServerMessage.ServerMessageType;
 import dev.rebel.chatmate.services.LogService;
+import dev.rebel.chatmate.util.TaskWrapper;
 import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.enums.ReadyState;
 import org.java_websocket.handshake.ServerHandshake;
 
+import javax.annotation.Nullable;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
 import java.util.function.Consumer;
 
 public class ChatMateWebsocketClient extends WebSocketClient {
   private final LogService logService;
   private final Gson gson;
   private final List<Consumer<EventMessageData>> callbacks;
+  private double lastRetryBackoff;
+  private @Nullable Timer retryTimer;
+  private boolean hasAttemptedInitialConnection;
 
   public ChatMateWebsocketClient(LogService logService, Environment environment) {
     super(createUri(environment)); // the fact that we have to wrap this logic into a static function is laughable
@@ -32,7 +39,9 @@ public class ChatMateWebsocketClient extends WebSocketClient {
         .create();
     this.callbacks = new ArrayList<>();
 
-    super.connect();
+    this.hasAttemptedInitialConnection = false;
+    this.lastRetryBackoff = 500;
+    this.tryConnectAfterDelay(100);
   }
 
   public void addListener(Consumer<EventMessageData> callback) {
@@ -85,6 +94,8 @@ public class ChatMateWebsocketClient extends WebSocketClient {
   public void onOpen(ServerHandshake handshake) {
     this.logService.logInfo(this, "Websocket connection established");
 
+    this.cancelRetryTimer();
+    this.lastRetryBackoff = 500;
     this.subscribeToStreamerTopic(Topic.STREAMER_CHAT, "rebel_guy");
   }
 
@@ -92,13 +103,54 @@ public class ChatMateWebsocketClient extends WebSocketClient {
   public void onClose(int code, String reason, boolean remote) {
     this.logService.logInfo(this, "Websocket closed with code", code, "and reason", reason);
 
+    this.cancelRetryTimer();
+    this.lastRetryBackoff *= 2;
+    this.tryConnectAfterDelay(this.lastRetryBackoff);
     // todo: automatically reconnect
     // todo: upon reconnection (or while disconnected), we might want to use an REST API request to fetch the data we might have missed
   }
 
   @Override
   public void onError(Exception e) {
-    this.logService.logError(this, e);
+    this.logService.logError(this, "Websocket encountered an error:", e);
+  }
+
+  private void onTryReconnect() {
+    this.logService.logInfo(this, "Attempting to connect...");
+
+    try {
+      if (super.getReadyState() == ReadyState.OPEN) {
+        this.logService.logError(this, "Attempting to connect but connection is already open. Attempting to close and re-open the connection.");
+        super.closeBlocking();
+      }
+
+      if (!this.hasAttemptedInitialConnection) {
+        // we can only do the initial connection once - any further attempts to call connect() will throw.
+        // it doesn't seem like we can check the state on the Websocket object, which is just fantastic!
+        this.hasAttemptedInitialConnection = true;
+        super.connectBlocking();
+      } else {
+        super.reconnectBlocking();
+      }
+
+      if (super.getReadyState() == ReadyState.OPEN || super.getReadyState() == ReadyState.CLOSED) {
+        // if it's closed, the onClose handler will be called
+        return;
+      } else {
+        this.logService.logError(this, "Apparently connected successfully but ready state is", super.getReadyState(), "- will retry the connection");
+      }
+    } catch (Exception e) {
+      this.logService.logError(this, "Unable to connect:", e);
+    }
+
+    this.cancelRetryTimer();
+    this.lastRetryBackoff *= 2;
+    this.tryConnectAfterDelay(this.lastRetryBackoff);
+  }
+
+  private void tryConnectAfterDelay(double delay) {
+    this.retryTimer = new Timer();
+    this.retryTimer.schedule(new TaskWrapper(this::onTryReconnect), (long)delay);
   }
 
   private void subscribeToStreamerTopic(Topic topic, String streamer) {
@@ -115,6 +167,13 @@ public class ChatMateWebsocketClient extends WebSocketClient {
 
   private void send(Object data) {
     this.send(this.gson.toJson(data));
+  }
+
+  private void cancelRetryTimer() {
+    if (this.retryTimer != null) {
+      this.retryTimer.cancel();
+      this.retryTimer = null;
+    }
   }
 
   @Override
