@@ -2,6 +2,7 @@ package dev.rebel.chatmate;
 
 import dev.rebel.chatmate.Environment.Env;
 import dev.rebel.chatmate.api.ChatMateApiException;
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
 import dev.rebel.chatmate.api.publicObjects.streamer.PublicStreamerSummary;
 import dev.rebel.chatmate.commands.*;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
@@ -21,11 +22,8 @@ import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.events.*;
 import dev.rebel.chatmate.stores.*;
-import dev.rebel.chatmate.util.Collections;
-import dev.rebel.chatmate.util.FileHelpers;
+import dev.rebel.chatmate.util.*;
 import dev.rebel.chatmate.services.ApiRequestService;
-import dev.rebel.chatmate.util.ApiPollerFactory;
-import dev.rebel.chatmate.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.launchwrapper.Launch;
@@ -34,6 +32,7 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import org.java_websocket.client.WebSocketClient;
 
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
@@ -114,7 +113,8 @@ public class ChatMate {
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config, streamerApiStore);
-    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory, config, dateTimeService);
+    ChatMateWebsocketClient chatMateWebsocketClient = new ChatMateWebsocketClient(logService, environment);
+    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory, config, dateTimeService, chatMateWebsocketClient);
 
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);

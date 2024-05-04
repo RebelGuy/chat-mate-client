@@ -1,9 +1,12 @@
 package dev.rebel.chatmate.events;
 
 import dev.rebel.chatmate.api.ChatMateApiException;
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
+import dev.rebel.chatmate.api.models.websocket.Topic;
+import dev.rebel.chatmate.api.models.websocket.server.EventMessageData;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
-import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.DateTimeService;
@@ -19,23 +22,29 @@ import jline.internal.Nullable;
 
 import java.util.Date;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class ChatMateChatService extends EventServiceBase<EventType> {
   private final static long TIMEOUT_WAIT = 20 * 1000;
 
   private final ChatEndpointProxy chatEndpointProxy;
-  private final ApiPoller<GetChatResponseData> apiPoller;
+//  private final ApiPoller<GetChatResponseData> apiPoller;
   private final Config config;
   private final DateTimeService dateTimeService;
+  private final ChatMateWebsocketClient chatMateWebsocketClient;
 
-  public ChatMateChatService(LogService logService, ChatEndpointProxy chatEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService) {
+  public ChatMateChatService(LogService logService, ChatEndpointProxy chatEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService, ChatMateWebsocketClient chatMateWebsocketClient) {
     super(EventType.class, logService);
 
     this.chatEndpointProxy = chatEndpointProxy;
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
+//    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
     this.config = config;
     this.dateTimeService = dateTimeService;
+    this.chatMateWebsocketClient = chatMateWebsocketClient;
+
+    this.chatMateWebsocketClient.addListener(this::onWebsocketMessage);
+
+    // catch up on the missed events since last time
+    this.onMakeRequest(this::onApiResponse, this::onApiError);
   }
 
   public void onNewChat(EventCallback<NewChatEventData> handler, Object key) {
@@ -68,6 +77,18 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     if (Objects.ifClass(ChatMateApiException.class, error, e -> e.apiResponseError.errorCode == 500)) {
       this.config.getLastGetChatResponseEmitter().set(new Date().getTime());
       this.logService.logWarning(this, "API status code was 500. To prevent further issues, the timestamp for the next request has been reset.");
+    }
+  }
+
+  private void onWebsocketMessage(EventMessageData data) {
+    if (data.topic != Topic.STREAMER_CHAT) {
+      return;
+    }
+
+    PublicChatItem chatItem = data.getChatData();
+    Event<NewChatEventData> event = new Event<>(new NewChatEventData(new PublicChatItem[] { chatItem }));
+    for (EventHandler<NewChatEventData, ?> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
+      super.safeDispatch(EventType.NEW_CHAT, handler, event);
     }
   }
 
