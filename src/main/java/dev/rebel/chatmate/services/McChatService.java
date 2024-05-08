@@ -209,7 +209,7 @@ public class McChatService {
       this.minecraftProxyService.printChatMessage("New viewer", message);
 
     } catch (Exception e) {
-      this.logService.logError(this, String.format("Could not print new viewer message for '%s'", data.newViewer.user.channel.displayName));
+      this.logService.logError(this, String.format("Could not print new viewer message for '%s'", data.newViewer.user.channel.displayName), e);
     }
   }
 

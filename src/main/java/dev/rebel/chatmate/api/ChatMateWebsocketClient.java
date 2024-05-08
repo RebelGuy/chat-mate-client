@@ -96,7 +96,8 @@ public class ChatMateWebsocketClient extends WebSocketClient {
 
     this.cancelRetryTimer();
     this.lastRetryBackoff = 500;
-    this.subscribeToStreamerTopic(Topic.STREAMER_CHAT, "rebel_guy");
+    this.subscribeToStreamerTopic(Topic.STREAMER_CHAT, "rebel_guy"); // todo: subscribe after logging in so we have the streamer
+    this.subscribeToStreamerTopic(Topic.STREAMER_EVENTS, "rebel_guy");
   }
 
   @Override

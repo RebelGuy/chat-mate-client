@@ -1,18 +1,19 @@
 package dev.rebel.chatmate.events;
 
 import dev.rebel.chatmate.api.ChatMateApiException;
-import dev.rebel.chatmate.api.publicObjects.event.*;
-import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.api.publicObjects.event.PublicChatMateEvent.ChatMateEventType;
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
 import dev.rebel.chatmate.api.models.chatMate.GetEventsResponse.GetEventsResponseData;
+import dev.rebel.chatmate.api.models.websocket.Topic;
+import dev.rebel.chatmate.api.models.websocket.server.EventMessageData;
 import dev.rebel.chatmate.api.proxy.StreamerEndpointProxy;
+import dev.rebel.chatmate.api.publicObjects.event.*;
+import dev.rebel.chatmate.api.publicObjects.event.PublicChatMateEvent.ChatMateEventType;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.events.models.*;
 import dev.rebel.chatmate.services.DateTimeService;
 import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
 import dev.rebel.chatmate.services.LogService;
-import dev.rebel.chatmate.util.ApiPoller;
-import dev.rebel.chatmate.util.ApiPoller.PollType;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Objects;
@@ -26,17 +27,29 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
 
   private final StreamerEndpointProxy streamerEndpointProxy;
   private final LogService logService;
-  private final ApiPoller<GetEventsResponseData> apiPoller;
+//  private final ApiPoller<GetEventsResponseData> apiPoller;
   private final Config config;
   private final DateTimeService dateTimeService;
+  private final ChatMateWebsocketClient chatMateWebsocketClient;
 
-  public ChatMateEventService(LogService logService, StreamerEndpointProxy streamerEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService) {
+  public ChatMateEventService(LogService logService,
+                              StreamerEndpointProxy streamerEndpointProxy,
+                              ApiPollerFactory apiPollerFactory,
+                              Config config,
+                              DateTimeService dateTimeService,
+                              ChatMateWebsocketClient chatMateWebsocketClient) {
     super(ChatMateEventType.class, logService);
     this.streamerEndpointProxy = streamerEndpointProxy;
     this.logService = logService;
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 1000L, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
+//    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 1000L, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
     this.config = config;
     this.dateTimeService = dateTimeService;
+    this.chatMateWebsocketClient = chatMateWebsocketClient;
+
+    this.chatMateWebsocketClient.addListener(this::onWebsocketMessage);
+
+    // catch up on the missed events since last time
+    this.onMakeRequest(this::onApiResponse, this::onApiError);
   }
 
   public void onLevelUp(EventCallback<LevelUpEventData> handler) {
@@ -76,59 +89,64 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
 
   private void onApiResponse(GetEventsResponseData response) {
     this.config.getLastGetChatMateEventsResponseEmitter().set(response.reusableTimestamp);
+
     for (PublicChatMateEvent event : response.events) {
-      if (event.type == ChatMateEventType.LEVEL_UP) {
-        ChatMateEventType eventType = ChatMateEventType.LEVEL_UP;
-        for (EventHandler<LevelUpEventData, ?> handler : this.getListeners(eventType, LevelUpEventData.class)) {
-          PublicLevelUpData data = event.levelUpData;
-          LevelUpEventData eventData = new LevelUpEventData(new Date(event.timestamp), data.user, data.oldLevel, data.newLevel);
-          this.safeDispatch(eventType, handler, new Event<>(eventData));
-        }
+      this.handleEvent(event);
+    }
+  }
 
-      } else if (event.type == ChatMateEventType.NEW_TWITCH_FOLLOWER) {
-        ChatMateEventType eventType = ChatMateEventType.NEW_TWITCH_FOLLOWER;
-        for (EventHandler<NewTwitchFollowerEventData, ?> handler : this.getListeners(eventType, NewTwitchFollowerEventData.class)) {
-          PublicNewTwitchFollowerData data = event.newTwitchFollowerData;
-          NewTwitchFollowerEventData eventData = new NewTwitchFollowerEventData(new Date(event.timestamp), data.displayName);
-          this.safeDispatch(eventType, handler, new Event<>(eventData));
-        }
-
-      } else if (event.type == ChatMateEventType.DONATION) {
-        ChatMateEventType eventType = ChatMateEventType.DONATION;
-        for (EventHandler<DonationEventData, ?> handler : this.getListeners(eventType, DonationEventData.class)) {
-          PublicDonationData data = event.donationData;
-          DonationEventData eventData = new DonationEventData(new Date(event.timestamp), data);
-          this.safeDispatch(eventType, handler, new Event<>(eventData));
-        }
-
-      } else if (event.type == ChatMateEventType.NEW_VIEWER) {
-        ChatMateEventType eventType = ChatMateEventType.NEW_VIEWER;
-        for (EventHandler<NewViewerEventData, ?> handler : this.getListeners(eventType, NewViewerEventData.class)) {
-          PublicNewViewerData data = event.newViewerData;
-          NewViewerEventData eventData = new NewViewerEventData(new Date(event.timestamp), data);
-          this.safeDispatch(eventType, handler, new Event<>(eventData));
-        }
-
-      } else if (event.type == ChatMateEventType.CHAT_MESSAGE_DELETED) {
-        ChatMateEventType eventType = ChatMateEventType.CHAT_MESSAGE_DELETED;
-        for (EventHandler<ChatMessageDeletedEventData, ?> handler : this.getListeners(eventType, ChatMessageDeletedEventData.class)) {
-          PublicChatMessageDeletedData data = event.chatMessageDeletedData;
-          ChatMessageDeletedEventData eventData = new ChatMessageDeletedEventData(new Date(event.timestamp), data);
-          this.safeDispatch(eventType, handler, new Event<>(eventData));
-        }
-
-      } else if (event.type == ChatMateEventType.RANK_UPDATE) {
-        ChatMateEventType eventType = ChatMateEventType.RANK_UPDATE;
-        for (EventHandler<RankUpdatedEventData, ?> handler : this.getListeners(eventType, RankUpdatedEventData.class)) {
-          PublicRankUpdateData data = event.rankUpdateData;
-          assert data != null;
-          RankUpdatedEventData eventData = new RankUpdatedEventData(data.rankName, data.isAdded, data.user, Collections.list(data.platformRanks));
-          this.safeDispatch(eventType, handler, new Event<>(eventData));
-        }
-
-      } else {
-        this.logService.logError("Invalid ChatMate event of type " + event.type);
+  private void handleEvent (PublicChatMateEvent event) {
+    if (event.type == ChatMateEventType.LEVEL_UP) {
+      ChatMateEventType eventType = ChatMateEventType.LEVEL_UP;
+      for (EventHandler<LevelUpEventData, ?> handler : this.getListeners(eventType, LevelUpEventData.class)) {
+        PublicLevelUpData data = event.levelUpData;
+        LevelUpEventData eventData = new LevelUpEventData(new Date(event.timestamp), data.user, data.oldLevel, data.newLevel);
+        this.safeDispatch(eventType, handler, new Event<>(eventData));
       }
+
+    } else if (event.type == ChatMateEventType.NEW_TWITCH_FOLLOWER) {
+      ChatMateEventType eventType = ChatMateEventType.NEW_TWITCH_FOLLOWER;
+      for (EventHandler<NewTwitchFollowerEventData, ?> handler : this.getListeners(eventType, NewTwitchFollowerEventData.class)) {
+        PublicNewTwitchFollowerData data = event.newTwitchFollowerData;
+        NewTwitchFollowerEventData eventData = new NewTwitchFollowerEventData(new Date(event.timestamp), data.displayName);
+        this.safeDispatch(eventType, handler, new Event<>(eventData));
+      }
+
+    } else if (event.type == ChatMateEventType.DONATION) {
+      ChatMateEventType eventType = ChatMateEventType.DONATION;
+      for (EventHandler<DonationEventData, ?> handler : this.getListeners(eventType, DonationEventData.class)) {
+        PublicDonationData data = event.donationData;
+        DonationEventData eventData = new DonationEventData(new Date(event.timestamp), data);
+        this.safeDispatch(eventType, handler, new Event<>(eventData));
+      }
+
+    } else if (event.type == ChatMateEventType.NEW_VIEWER) {
+      ChatMateEventType eventType = ChatMateEventType.NEW_VIEWER;
+      for (EventHandler<NewViewerEventData, ?> handler : this.getListeners(eventType, NewViewerEventData.class)) {
+        PublicNewViewerData data = event.newViewerData;
+        NewViewerEventData eventData = new NewViewerEventData(new Date(event.timestamp), data);
+        this.safeDispatch(eventType, handler, new Event<>(eventData));
+      }
+
+    } else if (event.type == ChatMateEventType.CHAT_MESSAGE_DELETED) {
+      ChatMateEventType eventType = ChatMateEventType.CHAT_MESSAGE_DELETED;
+      for (EventHandler<ChatMessageDeletedEventData, ?> handler : this.getListeners(eventType, ChatMessageDeletedEventData.class)) {
+        PublicChatMessageDeletedData data = event.chatMessageDeletedData;
+        ChatMessageDeletedEventData eventData = new ChatMessageDeletedEventData(new Date(event.timestamp), data);
+        this.safeDispatch(eventType, handler, new Event<>(eventData));
+      }
+
+    } else if (event.type == ChatMateEventType.RANK_UPDATE) {
+      ChatMateEventType eventType = ChatMateEventType.RANK_UPDATE;
+      for (EventHandler<RankUpdatedEventData, ?> handler : this.getListeners(eventType, RankUpdatedEventData.class)) {
+        PublicRankUpdateData data = event.rankUpdateData;
+        assert data != null;
+        RankUpdatedEventData eventData = new RankUpdatedEventData(data.rankName, data.isAdded, data.user, Collections.list(data.platformRanks));
+        this.safeDispatch(eventType, handler, new Event<>(eventData));
+      }
+
+    } else {
+      this.logService.logError("Invalid ChatMate event of type " + event.type);
     }
   }
 
@@ -139,5 +157,14 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
       this.config.getLastGetChatMateEventsResponseEmitter().set(new Date().getTime());
       this.logService.logWarning(this, "API status code was 500. To prevent further issues, the timestamp for the next request has been reset.");
     }
+  }
+
+  private void onWebsocketMessage(EventMessageData data) {
+    if (data.topic != Topic.STREAMER_EVENTS) {
+      return;
+    }
+
+    PublicChatMateEvent event = data.getEventData();
+    this.handleEvent(event);
   }
 }

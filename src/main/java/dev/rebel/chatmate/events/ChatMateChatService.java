@@ -64,8 +64,11 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
 
   private void onApiResponse(GetChatResponseData response) {
     this.config.getLastGetChatResponseEmitter().set(response.reusableTimestamp);
+    this.handleChat(response.chat);
+  }
 
-    Event<NewChatEventData> event = new Event<>(new NewChatEventData(response.chat));
+  private void handleChat(PublicChatItem[] chat) {
+    Event<NewChatEventData> event = new Event<>(new NewChatEventData(chat));
     for (EventHandler<NewChatEventData, ?> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
       super.safeDispatch(EventType.NEW_CHAT, handler, event);
     }
@@ -86,10 +89,7 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     }
 
     PublicChatItem chatItem = data.getChatData();
-    Event<NewChatEventData> event = new Event<>(new NewChatEventData(new PublicChatItem[] { chatItem }));
-    for (EventHandler<NewChatEventData, ?> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
-      super.safeDispatch(EventType.NEW_CHAT, handler, event);
-    }
+    this.handleChat(new PublicChatItem[] { chatItem });
   }
 
   public enum EventType {
