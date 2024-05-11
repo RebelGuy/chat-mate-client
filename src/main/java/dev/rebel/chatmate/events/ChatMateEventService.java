@@ -14,6 +14,7 @@ import dev.rebel.chatmate.events.models.*;
 import dev.rebel.chatmate.services.DateTimeService;
 import dev.rebel.chatmate.services.DateTimeService.UnitOfTime;
 import dev.rebel.chatmate.services.LogService;
+import dev.rebel.chatmate.util.ApiPoller;
 import dev.rebel.chatmate.util.ApiPollerFactory;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.Objects;
@@ -24,10 +25,11 @@ import java.util.function.Consumer;
 
 public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
   private final static long TIMEOUT_WAIT = 60 * 1000;
+  private final static long POLLING_RATE = 5000L; // polls only when the websocket is closed
 
   private final StreamerEndpointProxy streamerEndpointProxy;
   private final LogService logService;
-//  private final ApiPoller<GetEventsResponseData> apiPoller;
+  private final ApiPoller<GetEventsResponseData> apiPoller;
   private final Config config;
   private final DateTimeService dateTimeService;
   private final ChatMateWebsocketClient chatMateWebsocketClient;
@@ -41,12 +43,14 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
     super(ChatMateEventType.class, logService);
     this.streamerEndpointProxy = streamerEndpointProxy;
     this.logService = logService;
-//    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 1000L, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, POLLING_RATE, ApiPoller.PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
     this.config = config;
     this.dateTimeService = dateTimeService;
     this.chatMateWebsocketClient = chatMateWebsocketClient;
 
-    this.chatMateWebsocketClient.addListener(this::onWebsocketMessage);
+    this.chatMateWebsocketClient.addMessageListener(this::onWebsocketMessage);
+    this.chatMateWebsocketClient.addConnectListener(this::onWebsocketConnect);
+    this.chatMateWebsocketClient.addDisconnectListener(this::onWebsocketDisconnect);
 
     // catch up on the missed events since last time
     this.onMakeRequest(this::onApiResponse, this::onApiError);
@@ -160,11 +164,21 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
   }
 
   private void onWebsocketMessage(EventMessageData data) {
-    if (data.topic != Topic.STREAMER_EVENTS) {
+    this.config.getLastGetChatMateEventsResponseEmitter().set(new Date().getTime());
+
+    if (data == null || data.topic != Topic.STREAMER_EVENTS) {
       return;
     }
 
     PublicChatMateEvent event = data.getEventData();
     this.handleEvent(event);
+  }
+
+  private void onWebsocketConnect() {
+    this.apiPoller.pausePoller();
+  }
+
+  private void onWebsocketDisconnect() {
+    this.apiPoller.resumePoller();
   }
 }

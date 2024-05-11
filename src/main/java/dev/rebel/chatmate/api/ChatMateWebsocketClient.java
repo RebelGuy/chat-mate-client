@@ -12,8 +12,10 @@ import dev.rebel.chatmate.api.models.websocket.server.ServerMessage;
 import dev.rebel.chatmate.api.models.websocket.server.ServerMessage.ServerMessageType;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.util.TaskWrapper;
+import org.java_websocket.WebSocket;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.enums.ReadyState;
+import org.java_websocket.framing.Framedata;
 import org.java_websocket.handshake.ServerHandshake;
 
 import javax.annotation.Nullable;
@@ -26,10 +28,13 @@ import java.util.function.Consumer;
 public class ChatMateWebsocketClient extends WebSocketClient {
   private final LogService logService;
   private final Gson gson;
-  private final List<Consumer<EventMessageData>> callbacks;
+  private final List<Runnable> connectCallbacks;
+  private final List<Runnable> disconnectCallbacks;
+  private final List<Consumer<EventMessageData>> messageCallbacks;
   private double lastRetryBackoff;
   private @Nullable Timer retryTimer;
   private boolean hasAttemptedInitialConnection;
+  private boolean enabled;
 
   public ChatMateWebsocketClient(LogService logService, Environment environment) {
     super(createUri(environment)); // the fact that we have to wrap this logic into a static function is laughable
@@ -37,19 +42,54 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.gson = new GsonBuilder()
         .serializeNulls()
         .create();
-    this.callbacks = new ArrayList<>();
+    this.connectCallbacks = new ArrayList<>();
+    this.disconnectCallbacks = new ArrayList<>();
+    this.messageCallbacks = new ArrayList<>();
 
     this.hasAttemptedInitialConnection = false;
     this.lastRetryBackoff = 500;
+    this.enabled = true;
     this.tryConnectAfterDelay(100);
   }
 
-  public void addListener(Consumer<EventMessageData> callback) {
-    this.callbacks.add(callback);
+  public void addConnectListener(Runnable callback) {
+    this.connectCallbacks.add(callback);
   }
 
-  public void removeListener(Consumer<EventMessageData> callback) {
-    this.callbacks.remove(callback);
+  public void removeConnectListener(Runnable callback) {
+    this.connectCallbacks.remove(callback);
+  }
+
+  public void addDisconnectListener(Runnable callback) {
+    this.disconnectCallbacks.add(callback);
+  }
+
+  public void removeDisconnectListener(Runnable callback) {
+    this.disconnectCallbacks.remove(callback);
+  }
+
+  /** The event data can be null, e.g. for ping messages. */
+  public void addMessageListener(Consumer<EventMessageData> callback) {
+    this.messageCallbacks.add(callback);
+  }
+
+  public void removeMessageListener(Consumer<EventMessageData> callback) {
+    this.messageCallbacks.remove(callback);
+  }
+
+  public void setEnabled(boolean enabled) {
+    this.enabled = enabled;
+
+    if (!this.enabled) {
+      super.close();
+    } else {
+      this.cancelRetryTimer();
+      this.onTryReconnect();
+    }
+  }
+
+  public boolean isEnabled() {
+    return this.enabled;
   }
 
   @Override
@@ -75,7 +115,7 @@ public class ChatMateWebsocketClient extends WebSocketClient {
       this.logService.logInfo(this, "Received event from server.", parsed);
       EventMessageData eventData = parsed.getEventData();
       if (eventData.topic == Topic.STREAMER_CHAT || eventData.topic == Topic.STREAMER_EVENTS) {
-        for (Consumer<EventMessageData> callback : this.callbacks) {
+        for (Consumer<EventMessageData> callback : this.messageCallbacks) {
           try {
             callback.accept(eventData);
           } catch (Exception e) {
@@ -91,6 +131,19 @@ public class ChatMateWebsocketClient extends WebSocketClient {
   }
 
   @Override
+  public void onWebsocketPong(WebSocket conn, Framedata f) {
+    super.onWebsocketPong(conn, f);
+
+    for (Consumer<EventMessageData> callback : this.messageCallbacks) {
+      try {
+        callback.accept(null);
+      } catch (Exception e) {
+        this.logService.logError(this, "Encountered exception while executing message callback for the pong message", e);
+      }
+    }
+  }
+
+  @Override
   public void onOpen(ServerHandshake handshake) {
     this.logService.logInfo(this, "Websocket connection established");
 
@@ -98,17 +151,35 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.lastRetryBackoff = 500;
     this.subscribeToStreamerTopic(Topic.STREAMER_CHAT, "rebel_guy"); // todo: subscribe after logging in so we have the streamer
     this.subscribeToStreamerTopic(Topic.STREAMER_EVENTS, "rebel_guy");
+
+    for (Runnable callback : this.connectCallbacks) {
+      try {
+        callback.run();
+      } catch (Exception e) {
+        this.logService.logError(this, "Encountered exception while notifying listeners of the onOpen event", e);
+      }
+    }
   }
 
   @Override
   public void onClose(int code, String reason, boolean remote) {
     this.logService.logInfo(this, "Websocket closed with code", code, "and reason", reason);
 
-    this.cancelRetryTimer();
-    this.lastRetryBackoff *= 2;
-    this.tryConnectAfterDelay(this.lastRetryBackoff);
-    // todo: automatically reconnect
-    // todo: upon reconnection (or while disconnected), we might want to use an REST API request to fetch the data we might have missed
+    if (this.enabled) {
+      this.cancelRetryTimer();
+      this.lastRetryBackoff *= 2;
+      this.tryConnectAfterDelay(this.lastRetryBackoff);
+    } else {
+      this.logService.logDebug(this, "Won't attempt to reconnect because the websocket has been disabled");
+    }
+
+    for (Runnable callback : this.disconnectCallbacks) {
+      try {
+        callback.run();
+      } catch (Exception e) {
+        this.logService.logError(this, "Encountered exception while notifying listeners of the onClose event", e);
+      }
+    }
   }
 
   @Override

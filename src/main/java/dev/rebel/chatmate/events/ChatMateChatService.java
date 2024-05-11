@@ -25,9 +25,10 @@ import java.util.function.Consumer;
 
 public class ChatMateChatService extends EventServiceBase<EventType> {
   private final static long TIMEOUT_WAIT = 20 * 1000;
+  private final static long POLLING_RATE = 5000L; // polls only when the websocket is closed
 
   private final ChatEndpointProxy chatEndpointProxy;
-//  private final ApiPoller<GetChatResponseData> apiPoller;
+  private final ApiPoller<GetChatResponseData> apiPoller;
   private final Config config;
   private final DateTimeService dateTimeService;
   private final ChatMateWebsocketClient chatMateWebsocketClient;
@@ -36,12 +37,14 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
     super(EventType.class, logService);
 
     this.chatEndpointProxy = chatEndpointProxy;
-//    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, POLLING_RATE, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
     this.config = config;
     this.dateTimeService = dateTimeService;
     this.chatMateWebsocketClient = chatMateWebsocketClient;
 
-    this.chatMateWebsocketClient.addListener(this::onWebsocketMessage);
+    this.chatMateWebsocketClient.addMessageListener(this::onWebsocketMessage);
+    this.chatMateWebsocketClient.addConnectListener(this::onWebsocketConnect);
+    this.chatMateWebsocketClient.addDisconnectListener(this::onWebsocketDisconnect);
 
     // catch up on the missed events since last time
     this.onMakeRequest(this::onApiResponse, this::onApiError);
@@ -84,12 +87,22 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
   }
 
   private void onWebsocketMessage(EventMessageData data) {
-    if (data.topic != Topic.STREAMER_CHAT) {
+    this.config.getLastGetChatResponseEmitter().set(new Date().getTime());
+
+    if (data == null || data.topic != Topic.STREAMER_CHAT) {
       return;
     }
 
     PublicChatItem chatItem = data.getChatData();
     this.handleChat(new PublicChatItem[] { chatItem });
+  }
+
+  private void onWebsocketConnect() {
+    this.apiPoller.pausePoller();
+  }
+
+  private void onWebsocketDisconnect() {
+    this.apiPoller.resumePoller();
   }
 
   public enum EventType {

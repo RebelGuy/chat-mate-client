@@ -99,7 +99,7 @@ public class ApiPoller<D> {
     }
   }
 
-  private void resumePoller() {
+  public void resumePoller() {
     if (this.timer == null) {
       this.pauseUntil = null;
       this.timer = new Timer();
@@ -113,7 +113,7 @@ public class ApiPoller<D> {
     }
   }
 
-  private void pausePoller() {
+  public void pausePoller() {
     if (this.timer != null) {
       this.timer.cancel();
       this.timer = null;

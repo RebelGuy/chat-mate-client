@@ -268,7 +268,8 @@ public class ChatMate {
         donationHudStore,
         chatMateHudService,
         accountEndpointProxy,
-        fileService.dataFolder);
+        fileService.dataFolder,
+        chatMateWebsocketClient);
     this.donationHudService = new DonationHudService(chatMateHudStore,
         donationHudStore,
         guiService,

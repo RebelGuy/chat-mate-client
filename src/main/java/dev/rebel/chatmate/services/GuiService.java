@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.services;
 
 import dev.rebel.chatmate.Environment;
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
 import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
 import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.gui.*;
@@ -71,6 +72,7 @@ public class GuiService {
   private final ChatMateHudService chatMateHudService;
   private final AccountEndpointProxy accountEndpointProxy;
   private final String dataFolder;
+  private final ChatMateWebsocketClient chatMateWebsocketClient;
 
   public GuiService(boolean isDev,
                     LogService logService,
@@ -111,7 +113,7 @@ public class GuiService {
                     DonationHudStore donationHudStore,
                     ChatMateHudService chatMateHudService,
                     AccountEndpointProxy accountEndpointProxy,
-                    String dataFolder) {
+                    String dataFolder, ChatMateWebsocketClient chatMateWebsocketClient) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;
@@ -152,6 +154,7 @@ public class GuiService {
     this.chatMateHudService = chatMateHudService;
     this.accountEndpointProxy = accountEndpointProxy;
     this.dataFolder = dataFolder;
+    this.chatMateWebsocketClient = chatMateWebsocketClient;
 
     this.addEventHandlers();
   }
@@ -180,7 +183,8 @@ public class GuiService {
         this.chatMateHudService,
         this.accountEndpointProxy,
         this.dataFolder,
-        this.donationEndpointProxy)
+        this.donationEndpointProxy,
+        this.chatMateWebsocketClient)
     );
     return screen;
   }
