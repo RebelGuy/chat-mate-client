@@ -175,10 +175,12 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
   }
 
   private void onWebsocketConnect() {
+    this.logService.logInfo(this, "Pausing API poller due to Websocket connect");
     this.apiPoller.pausePoller();
   }
 
   private void onWebsocketDisconnect() {
+    this.logService.logInfo(this, "Resuming API poller due to Websocket disconnect");
     this.apiPoller.resumePoller();
   }
 }

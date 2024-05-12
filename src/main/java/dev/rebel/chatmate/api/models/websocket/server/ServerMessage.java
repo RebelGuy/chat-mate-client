@@ -2,10 +2,13 @@ package dev.rebel.chatmate.api.models.websocket.server;
 
 import com.google.gson.annotations.SerializedName;
 
+import javax.annotation.Nullable;
+
 import static dev.rebel.chatmate.util.JsonHelpers.parseSerialisedObject;
 
 public class ServerMessage {
   public ServerMessageType type;
+  public @Nullable Integer id;
   public Object data;
 
   public AcknowledgeMessageData getAcknowledgeData() {

@@ -4,19 +4,21 @@ import com.google.gson.annotations.SerializedName;
 
 public class ClientMessage {
   public final ClientMessageType type;
+  public final Integer id;
   public final Object data;
 
-  private ClientMessage(ClientMessageType type, Object data) {
+  private ClientMessage(ClientMessageType type, int id, Object data) {
     this.type = type;
+    this.id = id;
     this.data = data;
   }
 
-  public static ClientMessage createSubscribeMessage(SubscribeMessageData data) {
-    return new ClientMessage(ClientMessageType.SUBSCRIBE, data);
+  public static ClientMessage createSubscribeMessage(int id, SubscribeMessageData data) {
+    return new ClientMessage(ClientMessageType.SUBSCRIBE, id, data);
   }
 
-  public static ClientMessage createUnsubscribeMessage(UnsubscribeMessageData data) {
-    return new ClientMessage(ClientMessageType.UNSUBSCRIBE, data);
+  public static ClientMessage createUnsubscribeMessage(int id, UnsubscribeMessageData data) {
+    return new ClientMessage(ClientMessageType.UNSUBSCRIBE, id, data);
   }
 
   public enum ClientMessageType {

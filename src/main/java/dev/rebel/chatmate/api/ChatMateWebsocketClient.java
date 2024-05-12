@@ -6,6 +6,7 @@ import dev.rebel.chatmate.Environment;
 import dev.rebel.chatmate.api.models.websocket.Topic;
 import dev.rebel.chatmate.api.models.websocket.client.ClientMessage;
 import dev.rebel.chatmate.api.models.websocket.client.SubscribeMessageData;
+import dev.rebel.chatmate.api.models.websocket.client.UnsubscribeMessageData;
 import dev.rebel.chatmate.api.models.websocket.server.AcknowledgeMessageData;
 import dev.rebel.chatmate.api.models.websocket.server.EventMessageData;
 import dev.rebel.chatmate.api.models.websocket.server.ServerMessage;
@@ -23,6 +24,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 public class ChatMateWebsocketClient extends WebSocketClient {
@@ -31,10 +33,12 @@ public class ChatMateWebsocketClient extends WebSocketClient {
   private final List<Runnable> connectCallbacks;
   private final List<Runnable> disconnectCallbacks;
   private final List<Consumer<EventMessageData>> messageCallbacks;
+  private final List<AcknowledgementListener> acknowledgementListeners;
   private double lastRetryBackoff;
   private @Nullable Timer retryTimer;
   private boolean hasAttemptedInitialConnection;
   private boolean enabled;
+  private int id;
 
   public ChatMateWebsocketClient(LogService logService, Environment environment) {
     super(createUri(environment)); // the fact that we have to wrap this logic into a static function is laughable
@@ -45,10 +49,12 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.connectCallbacks = new ArrayList<>();
     this.disconnectCallbacks = new ArrayList<>();
     this.messageCallbacks = new ArrayList<>();
+    this.acknowledgementListeners = new CopyOnWriteArrayList<>(); // concurrent version of list so we can allow listeners removing themselves as part of their own callback
 
     this.hasAttemptedInitialConnection = false;
     this.lastRetryBackoff = 500;
     this.enabled = true;
+    this.id = 0;
     this.tryConnectAfterDelay(100);
   }
 
@@ -110,7 +116,19 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     if (parsed.type == ServerMessageType.ACKNOWLEDGE) {
       this.logService.logInfo(this, "Received acknowledgment from server.", parsed);
       AcknowledgeMessageData acknowledgementData = parsed.getAcknowledgeData();
-      // don't handle for now
+
+      if (parsed.id != null) {
+        for (AcknowledgementListener callback : this.acknowledgementListeners) {
+          try {
+            if (callback.onAcknowledgementReceived(parsed.id, acknowledgementData.success)) {
+              this.acknowledgementListeners.remove(callback);
+            }
+          } catch (Exception e) {
+            this.logService.logError(this, "Encountered exception while executing acknowledgement callback for message", parsed, e);
+          }
+        }
+      }
+
     } else if (parsed.type == ServerMessageType.EVENT) {
       this.logService.logInfo(this, "Received event from server.", parsed);
       EventMessageData eventData = parsed.getEventData();
@@ -149,16 +167,26 @@ public class ChatMateWebsocketClient extends WebSocketClient {
 
     this.cancelRetryTimer();
     this.lastRetryBackoff = 500;
-    this.subscribeToStreamerTopic(Topic.STREAMER_CHAT, "rebel_guy"); // todo: subscribe after logging in so we have the streamer
-    this.subscribeToStreamerTopic(Topic.STREAMER_EVENTS, "rebel_guy");
 
-    for (Runnable callback : this.connectCallbacks) {
-      try {
-        callback.run();
-      } catch (Exception e) {
-        this.logService.logError(this, "Encountered exception while notifying listeners of the onOpen event", e);
+    // todo: only connect if ChatMate is enabled - same goes for API pollers
+    CompletableFuture.allOf(
+        this.subscribeToStreamerTopic(Topic.STREAMER_CHAT, "rebel_guy"), // todo: subscribe after logging in so we have the streamer
+        this.subscribeToStreamerTopic(Topic.STREAMER_EVENTS, "rebel_guy")
+    ).thenRun(() -> {
+      this.logService.logInfo(this, "Subscribed to all events");
+
+      for (Runnable callback : this.connectCallbacks) {
+        try {
+          callback.run();
+        } catch (Exception e) {
+          this.logService.logError(this, "Encountered exception while notifying listeners of the onOpen event", e);
+        }
       }
-    }
+    }).exceptionally(e -> {
+      this.logService.logError(this, "Failed to subscribe to all events - closing Websocket for another attempt.", e);
+      super.close();
+      return null;
+    });
   }
 
   @Override
@@ -225,16 +253,52 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.retryTimer.schedule(new TaskWrapper(this::onTryReconnect), (long)delay);
   }
 
-  private void subscribeToStreamerTopic(Topic topic, String streamer) {
-    // todo: subscribe when logging in
-    this.send(ClientMessage.createSubscribeMessage(new SubscribeMessageData(topic, streamer)));
+  private CompletableFuture<Void> subscribeToStreamerTopic(Topic topic, String streamer) {
+    /*
+     * Note to self: in the future if you have to deal with async stuff, the CompletableFuture stuff isn't that bad.
+     * - You can explicitly complete it with a result or exception. If already completed and attepting to do so again is a no-op
+     * - You can chain together CompletableFutures and pass around results, similar to Javascript's `then`
+     * - `thenRun`/`thenApply` functions are called if the future has resolved
+     * - `exceptionally` functions are called if the future has thrown
+     * - You probably don't want to use `get()` because it's a blocking operation
+      */
 
-    // todo: listen to the next few seconds' messages here and verify that the server acknowledged the request.
-    // will need to make server changes so that we know which client message the acknowledgement is for.
+    // todo: subscribe when logging in
+    int id = this.id++;
+
+    CompletableFuture<Void> future = new CompletableFuture<>();
+    Timer timer = new Timer();
+
+    AcknowledgementListener callback = (messageId, success) -> {
+      if (messageId != id) {
+        return false;
+      }
+
+      timer.cancel();
+      if (success) {
+        future.complete(null);
+      } else {
+        future.completeExceptionally(new RuntimeException(String.format("Subscription for topic %s for streamer %s was not successful", topic, streamer)));
+      }
+
+      // note: this callback is a one-time use and will be removed from the list automatically
+      return true;
+    };
+
+    timer.schedule(new TaskWrapper(() -> {
+      future.completeExceptionally(new RuntimeException(String.format("Subscription for topic %s for streamer %s timed out", topic, streamer)));
+      this.acknowledgementListeners.remove(callback);
+    }), 5000);
+
+    this.acknowledgementListeners.add(callback);
+    this.send(ClientMessage.createSubscribeMessage(id, new SubscribeMessageData(topic, streamer)));
+
+    return future;
   }
 
   private void unsubscribeFromStreamerTopic(Topic topic, String streamer) {
     // todo: unsubscribe when the mod unloads and when logging out
+    this.send(ClientMessage.createUnsubscribeMessage(this.id++, new UnsubscribeMessageData(topic, streamer)));
   }
 
   private void send(Object data) {
@@ -260,5 +324,10 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @FunctionalInterface
+  private interface AcknowledgementListener {
+    boolean onAcknowledgementReceived(Integer messageId, boolean successfullyHandledByServer);
   }
 }
