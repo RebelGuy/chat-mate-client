@@ -61,8 +61,8 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.id = 0;
     this.tryConnectAfterDelay(100);
 
-    this.config.getChatMateEnabledEmitter().onChange(this::onChatMateEnabledChanged, this, false);
-    this.config.getLoginInfoEmitter().onChange(this::onLoginInfoChanged, this, false);
+    this.config.getChatMateEnabledEmitter().onChange(this::onChatMateEnabledChanged);
+    this.config.getLoginInfoEmitter().onChange(this::onLoginInfoChanged);
   }
 
   // the point of the connect/disconnect listeners is to toggle the ApiPollers - when the websocket is not connected,
