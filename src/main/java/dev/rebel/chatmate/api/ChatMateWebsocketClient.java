@@ -11,6 +11,8 @@ import dev.rebel.chatmate.api.models.websocket.server.AcknowledgeMessageData;
 import dev.rebel.chatmate.api.models.websocket.server.EventMessageData;
 import dev.rebel.chatmate.api.models.websocket.server.ServerMessage;
 import dev.rebel.chatmate.api.models.websocket.server.ServerMessage.ServerMessageType;
+import dev.rebel.chatmate.config.Config;
+import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.util.TaskWrapper;
 import org.java_websocket.WebSocket;
@@ -29,6 +31,7 @@ import java.util.function.Consumer;
 
 public class ChatMateWebsocketClient extends WebSocketClient {
   private final LogService logService;
+  private final Config config;
   private final Gson gson;
   private final List<Runnable> connectCallbacks;
   private final List<Runnable> disconnectCallbacks;
@@ -40,9 +43,10 @@ public class ChatMateWebsocketClient extends WebSocketClient {
   private boolean enabled;
   private int id;
 
-  public ChatMateWebsocketClient(LogService logService, Environment environment) {
+  public ChatMateWebsocketClient(LogService logService, Environment environment, Config config) {
     super(createUri(environment)); // the fact that we have to wrap this logic into a static function is laughable
     this.logService = logService;
+    this.config = config;
     this.gson = new GsonBuilder()
         .serializeNulls()
         .create();
@@ -56,7 +60,13 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.enabled = true;
     this.id = 0;
     this.tryConnectAfterDelay(100);
+
+    this.config.getChatMateEnabledEmitter().onChange(this::onChatMateEnabledChanged, this, false);
+    this.config.getLoginInfoEmitter().onChange(this::onLoginInfoChanged, this, false);
   }
+
+  // the point of the connect/disconnect listeners is to toggle the ApiPollers - when the websocket is not connected,
+  // we instead get the equivalent data via API calls as a fallback.
 
   public void addConnectListener(Runnable callback) {
     this.connectCallbacks.add(callback);
@@ -89,7 +99,6 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     if (!this.enabled) {
       super.close();
     } else {
-      this.cancelRetryTimer();
       this.onTryReconnect();
     }
   }
@@ -168,10 +177,16 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.cancelRetryTimer();
     this.lastRetryBackoff = 500;
 
-    // todo: only connect if ChatMate is enabled - same goes for API pollers
+    @Nullable String selectedStreamer = this.config.getLoginInfoEmitter().get().username;
+    if (selectedStreamer == null) {
+      this.logService.logError(this, "Websocket opened but no streamer is selected - closing");
+      this.close();
+      return;
+    }
+
     CompletableFuture.allOf(
-        this.subscribeToStreamerTopic(Topic.STREAMER_CHAT, "rebel_guy"), // todo: subscribe after logging in so we have the streamer
-        this.subscribeToStreamerTopic(Topic.STREAMER_EVENTS, "rebel_guy")
+        this.subscribeToStreamerTopic(Topic.STREAMER_CHAT, selectedStreamer),
+        this.subscribeToStreamerTopic(Topic.STREAMER_EVENTS, selectedStreamer)
     ).thenRun(() -> {
       this.logService.logInfo(this, "Subscribed to all events");
 
@@ -193,12 +208,12 @@ public class ChatMateWebsocketClient extends WebSocketClient {
   public void onClose(int code, String reason, boolean remote) {
     this.logService.logInfo(this, "Websocket closed with code", code, "and reason", reason);
 
-    if (this.enabled) {
+    if (this.shouldConnect()) {
       this.cancelRetryTimer();
       this.lastRetryBackoff *= 2;
       this.tryConnectAfterDelay(this.lastRetryBackoff);
     } else {
-      this.logService.logDebug(this, "Won't attempt to reconnect because the websocket has been disabled");
+      this.logService.logDebug(this, "Won't attempt to reconnect because the conditions to connect are not currently met");
     }
 
     for (Runnable callback : this.disconnectCallbacks) {
@@ -215,10 +230,40 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.logService.logError(this, "Websocket encountered an error:", e);
   }
 
+  private void onChatMateEnabledChanged(Event<Boolean> event) {
+    if (event.getData()) {
+      this.onTryReconnect();
+    } else {
+      this.close();
+    }
+  }
+
+  private void onLoginInfoChanged(Event<Config.LoginInfo> in) {
+    // technically we shouldn't open/close the connection based on the streamer's selection - instead we should just cycle our streamer topic subscriptions
+    // but i'm too lazy
+    if (in.getData().username != null) {
+      this.onTryReconnect();
+    } else {
+      this.close();
+    }
+  }
+
+  private boolean shouldConnect() {
+    boolean chatMateEnabled = this.config.getChatMateEnabledEmitter().get();
+    boolean streamerSelected = this.config.getLoginInfoEmitter().get().username != null;
+
+    return chatMateEnabled && streamerSelected && this.enabled;
+  }
+
   private void onTryReconnect() {
+    if (!this.shouldConnect()) {
+      return;
+    }
+
     this.logService.logInfo(this, "Attempting to connect...");
 
     try {
+      this.cancelRetryTimer();
       if (super.getReadyState() == ReadyState.OPEN) {
         this.logService.logError(this, "Attempting to connect but connection is already open. Attempting to close and re-open the connection.");
         super.closeBlocking();
@@ -263,7 +308,6 @@ public class ChatMateWebsocketClient extends WebSocketClient {
      * - You probably don't want to use `get()` because it's a blocking operation
       */
 
-    // todo: subscribe when logging in
     int id = this.id++;
 
     CompletableFuture<Void> future = new CompletableFuture<>();
@@ -297,7 +341,6 @@ public class ChatMateWebsocketClient extends WebSocketClient {
   }
 
   private void unsubscribeFromStreamerTopic(Topic topic, String streamer) {
-    // todo: unsubscribe when the mod unloads and when logging out
     this.send(ClientMessage.createUnsubscribeMessage(this.id++, new UnsubscribeMessageData(topic, streamer)));
   }
 

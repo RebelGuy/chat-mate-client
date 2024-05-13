@@ -112,7 +112,7 @@ public class ChatMate {
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config, streamerApiStore);
-    ChatMateWebsocketClient chatMateWebsocketClient = new ChatMateWebsocketClient(logService, environment);
+    ChatMateWebsocketClient chatMateWebsocketClient = new ChatMateWebsocketClient(logService, environment, config);
     this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory, config, dateTimeService, chatMateWebsocketClient);
 
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
