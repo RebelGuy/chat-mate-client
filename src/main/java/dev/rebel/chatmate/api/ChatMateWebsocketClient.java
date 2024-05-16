@@ -15,11 +15,8 @@ import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.util.TaskWrapper;
-import org.java_websocket.WebSocket;
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.enums.ReadyState;
-import org.java_websocket.framing.Framedata;
-import org.java_websocket.handshake.ServerHandshake;
+
+import javax.websocket.*;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -29,33 +26,38 @@ import java.util.Timer;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
-public class ChatMateWebsocketClient extends WebSocketClient {
+@ClientEndpoint
+public class ChatMateWebsocketClient {
   private final LogService logService;
   private final Config config;
   private final Gson gson;
+  private final URI uri;
   private final List<Runnable> connectCallbacks;
   private final List<Runnable> disconnectCallbacks;
   private final List<Consumer<EventMessageData>> messageCallbacks;
   private final List<AcknowledgementListener> acknowledgementListeners;
+  private final Timer pingTimer;
   private double lastRetryBackoff;
   private @Nullable Timer retryTimer;
-  private boolean hasAttemptedInitialConnection;
   private boolean enabled;
   private int id;
 
+  private Session userSession = null;
+
   public ChatMateWebsocketClient(LogService logService, Environment environment, Config config) {
-    super(createUri(environment)); // the fact that we have to wrap this logic into a static function is laughable
     this.logService = logService;
     this.config = config;
     this.gson = new GsonBuilder()
         .serializeNulls()
         .create();
+    this.uri = createUri(environment);
     this.connectCallbacks = new ArrayList<>();
     this.disconnectCallbacks = new ArrayList<>();
     this.messageCallbacks = new ArrayList<>();
     this.acknowledgementListeners = new CopyOnWriteArrayList<>(); // concurrent version of list so we can allow listeners removing themselves as part of their own callback
+    this.pingTimer = new Timer();
+    this.pingTimer.scheduleAtFixedRate(new TaskWrapper(this::sendPing), 60_000, 60_000);
 
-    this.hasAttemptedInitialConnection = false;
     this.lastRetryBackoff = 500;
     this.enabled = true;
     this.id = 0;
@@ -97,7 +99,7 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     this.enabled = enabled;
 
     if (!this.enabled) {
-      super.close();
+      this.close();
     } else {
       this.onTryReconnect();
     }
@@ -107,7 +109,7 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     return this.enabled;
   }
 
-  @Override
+  @OnMessage
   public void onMessage(String message) {
     ServerMessage parsed;
     try {
@@ -157,10 +159,8 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     }
   }
 
-  @Override
-  public void onWebsocketPong(WebSocket conn, Framedata f) {
-    super.onWebsocketPong(conn, f);
-
+  @OnMessage
+  public void onWebsocketPong(PongMessage message) {
     for (Consumer<EventMessageData> callback : this.messageCallbacks) {
       try {
         callback.accept(null);
@@ -170,10 +170,11 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     }
   }
 
-  @Override
-  public void onOpen(ServerHandshake handshake) {
+  @OnOpen
+  public void onOpen(Session userSession) {
     this.logService.logInfo(this, "Websocket connection established");
 
+    this.userSession = userSession;
     this.cancelRetryTimer();
     this.lastRetryBackoff = 500;
 
@@ -199,14 +200,14 @@ public class ChatMateWebsocketClient extends WebSocketClient {
       }
     }).exceptionally(e -> {
       this.logService.logError(this, "Failed to subscribe to all events - closing Websocket for another attempt.", e);
-      super.close();
+      this.close();
       return null;
     });
   }
 
-  @Override
-  public void onClose(int code, String reason, boolean remote) {
-    this.logService.logInfo(this, "Websocket closed with code", code, "and reason", reason);
+  @OnClose
+  public void onClose(CloseReason closeReason) {
+    this.logService.logInfo(this, "Websocket closed with code", closeReason.getCloseCode().getCode(), "and reason", closeReason.getReasonPhrase());
 
     if (this.shouldConnect()) {
       this.cancelRetryTimer();
@@ -225,8 +226,8 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     }
   }
 
-  @Override
-  public void onError(Exception e) {
+  @OnError
+  public void onError(Throwable e) {
     this.logService.logError(this, "Websocket encountered an error:", e);
   }
 
@@ -264,25 +265,16 @@ public class ChatMateWebsocketClient extends WebSocketClient {
 
     try {
       this.cancelRetryTimer();
-      if (super.getReadyState() == ReadyState.OPEN) {
+      if (this.isOpen()) {
         this.logService.logError(this, "Attempting to connect but connection is already open. Attempting to close and re-open the connection.");
-        super.closeBlocking();
+        this.close();
       }
 
-      if (!this.hasAttemptedInitialConnection) {
-        // we can only do the initial connection once - any further attempts to call connect() will throw.
-        // it doesn't seem like we can check the state on the Websocket object, which is just fantastic!
-        this.hasAttemptedInitialConnection = true;
-        super.connectBlocking();
-      } else {
-        super.reconnectBlocking();
-      }
+      WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+      container.connectToServer(this, this.uri);
 
-      if (super.getReadyState() == ReadyState.OPEN || super.getReadyState() == ReadyState.CLOSED) {
-        // if it's closed, the onClose handler will be called
+      if (this.isOpen()) {
         return;
-      } else {
-        this.logService.logError(this, "Apparently connected successfully but ready state is", super.getReadyState(), "- will retry the connection");
       }
     } catch (Exception e) {
       this.logService.logError(this, "Unable to connect:", e);
@@ -296,6 +288,20 @@ public class ChatMateWebsocketClient extends WebSocketClient {
   private void tryConnectAfterDelay(double delay) {
     this.retryTimer = new Timer();
     this.retryTimer.schedule(new TaskWrapper(this::onTryReconnect), (long)delay);
+  }
+
+  private void close() {
+    try {
+      this.userSession.close();
+      this.userSession = null;
+    } catch (Exception e) {
+      this.logService.logError(this, "Unable to close the connection:", e);
+      throw new RuntimeException(e);
+    }
+  }
+
+  private boolean isOpen() {
+    return this.userSession != null && this.userSession.isOpen();
   }
 
   private CompletableFuture<Void> subscribeToStreamerTopic(Topic topic, String streamer) {
@@ -355,10 +361,19 @@ public class ChatMateWebsocketClient extends WebSocketClient {
     }
   }
 
-  @Override
   public void send(String message) {
     this.logService.logDebug(this, "Sending message", message);
-    super.send(message);
+    this.userSession.getAsyncRemote().sendText(message);
+  }
+
+  private void sendPing() {
+    if (this.userSession != null) {
+      try {
+        this.userSession.getAsyncRemote().sendPing(null);
+      } catch (Exception e) {
+        this.logService.logError(this, "Unable to send ping:", e);
+      }
+    }
   }
 
   private static URI createUri(Environment environment) {
