@@ -2,6 +2,7 @@ package dev.rebel.chatmate;
 
 import dev.rebel.chatmate.Environment.Env;
 import dev.rebel.chatmate.api.ChatMateApiException;
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
 import dev.rebel.chatmate.api.publicObjects.streamer.PublicStreamerSummary;
 import dev.rebel.chatmate.commands.*;
 import dev.rebel.chatmate.commands.handlers.CountdownHandler;
@@ -21,11 +22,8 @@ import dev.rebel.chatmate.services.*;
 import dev.rebel.chatmate.services.FilterService.FilterFileParseResult;
 import dev.rebel.chatmate.events.*;
 import dev.rebel.chatmate.stores.*;
-import dev.rebel.chatmate.util.Collections;
-import dev.rebel.chatmate.util.FileHelpers;
+import dev.rebel.chatmate.util.*;
 import dev.rebel.chatmate.services.ApiRequestService;
-import dev.rebel.chatmate.util.ApiPollerFactory;
-import dev.rebel.chatmate.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.launchwrapper.Launch;
@@ -114,7 +112,8 @@ public class ChatMate {
     FilterService filterService = new FilterService(parsedFilterFile.filtered, parsedFilterFile.whitelisted);
 
     ApiPollerFactory apiPollerFactory = new ApiPollerFactory(logService, config, streamerApiStore);
-    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory, config, dateTimeService);
+    ChatMateWebsocketClient chatMateWebsocketClient = new ChatMateWebsocketClient(logService, environment, config);
+    this.chatMateChatService = new ChatMateChatService(logService, chatEndpointProxy, apiPollerFactory, config, dateTimeService, chatMateWebsocketClient);
 
     ContextMenuStore contextMenuStore = new ContextMenuStore(minecraft, forgeEventService, mouseEventService, dimFactory, fontEngine);
     ChatComponentRenderer chatComponentRenderer = new ChatComponentRenderer(dimFactory, fontEngine, minecraft);
@@ -133,7 +132,7 @@ public class ChatMate {
     MinecraftProxyService minecraftProxyService = new MinecraftProxyService(minecraft, logService, forgeEventService, customGuiNewChat);
 
     SoundService soundService = new SoundService(logService, minecraftProxyService, config);
-    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, streamerEndpointProxy, apiPollerFactory, config, dateTimeService);
+    ChatMateEventService chatMateEventService = new ChatMateEventService(logService, streamerEndpointProxy, apiPollerFactory, config, dateTimeService, chatMateWebsocketClient);
     DonationService donationService = new DonationService(dateTimeService, donationApiStore, livestreamApiStore, rankApiStore, chatMateEventService);
     MessageService messageService = new MessageService(logService, fontEngine, dimFactory, donationService, rankApiStore, chatComponentRenderer, dateTimeService);
     PersistentCacheService persistentCacheService = new PersistentCacheService(logService, fileService);
@@ -269,7 +268,8 @@ public class ChatMate {
         donationHudStore,
         chatMateHudService,
         accountEndpointProxy,
-        fileService.dataFolder);
+        fileService.dataFolder,
+        chatMateWebsocketClient);
     this.donationHudService = new DonationHudService(chatMateHudStore,
         donationHudStore,
         guiService,

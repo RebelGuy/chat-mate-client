@@ -1,9 +1,12 @@
 package dev.rebel.chatmate.events;
 
 import dev.rebel.chatmate.api.ChatMateApiException;
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
+import dev.rebel.chatmate.api.models.websocket.Topic;
+import dev.rebel.chatmate.api.models.websocket.server.EventMessageData;
+import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
-import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.DateTimeService;
@@ -19,23 +22,32 @@ import jline.internal.Nullable;
 
 import java.util.Date;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class ChatMateChatService extends EventServiceBase<EventType> {
   private final static long TIMEOUT_WAIT = 20 * 1000;
+  private final static long POLLING_RATE = 5000L; // polls only when the websocket is closed
 
   private final ChatEndpointProxy chatEndpointProxy;
   private final ApiPoller<GetChatResponseData> apiPoller;
   private final Config config;
   private final DateTimeService dateTimeService;
+  private final ChatMateWebsocketClient chatMateWebsocketClient;
 
-  public ChatMateChatService(LogService logService, ChatEndpointProxy chatEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService) {
+  public ChatMateChatService(LogService logService, ChatEndpointProxy chatEndpointProxy, ApiPollerFactory apiPollerFactory, Config config, DateTimeService dateTimeService, ChatMateWebsocketClient chatMateWebsocketClient) {
     super(EventType.class, logService);
 
     this.chatEndpointProxy = chatEndpointProxy;
-    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, 500, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
+    this.apiPoller = apiPollerFactory.Create(this::onApiResponse, this::onApiError, this::onMakeRequest, POLLING_RATE, PollType.CONSTANT_PADDING, TIMEOUT_WAIT, 2, true);
     this.config = config;
     this.dateTimeService = dateTimeService;
+    this.chatMateWebsocketClient = chatMateWebsocketClient;
+
+    this.chatMateWebsocketClient.addMessageListener(this::onWebsocketMessage);
+    this.chatMateWebsocketClient.addConnectListener(this::onWebsocketConnect);
+    this.chatMateWebsocketClient.addDisconnectListener(this::onWebsocketDisconnect);
+
+    // catch up on the missed events since last time
+    this.onMakeRequest(this::onApiResponse, this::onApiError);
   }
 
   public void onNewChat(EventCallback<NewChatEventData> handler, Object key) {
@@ -55,8 +67,11 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
 
   private void onApiResponse(GetChatResponseData response) {
     this.config.getLastGetChatResponseEmitter().set(response.reusableTimestamp);
+    this.handleChat(response.chat);
+  }
 
-    Event<NewChatEventData> event = new Event<>(new NewChatEventData(response.chat));
+  private void handleChat(PublicChatItem[] chat) {
+    Event<NewChatEventData> event = new Event<>(new NewChatEventData(chat));
     for (EventHandler<NewChatEventData, ?> handler : this.getListeners(EventType.NEW_CHAT, NewChatEventData.class)) {
       super.safeDispatch(EventType.NEW_CHAT, handler, event);
     }
@@ -69,6 +84,27 @@ public class ChatMateChatService extends EventServiceBase<EventType> {
       this.config.getLastGetChatResponseEmitter().set(new Date().getTime());
       this.logService.logWarning(this, "API status code was 500. To prevent further issues, the timestamp for the next request has been reset.");
     }
+  }
+
+  private void onWebsocketMessage(EventMessageData data) {
+    this.config.getLastGetChatResponseEmitter().set(new Date().getTime());
+
+    if (data == null || data.topic != Topic.STREAMER_CHAT) {
+      return;
+    }
+
+    PublicChatItem chatItem = data.getChatData();
+    this.handleChat(new PublicChatItem[] { chatItem });
+  }
+
+  private void onWebsocketConnect() {
+    this.logService.logInfo(this, "Making one more request, then disabling API poller due to Websocket connect");
+    this.apiPoller.disable(true);
+  }
+
+  private void onWebsocketDisconnect() {
+    this.logService.logInfo(this, "Enabling API poller due to Websocket disconnect");
+    this.apiPoller.enable();
   }
 
   public enum EventType {

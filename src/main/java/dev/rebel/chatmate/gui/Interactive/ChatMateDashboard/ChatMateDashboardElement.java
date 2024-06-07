@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard;
 
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
 import dev.rebel.chatmate.api.proxy.AccountEndpointProxy;
 import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.gui.Interactive.*;
@@ -75,7 +76,8 @@ public class ChatMateDashboardElement extends ContainerElement {
                                   ChatMateHudService chatMateHudService,
                                   AccountEndpointProxy accountEndpointProxy,
                                   String dataFolder,
-                                  DonationEndpointProxy donationEndpointProxy) {
+                                  DonationEndpointProxy donationEndpointProxy,
+                                  ChatMateWebsocketClient chatMateWebsocketClient) {
     super(context, parent, LayoutMode.INLINE);
     super.setMargin(new RectExtension(ZERO, ZERO, gui(4), ZERO)); // stay clear of the HUD indicator
     super.setBorder(new RectExtension(gui(8)));
@@ -93,7 +95,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService, donationEndpointProxy);
-    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route), config, context.urlService, dataFolder);
+    this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route), config, context.urlService, dataFolder, chatMateWebsocketClient);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
         .setMargin(new RectExtension(ZERO, gui(8), ZERO, ZERO))

@@ -1,12 +1,12 @@
 package dev.rebel.chatmate.services;
 
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.Config.StatefulEmitter;
 import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.api.publicObjects.chat.PublicChatItem;
 import dev.rebel.chatmate.api.proxy.ChatEndpointProxy;
 import dev.rebel.chatmate.events.ChatMateChatService;
-import dev.rebel.chatmate.events.EventHandler;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.events.models.NewChatEventData;
 import dev.rebel.chatmate.util.ApiPollerFactory;
@@ -32,6 +32,7 @@ public class ChatMateChatServiceTests {
   @Mock Config mockConfig;
   @Mock StatefulEmitter<Long> mockLastResponseEmitter;
   @Mock DateTimeService mockDateTimeService;
+  @Mock ChatMateWebsocketClient mockChatMateWebsocketClient;
 
   @Test
   public void newChatItem_dispatched() {
@@ -49,7 +50,7 @@ public class ChatMateChatServiceTests {
     when(this.mockLastResponseEmitter.get()).thenReturn(0L);
 
     // act
-    ChatMateChatService chatService = new ChatMateChatService(this.mockLogService, this.mockChatEndpointProxy, this.mockApiPollerFactory, this.mockConfig, this.mockDateTimeService);
+    ChatMateChatService chatService = new ChatMateChatService(this.mockLogService, this.mockChatEndpointProxy, this.mockApiPollerFactory, this.mockConfig, this.mockDateTimeService, this.mockChatMateWebsocketClient);
     chatService.onNewChat(mockChatSubscriber, this);
 
     // extract the onResponse and endpoint callbacks
