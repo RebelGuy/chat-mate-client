@@ -113,7 +113,8 @@ public class GuiService {
                     DonationHudStore donationHudStore,
                     ChatMateHudService chatMateHudService,
                     AccountEndpointProxy accountEndpointProxy,
-                    String dataFolder, ChatMateWebsocketClient chatMateWebsocketClient) {
+                    String dataFolder,
+                    ChatMateWebsocketClient chatMateWebsocketClient) {
     this.isDev = isDev;
     this.logService = logService;
     this.config = config;

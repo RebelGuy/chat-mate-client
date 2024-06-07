@@ -240,7 +240,7 @@ public class ChatMateWebsocketClient {
   }
 
   private void onLoginInfoChanged(Event<Config.LoginInfo> in) {
-    // technically we shouldn't open/close the connection based on the streamer's selection - instead we should just cycle our streamer topic subscriptions
+    // technically we shouldn't open/close the connection based on the streamer's username - instead we should just cycle our streamer topic subscriptions
     // but i'm too lazy
     if (in.getData().username != null) {
       this.onTryReconnect();
@@ -361,7 +361,7 @@ public class ChatMateWebsocketClient {
     }
   }
 
-  public void send(String message) {
+  private void send(String message) {
     this.logService.logDebug(this, "Sending message", message);
     this.userSession.getAsyncRemote().sendText(message);
   }
