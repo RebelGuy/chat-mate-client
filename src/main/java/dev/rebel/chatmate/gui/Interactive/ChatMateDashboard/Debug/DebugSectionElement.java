@@ -1,5 +1,6 @@
 package dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Debug;
 
+import dev.rebel.chatmate.api.ChatMateWebsocketClient;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.config.Config.LogLevel;
 import dev.rebel.chatmate.gui.Interactive.*;
@@ -25,14 +26,16 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
   private final Config config;
   private final UrlService urlService;
   private final String dataFolder;
+  private final ChatMateWebsocketClient chatMateWebsocketClient;
 
   private final LabelElement didClearStoresLabel;
 
-  public DebugSectionElement(InteractiveContext context, IElement parent, @Nullable DebugRoute route, Config config, UrlService urlService, String dataFolder) {
+  public DebugSectionElement(InteractiveContext context, IElement parent, @Nullable DebugRoute route, Config config, UrlService urlService, String dataFolder, ChatMateWebsocketClient chatMateWebsocketClient) {
     super(context, parent, LayoutMode.BLOCK);
     this.config = config;
     this.urlService = urlService;
     this.dataFolder = dataFolder;
+    this.chatMateWebsocketClient = chatMateWebsocketClient;
 
     for (LogLevel logLevel : LogLevel.values()) {
       super.addElement(CHECKBOX_LIGHT.create(context, this)
@@ -71,6 +74,13 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
         .setTextScale(0.75f)
         .setOnClick(this::onResetCursor)
     );
+
+    super.addElement(CHECKBOX_LIGHT.create(context, this)
+        .setChecked(this.chatMateWebsocketClient.isEnabled())
+        .onCheckedChanged(this::onChangeWebsocketEnabled)
+        .setLabel("Websocket enabled")
+        .setScale(SCALE)
+    );
   }
 
   private boolean hasLogLevel(LogLevel logLevel) {
@@ -104,6 +114,10 @@ public class DebugSectionElement extends ContainerElement implements ISectionEle
 
   private void onResetCursor() {
     super.context.cursorService.reset();
+  }
+
+  private void onChangeWebsocketEnabled(boolean enabled) {
+    this.chatMateWebsocketClient.setEnabled(enabled);
   }
 
   @Override

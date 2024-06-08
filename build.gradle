@@ -4,7 +4,7 @@ plugins {
     id "net.minecraftforge.gradle.forge" version "6f53277"
 }
 
-version = "1.31.0"
+version = "1.32.0"
 group = "dev.rebel"
 archivesBaseName = "ChatMate"
 
@@ -51,7 +51,12 @@ configurations {
 }
 
 dependencies {
+    // groupId:artifactId:version
     implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'javax.websocket:javax.websocket-client-api:1.1'
+
+    // this must be added to fix runtime issues (classdef not found)
+    include 'org.glassfish.tyrus.bundles:tyrus-standalone-client:1.13'
 
     // How to normally add a dependency (If you don't want it to be added to the jar)
     // implementation "com.example:example:1.0.0"
@@ -137,4 +142,4 @@ dependencies {
 
 }
 
-jar.dependsOn shadowJar
+jar.finalizedBy('shadowJar')

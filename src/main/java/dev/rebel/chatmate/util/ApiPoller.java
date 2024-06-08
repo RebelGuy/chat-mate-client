@@ -37,6 +37,9 @@ public class ApiPoller<D> {
   private boolean requestInProgress;
   private int currentRetries;
 
+  // if false, the poller will definitely not run. if true, the poller may run (depending on other conditions)
+  private boolean enabled;
+
   // if unauthorised, we pause the poller until the login token has been changed
   private boolean isUnauthorised;
   private @Nullable String unauthorisedLoginToken;
@@ -78,29 +81,57 @@ public class ApiPoller<D> {
     this.isUnauthorised = false;
     this.unauthorisedLoginToken = null;
 
+    this.enabled = true;
+
     this.config.getChatMateEnabledEmitter().onChange(this._onChatMateEnabledChanged, this, true);
     this.config.getLoginInfoEmitter().onChange(this._onLoginInfoChanged, this, false);
+  }
+
+  public void enable() {
+    this.enabled = true;
+    this.tryResumePoller();
+  }
+
+  public void disable(boolean forceFinalRequest) {
+    this.enabled = false;
+    this.tryPausePoller(forceFinalRequest);
+  }
+
+  public boolean getEnabled() {
+    return this.enabled;
   }
 
   private void onChatMateEnabledChanged(Event<Boolean> event) {
     boolean enabled = event.getData();
     if (enabled) {
-      this.resumePoller();
+      this.tryResumePoller();
     } else {
-      this.pausePoller();
+      this.tryPausePoller(false);
     }
   }
 
   private void onLoginInfoChanged(Event<LoginInfo> in) {
     LoginInfo data = in.getData();
 
-    if (this.isUnauthorised && !java.util.Objects.equals(data.loginToken, this.unauthorisedLoginToken)) {
-      this.resumePoller();
+    if (this.isUnauthorised && data.loginToken != null && !java.util.Objects.equals(data.loginToken, this.unauthorisedLoginToken)) {
+      this.tryResumePoller();
     }
   }
 
-  private void resumePoller() {
-    if (this.timer == null) {
+  private boolean shouldTryNextRequest() {
+    boolean chatMateEnabled = this.config.getChatMateEnabledEmitter().get();
+    boolean streamerSelected = this.config.getLoginInfoEmitter().get().username != null;
+
+    return chatMateEnabled && enabled && (this.requiresStreamer && streamerSelected);
+  }
+
+  private void tryResumePoller() {
+    // check if we are already polling
+    if (this.timer != null) {
+      return;
+    }
+
+    if (this.shouldTryNextRequest()) {
       this.pauseUntil = null;
       this.timer = new Timer();
       if (this.type == PollType.CONSTANT_PADDING) {
@@ -113,14 +144,25 @@ public class ApiPoller<D> {
     }
   }
 
-  private void pausePoller() {
+  private void tryPausePoller(boolean forceFinalRequest) {
     if (this.timer != null) {
       this.timer.cancel();
       this.timer = null;
     }
+
+    if (forceFinalRequest && this.canMakeRequest()) {
+      this.requestInProgress = true;
+      this.currentRetries = 0;
+      this.endpoint.accept(this::onApiResponse, this::onApiError);
+    }
   }
 
   private void pollApi() {
+    if (!this.shouldTryNextRequest()) {
+      this.tryPausePoller(false);
+      return;
+    }
+
     if (this.canMakeRequest()) {
       this.requestInProgress = true;
       this.currentRetries = 0;
@@ -171,7 +213,7 @@ public class ApiPoller<D> {
       // loginToken has been updated. the poller will be resumed automatically when the loginToken has been changed.
       this.isUnauthorised = true;
       this.unauthorisedLoginToken = casted(ChatMateApiException.class, error, e -> e.loginToken);
-      this.pausePoller();
+      this.tryPausePoller(false);
 
     } else {
       this.isUnauthorised = false;

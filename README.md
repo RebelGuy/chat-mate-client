@@ -88,6 +88,12 @@ recorded within the `Sampler` tab.
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.32 - The Websocket Update [07/06/2024]
+- Connects to the new ChatMate websocket
+  - Streamer chat and events are now received instantly without the need to poll the REST API
+  - If the websocket disconnects, data will be retrieved periodically via the REST API, though at a reduced rate compared to what it used to be
+- Old Sandbox releases/tags on Github are now automatically cleaned up when a new build with a duplicate major, minor, and patch version is deployed
+
 ## v1.31 - The Emoji Update v2 [28/04/2024]
 - Public emojis are now rendered in chat
   - This feature is enabled only for chat users with a donator rank

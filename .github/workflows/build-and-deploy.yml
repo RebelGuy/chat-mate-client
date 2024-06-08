@@ -1,5 +1,13 @@
 name: Build and Test Client
 
+# declare environment variables for better syntax highlighting
+env:
+  ASSET_NAME:
+  TAG_NAME:
+  RELEASE_NAME:
+  IS_PRERELEASE:
+  PREV_SANDBOX_TAG_NAME:
+
 on:
   push:
   workflow_dispatch:
@@ -81,11 +89,13 @@ jobs:
           RELEASE_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo ChatMate v$VERSION '(Sandbox)' || echo ChatMate v$VERSION)
           IS_PRERELEASE=$([ ${{ github.ref_name }} == 'develop' ] && echo true || echo false)
           ASSET_NAME=$([ ${{ github.ref_name }} == 'develop' ] && echo ChatMate-v$VERSION-Sandbox.jar || echo ChatMate-v$VERSION.jar)
+          PREV_SANDBOX_TAG_NAME=$(git tag -l v$VERSION*-Sandbox | head -n 1)
 
           echo TAG_NAME=$TAG_NAME >> $GITHUB_ENV
           echo RELEASE_NAME=$RELEASE_NAME >> $GITHUB_ENV
           echo IS_PRERELEASE=$IS_PRERELEASE >> $GITHUB_ENV
           echo ASSET_NAME=$ASSET_NAME >> $GITHUB_ENV
+          echo PREV_SANDBOX_TAG_NAME=$PREV_SANDBOX_TAG_NAME >> $GITHUB_ENV
 
       - name: Create Release
         id: create-release
@@ -107,3 +117,13 @@ jobs:
           asset_path: ./ChatMate.jar
           asset_name: ${{ env.ASSET_NAME }}
           asset_content_type: application/java-archive
+      
+        # to avoid cluttering up our releases/tags when testing things in sandbox, we automatically
+        # delete the previous release/tag that shares the same major, minor, and patch version.
+      - name: Clean up previous Sandbox release
+        if: ${{ github.ref_name == 'develop' && env.PREV_SANDBOX_TAG_NAME != '' }}
+        uses: dev-drprasad/delete-tag-and-release@v1.1
+        with:
+          tag_name: ${{ env.PREV_SANDBOX_TAG_NAME }}
+          delete_release: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}

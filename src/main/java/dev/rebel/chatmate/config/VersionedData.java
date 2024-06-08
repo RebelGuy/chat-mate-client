@@ -1,7 +1,8 @@
 package dev.rebel.chatmate.config;
 
-import com.google.gson.Gson;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigVersions.Version;
+
+import static dev.rebel.chatmate.util.JsonHelpers.parseSerialisedObject;
 
 public class VersionedData {
   public final int schema;
@@ -13,6 +14,6 @@ public class VersionedData {
   }
 
   public <Serialised extends Version> Serialised parseData(Class<Serialised> clazz) {
-    return new Gson().fromJson(new Gson().toJson(this.data), clazz);
+    return parseSerialisedObject(this.data, clazz);
   }
 }
