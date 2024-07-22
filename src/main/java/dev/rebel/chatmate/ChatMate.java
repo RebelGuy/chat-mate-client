@@ -47,6 +47,7 @@ public class ChatMate {
   // must hold on to reference in these classes, otherwise they may be garbage collected (wtf)
   ChatMateChatService chatMateChatService;
   DonationHudService donationHudService;
+  LiveReactionService liveReactionService;
 
   AccountEndpointProxy accountEndpointProxy;
   Config config;
@@ -278,6 +279,7 @@ public class ChatMate {
         chatMateEventService,
         logService,
         donationApiStore);
+    this.liveReactionService =  new LiveReactionService(chatMateEventService, chatMateHudStore, minecraft, imageService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),
