@@ -29,10 +29,15 @@ public class LiveReactionService {
     PublicChatImage image = event.getData().emojiImage;
     String cacheKey = event.getData().getCacheKey();
 
+    int duration = (int)(Math.random() * 10000);
     for (int i = 0; i < reactionCount; i++) {
-      int delay = i / reactionCount * 2000;
-//      this.minecraft.addScheduledTask()
-      new Timer().schedule(new TaskWrapper(() -> this.spawnReactionElement(image, cacheKey)), delay);
+      int delay = duration * i / reactionCount;
+      new Timer().schedule(
+          new TaskWrapper(() -> this.minecraft.addScheduledTask(
+              () -> this.spawnReactionElement(image, cacheKey))
+          ),
+          delay
+      );
     }
   }
 

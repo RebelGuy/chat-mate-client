@@ -939,14 +939,17 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
   // This manages the render order of elements to simulate z indexes. For some reason, OpenGL ignores z values when
   // translating or rendering, otherwise we would just use the built-in functionality.
   public static class ScreenRenderer {
+    private final Minecraft minecraft;
+
     // importantly, renderables within a layer are ordered
     private Map<Integer, List<Runnable>> collectedRenders;
     private Set<Runnable> completedRenders;
     private final List<Runnable> sideEffects;
     private boolean sideEffectsInProgress;
 
-    public ScreenRenderer() {
+    public ScreenRenderer(Minecraft minecraft) {
       this.clear();
+      this.minecraft = minecraft;
       this.sideEffects = java.util.Collections.synchronizedList(new ArrayList<>());
       this.sideEffectsInProgress = false;
     }
@@ -973,7 +976,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
       synchronized (this.sideEffects) {
         if (this.sideEffectsInProgress) {
           // it is possible that running a side effect causes another side effect to be run - we can safely run it immediately
-          sideEffect.run();
+          this.minecraft.addScheduledTask(sideEffect);
         } else {
           this.sideEffects.add(sideEffect);
         }
@@ -1010,7 +1013,7 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
         copy = Collections.list(this.sideEffects);
         this.sideEffects.clear();
       }
-      copy.forEach(Runnable::run);
+      copy.forEach(this.minecraft::addScheduledTask);
 
       this.sideEffectsInProgress = false;
     }

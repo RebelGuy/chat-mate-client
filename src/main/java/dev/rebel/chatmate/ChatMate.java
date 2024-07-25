@@ -147,7 +147,7 @@ public class ChatMate {
 
     DonationHudStore donationHudStore = new DonationHudStore(config, logService);
     Supplier<InteractiveContext> interactiveContextFactory = () -> new InteractiveContext(
-        new InteractiveScreen.ScreenRenderer(),
+        new InteractiveScreen.ScreenRenderer(minecraft),
         mouseEventService,
         keyboardEventService,
         dimFactory,

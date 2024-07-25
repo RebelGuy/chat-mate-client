@@ -241,7 +241,7 @@ public class ContextMenuService {
   }
 
   private InteractiveContext createInteractiveContext() {
-    return new InteractiveContext(new ScreenRenderer(),
+    return new InteractiveContext(new ScreenRenderer(this.minecraft),
         this.mouseEventService,
         this.keyboardEventService,
         this.dimFactory,
