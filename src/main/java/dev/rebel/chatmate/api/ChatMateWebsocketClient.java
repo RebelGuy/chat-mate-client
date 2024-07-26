@@ -291,6 +291,11 @@ public class ChatMateWebsocketClient {
   }
 
   private void close() {
+    if (this.userSession == null) {
+      this.logService.logDebug(this, "Closing websocket connection, but no user session exists anyway");
+      return;
+    }
+
     try {
       this.userSession.close();
       this.userSession = null;
