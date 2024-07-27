@@ -7,6 +7,7 @@ import dev.rebel.chatmate.api.models.rank.GetAccessibleRanksResponse.GetAccessib
 import dev.rebel.chatmate.api.models.rank.GetUserRanksResponse.GetUserRanksResponseData;
 import dev.rebel.chatmate.api.models.rank.RemoveModRankResponse.RemoveModRankResponseData;
 import dev.rebel.chatmate.api.models.rank.RemoveUserRankResponse.RemoveUserRankResponseData;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.LogService;
 
@@ -14,8 +15,8 @@ import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public class RankEndpointProxy extends EndpointProxy {
-  public RankEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
-    super(logService, apiRequestService, basePath + "/rank");
+  public RankEndpointProxy(LogService logService, ApiRequestService apiRequestService, Config config, String basePath) {
+    super(logService, apiRequestService, config, basePath + "/rank");
   }
 
   public void getRanksAsync(int userId, @Nullable Boolean includeInactive, Consumer<GetUserRanksResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

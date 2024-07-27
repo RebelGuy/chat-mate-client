@@ -90,17 +90,17 @@ public class ChatMate {
     DateTimeService dateTimeService = new DateTimeService();
     CursorService cursorService = new CursorService(minecraft, logService, forgeEventService);
     ApiRequestService apiRequestService = new ApiRequestService(cursorService, config);
-    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, apiPath);
-    this.accountEndpointProxy = new AccountEndpointProxy(logService, apiRequestService, apiPath);
+    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, config, apiPath);
+    this.accountEndpointProxy = new AccountEndpointProxy(logService, apiRequestService, config, apiPath);
     this.validateLoginDetails();
 
-    StreamerEndpointProxy streamerEndpointProxy = new StreamerEndpointProxy(logService, apiRequestService, apiPath);
-    UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, apiPath);
-    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, apiPath);
-    PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, apiPath);
-    RankEndpointProxy rankEndpointProxy = new RankEndpointProxy(logService, apiRequestService, apiPath);
-    DonationEndpointProxy donationEndpointProxy = new DonationEndpointProxy(logService, apiRequestService, apiPath);
-    LivestreamEndpointProxy livestreamEndpointProxy = new LivestreamEndpointProxy(logService, apiRequestService, apiPath);
+    StreamerEndpointProxy streamerEndpointProxy = new StreamerEndpointProxy(logService, apiRequestService, config, apiPath);
+    UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, config, apiPath);
+    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, config, apiPath);
+    PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, config, apiPath);
+    RankEndpointProxy rankEndpointProxy = new RankEndpointProxy(logService, apiRequestService, config, apiPath);
+    DonationEndpointProxy donationEndpointProxy = new DonationEndpointProxy(logService, apiRequestService, config, apiPath);
+    LivestreamEndpointProxy livestreamEndpointProxy = new LivestreamEndpointProxy(logService, apiRequestService, config, apiPath);
 
     LivestreamApiStore livestreamApiStore = new LivestreamApiStore(livestreamEndpointProxy, config);
     DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy, config);

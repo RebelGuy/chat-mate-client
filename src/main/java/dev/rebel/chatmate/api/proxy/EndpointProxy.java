@@ -5,8 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import dev.rebel.chatmate.api.ChatMateApiException;
 import dev.rebel.chatmate.api.HttpException;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.ApiRequestService;
+import dev.rebel.chatmate.util.Objects;
 import dev.rebel.chatmate.util.RequestBackoff;
 
 import javax.annotation.Nullable;
@@ -27,15 +29,17 @@ import static dev.rebel.chatmate.util.Objects.ifClass;
 public class EndpointProxy {
   private final LogService logService;
   private final ApiRequestService apiRequestService;
+  private final Config config;
   private final String basePath;
   private final Gson gson;
   private final ConcurrentMap<String, RequestBackoff> requestBackoffs;
 
   private int requestId = 0;
 
-  public EndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
+  public EndpointProxy(LogService logService, ApiRequestService apiRequestService, Config config, String basePath) {
     this.logService = logService;
     this.apiRequestService = apiRequestService;
+    this.config = config;
     this.basePath = basePath;
     this.gson = new GsonBuilder()
         .serializeNulls()
@@ -84,6 +88,10 @@ public class EndpointProxy {
           return result;
 
         } catch (Exception e) {
+          if (Objects.ifClass(ChatMateApiException.class, e, ex -> ex.apiResponseError.errorCode == 401)) {
+            this.config.getLoginInfoEmitter().set(new Config.LoginInfo(null, null));
+          }
+
           backoff.onError(e);
           onComplete.run();
           if (errorHandler != null) {
