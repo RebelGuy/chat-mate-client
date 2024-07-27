@@ -233,7 +233,7 @@ public class ChatMateWebsocketClient {
 
   private void onChatMateEnabledChanged(Event<Boolean> event) {
     if (event.getData()) {
-      this.onTryReconnect();
+      this.tryConnectAfterDelay(1);
     } else {
       this.close();
     }
@@ -243,7 +243,7 @@ public class ChatMateWebsocketClient {
     // technically we shouldn't open/close the connection based on the streamer's username - instead we should just cycle our streamer topic subscriptions
     // but i'm too lazy
     if (in.getData().username != null) {
-      this.onTryReconnect();
+      this.tryConnectAfterDelay(1);
     } else {
       this.close();
     }
