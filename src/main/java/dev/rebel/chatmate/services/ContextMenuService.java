@@ -14,11 +14,13 @@ import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.BulkSendMessagesModal.BulkSendMessagesModal;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.DonationHudStore;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.TextHudStore;
 import dev.rebel.chatmate.gui.Interactive.CounterModal.CounterModal;
 import dev.rebel.chatmate.gui.Interactive.DonationHudModal.DonationHudModal;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveScreenType;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.ScreenRenderer;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.TextHudModal;
 import dev.rebel.chatmate.gui.Interactive.rank.ManageRanksModal;
 import dev.rebel.chatmate.gui.Interactive.rank.PunishmentAdapters;
 import dev.rebel.chatmate.gui.Interactive.rank.RankAdapters;
@@ -74,6 +76,7 @@ public class ContextMenuService {
   private final ChatMateHudStore chatMateHudStore;
   private final StatusService statusService;
   private final ImageService imageService;
+  private final TextHudStore textHudStore;
 
   public ContextMenuService(Minecraft minecraft,
                             DimFactory dimFactory,
@@ -107,7 +110,8 @@ public class ContextMenuService {
                             Config config,
                             ChatMateHudStore chatMateHudStore,
                             StatusService statusService,
-                            ImageService imageService) {
+                            ImageService imageService,
+                            TextHudStore textHudStore) {
     this.minecraft = minecraft;
     this.dimFactory = dimFactory;
     this.store = store;
@@ -141,6 +145,7 @@ public class ContextMenuService {
     this.chatMateHudStore = chatMateHudStore;
     this.statusService = statusService;
     this.imageService = imageService;
+    this.textHudStore = textHudStore;
   }
 
   public void showUserContext(Dim x, Dim y, PublicUser user) {
@@ -155,6 +160,7 @@ public class ContextMenuService {
 
   public void showHudContext(Dim x, Dim y) {
     this.store.showContextMenu(x, y,
+      new ContextMenuOption("Add text element", this::onAddTextElement),
       new ContextMenuOption("Add countdown title", this::onAddCountdownTitle),
       new ContextMenuOption("Add counter element", this::onAddCounterElement),
       new ContextMenuOption("Add donation element", this::onAddDonationElement),
@@ -189,6 +195,10 @@ public class ContextMenuService {
 
   private void onGoToChannel(PublicUser user) {
     this.urlService.openUrl(user.channel.channelUrl);
+  }
+
+  private void onAddTextElement() {
+    this.displayElementInScreen((context, screen) -> new TextHudModal(context, screen, this.textHudStore));
   }
 
   private void onAddCountdownTitle() {
