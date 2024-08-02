@@ -138,6 +138,7 @@ public class TextHudModal extends ModalElement {
           .setPlaceholder("Add text")
           .setTextUnsafe(this.element.getText())
           .onTextChange(this::onEditedTextChanged)
+          .useDefaultTextFormatter()
           .setMinWidth(gui(50))
           .setVerticalAlignment(VerticalAlignment.MIDDLE)
           .cast();
@@ -155,6 +156,13 @@ public class TextHudModal extends ModalElement {
           .setImage(GUI_BIN_ICON)
           .setTooltip("Delete text element")
           .setOnClick(this::onDelete)
+          .setMaxContentWidth(iconWidth)
+          .setMargin(RectExtension.fromLeft(buttonMargin))
+          .cast();
+      IconButtonElement sectionIcon = new IconButtonElement(context, this)
+          .setImage(GUI_SECTION_ICON)
+          .setTooltip("Insert section character")
+          .setOnClick(this::onInsertSectionIcon)
           .setMaxContentWidth(iconWidth)
           .setMargin(RectExtension.fromLeft(buttonMargin))
           .cast();
@@ -182,6 +190,7 @@ public class TextHudModal extends ModalElement {
           .setSizingMode(SizingMode.FILL);
       this.editingElement = new InlineElement(context, this)
           .addElement(this.textInputElement)
+          .addElement(sectionIcon)
           .addElement(confirmButton)
           .addElement(cancelButton)
           .setAllowShrink(true)
@@ -195,6 +204,13 @@ public class TextHudModal extends ModalElement {
 
     private void onDelete() {
       this.onDelete.accept(this);
+    }
+
+    private void onInsertSectionIcon() {
+      this.textInputElement.writeText("§");
+
+      // bring back the focus to the input element
+      super.context.focusedElement = this.textInputElement;
     }
 
     private void onEdit() {
@@ -226,6 +242,10 @@ public class TextHudModal extends ModalElement {
     private void setEditingMode(boolean editing) {
       this.readonlyElement.setVisible(!editing);
       this.editingElement.setVisible(editing);
+
+      if (editing) {
+        super.context.focusedElement = this.textInputElement;
+      }
     }
   }
 }

@@ -59,6 +59,7 @@ public class TextInputElement extends InputElement {
   private @Nullable String placeholder = null;
   private @Nullable Runnable onSubmit = null;
   private InputType inputType = InputType.TEXT;
+  private boolean renderSectionCharacter = false;
 
   private Dim textHeight;
   private float textScale = 1;
@@ -98,7 +99,7 @@ public class TextInputElement extends InputElement {
   public void onMouseDown(InteractiveEvent<MouseEventData> e) {
     if (e.getData().mouseButtonData.eventButton == MouseButton.LEFT_BUTTON) {
       Dim relX = e.getData().mousePositionData.x.minus(this.getContentBox().getX());
-      String textBeforeCursor = this.fontEngine.trimStringToWidth(this.getVisibleText(), (int)(relX.getGui() / this.textScale)); // i.e. do this operation at 100% scale
+      String textBeforeCursor = this.fontEngine.trimStringToWidth(this.getVisibleText(), (int)(relX.getGui() / this.textScale), false, this.renderSectionCharacter); // i.e. do this operation at 100% scale
       this.setCursorIndex(this.scrollOffsetIndex + textBeforeCursor.length());
       e.stopPropagation();
     }
@@ -198,6 +199,16 @@ public class TextInputElement extends InputElement {
   /** Allows formatting sections of the string. It is required that the total string obtained by concatenating the entries in the returned list is equivalent to the input string. */
   public TextInputElement setTextFormatter(Function<String, List<Tuple2<String, Font>>> textFormatter) {
     this.textFormatter = textFormatter;
+    this.renderSectionCharacter = false;
+    return this;
+  }
+
+  /** Allows users to input the section element to format the text. Section elements are treated as just another character, but they happen to effect how the text is rendered. */
+  public TextInputElement useDefaultTextFormatter() {
+    // todo: i don't believe we need this: just add a function to toggle the renderSectionCharacter field, then fix the formatting after the cursor
+    // -> will need to create a function "getFontAtIndex" to re-apply the font to the text after the cursor
+    this.textFormatter = this::defaultTextFormatter;
+    this.renderSectionCharacter = true;
     return this;
   }
 
@@ -212,9 +223,9 @@ public class TextInputElement extends InputElement {
   }
 
   /** Adds text at the current cursor position, overwriting any selected text. */
-  private void writeText(String textToAdd) {
+  public void writeText(String textToAdd) {
     String text = "";
-    textToAdd = ChatAllowedCharacters.filterAllowedCharacters(textToAdd);
+    textToAdd = this.renderSectionCharacter && textToAdd.equals("§") ? textToAdd : ChatAllowedCharacters.filterAllowedCharacters(textToAdd);
     int selectionStart = Math.min(this.cursorIndex, this.selectionEndIndex);
     int selectionEnd = Math.max(this.cursorIndex, this.selectionEndIndex);
     int maxLengthToAdd = this.maxStringLength - this.text.length() - (selectionStart - selectionEnd);
@@ -509,7 +520,7 @@ public class TextInputElement extends InputElement {
     Dim right = left.plus(width);
 
     String textToRender = this.getTextToRender();
-    String trimmedString = this.fontEngine.trimStringToWidth(textToRender.substring(this.scrollOffsetIndex), (int)(width.getGui() / this.textScale)); // i.e. perform this operation at 100% scale
+    String trimmedString = this.fontEngine.trimStringToWidth(textToRender.substring(this.scrollOffsetIndex), (int)(width.getGui() / this.textScale), false, this.renderSectionCharacter); // i.e. perform this operation at 100% scale
     int visibleStringLength = trimmedString.length();
     int trimmedStringBegin = this.scrollOffsetIndex;
     int trimmedStringEnd = trimmedStringBegin + visibleStringLength;
@@ -530,7 +541,7 @@ public class TextInputElement extends InputElement {
       // thanks java
       State<Dim> newX = new State<>(ZERO);
       RendererHelpers.withMapping(new DimPoint(left, top), this.textScale, () -> {
-        Dim returnedValue = this.fontEngine.drawString(visibleString, ZERO, ZERO);
+        Dim returnedValue = this.fontEngine.drawString(visibleString, ZERO, ZERO, this.renderSectionCharacter);
         newX.setState(returnedValue.times(this.textScale));
       });
       currentX = currentX.plus(newX.getState());
@@ -548,7 +559,7 @@ public class TextInputElement extends InputElement {
     if (visibleStringLength > 0 && cursorIsWithinRange && cursorStartIndex < visibleStringLength) {
       List<Tuple2<String, Font>> visibleString = this.getFormattedString(trimmedStringBegin + cursorStartIndex, trimmedStringEnd);
       RendererHelpers.withMapping(new DimPoint(currentX, top), this.textScale, () -> {
-        this.fontEngine.drawString(visibleString, ZERO, ZERO);
+        this.fontEngine.drawString(visibleString, ZERO, ZERO, this.renderSectionCharacter);
       });
     }
 
@@ -558,7 +569,8 @@ public class TextInputElement extends InputElement {
 
     // if there is a selection, invert the colours
     if (cursorEndIndex != cursorStartIndex) {
-      Dim leftPad = this.fontEngine.getStringWidthDim(trimmedString.substring(0, cursorEndIndex)).times(this.textScale);
+      // todo: need to modify string width to include the section param
+      Dim leftPad = this.fontEngine.getStringWidthDim(trimmedString.substring(0, cursorEndIndex), this.renderSectionCharacter).times(this.textScale);
       Dim x2 = left.plus(leftPad);
       this.invertRegionColours(x1, top.minus(gui(1)), x2.minus(gui(1)), bottom.plus(gui(1)));
     }
@@ -572,8 +584,7 @@ public class TextInputElement extends InputElement {
     }
 
     if (this.textFormatter == null) {
-      Colour colour = super.getEnabled() ? this.enabledColour : this.disabledColour;
-      Font font = new Font().withColour(colour).withShadow(new Shadow(super.context.dimFactory));
+      Font font = this.getDefaultFont();
       text = text.substring(beginIndex, endIndex);
       return Collections.list(new Tuple2<>(text, font));
     }
@@ -715,13 +726,13 @@ public class TextInputElement extends InputElement {
   /** Gets the text that fits into the text box. */
   private String getVisibleText() {
     int width = (int)(this.getEditableWidth().getGui() / this.textScale);
-    return this.fontEngine.trimStringToWidth(this.getTextToRender().substring(this.scrollOffsetIndex), width);
+    return this.fontEngine.trimStringToWidth(this.getTextToRender().substring(this.scrollOffsetIndex), width, false, this.renderSectionCharacter);
   }
 
   /** Gets the tail-end of the text that fits into the text box. */
   private String getVisibleTextReverse() {
     int width = (int)(this.getContentBox().getWidth().getGui() / this.textScale);
-    return this.fontEngine.trimStringToWidth(this.getTextToRender(), width, true);
+    return this.fontEngine.trimStringToWidth(this.getTextToRender(), width, true, this.renderSectionCharacter);
   }
 
   /** Empty string if nothing is selected. */
@@ -752,7 +763,18 @@ public class TextInputElement extends InputElement {
   }
 
   private Dim getEditableWidth() {
-    return this.getContentBox().getWidth().minus(gui(this.fontEngine.getStringWidth(this.suffix) * this.textScale));
+    return this.getContentBox().getWidth().minus(gui(this.fontEngine.getStringWidth(this.suffix, this.renderSectionCharacter) * this.textScale));
+  }
+
+  private Font getDefaultFont() {
+    Colour colour = super.getEnabled() ? this.enabledColour : this.disabledColour;
+    return new Font().withColour(colour).withShadow(new Shadow(super.context.dimFactory));
+  }
+
+  private List<Tuple2<String, Font>> defaultTextFormatter(String text) {
+    List<Tuple2<String, Font>> result = new ArrayList<>();
+    result.add(new Tuple2<>(text, this.getDefaultFont()));
+    return result;
   }
 
   public enum InputType {
