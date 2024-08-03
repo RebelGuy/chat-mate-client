@@ -36,7 +36,7 @@ import static dev.rebel.chatmate.gui.Interactive.RendererHelpers.withConditional
 
 public class FontEngine {
   private static final ResourceLocation[] unicodePageLocations = new ResourceLocation[256];
-  private static final char CHAR_SECTION_SIGN = 167;
+  public static final char CHAR_SECTION_SIGN = 167;
   private static final char CHAR_SPACE = 32;
   private static final char CHAR_NEW_LINE = 10;
   private static final String SECTION_SIGN_STRING = "\u00A7";
@@ -364,6 +364,38 @@ public class FontEngine {
     return this.drawString(text, x, y, baseFont, false);
   }
 
+  /** Adds the style represented by the `formattingCode` to the given `font`. If the style is to be reset, `baseFont` will be returned. */
+  public Font getFontFromChar(char formattingCode, Font baseFont, Font font) {
+    int styleIndex = STYLE_CODES.indexOf(formattingCode);
+    if (styleIndex >= 0 && styleIndex < 16) {
+      int colourInt = this.colorCode[styleIndex];
+      Colour colour = new Colour(colourInt).withAlpha(baseFont.getColour().alpha);
+
+      // todo: it seems weird that colours must go first, else the stylings are reset, but it seems that this is the vanilla behaviour. double check that it makes sense, otherwise don't reset the stylings.
+      font = font
+          .withObfuscated(false)
+          .withBold(false)
+          .withItalic(false)
+          .withUnderlined(false)
+          .withStrikethrough(false)
+          .withColour(colour);
+    } else if (styleIndex == 16) {
+      font = font.withObfuscated(true);
+    } else if (styleIndex == 17) {
+      font = font.withBold(true);
+    } else if (styleIndex == 18) {
+      font = font.withStrikethrough(true);
+    } else if (styleIndex == 19) {
+      font = font.withUnderlined(true);
+    } else if (styleIndex == 20) {
+      font = font.withItalic(true);
+    } else if (styleIndex == 21) {
+      font = baseFont;
+    }
+
+    return font;
+  }
+
   /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor.
    * If `renderSectionCharacter` is true, the formatting codes will be drawn. */
   public Dim drawString(String text, Dim x, Dim y, Font baseFont, boolean renderSectionCharacter) {
@@ -377,43 +409,16 @@ public class FontEngine {
       char c = text.charAt(i);
 
       if (c == CHAR_SECTION_SIGN && i + 1 < text.length()) {
-        int styleIndex = STYLE_CODES.indexOf(text.toLowerCase(Locale.ENGLISH).charAt(i + 1));
-
-        if (!renderSectionCharacter) {
-          // skip the next character
-          i++;
-        }
-
-        if (styleIndex >= 0 && styleIndex < 16) {
-          int colourInt = this.colorCode[styleIndex];
-          Colour colour = new Colour(colourInt).withAlpha(baseFont.getColour().alpha);
-
-          // todo: it seems weird that colours must go first, else the stylings are reset, but it seems that this is the vanilla behaviour. double check that it makes sense, otherwise don't reset the stylings.
-          currentFont = currentFont
-              .withObfuscated(false)
-              .withBold(false)
-              .withItalic(false)
-              .withUnderlined(false)
-              .withStrikethrough(false)
-              .withColour(colour);
-        } else if (styleIndex == 16) {
-          currentFont = currentFont.withObfuscated(true);
-        } else if (styleIndex == 17) {
-          currentFont = currentFont.withBold(true);
-        } else if (styleIndex == 18) {
-          currentFont = currentFont.withStrikethrough(true);
-        } else if (styleIndex == 19) {
-          currentFont = currentFont.withUnderlined(true);
-        } else if (styleIndex == 20) {
-          currentFont = currentFont.withItalic(true);
-        } else if (styleIndex == 21) {
-          currentFont = baseFont;
-        }
+        char formattingCode = text.toLowerCase(Locale.ENGLISH).charAt(i + 1);
+        currentFont = this.getFontFromChar(formattingCode, baseFont, currentFont);
 
         // if instructed, render the formatting code but also apply the very style that it represents
         if (renderSectionCharacter) {
           Dim charWidth = this.renderChar(c, currentFont, x, y);
           x = x.plus(charWidth);
+        } else {
+          // skip the next character
+          i++;
         }
       } else {
         int asciiIndex = ASCII_CHARACTERS.indexOf(c);

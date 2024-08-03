@@ -2,6 +2,7 @@ package dev.rebel.chatmate.gui.Interactive;
 
 import dev.rebel.chatmate.events.models.KeyboardEventData.KeyModifier;
 import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData.FocusReason;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
@@ -34,6 +35,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -42,7 +44,6 @@ import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
 
 /** Border: actually draws a border. Padding: space between text and border. */
 public class TextInputElement extends InputElement {
-  private String placeholderText = "";
   private String text;
   private int maxStringLength = 64;
 
@@ -203,12 +204,10 @@ public class TextInputElement extends InputElement {
     return this;
   }
 
-  /** Allows users to input the section element to format the text. Section elements are treated as just another character, but they happen to effect how the text is rendered. */
-  public TextInputElement useDefaultTextFormatter() {
-    // todo: i don't believe we need this: just add a function to toggle the renderSectionCharacter field, then fix the formatting after the cursor
-    // -> will need to create a function "getFontAtIndex" to re-apply the font to the text after the cursor
-    this.textFormatter = this::defaultTextFormatter;
-    this.renderSectionCharacter = true;
+  /** Allows users to input the section element to format the text. Section elements are rendered as just another character, but they happen to effect how the text is rendered.
+   * By default, formatting codes are not rendered. */
+  public TextInputElement setRenderSectionCharacter(boolean renderSectionCharacter) {
+    this.renderSectionCharacter = renderSectionCharacter;
     return this;
   }
 
@@ -576,6 +575,30 @@ public class TextInputElement extends InputElement {
     }
   }
 
+  /** What font should the character at the given index be rendered as? */
+  private Font getFontAtIndex(int index) {
+    String text = this.getTextToRender();
+    index = Math.max(
+        Math.min(1, text.length()), // this guarantees we will correctly format section signs if they appear on index 0
+        Math.min(index, text.length() - 1) // this guarantees there is always a next character in the string
+    );
+
+    Font defaultFont = this.getDefaultFont();
+    Font font = defaultFont;
+    for (int i = 0; i < index; i++) {
+      char thisChar = text.charAt(i);
+      if (thisChar != FontEngine.CHAR_SECTION_SIGN) {
+        continue;
+      }
+
+      i++;
+      char formattingCode = text.toLowerCase(Locale.ENGLISH).charAt(i);
+      font = this.fontEngine.getFontFromChar(formattingCode, defaultFont, font);
+    }
+
+    return font;
+  }
+
   /** endIndex is exclusive. */
   private List<Tuple2<String, Font>> getFormattedString(int beginIndex, @Nullable Integer endIndex) {
     String text = this.getTextToRender();
@@ -583,8 +606,20 @@ public class TextInputElement extends InputElement {
       endIndex = text.length();
     }
 
+    // use the default formatter if no formatter has been provided.
+    // the default formatter mostly relies on formatting being already encoded in the text via the section sign.
     if (this.textFormatter == null) {
-      Font font = this.getDefaultFont();
+      Font font = this.getFontAtIndex(beginIndex);
+
+      // the last section sign character has to be formatted differently depending on the formatting code coming after it.
+      // we don't need to care about internal section characters, because the font engine already handles that for us.
+      if (endIndex > 0 && endIndex != text.length() && text.charAt(endIndex - 1) == FontEngine.CHAR_SECTION_SIGN) {
+        return Collections.list(
+            new Tuple2<>(text.substring(beginIndex, endIndex - 1), font),
+            new Tuple2<>(text.substring(endIndex - 1, endIndex), this.getFontAtIndex(endIndex))
+        );
+      }
+
       text = text.substring(beginIndex, endIndex);
       return Collections.list(new Tuple2<>(text, font));
     }
@@ -769,12 +804,6 @@ public class TextInputElement extends InputElement {
   private Font getDefaultFont() {
     Colour colour = super.getEnabled() ? this.enabledColour : this.disabledColour;
     return new Font().withColour(colour).withShadow(new Shadow(super.context.dimFactory));
-  }
-
-  private List<Tuple2<String, Font>> defaultTextFormatter(String text) {
-    List<Tuple2<String, Font>> result = new ArrayList<>();
-    result.add(new Tuple2<>(text, this.getDefaultFont()));
-    return result;
   }
 
   public enum InputType {

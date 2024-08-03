@@ -138,7 +138,7 @@ public class TextHudModal extends ModalElement {
           .setPlaceholder("Add text")
           .setTextUnsafe(this.element.getText())
           .onTextChange(this::onEditedTextChanged)
-          .useDefaultTextFormatter()
+          .setRenderSectionCharacter(true)
           .setMinWidth(gui(50))
           .setVerticalAlignment(VerticalAlignment.MIDDLE)
           .cast();
