@@ -578,12 +578,16 @@ public class TextInputElement extends InputElement {
   /** What font should the character at the given index be rendered as? */
   private Font getFontAtIndex(int index) {
     String text = this.getTextToRender();
+    Font defaultFont = this.getDefaultFont();
+    if (text.length() <= 1) {
+      return defaultFont;
+    }
+
     index = Math.max(
         Math.min(1, text.length()), // this guarantees we will correctly format section signs if they appear on index 0
         Math.min(index, text.length() - 1) // this guarantees there is always a next character in the string
     );
 
-    Font defaultFont = this.getDefaultFont();
     Font font = defaultFont;
     for (int i = 0; i < index; i++) {
       char thisChar = text.charAt(i);
