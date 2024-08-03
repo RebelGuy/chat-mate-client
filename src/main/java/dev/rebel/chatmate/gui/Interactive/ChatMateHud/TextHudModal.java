@@ -139,6 +139,7 @@ public class TextHudModal extends ModalElement {
           .setTextUnsafe(this.element.getText())
           .onTextChange(this::onEditedTextChanged)
           .setRenderSectionCharacter(true)
+          .setCursorStateRestorationEnabled(true) // retain the cursor state when clicking on the section character button
           .setMinWidth(gui(50))
           .setVerticalAlignment(VerticalAlignment.MIDDLE)
           .cast();
@@ -207,10 +208,10 @@ public class TextHudModal extends ModalElement {
     }
 
     private void onInsertSectionIcon() {
-      this.textInputElement.writeText("§");
-
       // bring back the focus to the input element
-      super.context.focusedElement = this.textInputElement;
+      super.context.onSetFocus(this.textInputElement);
+
+      this.textInputElement.writeText("§");
     }
 
     private void onEdit() {
@@ -244,7 +245,7 @@ public class TextHudModal extends ModalElement {
       this.editingElement.setVisible(editing);
 
       if (editing) {
-        super.context.focusedElement = this.textInputElement;
+        super.context.onSetFocus(this.textInputElement);
       }
     }
   }

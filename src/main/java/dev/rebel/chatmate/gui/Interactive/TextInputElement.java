@@ -62,6 +62,9 @@ public class TextInputElement extends InputElement {
   private InputType inputType = InputType.TEXT;
   private boolean renderSectionCharacter = false;
 
+  /** Saves the current cursor state to this variable so it can be restored upon focus. If null, the feature is disabled. */
+  private @Nullable CursorState previousCursorState = null;
+
   private Dim textHeight;
   private float textScale = 1;
 
@@ -120,8 +123,18 @@ public class TextInputElement extends InputElement {
       this.cursorIndex = this.text.length();
       this.selectionEndIndex = 0;
     } else if (e.getData().reason == FocusReason.CODE) {
-      this.cursorIndex = this.text.length();
-      this.selectionEndIndex = this.text.length();
+      if (this.previousCursorState != null) {
+        this.cursorIndex = this.previousCursorState.cursorIndex;
+        this.scrollOffsetIndex = this.previousCursorState.scrollOffsetIndex;
+        this.selectionEndIndex = this.previousCursorState.selectionEndIndex;
+      } else {
+        this.cursorIndex = this.text.length();
+        this.selectionEndIndex = this.text.length();
+      }
+    }
+
+    if (this.previousCursorState != null) {
+      this.previousCursorState.update();
     }
   }
 
@@ -218,6 +231,17 @@ public class TextInputElement extends InputElement {
 
   public TextInputElement setPlaceholder(String placeholder) {
     this.placeholder = placeholder;
+    return this;
+  }
+
+  /** If enabled, the cursor state will be restored whenever focus is brought to the element programmatically. */
+  public TextInputElement setCursorStateRestorationEnabled(boolean enable) {
+    if (enable) {
+      this.previousCursorState = new CursorState(this.cursorIndex, this.scrollOffsetIndex, this.selectionEndIndex);
+    } else {
+      this.previousCursorState = null;
+    }
+
     return this;
   }
 
@@ -760,6 +784,10 @@ public class TextInputElement extends InputElement {
     }
 
     this.scrollOffsetIndex = MathHelper.clamp_int(this.scrollOffsetIndex, 0, length);
+
+    if (this.previousCursorState != null) {
+      this.previousCursorState.update();
+    }
   }
 
   /** Gets the text that fits into the text box. */
@@ -812,5 +840,23 @@ public class TextInputElement extends InputElement {
 
   public enum InputType {
       TEXT, PASSWORD
+  }
+
+  private class CursorState {
+    public int cursorIndex;
+    public int scrollOffsetIndex;
+    public int selectionEndIndex;
+
+    public CursorState(int cursorIndex, int scrollOffsetIndex, int selectionEndIndex) {
+      this.cursorIndex = cursorIndex;
+      this.scrollOffsetIndex = scrollOffsetIndex;
+      this.selectionEndIndex = selectionEndIndex;
+    }
+
+    public void update() {
+      this.cursorIndex = TextInputElement.this.cursorIndex;
+      this.scrollOffsetIndex = TextInputElement.this.scrollOffsetIndex;
+      this.selectionEndIndex = TextInputElement.this.selectionEndIndex;
+    }
   }
 }

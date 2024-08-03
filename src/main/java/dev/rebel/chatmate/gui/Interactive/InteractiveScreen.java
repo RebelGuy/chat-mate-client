@@ -867,6 +867,8 @@ public class InteractiveScreen extends Screen implements IElement, IFocusListene
 
     /** The element that we want to debug. */
     public @Nullable IElement debugElement = null;
+
+    /** Do not set this directly - use `context.onSetFocus()` instead. */
     public @Nullable InputElement focusedElement = null;
     public @Nullable DimPoint mousePosition = null;
 
