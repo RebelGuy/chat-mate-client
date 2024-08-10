@@ -16,6 +16,7 @@ public class Asset {
   public static Texture GUI_WEB_ICON = new Texture(64, 64, "textures/gui/web_icon.png");
   public static Texture GUI_EXTERNAL_ICON = new Texture(64, 64, "textures/gui/external_icon.png");
   public static Texture GUI_BIN_ICON = new Texture(64, 64, "textures/gui/bin_icon.png");
+  public static Texture GUI_PEN_ICON = new Texture(128, 128, "textures/gui/pen_icon.png");
   public static Texture GUI_LINK_ICON = new Texture(64, 64, "textures/gui/link_icon.png");
   public static Texture GUI_UNLINK_ICON = new Texture(64, 64, "textures/gui/unlink_icon.png");
   public static Texture GUI_DOLLAR_ICON = new Texture(64, 64, "textures/gui/dollar_icon.png");
@@ -23,6 +24,7 @@ public class Asset {
   public static Texture GUI_TEXT_ICON = new Texture(128, 128, "textures/gui/text_icon.png");
   public static Texture GUI_VERIFICATION_ICON = new Texture(128, 128, "textures/gui/verification_icon.png");
   public static Texture GUI_VERIFICATION_ICON_WHITE_SMALL = new Texture(32, 32, "textures/gui/verification_icon_white_small.png"); // use this when recolouring the icon
+  public static Texture GUI_SECTION_ICON = new Texture(128, 128, "textures/gui/section_icon.png");
 
   public static Texture LOGO_YOUTUBE = new Texture(320, 320, "textures/logo_youtube.png");
   public static Texture LOGO_TWITCH = new Texture(320, 320, "textures/logo_twitch.png");

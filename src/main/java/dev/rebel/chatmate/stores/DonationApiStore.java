@@ -10,31 +10,36 @@ import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
 import dev.rebel.chatmate.api.proxy.EndpointProxy;
 import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.config.Config.LoginInfo;
-import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public class DonationApiStore {
+  private final static long ERROR_TIMEOUT_MS = 10_000; // hardcoded for now - see CHAT-803
+
   private final DonationEndpointProxy donationEndpointProxy;
+  private final Config config;
 
   private @Nullable CopyOnWriteArrayList<PublicDonation> donations;
   private @Nullable String getDonationsError;
+  private @Nullable Long getDonationsErrorExpiry;
   private boolean loading;
 
   public DonationApiStore(DonationEndpointProxy donationEndpointProxy, Config config) {
     this.donationEndpointProxy = donationEndpointProxy;
+    this.config = config;
 
     this.donations = null;
     this.getDonationsError = null;
+    this.getDonationsErrorExpiry = null;
     this.loading = false;
 
     config.getLoginInfoEmitter().onChange(_info -> this.clear(), new ConfigEventOptions<>(info -> info.loginToken == null));
@@ -43,11 +48,16 @@ public class DonationApiStore {
   public void clear() {
     this.donations = null;
     this.getDonationsError = null;
+    this.getDonationsErrorExpiry = null;
     this.loading = false;
   }
 
   /** Fetches donations from the server. */
-  public void loadDonations(Consumer<List<PublicDonation>> callback, @Nullable Consumer<Throwable> errorHandler, boolean forceLoad) {
+  public void loadDonations(Consumer<List<PublicDonation>> callback, @Nonnull Consumer<Throwable> errorHandler, boolean forceLoad) {
+    if (this.config.getLoginInfoEmitter().get().username == null || this.getError() != null && !forceLoad) {
+      return;
+    }
+
     if (this.donations != null && !forceLoad) {
       callback.accept(this.donations);
       return;
@@ -60,11 +70,13 @@ public class DonationApiStore {
     this.donationEndpointProxy.getDonationsAsync(res -> {
       this.donations = new CopyOnWriteArrayList<>(Collections.reverse(Collections.orderBy(Collections.list(res.donations), d -> d.time)));
       this.getDonationsError = null;
+      this.getDonationsErrorExpiry = null;
       this.loading = false;
       callback.accept(this.donations);
     }, err -> {
       this.donations = null;
       this.getDonationsError = EndpointProxy.getApiErrorMessage(err);
+      this.getDonationsErrorExpiry = new Date().getTime() + ERROR_TIMEOUT_MS;
       this.loading = false;
       errorHandler.accept(err);
     }, forceLoad);
@@ -83,7 +95,12 @@ public class DonationApiStore {
   }
 
   public @Nullable String getError() {
-    return this.getDonationsError;
+    if (this.getDonationsError == null) {
+      return null;
+    }
+
+    assert this.getDonationsErrorExpiry != null;
+    return new Date().getTime() < this.getDonationsErrorExpiry ? this.getDonationsError : null;
   }
 
   public void linkUser(int donationId, int userId, Consumer<LinkUserResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

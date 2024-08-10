@@ -153,7 +153,7 @@ public class DonationsListElement extends ContainerElement {
 
   public void onShow() {
     this.loadingSpinner.setVisible(true);
-    super.context.donationApiStore.loadDonations(this::onGetDonations, this::onError, false);
+    super.context.donationApiStore.loadDonations(this::onGetDonations, this::onError, true);
   }
 
   public void onHide() {

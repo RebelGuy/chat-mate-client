@@ -270,7 +270,7 @@ public class GuiService {
   }
 
   private InteractiveScreen.InteractiveContext createInteractiveContext() {
-    return new InteractiveScreen.InteractiveContext(new ScreenRenderer(),
+    return new InteractiveScreen.InteractiveContext(new ScreenRenderer(this.minecraft),
         this.mouseEventService,
         this.keyboardEventService,
         this.dimFactory,

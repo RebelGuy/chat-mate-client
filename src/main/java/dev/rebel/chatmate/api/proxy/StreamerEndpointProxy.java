@@ -11,6 +11,7 @@ import dev.rebel.chatmate.api.models.streamer.GetPrimaryChannelsResponse;
 import dev.rebel.chatmate.api.models.streamer.GetPrimaryChannelsResponse.GetPrimaryChannelsResponseData;
 import dev.rebel.chatmate.api.models.streamer.GetStreamersResponse;
 import dev.rebel.chatmate.api.models.streamer.GetStreamersResponse.GetStreamersResponseData;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.ApiRequestService;
 
@@ -20,8 +21,8 @@ import java.util.Date;
 import java.util.function.Consumer;
 
 public class StreamerEndpointProxy extends EndpointProxy {
-  public StreamerEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
-    super(logService, apiRequestService, basePath + "/streamer");
+  public StreamerEndpointProxy(LogService logService, ApiRequestService apiRequestService, Config config, String basePath) {
+    super(logService, apiRequestService, config, basePath + "/streamer");
   }
 
   public void getStatusAsync(Consumer<GetStatusResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean notifyEndpointStore) {

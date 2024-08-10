@@ -1,16 +1,13 @@
 package dev.rebel.chatmate.api.proxy;
 
-import dev.rebel.chatmate.api.models.account.*;
+import dev.rebel.chatmate.api.models.account.AuthenticateResponse;
 import dev.rebel.chatmate.api.models.account.AuthenticateResponse.AuthenticateResponseData;
+import dev.rebel.chatmate.api.models.account.LoginRequest;
+import dev.rebel.chatmate.api.models.account.LoginResponse;
 import dev.rebel.chatmate.api.models.account.LoginResponse.LoginResponseData;
+import dev.rebel.chatmate.api.models.account.LogoutResponse;
 import dev.rebel.chatmate.api.models.account.LogoutResponse.LogoutResponseData;
-import dev.rebel.chatmate.api.models.experience.GetLeaderboardResponse;
-import dev.rebel.chatmate.api.models.experience.GetLeaderboardResponse.GetLeaderboardResponseData;
-import dev.rebel.chatmate.api.models.experience.GetRankResponse;
-import dev.rebel.chatmate.api.models.experience.GetRankResponse.GetRankResponseData;
-import dev.rebel.chatmate.api.models.experience.ModifyExperienceRequest;
-import dev.rebel.chatmate.api.models.experience.ModifyExperienceResponse;
-import dev.rebel.chatmate.api.models.experience.ModifyExperienceResponse.ModifyExperienceResponseData;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.LogService;
 
@@ -19,8 +16,8 @@ import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public class AccountEndpointProxy extends EndpointProxy {
-  public AccountEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
-    super(logService, apiRequestService, basePath + "/account");
+  public AccountEndpointProxy(LogService logService, ApiRequestService apiRequestService, Config config, String basePath) {
+    super(logService, apiRequestService, config, basePath + "/account");
   }
 
   public void authenticateAsync(Consumer<AuthenticateResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

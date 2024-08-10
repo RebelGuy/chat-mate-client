@@ -115,10 +115,13 @@ public class YoutubeLivestreamElement extends InlineElement {
 
   @Override
   public ContainerElement setVisible(boolean visible) {
+    super.setVisible(visible);
+
     if (visible) {
       this.onRefresh();
     }
-    return super.setVisible(visible);
+
+    return this;
   }
 
   private void onChange(String livestream) {

@@ -7,6 +7,7 @@ import dev.rebel.chatmate.gui.models.DimFactory;
 import dev.rebel.chatmate.gui.style.Font;
 import dev.rebel.chatmate.gui.style.Shadow;
 import dev.rebel.chatmate.util.Collections;
+import gnu.trove.stack.array.TFloatArrayStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -35,7 +36,7 @@ import static dev.rebel.chatmate.gui.Interactive.RendererHelpers.withConditional
 
 public class FontEngine {
   private static final ResourceLocation[] unicodePageLocations = new ResourceLocation[256];
-  private static final char CHAR_SECTION_SIGN = 167;
+  public static final char CHAR_SECTION_SIGN = 167;
   private static final char CHAR_SPACE = 32;
   private static final char CHAR_NEW_LINE = 10;
   private static final String SECTION_SIGN_STRING = "\u00A7";
@@ -351,15 +352,53 @@ public class FontEngine {
   }
 
   /** Returns the new x-position of the cursor. */
-  public Dim drawString(List<Tuple2<String, Font>> formattedText, Dim x, Dim y) {
+  public Dim drawString(List<Tuple2<String, Font>> formattedText, Dim x, Dim y, boolean renderSectionCharacter) {
     for (Tuple2<String, Font> text : formattedText) {
-      x = this.drawString(text._1, x, y, text._2);
+      x = this.drawString(text._1, x, y, text._2, renderSectionCharacter);
     }
     return x;
   }
 
-  /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor. */
+  /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor. Formatting codes are hidden. */
   public Dim drawString(String text, Dim x, Dim y, Font baseFont) {
+    return this.drawString(text, x, y, baseFont, false);
+  }
+
+  /** Adds the style represented by the `formattingCode` to the given `font`. If the style is to be reset, `baseFont` will be returned. */
+  public Font getFontFromChar(char formattingCode, Font baseFont, Font font) {
+    int styleIndex = STYLE_CODES.indexOf(formattingCode);
+    if (styleIndex >= 0 && styleIndex < 16) {
+      int colourInt = this.colorCode[styleIndex];
+      Colour colour = new Colour(colourInt).withAlpha(baseFont.getColour().alpha);
+
+      // todo: it seems weird that colours must go first, else the stylings are reset, but it seems that this is the vanilla behaviour. double check that it makes sense, otherwise don't reset the stylings.
+      font = font
+          .withObfuscated(false)
+          .withBold(false)
+          .withItalic(false)
+          .withUnderlined(false)
+          .withStrikethrough(false)
+          .withColour(colour);
+    } else if (styleIndex == 16) {
+      font = font.withObfuscated(true);
+    } else if (styleIndex == 17) {
+      font = font.withBold(true);
+    } else if (styleIndex == 18) {
+      font = font.withStrikethrough(true);
+    } else if (styleIndex == 19) {
+      font = font.withUnderlined(true);
+    } else if (styleIndex == 20) {
+      font = font.withItalic(true);
+    } else if (styleIndex == 21) {
+      font = baseFont;
+    }
+
+    return font;
+  }
+
+  /** Render a single line string at the given position, respecting the styles contained in the string. Returns the new x-position of the cursor.
+   * If `renderSectionCharacter` is true, the formatting codes will be drawn. */
+  public Dim drawString(String text, Dim x, Dim y, Font baseFont, boolean renderSectionCharacter) {
     if (text == null || text.length() == 0) {
       return x;
     }
@@ -370,33 +409,16 @@ public class FontEngine {
       char c = text.charAt(i);
 
       if (c == CHAR_SECTION_SIGN && i + 1 < text.length()) {
-        int styleIndex = STYLE_CODES.indexOf(text.toLowerCase(Locale.ENGLISH).charAt(i + 1));
-        i++;
+        char formattingCode = text.toLowerCase(Locale.ENGLISH).charAt(i + 1);
+        currentFont = this.getFontFromChar(formattingCode, baseFont, currentFont);
 
-        if (styleIndex >= 0 && styleIndex < 16) {
-          int colourInt = this.colorCode[styleIndex];
-          Colour colour = new Colour(colourInt).withAlpha(baseFont.getColour().alpha);
-
-          // todo: it seems weird that colours must go first, else the stylings are reset, but it seems that this is the vanilla behaviour. double check that it makes sense, otherwise don't reset the stylings.
-          currentFont = currentFont
-              .withObfuscated(false)
-              .withBold(false)
-              .withItalic(false)
-              .withUnderlined(false)
-              .withStrikethrough(false)
-              .withColour(colour);
-        } else if (styleIndex == 16) {
-          currentFont = currentFont.withObfuscated(true);
-        } else if (styleIndex == 17) {
-          currentFont = currentFont.withBold(true);
-        } else if (styleIndex == 18) {
-          currentFont = currentFont.withStrikethrough(true);
-        } else if (styleIndex == 19) {
-          currentFont = currentFont.withUnderlined(true);
-        } else if (styleIndex == 20) {
-          currentFont = currentFont.withItalic(true);
-        } else if (styleIndex == 21) {
-          currentFont = baseFont;
+        // if instructed, render the formatting code but also apply the very style that it represents
+        if (renderSectionCharacter) {
+          Dim charWidth = this.renderChar(c, currentFont, x, y);
+          x = x.plus(charWidth);
+        } else {
+          // skip the next character
+          i++;
         }
       } else {
         int asciiIndex = ASCII_CHARACTERS.indexOf(c);
@@ -462,15 +484,27 @@ public class FontEngine {
   }
 
   public int getStringWidth(String text) {
-    return (int)this.getStringWidthDim(text).getGui();
+    return this.getStringWidth(text, false);
+  }
+
+  public int getStringWidth(String text, boolean renderSectionCharacter) {
+    return (int)this.getStringWidthDim(text, renderSectionCharacter).getGui();
   }
 
   public Dim getStringWidthDim(String text) {
     return this.getStringWidthDim(text, new Font());
   }
 
-  /** Returns the width of this string. Equivalent of FontMetrics.stringWidth(String s). */
   public Dim getStringWidthDim(String text, Font font) {
+    return this.getStringWidthDim(text, font, false);
+  }
+
+  public Dim getStringWidthDim(String text, boolean renderSectionCharacter) {
+    return this.getStringWidthDim(text, new Font(), renderSectionCharacter);
+  }
+
+  /** Returns the width of this string. Equivalent of FontMetrics.stringWidth(String s). */
+  public Dim getStringWidthDim(String text, Font font, boolean renderSectionCharacter) {
     if (text == null) {
       return this.dimFactory.zeroGui();
     } else {
@@ -479,22 +513,27 @@ public class FontEngine {
 
       for (int j = 0; j < text.length(); ++j) {
         char thisChar = text.charAt(j);
-        Dim charWidth = this.getCharWidth(thisChar);
+        Dim charWidth = this.getCharWidth(thisChar, renderSectionCharacter);
 
-        // if we have inferred a section char (why not just check if it's the section char??)
         if (thisChar == CHAR_SECTION_SIGN && j < text.length() - 1) {
-          ++j;
-          thisChar = text.charAt(j); // format char
+          if (!renderSectionCharacter) {
+            // skip the next character
+            j++;
+          }
 
-          if (thisChar != 108 && thisChar != 76) { // is not `l` (bold)
-            if (thisChar == 114 || thisChar == 82) { // is `r`
+          char formatChar = text.charAt(j); // format char
+
+          if (formatChar != 108 && formatChar != 76) { // is not `l` (bold)
+            if (formatChar == 114 || formatChar == 82) { // is `r`
               isBold = false;
             }
           } else {
             isBold = true;
           }
 
-          charWidth = this.dimFactory.zeroGui();
+          if (!renderSectionCharacter) {
+            charWidth = this.dimFactory.zeroGui();
+          }
         }
 
         width = width.plus(charWidth);
@@ -510,7 +549,12 @@ public class FontEngine {
 
   /** Returns the width of this character as rendered. */
   public Dim getCharWidth(char character) {
-    if (character == CHAR_SECTION_SIGN) {
+    return this.getCharWidth(character, false);
+  }
+
+  /** Returns the width of this character as rendered. */
+  public Dim getCharWidth(char character, boolean renderSectionCharacter) {
+    if (character == CHAR_SECTION_SIGN && !renderSectionCharacter) {
       return this.dimFactory.fromGui(-1);
     } else if (character == CHAR_SPACE) {
       return this.dimFactory.fromGui(4);
@@ -537,43 +581,57 @@ public class FontEngine {
     return this.trimStringToWidth(text, width, false);
   }
 
-  /** Trims a string to a specified width, and will reverse it if par3 is set. */
+  /** Trims a string to a specified width, and will reverse it if set. */
   public String trimStringToWidth(String text, int width, boolean reverse) {
-    return this.trimStringToWidth(text, this.dimFactory.fromGui(width), new Font(), reverse);
+    return this.trimStringToWidth(text, this.dimFactory.fromGui(width), new Font(), reverse, false);
   }
 
-  /** Trims a string to a specified width, and will reverse it if par4 is set. */
+  /** Trims a string to a specified width, and will reverse it if set. */
+  public String trimStringToWidth(String text, int width, boolean reverse, boolean renderSectionCharacter) {
+    return this.trimStringToWidth(text, this.dimFactory.fromGui(width), new Font(), reverse, renderSectionCharacter);
+  }
+
   public String trimStringToWidth(String text, Dim width, Font font, boolean reverse) {
+    return this.trimStringToWidth(text, width, font, reverse, false);
+  }
+
+  /** Trims a string to a specified width, and will reverse it if set. If `renderSectionCharacter` is `true`, the formatting codes are considered in the width calculation. */
+  public String trimStringToWidth(String text, Dim width, Font font, boolean reverse, boolean renderSectionCharacter) {
     StringBuilder stringbuilder = new StringBuilder();
     Dim currentWidth = this.dimFactory.zeroGui();
-    int j = reverse ? text.length() - 1 : 0;
-    int k = reverse ? -1 : 1;
-    boolean isSectionSign = false;
+    int startIndex = reverse ? text.length() - 1 : 0;
+    int delta = reverse ? -1 : 1;
     boolean isBold = false;
 
-    for (int l = j; l >= 0 && l < text.length() && currentWidth.lt(width); l += k) {
-      char thisChar = text.charAt(l);
-      Dim thisCharWidth = this.getCharWidth(thisChar);
+    for (int j = startIndex; j >= 0 && j < text.length() && currentWidth.lt(width); j += delta) {
+      char thisChar = text.charAt(j);
+      Dim charWidth = this.getCharWidth(thisChar, renderSectionCharacter);
 
-      // todo: clean up this mess... it's even worse than in `getStringWidthDim`
-      if (isSectionSign) {
-        isSectionSign = false;
+      if (thisChar == CHAR_SECTION_SIGN && j < text.length() - 1) {
+        if (!renderSectionCharacter) {
+          // skip the next character
+          j++;
+        }
 
-        if (thisChar != 108 && thisChar != 76) { // char is not `l` (bold)
-          if (thisChar == 114 || thisChar == 82) { // char is `r` (reset)
+        char formatChar = text.charAt(j); // format char
+
+        if (formatChar != 108 && formatChar != 76) { // is not `l` (bold)
+          if (formatChar == 114 || formatChar == 82) { // is `r`
             isBold = false;
           }
         } else {
           isBold = true;
         }
-      } else if (thisCharWidth.lt(this.dimFactory.zeroGui())) {
-        isSectionSign = true;
-      } else {
-        currentWidth = currentWidth.plus(thisCharWidth);
 
-        if (isBold || font.getBold()) {
-          currentWidth = currentWidth.plus(this.dimFactory.fromGui(1));
+        if (!renderSectionCharacter) {
+          charWidth = this.dimFactory.zeroGui();
         }
+      }
+
+      currentWidth = currentWidth.plus(charWidth);
+
+      if ((font.getBold() || isBold) && charWidth.gt(this.dimFactory.zeroGui())) {
+        currentWidth = currentWidth.plus(this.dimFactory.fromGui(1));
       }
 
       if (currentWidth.gt(width)) {

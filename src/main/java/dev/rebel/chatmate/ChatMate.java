@@ -47,6 +47,7 @@ public class ChatMate {
   // must hold on to reference in these classes, otherwise they may be garbage collected (wtf)
   ChatMateChatService chatMateChatService;
   DonationHudService donationHudService;
+  LiveReactionService liveReactionService;
 
   AccountEndpointProxy accountEndpointProxy;
   Config config;
@@ -89,17 +90,17 @@ public class ChatMate {
     DateTimeService dateTimeService = new DateTimeService();
     CursorService cursorService = new CursorService(minecraft, logService, forgeEventService);
     ApiRequestService apiRequestService = new ApiRequestService(cursorService, config);
-    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, apiPath);
-    this.accountEndpointProxy = new AccountEndpointProxy(logService, apiRequestService, apiPath);
+    ChatEndpointProxy chatEndpointProxy = new ChatEndpointProxy(logService, apiRequestService, config, apiPath);
+    this.accountEndpointProxy = new AccountEndpointProxy(logService, apiRequestService, config, apiPath);
     this.validateLoginDetails();
 
-    StreamerEndpointProxy streamerEndpointProxy = new StreamerEndpointProxy(logService, apiRequestService, apiPath);
-    UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, apiPath);
-    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, apiPath);
-    PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, apiPath);
-    RankEndpointProxy rankEndpointProxy = new RankEndpointProxy(logService, apiRequestService, apiPath);
-    DonationEndpointProxy donationEndpointProxy = new DonationEndpointProxy(logService, apiRequestService, apiPath);
-    LivestreamEndpointProxy livestreamEndpointProxy = new LivestreamEndpointProxy(logService, apiRequestService, apiPath);
+    StreamerEndpointProxy streamerEndpointProxy = new StreamerEndpointProxy(logService, apiRequestService, config, apiPath);
+    UserEndpointProxy userEndpointProxy = new UserEndpointProxy(logService, apiRequestService, config, apiPath);
+    ExperienceEndpointProxy experienceEndpointProxy = new ExperienceEndpointProxy(logService, apiRequestService, config, apiPath);
+    PunishmentEndpointProxy punishmentEndpointProxy = new PunishmentEndpointProxy(logService, apiRequestService, config, apiPath);
+    RankEndpointProxy rankEndpointProxy = new RankEndpointProxy(logService, apiRequestService, config, apiPath);
+    DonationEndpointProxy donationEndpointProxy = new DonationEndpointProxy(logService, apiRequestService, config, apiPath);
+    LivestreamEndpointProxy livestreamEndpointProxy = new LivestreamEndpointProxy(logService, apiRequestService, config, apiPath);
 
     LivestreamApiStore livestreamApiStore = new LivestreamApiStore(livestreamEndpointProxy, config);
     DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy, config);
@@ -146,7 +147,7 @@ public class ChatMate {
 
     DonationHudStore donationHudStore = new DonationHudStore(config, logService);
     Supplier<InteractiveContext> interactiveContextFactory = () -> new InteractiveContext(
-        new InteractiveScreen.ScreenRenderer(),
+        new InteractiveScreen.ScreenRenderer(minecraft),
         mouseEventService,
         keyboardEventService,
         dimFactory,
@@ -192,6 +193,7 @@ public class ChatMate {
     ChatMateHudStore chatMateHudStore = new ChatMateHudStore(hudContext);
     CountdownHandler countdownHandler = new CountdownHandler(dimFactory, minecraft, fontEngine, chatMateHudStore);
     CounterHandler counterHandler = new CounterHandler(keyBindingService, chatMateHudStore, dimFactory);
+    TextHudStore textHudStore = new TextHudStore(chatMateHudStore);
     ContextMenuService contextMenuService = new ContextMenuService(minecraft,
         dimFactory,
         contextMenuStore,
@@ -224,7 +226,8 @@ public class ChatMate {
         config,
         chatMateHudStore,
         statusService,
-        imageService);
+        imageService,
+        textHudStore);
     ChatMateHudScreen chatMateHudScreen = new ChatMateHudScreen(chatMateHudStore, contextMenuService, hudContext, config);
     ChatMateHudService chatMateHudService = new ChatMateHudService(chatMateHudStore, dimFactory, config, statusService);
 
@@ -278,6 +281,7 @@ public class ChatMate {
         chatMateEventService,
         logService,
         donationApiStore);
+    this.liveReactionService =  new LiveReactionService(chatMateEventService, chatMateHudStore, minecraft, imageService);
 
     ChatMateCommand chatMateCommand = new ChatMateCommand(
       new CountdownCommand(countdownHandler),

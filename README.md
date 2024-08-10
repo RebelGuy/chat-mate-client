@@ -88,6 +88,14 @@ recorded within the `Sampler` tab.
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.33 - The Youtube Update [10/08/2024]
+- Live reactions are now shown, emerging from the bottom left corner and fading away as they ascend, similar to Youtube's "reaction fountain"
+- Added the ability to add custom text elements to the ChatMate HUD
+  - Accessible via the context menu
+  - Supports Minecraft formatting via the '§' character
+- Improved invalid login behaviour
+- Fixed momentary freeze when starting ChatMate
+
 ## v1.32 - The Websocket Update [07/06/2024]
 - Connects to the new ChatMate websocket
   - Streamer chat and events are now received instantly without the need to poll the REST API
