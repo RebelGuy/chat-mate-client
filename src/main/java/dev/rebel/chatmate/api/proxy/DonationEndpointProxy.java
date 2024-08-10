@@ -8,6 +8,7 @@ import dev.rebel.chatmate.api.models.donation.GetDonationsResponse.GetDonationsR
 import dev.rebel.chatmate.api.models.donation.LinkUserResponse.LinkUserResponseData;
 import dev.rebel.chatmate.api.models.donation.RefundDonationResponse.RefundDonationResponseData;
 import dev.rebel.chatmate.api.models.donation.UnlinkUserResponse.UnlinkUserResponseData;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.ApiRequestService;
 import dev.rebel.chatmate.services.LogService;
 
@@ -15,8 +16,8 @@ import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public class DonationEndpointProxy extends EndpointProxy {
-  public DonationEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
-    super(logService, apiRequestService, basePath + "/donation");
+  public DonationEndpointProxy(LogService logService, ApiRequestService apiRequestService, Config config, String basePath) {
+    super(logService, apiRequestService, config, basePath + "/donation");
   }
 
   public void getDonationsAsync(Consumer<GetDonationsResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {

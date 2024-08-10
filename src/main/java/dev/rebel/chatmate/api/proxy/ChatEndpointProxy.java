@@ -4,6 +4,7 @@ import dev.rebel.chatmate.api.models.chat.GetChatResponse;
 import dev.rebel.chatmate.api.models.chat.GetChatResponse.GetChatResponseData;
 import dev.rebel.chatmate.api.models.chat.GetCommandStatusResponse;
 import dev.rebel.chatmate.api.models.chat.GetCommandStatusResponse.GetCommandStatusResponseData;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.ApiRequestService;
 
@@ -12,8 +13,8 @@ import java.util.Date;
 import java.util.function.Consumer;
 
 public class ChatEndpointProxy extends EndpointProxy {
-  public ChatEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
-    super(logService, apiRequestService, basePath + "/chat");
+  public ChatEndpointProxy(LogService logService, ApiRequestService apiRequestService, Config config, String basePath) {
+    super(logService, apiRequestService, config, basePath + "/chat");
   }
 
   public void getChatAsync(Consumer<GetChatResponseData> callback, @Nullable Consumer<Throwable> errorHandler, @Nullable Long since, @Nullable Integer limit) {

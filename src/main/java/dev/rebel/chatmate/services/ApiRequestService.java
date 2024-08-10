@@ -21,6 +21,7 @@ public class ApiRequestService {
   public ApiRequestService(CursorService cursorService, Config config) {
     this.cursorService = cursorService;
     this.config = config;
+    this.getStreamers = ArrayList::new;
   }
 
   public void setGetStreamers(Supplier<List<PublicStreamerSummary>> getStreamers) {

@@ -80,6 +80,10 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
     this.addListener(ChatMateEventType.RANK_UPDATE, 0, handler, null);
   }
 
+  public void onLiveReactions(EventCallback<LiveReactionsEventData> handler) {
+    this.addListener(ChatMateEventType.LIVE_REACTIONS, 0, handler, null);
+  }
+
   private void onMakeRequest(Consumer<GetEventsResponseData> callback, Consumer<Throwable> onError) {
     @Nullable Long sinceTimestamp = this.config.getLastGetChatMateEventsResponseEmitter().get();
     long lastAllowedTimestamp = this.dateTimeService.nowPlus(UnitOfTime.HOUR, -1.0);
@@ -146,6 +150,15 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
         PublicRankUpdateData data = event.rankUpdateData;
         assert data != null;
         RankUpdatedEventData eventData = new RankUpdatedEventData(data.rankName, data.isAdded, data.user, Collections.list(data.platformRanks));
+        this.safeDispatch(eventType, handler, new Event<>(eventData));
+      }
+
+    } else if (event.type == ChatMateEventType.LIVE_REACTIONS) {
+      ChatMateEventType eventType = ChatMateEventType.LIVE_REACTIONS;
+      for (EventHandler<LiveReactionsEventData, ?> handler : this.getListeners(eventType, LiveReactionsEventData.class)) {
+        PublicLiveReactionsData data = event.liveReactionsData;
+        assert data != null;
+        LiveReactionsEventData eventData = new LiveReactionsEventData(data.emojiId, data.emojiImage, data.reactionCount);
         this.safeDispatch(eventType, handler, new Event<>(eventData));
       }
 

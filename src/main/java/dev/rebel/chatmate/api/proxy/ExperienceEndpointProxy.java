@@ -7,6 +7,7 @@ import dev.rebel.chatmate.api.models.experience.GetRankResponse.GetRankResponseD
 import dev.rebel.chatmate.api.models.experience.ModifyExperienceRequest;
 import dev.rebel.chatmate.api.models.experience.ModifyExperienceResponse;
 import dev.rebel.chatmate.api.models.experience.ModifyExperienceResponse.ModifyExperienceResponseData;
+import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.services.ApiRequestService;
 
@@ -15,8 +16,8 @@ import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public class ExperienceEndpointProxy extends EndpointProxy {
-  public ExperienceEndpointProxy(LogService logService, ApiRequestService apiRequestService, String basePath) {
-    super(logService, apiRequestService, basePath + "/experience");
+  public ExperienceEndpointProxy(LogService logService, ApiRequestService apiRequestService, Config config, String basePath) {
+    super(logService, apiRequestService, config, basePath + "/experience");
   }
 
   public void getLeaderboardAsync(Consumer<GetLeaderboardResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

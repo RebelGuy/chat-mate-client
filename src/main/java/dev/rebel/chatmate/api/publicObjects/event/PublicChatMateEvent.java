@@ -13,6 +13,7 @@ public class PublicChatMateEvent {
   public @Nullable PublicNewViewerData newViewerData;
   public @Nullable PublicChatMessageDeletedData chatMessageDeletedData;
   public @Nullable PublicRankUpdateData rankUpdateData;
+  public @Nullable PublicLiveReactionsData liveReactionsData;
 
   public enum ChatMateEventType {
     @SerializedName("levelUp") LEVEL_UP,
@@ -20,6 +21,7 @@ public class PublicChatMateEvent {
     @SerializedName("donation") DONATION,
     @SerializedName("newViewer") NEW_VIEWER,
     @SerializedName("chatMessageDeleted") CHAT_MESSAGE_DELETED,
-    @SerializedName("rankUpdate") RANK_UPDATE
+    @SerializedName("rankUpdate") RANK_UPDATE,
+    @SerializedName("liveReactions") LIVE_REACTIONS
   }
 }
