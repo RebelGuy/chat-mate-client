@@ -179,8 +179,8 @@ public class PunishmentAdapters extends Adapters {
   public static class PunishmentChannelRankChangeAdapter extends ChannelRankChangeAdapter {
     public PunishmentChannelRankChangeAdapter() {
       super.internalRankErrorHeaderMessage = "Failed to apply the punishment internally:";
-      super.noActionsMessage = "No external punishments were applied.";
-      super.actionsHeaderMessage = "External punishments:";
+      super.noActionsMessage = "No external actions were applied.";
+      super.actionsHeaderMessage = "External actions:";
     }
 
     @Override
