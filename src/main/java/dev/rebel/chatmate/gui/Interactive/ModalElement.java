@@ -3,7 +3,6 @@ package dev.rebel.chatmate.gui.Interactive;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
-import dev.rebel.chatmate.gui.Interactive.Events.ScreenSizeData;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextAlignment;
 import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
@@ -28,7 +27,11 @@ public abstract class ModalElement extends ContainerElement {
   private final Dim shadowDistance;
 
   private final LabelElement title;
-  private final ElementReference bodyElement;
+  private IElement bodyElement;
+
+  /** By default, it is the caller's responsibility to manage vertical space. However, they can opt in to automatically add scrolling to the body element. */
+  private boolean enableAutoScrollBody;
+  private final ScrollingElement scrollableBodyElement;
   private final LabelElement errorLabel;
   private final HorizontalDivider divider;
   private final TextButtonElement closeButton;
@@ -57,7 +60,9 @@ public abstract class ModalElement extends ContainerElement {
         .setMargin(new Layout.RectExtension(ZERO, ZERO, ZERO, context.dimFactory.fromGui(15)))
         .setVisible(true);
 
-    this.bodyElement = new ElementReference(context, this);
+    this.scrollableBodyElement = new ScrollingElement(context, this);
+    this.bodyElement = null;
+    this.enableAutoScrollBody = false;
 
     this.errorLabel = (LabelElement)new LabelElement(context, this)
         .setColour(Colour.RED)
@@ -94,7 +99,7 @@ public abstract class ModalElement extends ContainerElement {
 
     super.addElement(this.title);
 
-    super.addElement(this.bodyElement);
+    super.addElement(this.scrollableBodyElement);
     super.addElement(this.errorLabel);
 
     super.addElement(this.divider);
@@ -103,34 +108,45 @@ public abstract class ModalElement extends ContainerElement {
 
   /** Do not call this from the constructor. */
   public ModalElement setBody(IElement bodyElement) {
-    this.bodyElement.setUnderlyingElement(bodyElement);
+    this.bodyElement = bodyElement;
+    this.scrollableBodyElement.setElement(bodyElement);
     return this;
   }
 
   public IElement getBody() {
-    return this.bodyElement.getUnderlyingElement();
+    return this.bodyElement;
   }
 
-  /** Do not call this from the constructor. */
   public ModalElement setTitle(String title) {
     this.title.setText(title);
     return this;
   }
 
-  /** Do not call this from the constructor. */
   public ModalElement setSubmitText(String submitText) {
     this.submitButton.setText(submitText);
     return this;
   }
 
-  /** Do not call this from the constructor. */
   public ModalElement setCloseText(String closeText) {
     this.closeButton.setText(closeText);
     return this;
   }
 
-  /* The modal does not enforce a maximum height and so it is possible for overflow to occur.
-  If you think your content may overflow, you can get the maximum (full) height of the body element and modify its content accordingly. */
+  public ModalElement setAutoScrollBody(boolean scrollBody) {
+    if (this.enableAutoScrollBody != scrollBody) {
+      this.enableAutoScrollBody = scrollBody;
+      super.onInvalidateSize();
+    }
+
+    if (!scrollBody) {
+      this.scrollableBodyElement.setMaxHeight(null);
+    }
+
+    return this;
+  }
+
+  /* If you think your content may overflow, you can get the maximum (full) height of the body element and modify its content accordingly.
+  * Alternatively, use the `setAutoScrollBody()` method to let the modal handle the scrolling automatically. */
   public Dim getMaxBodyHeight() {
     Dim contentHeightWithoutBody = this.title.getLastCalculatedSize().getY()
         .plus(this.errorLabel.getLastCalculatedSizeOrZero().getY())
@@ -201,7 +217,13 @@ public abstract class ModalElement extends ContainerElement {
 
   @Override
   protected DimPoint calculateThisSize(Dim maxContentSize) {
-    return super.calculateThisSize(Dim.min(maxContentSize, this.width));
+    DimPoint thisSize = super.calculateThisSize(Dim.min(maxContentSize, this.width));
+
+    if (this.enableAutoScrollBody) {
+      this.scrollableBodyElement.setMaxHeight(this.getMaxBodyHeight());
+    }
+
+    return thisSize;
   }
 
   @Override

@@ -26,6 +26,8 @@ public class TextHudModal extends ModalElement {
 
   public TextHudModal(InteractiveContext context, InteractiveScreen parent, TextHudStore textHudStore) {
     super(context, parent);
+    super.setAutoScrollBody(true);
+
     this.textHudStore = textHudStore;
 
     this.noElementsLabel = new LabelElement(context, this)
