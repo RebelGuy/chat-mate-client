@@ -37,8 +37,8 @@ public class ChatMateHudService {
     HudElementTransform secondaryIndicatorTransform = new HudElementTransform(dimFactory.fromGui(10), dimFactory.fromGui(23), HudElement.Anchor.TOP_LEFT, dimFactory.getMinecraftRect(), dimFactory.getScaleFactor(), 1);
 
     IndicatorElement.Factory statusIndicatorFactory = new IndicatorElement.Factory(config, statusService);
-    this.mainStatusIndicator = this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, true, statusIndicatorFactory, config.getStatusIndicatorEmitter(), config.getHudTransformsEmitter(), mainIndicatorTransform, mainIndicatorName));
-    this.secondaryStatusIndicator = this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, false, statusIndicatorFactory, config.getStatusIndicatorEmitter(), config.getHudTransformsEmitter(), secondaryIndicatorTransform, secondaryIndicatorName));
+    this.mainStatusIndicator = this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, true, statusIndicatorFactory, config.getStatusIndicatorEmitter(), config.getHudTransformsEmitter(), config.getOnlyShowIndicatorsWhenLive(), mainIndicatorTransform, mainIndicatorName));
+    this.secondaryStatusIndicator = this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, false, statusIndicatorFactory, config.getStatusIndicatorEmitter(), config.getHudTransformsEmitter(), config.getOnlyShowIndicatorsWhenLive(), secondaryIndicatorTransform, secondaryIndicatorName));
 
     String mainViewerCountName = "mainViewerCount";
     String secondaryViewerCountName = "secondaryViewerCount";
@@ -46,8 +46,8 @@ public class ChatMateHudService {
     HudElementTransform secondaryViewerCountTransform = new HudElementTransform(dimFactory.fromGui(23), dimFactory.fromGui(23), HudElement.Anchor.TOP_LEFT, dimFactory.getMinecraftRect(), dimFactory.getScaleFactor(), 1);
 
     ViewerCountElement.Factory viewerCountFactory = new ViewerCountElement.Factory(config, statusService);
-    this.mainViewerCount = this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, true, viewerCountFactory, config.getViewerCountEmitter(), config.getHudTransformsEmitter(), mainViewerCountTransform, mainViewerCountName));
-    this.secondaryViewerCount = this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, false, viewerCountFactory, config.getViewerCountEmitter(), config.getHudTransformsEmitter(), secondaryViewerCountTransform, secondaryViewerCountName));
+    this.mainViewerCount = this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, true, viewerCountFactory, config.getViewerCountEmitter(), config.getHudTransformsEmitter(), config.getOnlyShowIndicatorsWhenLive(), mainViewerCountTransform, mainViewerCountName));
+    this.secondaryViewerCount = this.chatMateHudStore.addElement((context, parent) -> new SeparableHudElement(context, parent, false, viewerCountFactory, config.getViewerCountEmitter(), config.getHudTransformsEmitter(), config.getOnlyShowIndicatorsWhenLive(), secondaryViewerCountTransform, secondaryViewerCountName));
   }
 
   public void resetHud() {
