@@ -81,6 +81,8 @@ Use the IntelliJ extension `VisualVM Launcher` from the Marketplace: `https://pl
 Start the profiling session by using the "Debug with VisualVM 'Minecraft Client'" configuration at the top. Download and extract
 VisualVM and copy the path of the executable in the `/bin` folder to the empty input field.
 
+On Linux, IntelliJ runs into a permission error when attempting to run the above-mentioned configuration. To get around this, ignore the error and open VisualVM window manually by running the `visualvm` script in the extracted `/bin` folder.
+
 Once started, Minecraft can be profiled within VisualVM via the `GradleStart` application. A partial snapshot can be 
 recorded within the `Sampler` tab.
 
