@@ -40,8 +40,7 @@ public class ApiPoller<D> {
   // if false, the poller will definitely not run. if true, the poller may run (depending on other conditions)
   private boolean enabled;
 
-  // if unauthorised, we pause the poller until the login token has been changed
-  private boolean isUnauthorised;
+  // the login token that was used to make the last unauthorised request
   private @Nullable String unauthorisedLoginToken;
 
   private final EventCallback<Boolean> _onChatMateEnabledChanged = this::onChatMateEnabledChanged;
@@ -78,7 +77,6 @@ public class ApiPoller<D> {
     this.requestInProgress = false;
     this.currentRetries = 0;
 
-    this.isUnauthorised = false;
     this.unauthorisedLoginToken = null;
 
     this.enabled = true;
@@ -113,7 +111,7 @@ public class ApiPoller<D> {
   private void onLoginInfoChanged(Event<LoginInfo> in) {
     LoginInfo data = in.getData();
 
-    if (this.isUnauthorised && data.loginToken != null && !java.util.Objects.equals(data.loginToken, this.unauthorisedLoginToken)) {
+    if (data.loginToken != null && !java.util.Objects.equals(data.loginToken, this.unauthorisedLoginToken)) {
       this.tryResumePoller();
     }
   }
@@ -188,7 +186,6 @@ public class ApiPoller<D> {
   }
 
   private void onApiResponse(D data) {
-    this.isUnauthorised = false;
     this.unauthorisedLoginToken = null;
 
     this.onHandleCallback(data, this.callback);
@@ -211,12 +208,10 @@ public class ApiPoller<D> {
     } else if (ifClass(ChatMateApiException.class, error, e -> e.apiResponseError.errorCode == 401)) {
       // if we aren't authorised to make the request, there's little point in trying the same request again until the
       // loginToken has been updated. the poller will be resumed automatically when the loginToken has been changed.
-      this.isUnauthorised = true;
       this.unauthorisedLoginToken = casted(ChatMateApiException.class, error, e -> e.loginToken);
       this.tryPausePoller(false);
 
     } else {
-      this.isUnauthorised = false;
       this.unauthorisedLoginToken = null;
       canRetry = true;
     }
