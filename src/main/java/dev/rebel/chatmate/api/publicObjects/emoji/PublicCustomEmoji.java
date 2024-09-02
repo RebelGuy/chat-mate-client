@@ -1,5 +1,7 @@
 package dev.rebel.chatmate.api.publicObjects.emoji;
 
+import javax.annotation.Nullable;
+
 public class PublicCustomEmoji {
   public Integer id;
   public String name;
@@ -10,7 +12,7 @@ public class PublicCustomEmoji {
   public Integer levelRequirement;
   public Boolean canUseInDonationMessage;
   public Integer version;
-  public Boolean isActive;
+  public @Nullable Long deletedAt;
   public Integer[] whitelistedRanks;
   public Integer sortOrder;
 
