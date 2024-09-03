@@ -61,6 +61,7 @@ public class TextInputElement extends InputElement {
   private @Nullable Runnable onSubmit = null;
   private InputType inputType = InputType.TEXT;
   private boolean renderSectionCharacter = false;
+  private @Nullable TextFormattingElement textFormattingElement = null;
 
   /** Saves the current cursor state to this variable so it can be restored upon focus. If null, the feature is disabled. */
   private @Nullable CursorState previousCursorState = null;
@@ -86,7 +87,11 @@ public class TextInputElement extends InputElement {
 
   @Override
   public List<IElement> getChildren() {
-    return null;
+    if (this.textFormattingElement != null) {
+      return Collections.list(this.textFormattingElement);
+    } else {
+      return null;
+    }
   }
 
   public TextInputElement setTextScale(float textScale) {
@@ -146,7 +151,22 @@ public class TextInputElement extends InputElement {
 
   @Override
   protected DimPoint calculateThisSize(Dim maxContentSize) {
-    return new DimPoint(maxContentSize, this.textHeight);
+    DimPoint size = new DimPoint(maxContentSize, this.textHeight);
+
+    if (this.textFormattingElement != null) {
+      this.textFormattingElement.calculateSize(size.getX());
+    }
+
+    return size;
+  }
+
+  @Override
+  public void setBox(DimRect box) {
+    super.setBox(box);
+
+    if (this.textFormattingElement != null) {
+      this.textFormattingElement.setBox(box);
+    }
   }
 
   @Override
@@ -222,6 +242,24 @@ public class TextInputElement extends InputElement {
   public TextInputElement setRenderSectionCharacter(boolean renderSectionCharacter) {
     this.renderSectionCharacter = renderSectionCharacter;
     return this;
+  }
+
+  /** Shows toggle buttons for users to easily see/edit the format of text. */
+  public TextInputElement enableFormattingTools(boolean enableFormattingTools) {
+    boolean currentlyEnabled = this.textFormattingElement != null;
+    if (currentlyEnabled != enableFormattingTools) {
+      if (enableFormattingTools) {
+        this.textFormattingElement = new TextFormattingElement(super.context, this);
+      } else {
+        this.textFormattingElement = null;
+      }
+      super.onInvalidateSize();
+    }
+    return this;
+  }
+
+  public boolean getFormattingToolsEnabled() {
+    return this.textFormattingElement != null;
   }
 
   public TextInputElement setSuffix(String suffix) {
@@ -473,6 +511,10 @@ public class TextInputElement extends InputElement {
 
       if (this.context.focusedElement != this && isNullOrEmpty(this.text)) {
         this.drawPlaceholder();
+      }
+
+      if (this.textFormattingElement != null) {
+        this.textFormattingElement.renderElement();
       }
     }
   }

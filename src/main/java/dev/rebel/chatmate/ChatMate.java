@@ -12,6 +12,7 @@ import dev.rebel.chatmate.commands.handlers.SearchHandler;
 import dev.rebel.chatmate.config.serialised.SerialisedConfigV6;
 import dev.rebel.chatmate.gui.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.*;
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.TextHud.TextHudStore;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.models.DimFactory;

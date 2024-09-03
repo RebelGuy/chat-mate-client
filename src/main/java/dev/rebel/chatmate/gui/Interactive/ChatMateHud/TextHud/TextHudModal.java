@@ -1,4 +1,4 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
+package dev.rebel.chatmate.gui.Interactive.ChatMateHud.TextHud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.IconButtonElement;
@@ -112,6 +112,7 @@ public class TextHudModal extends ModalElement {
   private static class EditableTextHudElement extends InlineElement {
     public TextHudElement element;
     public boolean isNew;
+    private boolean showFormattingTools;
     private final Consumer<EditableTextHudElement> onConfirm;
     private final Consumer<EditableTextHudElement> onDelete;
 
@@ -126,6 +127,7 @@ public class TextHudModal extends ModalElement {
 
       this.element = element;
       this.isNew = isNew;
+      this.showFormattingTools = false;
       this.onConfirm = onConfirm;
       this.onDelete = onDelete;
 
@@ -140,7 +142,6 @@ public class TextHudModal extends ModalElement {
           .setPlaceholder("Add text")
           .setTextUnsafe(this.element.getText())
           .onTextChange(this::onEditedTextChanged)
-          .setRenderSectionCharacter(true)
           .setCursorStateRestorationEnabled(true) // retain the cursor state when clicking on the section character button
           .setMinWidth(gui(50))
           .setVerticalAlignment(VerticalAlignment.MIDDLE)
@@ -164,8 +165,8 @@ public class TextHudModal extends ModalElement {
           .cast();
       IconButtonElement sectionIcon = new IconButtonElement(context, this)
           .setImage(GUI_SECTION_ICON)
-          .setTooltip("Insert section character")
-          .setOnClick(this::onInsertSectionIcon)
+          .setTooltip("Toggle formatting tools")
+          .setOnClick(this::onToggleFormattingTools)
           .setMaxContentWidth(iconWidth)
           .setMargin(RectExtension.fromLeft(buttonMargin))
           .cast();
@@ -209,11 +210,11 @@ public class TextHudModal extends ModalElement {
       this.onDelete.accept(this);
     }
 
-    private void onInsertSectionIcon() {
+    private void onToggleFormattingTools() {
       // bring back the focus to the input element
       super.context.onSetFocus(this.textInputElement);
 
-      this.textInputElement.writeText("§");
+      this.textInputElement.enableFormattingTools(!this.textInputElement.getFormattingToolsEnabled());
     }
 
     private void onEdit() {
