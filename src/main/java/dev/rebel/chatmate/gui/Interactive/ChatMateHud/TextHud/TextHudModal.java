@@ -112,7 +112,6 @@ public class TextHudModal extends ModalElement {
   private static class EditableTextHudElement extends InlineElement {
     public TextHudElement element;
     public boolean isNew;
-    private boolean showFormattingTools;
     private final Consumer<EditableTextHudElement> onConfirm;
     private final Consumer<EditableTextHudElement> onDelete;
 
@@ -127,7 +126,6 @@ public class TextHudModal extends ModalElement {
 
       this.element = element;
       this.isNew = isNew;
-      this.showFormattingTools = false;
       this.onConfirm = onConfirm;
       this.onDelete = onDelete;
 

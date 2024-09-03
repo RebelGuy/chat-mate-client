@@ -7,6 +7,8 @@ import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData;
 import dev.rebel.chatmate.gui.Interactive.Events.FocusEventData.FocusReason;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
+import dev.rebel.chatmate.gui.Interactive.TextFormattingElement.TextFormat;
+import dev.rebel.chatmate.gui.Interactive.TextFormattingElement.TextFormatState;
 import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -32,10 +34,7 @@ import scala.Tuple2;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -118,6 +117,8 @@ public class TextInputElement extends InputElement {
   public void onKeyDown(InteractiveEvent<KeyboardEventData> e) {
     if (this.textboxKeyTyped(e.getData())) {
       e.stopPropagation();
+    } else if (this.textFormattingElement != null) {
+      this.textFormattingElement.onKeyDown(e);
     }
   }
 
@@ -249,7 +250,8 @@ public class TextInputElement extends InputElement {
     boolean currentlyEnabled = this.textFormattingElement != null;
     if (currentlyEnabled != enableFormattingTools) {
       if (enableFormattingTools) {
-        this.textFormattingElement = new TextFormattingElement(super.context, this);
+        Map<TextFormat, TextFormatState> initialFormats = new HashMap<>();
+        this.textFormattingElement = new TextFormattingElement(super.context, this, initialFormats);
       } else {
         this.textFormattingElement = null;
       }
