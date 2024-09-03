@@ -15,12 +15,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TextFormattingElement extends InlineElement {
+  private final Map<TextFormat, FormatInfo> formatInfo;
   private final Map<TextFormat, TextFormattingButton> elements;
 
-  public TextFormattingElement(InteractiveScreen.InteractiveContext context, IElement parent) {
+  public TextFormattingElement(InteractiveScreen.InteractiveContext context, InputElement parent) {
     super(context, parent);
 
-    Map<TextFormat, FormatInfo> formatInfo = new HashMap<>();
+    this.formatInfo = new HashMap<>();
     formatInfo.put(TextFormat.WHITE, new FormatInfo('f', "White", Colour.WHITE, null));
     formatInfo.put(TextFormat.GRAY, new FormatInfo('7', "Gray", Colour.GREY67, null));
     formatInfo.put(TextFormat.DARK_GRAY, new FormatInfo('8', "Dark Gray",Colour.GREY33, null));
@@ -48,15 +49,42 @@ public class TextFormattingElement extends InlineElement {
     this.elements = new HashMap<>();
     for (TextFormat format : TextFormat.values()) {
       FormatInfo info = formatInfo.get(format);
-      TextFormattingButton button = new TextFormattingButton(context, this, info);
+      TextFormattingButton button = new TextFormattingButton(context, this, info)
+          .setOnClick(() -> this.onClick(format))
+          .cast();
       this.elements.put(format, button);
       super.addElement(button);
     }
   }
 
+  private void onClick(TextFormat format) {
+    TextFormatState newState = this.getState(format) == TextFormatState.INACTIVE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
+    this.setState(format, newState);
+    super.context.onSetFocus((InputElement)super.parent);
+  }
+
   public TextFormattingElement setState(TextFormat format, TextFormatState state) {
+    if (format == TextFormat.RESET) {
+      this.elements.forEach((f, element) -> element.setButtonState(TextFormatState.INACTIVE));
+      return this;
+    }
+
+    // if activating a colour, make sure to deactivate all other colours
+    if (state == TextFormatState.ACTIVE && this.formatInfo.get(format).isColour()) {
+      for (TextFormat f : TextFormat.values()) {
+        FormatInfo info = formatInfo.get(f);
+        if (info.isColour()) {
+          this.elements.get(f).setButtonState(TextFormatState.INACTIVE);
+        }
+      }
+    }
+
     this.elements.get(format).setButtonState(state);
     return this;
+  }
+
+  public TextFormatState getState(TextFormat format) {
+    return this.elements.get(format).getButtonState();
   }
 
   /** This should be called with the parent's box - we manage our own box internally. */
@@ -78,6 +106,8 @@ public class TextFormattingElement extends InlineElement {
       super.setTooltip(formatInfo.tooltip);
       super.setTargetHeight(gui(8));
       super.setImage(formatInfo.texture);
+      super.setBorder(new RectExtension(screen(1)));
+      super.setMargin(new RectExtension(screen(1)));
 
       this.formatInfo = formatInfo;
       this.state = TextFormatState.INACTIVE;
@@ -85,7 +115,19 @@ public class TextFormattingElement extends InlineElement {
 
     public TextFormattingButton setButtonState(TextFormatState state) {
       this.state = state;
+
+      RectExtension defaultMargin = new RectExtension(screen(1));
+      if (state == TextFormatState.ACTIVE) {
+        super.setMargin(defaultMargin.top(gui(1)));
+      } else {
+        super.setMargin(defaultMargin);
+      }
+
       return this;
+    }
+
+    public TextFormatState getButtonState() {
+      return this.state;
     }
 
     @Override
@@ -101,9 +143,14 @@ public class TextFormattingElement extends InlineElement {
 
     @Override
     protected void renderElement() {
-      Dim borderWidth = super.getBorder().left.over(2);
-      Colour borderColour = super.isHovering() && this.getEnabled() ? Colour.GREY75 : Colour.WHITE;
-      RendererHelpers.drawRect(0, this.getPaddingBox(), this.formatInfo.colour, borderWidth, borderColour);
+      Colour borderColour;
+      if (super.isHovering() && this.getEnabled()) {
+        borderColour = Colour.GREY75;
+      } else {
+        borderColour = Colour.WHITE;
+      }
+
+      RendererHelpers.drawRect(0, this.getPaddingBox(), this.formatInfo.colour, super.getBorder().left, borderColour);
 
       IElement childElement = Collections.first(super.getChildren());
       if (childElement != null) {
@@ -123,6 +170,10 @@ public class TextFormattingElement extends InlineElement {
       this.tooltip = tooltip;
       this.colour = colour;
       this.texture = texture;
+    }
+
+    public boolean isColour() {
+      return this.code >= '0' && this.code <= 'f';
     }
   }
 
