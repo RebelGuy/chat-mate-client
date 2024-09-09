@@ -251,7 +251,7 @@ public class TextInputElement extends InputElement {
     if (currentlyEnabled != enableFormattingTools) {
       if (enableFormattingTools) {
         Map<TextFormat, TextFormatState> initialFormats = new HashMap<>();
-        this.textFormattingElement = new TextFormattingElement(super.context, this, initialFormats);
+        this.textFormattingElement = new TextFormattingElement(super.context, this, initialFormats, this::onUpdateFormat);
       } else {
         this.textFormattingElement = null;
       }
@@ -831,6 +831,16 @@ public class TextInputElement extends InputElement {
 
     if (this.previousCursorState != null) {
       this.previousCursorState.update();
+    }
+  }
+
+  private void onUpdateFormat(TextFormat format, TextFormatState state) {
+    int indexStart = Math.min(this.cursorIndex, this.selectionEndIndex);
+    int indexEnd = Math.max(this.cursorIndex, this.selectionEndIndex);
+
+    if (indexStart == indexEnd) {
+      // no text to update
+      return;
     }
   }
 

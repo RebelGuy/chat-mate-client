@@ -15,63 +15,67 @@ import dev.rebel.chatmate.util.Collections;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class TextFormattingElement extends InlineElement {
-  private final Map<TextFormat, FormatInfo> formatInfo;
+  private static final Map<TextFormat, FormatInfo> FORMAT_INFO;
+
+  static {
+    FORMAT_INFO = new HashMap<>();
+    FORMAT_INFO.put(TextFormat.WHITE, new FormatInfo('f', "White", Colour.WHITE, null));
+    FORMAT_INFO.put(TextFormat.GRAY, new FormatInfo('7', "Gray", Colour.GREY67, null));
+    FORMAT_INFO.put(TextFormat.DARK_GRAY, new FormatInfo('8', "Dark Gray", Colour.GREY33, null));
+    FORMAT_INFO.put(TextFormat.BLACK, new FormatInfo('0', "Black", Colour.BLACK, null));
+    FORMAT_INFO.put(TextFormat.DARK_RED, new FormatInfo('4', "Dark Red", Colour.DARK_RED, null));
+    FORMAT_INFO.put(TextFormat.RED, new FormatInfo('c', "Red", Colour.RED, null));
+    FORMAT_INFO.put(TextFormat.GOLD, new FormatInfo('6', "Gold", Colour.GOLD, null));
+    FORMAT_INFO.put(TextFormat.YELLOW, new FormatInfo('e', "Yellow", Colour.YELLOW, null));
+    FORMAT_INFO.put(TextFormat.DARK_GREEN, new FormatInfo('2', "Dark Green", Colour.DARK_GREEN, null));
+    FORMAT_INFO.put(TextFormat.GREEN, new FormatInfo('a', "Green", Colour.GREEN, null));
+    FORMAT_INFO.put(TextFormat.AQUA, new FormatInfo('b', "Aqua", Colour.AQUA, null));
+    FORMAT_INFO.put(TextFormat.DARK_AQUA, new FormatInfo('3', "Dark Aqua", Colour.DARK_AQUA, null));
+    FORMAT_INFO.put(TextFormat.DARK_BLUE, new FormatInfo('1', "Dark Blue", Colour.DARK_BLUE, null));
+    FORMAT_INFO.put(TextFormat.BLUE, new FormatInfo('9', "Blue", Colour.BLUE, null));
+    FORMAT_INFO.put(TextFormat.LIGHT_PURPLE, new FormatInfo('d', "Light Purple", Colour.LIGHT_PURPLE, null));
+    FORMAT_INFO.put(TextFormat.DARK_PURPLE, new FormatInfo('5', "Purple", Colour.DARK_PURPLE, null));
+    FORMAT_INFO.put(TextFormat.BOLD, new FormatInfo('l', "Bold", Colour.WHITE, Asset.LETTER_B, Keyboard.KEY_B));
+    FORMAT_INFO.put(TextFormat.ITALIC, new FormatInfo('o', "Italic", Colour.WHITE, Asset.LETTER_I, Keyboard.KEY_I));
+    FORMAT_INFO.put(TextFormat.UNDERLINE, new FormatInfo('n', "Underline", Colour.WHITE, Asset.LETTER_U, Keyboard.KEY_U));
+    FORMAT_INFO.put(TextFormat.STRIKETHROUGH, new FormatInfo('m', "Strikethrough", Colour.WHITE, Asset.LETTER_S, Keyboard.KEY_S));
+    FORMAT_INFO.put(TextFormat.OBFUSCATED, new FormatInfo('k', "Obfuscated", Colour.WHITE, Asset.LETTER_O, Keyboard.KEY_O));
+    FORMAT_INFO.put(TextFormat.RESET, new FormatInfo('r', "Reset Styles", Colour.WHITE, Asset.LETTER_X, Keyboard.KEY_X));
+  }
+
+  private final BiConsumer<TextFormat, TextFormatState> onUpdate;
   private final Map<TextFormat, TextFormattingButton> elements;
+  private final TextFormatStateBuilder stateBuilder;
 
-  public TextFormattingElement(InteractiveScreen.InteractiveContext context, InputElement parent, Map<TextFormat, TextFormatState> initialState) {
+  public TextFormattingElement(InteractiveScreen.InteractiveContext context, InputElement parent, Map<TextFormat, TextFormatState> initialState, BiConsumer<TextFormat, TextFormatState> onUpdate) {
     super(context, parent);
-
-    this.formatInfo = new HashMap<>();
-    formatInfo.put(TextFormat.WHITE, new FormatInfo('f', "White", Colour.WHITE, null));
-    formatInfo.put(TextFormat.GRAY, new FormatInfo('7', "Gray", Colour.GREY67, null));
-    formatInfo.put(TextFormat.DARK_GRAY, new FormatInfo('8', "Dark Gray", Colour.GREY33, null));
-    formatInfo.put(TextFormat.BLACK, new FormatInfo('0', "Black", Colour.BLACK, null));
-    formatInfo.put(TextFormat.DARK_RED, new FormatInfo('4', "Dark Red", Colour.DARK_RED, null));
-    formatInfo.put(TextFormat.RED, new FormatInfo('c', "Red", Colour.RED, null));
-    formatInfo.put(TextFormat.GOLD, new FormatInfo('6', "Gold", Colour.GOLD, null));
-    formatInfo.put(TextFormat.YELLOW, new FormatInfo('e', "Yellow", Colour.YELLOW, null));
-    formatInfo.put(TextFormat.DARK_GREEN, new FormatInfo('2', "Dark Green", Colour.DARK_GREEN, null));
-    formatInfo.put(TextFormat.GREEN, new FormatInfo('a', "Green", Colour.GREEN, null));
-    formatInfo.put(TextFormat.AQUA, new FormatInfo('b', "Aqua", Colour.AQUA, null));
-    formatInfo.put(TextFormat.DARK_AQUA, new FormatInfo('3', "Dark Aqua", Colour.DARK_AQUA, null));
-    formatInfo.put(TextFormat.DARK_BLUE, new FormatInfo('1', "Dark Blue", Colour.DARK_BLUE, null));
-    formatInfo.put(TextFormat.BLUE, new FormatInfo('9', "Blue", Colour.BLUE, null));
-    formatInfo.put(TextFormat.LIGHT_PURPLE, new FormatInfo('d', "Light Purple", Colour.LIGHT_PURPLE, null));
-    formatInfo.put(TextFormat.DARK_PURPLE, new FormatInfo('5', "Purple", Colour.DARK_PURPLE, null));
-    formatInfo.put(TextFormat.BOLD, new FormatInfo('l', "Bold", Colour.WHITE, Asset.LETTER_B, Keyboard.KEY_B));
-    formatInfo.put(TextFormat.ITALIC, new FormatInfo('o', "Italic", Colour.WHITE, Asset.LETTER_I, Keyboard.KEY_I));
-    formatInfo.put(TextFormat.UNDERLINE, new FormatInfo('n', "Underline", Colour.WHITE, Asset.LETTER_U, Keyboard.KEY_U));
-    formatInfo.put(TextFormat.STRIKETHROUGH, new FormatInfo('m', "Strikethrough", Colour.WHITE, Asset.LETTER_S, Keyboard.KEY_S));
-    formatInfo.put(TextFormat.OBFUSCATED, new FormatInfo('k', "Obfuscated", Colour.WHITE, Asset.LETTER_O, Keyboard.KEY_O));
-    formatInfo.put(TextFormat.RESET, new FormatInfo('r', "Reset Styles", Colour.WHITE, Asset.LETTER_X, Keyboard.KEY_X));
+    this.onUpdate = onUpdate;
 
     // add the elements in order
     this.elements = new HashMap<>();
-    boolean hasInitialisedColour = false;
     for (TextFormat format : TextFormat.values()) {
-      FormatInfo info = formatInfo.get(format);
+      FormatInfo info = FORMAT_INFO.get(format);
       TextFormattingButton button = new TextFormattingButton(context, this, info)
           .setOnClick(() -> this.onClick(format))
           .cast();
       this.elements.put(format, button);
       super.addElement(button);
-
-      if (initialState.containsKey(format)) {
-        if (info.isColour()) {
-          hasInitialisedColour = true;
-        }
-
-        this.setState(format, TextFormatState.ACTIVE);
-      }
     }
 
-    if (!hasInitialisedColour) {
-      this.setState(TextFormat.WHITE, TextFormatState.ACTIVE);
-    }
+    // importantly, this has to be done after initialising the elements
+    this.stateBuilder = new TextFormatStateBuilder(initialState, this::onUpdateState);
+  }
+
+  private void onUpdateState(TextFormat format, TextFormatState state) {
+    this.elements.get(format).setButtonState(state);
+    this.onUpdate.accept(format, state);
   }
 
   private void onClick(TextFormat format) {
@@ -80,34 +84,8 @@ public class TextFormattingElement extends InlineElement {
   }
 
   private void toggleFormat(TextFormat format) {
-    // make sure one colour is always active
-    FormatInfo info = this.formatInfo.get(format);
-    if (info.isColour() && this.getState(format) == TextFormatState.ACTIVE) {
-      return;
-    }
-
     TextFormatState newState = this.getState(format) == TextFormatState.INACTIVE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
-    this.setState(format, newState);
-  }
-
-  public TextFormattingElement setState(TextFormat format, TextFormatState state) {
-    if (format == TextFormat.RESET) {
-      this.elements.forEach((f, element) -> element.setButtonState(TextFormatState.INACTIVE));
-      return this;
-    }
-
-    // if activating a colour, make sure to deactivate all other colours
-    if (state == TextFormatState.ACTIVE && this.formatInfo.get(format).isColour()) {
-      for (TextFormat f : TextFormat.values()) {
-        FormatInfo info = formatInfo.get(f);
-        if (info.isColour()) {
-          this.elements.get(f).setButtonState(TextFormatState.INACTIVE);
-        }
-      }
-    }
-
-    this.elements.get(format).setButtonState(state);
-    return this;
+    this.stateBuilder.withState(format, newState);
   }
 
   public TextFormatState getState(TextFormat format) {
@@ -122,7 +100,7 @@ public class TextFormattingElement extends InlineElement {
     }
 
     for (TextFormat format : TextFormat.values()) {
-      FormatInfo info = this.formatInfo.get(format);
+      FormatInfo info = FORMAT_INFO.get(format);
       if (info.shortcut != null && info.shortcut == data.eventKey) {
         this.toggleFormat(format);
         e.stopPropagation();
@@ -200,6 +178,79 @@ public class TextFormattingElement extends InlineElement {
       if (childElement != null) {
         childElement.render(null);
       }
+    }
+  }
+
+  public static class TextFormatStateBuilder {
+    private final @Nullable BiConsumer<TextFormat, TextFormatState> onUpdate;
+    private final Map<TextFormat, TextFormatState> state;
+
+    public TextFormatStateBuilder(Map<TextFormat, TextFormatState> initialState, @Nullable BiConsumer<TextFormat, TextFormatState> onUpdate) {
+      this.onUpdate = onUpdate;
+
+      this.state = new HashMap<>();
+      for (TextFormat format : TextFormat.values()) {
+        this.state.put(format, TextFormatState.INACTIVE);
+      }
+
+      this.reset();
+
+      for (TextFormat format : initialState.keySet()) {
+        this.withState(format, initialState.get(format));
+      }
+    }
+
+    public void withState(TextFormat format, TextFormatState newState) {
+      if (format == TextFormat.RESET) {
+        this.reset();
+        return;
+      }
+
+      if (FORMAT_INFO.get(format).isColour()) {
+        if (newState == TextFormatState.ACTIVE) {
+          // deactivate all other colours
+          for (TextFormat f : TextFormat.values()) {
+            if (f == format || !FORMAT_INFO.get(f).isColour()) {
+              continue;
+            }
+
+            this.setStateUnsafe(f, TextFormatState.INACTIVE);
+          }
+        } else {
+          // deactivating colours directly is not supported
+          return;
+        }
+      }
+
+      this.setStateUnsafe(format, newState);
+    }
+
+    public List<TextFormat> getActiveFormats() {
+      List<TextFormat> result = new ArrayList<>();
+      for (TextFormat format : TextFormat.values()) {
+        if (this.state.getOrDefault(format, TextFormatState.INACTIVE) == TextFormatState.ACTIVE) {
+          result.add(format);
+        }
+      }
+
+      return result;
+    }
+
+    private void reset() {
+      for (TextFormat format : TextFormat.values()) {
+        TextFormatState newState = format == TextFormat.WHITE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
+        this.setStateUnsafe(format, newState);
+      }
+    }
+
+    /** Does not check the validity of the state. */
+    private void setStateUnsafe(TextFormat format, TextFormatState newState) {
+      // notify subscriber of a changed state
+      if (this.onUpdate != null && newState != this.state.get(format)) {
+        this.onUpdate.accept(format, newState);
+      }
+
+      this.state.put(format, newState);
     }
   }
 
