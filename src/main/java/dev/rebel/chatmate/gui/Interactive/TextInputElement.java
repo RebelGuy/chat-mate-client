@@ -9,6 +9,7 @@ import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.TextFormattingElement.TextFormat;
 import dev.rebel.chatmate.gui.Interactive.TextFormattingElement.TextFormatState;
+import dev.rebel.chatmate.gui.Interactive.TextFormattingElement.TextFormatStateBuilder;
 import dev.rebel.chatmate.gui.StateManagement.State;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
@@ -808,6 +809,24 @@ public class TextInputElement extends InputElement {
       newIndex = 0;
     }
 
+    // todo: handle the case where we have selected multiple characters
+
+    if (this.textFormattingElement != null) {
+      TextFormatStateBuilder builder = this.textFormattingElement.getStateBuilder();
+      builder.reset();
+
+      if (newIndex > 0) {
+        // updating the state handles all formatting button states as a side effect! : -- )
+        TextHelpers.ExtractedFormatting formatting = TextHelpers.extractFormatting(this.text.substring(0, newIndex));
+        for (TextHelpers.ExtractedFormatting.Format format : formatting.extracted) {
+          @Nullable TextFormat textFormat = this.textFormattingElement.getTextFormatFromChar(format.formatChar);
+          if (textFormat != null) {
+            builder.withState(textFormat, TextFormatState.ACTIVE);
+          }
+        }
+      }
+    }
+
     this.selectionEndIndex = newIndex;
     if (this.scrollOffsetIndex > length) {
       this.scrollOffsetIndex = length;
@@ -864,7 +883,16 @@ public class TextInputElement extends InputElement {
   }
 
   private void moveCursorBy(int delta) {
-    this.setCursorIndex(this.selectionEndIndex + delta);
+    int N = this.text.length();
+    int newIndex = MathHelper.clamp_int(this.selectionEndIndex + delta, 0, N);
+
+    // skip section signs and their formatting characters if we are not rendering them
+    if (!this.renderSectionCharacter && delta != 0 && newIndex > 0 && newIndex < N - 1 && (this.text.charAt(newIndex - 1) == '§' || newIndex > 1 && this.text.charAt(newIndex - 2) == '§')) {
+      this.moveCursorBy(delta + (int)Math.signum(delta));
+      return;
+    }
+
+    this.setCursorIndex(newIndex);
   }
 
   private void setCursorIndex(int newPosition) {

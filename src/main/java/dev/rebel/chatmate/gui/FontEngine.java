@@ -608,12 +608,7 @@ public class FontEngine {
       Dim charWidth = this.getCharWidth(thisChar, renderSectionCharacter);
 
       if (thisChar == CHAR_SECTION_SIGN && j < text.length() - 1) {
-        if (!renderSectionCharacter) {
-          // skip the next character
-          j++;
-        }
-
-        char formatChar = text.charAt(j); // format char
+        char formatChar = text.charAt(j + 1); // format char
 
         if (formatChar != 108 && formatChar != 76) { // is not `l` (bold)
           if (formatChar == 114 || formatChar == 82) { // is `r`
@@ -626,6 +621,8 @@ public class FontEngine {
         if (!renderSectionCharacter) {
           charWidth = this.dimFactory.zeroGui();
         }
+      } else if (j > 0 && text.charAt(j - 1) == CHAR_SECTION_SIGN && !renderSectionCharacter) {
+        charWidth = this.dimFactory.zeroGui();
       }
 
       currentWidth = currentWidth.plus(charWidth);

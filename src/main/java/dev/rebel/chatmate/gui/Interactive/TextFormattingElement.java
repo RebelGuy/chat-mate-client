@@ -84,12 +84,23 @@ public class TextFormattingElement extends InlineElement {
   }
 
   private void toggleFormat(TextFormat format) {
-    TextFormatState newState = this.getState(format) == TextFormatState.INACTIVE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
+    TextFormatState newState = this.stateBuilder.getState(format) == TextFormatState.INACTIVE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
     this.stateBuilder.withState(format, newState);
   }
 
-  public TextFormatState getState(TextFormat format) {
-    return this.elements.get(format).getButtonState();
+  public TextFormatStateBuilder getStateBuilder() {
+    return this.stateBuilder;
+  }
+
+  public @Nullable TextFormat getTextFormatFromChar(char c) {
+    for (TextFormat format : TextFormat.values()) {
+      FormatInfo info = FORMAT_INFO.get(format);
+      if (info.code == c) {
+        return format;
+      }
+    }
+
+    return null;
   }
 
   @Override
@@ -225,6 +236,10 @@ public class TextFormattingElement extends InlineElement {
       this.setStateUnsafe(format, newState);
     }
 
+    public TextFormatState getState(TextFormat format) {
+      return this.state.get(format);
+    }
+
     public List<TextFormat> getActiveFormats() {
       List<TextFormat> result = new ArrayList<>();
       for (TextFormat format : TextFormat.values()) {
@@ -236,7 +251,7 @@ public class TextFormattingElement extends InlineElement {
       return result;
     }
 
-    private void reset() {
+    public void reset() {
       for (TextFormat format : TextFormat.values()) {
         TextFormatState newState = format == TextFormat.WHITE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
         this.setStateUnsafe(format, newState);
