@@ -441,7 +441,7 @@ public class TextInputElement extends InputElement {
             if (GuiScreen.isCtrlKeyDown()) {
               this.setSelectionIndex(this.getNthWordFromPos(-1, this.selectionEndIndex));
             } else {
-              this.setSelectionIndex(this.selectionEndIndex - 1);
+              this.moveSelectionIndexBy(-1);
             }
           } else if (GuiScreen.isCtrlKeyDown()) {
             this.setCursorIndex(this.getNthWordFromCursor(-1));
@@ -455,7 +455,7 @@ public class TextInputElement extends InputElement {
             if (GuiScreen.isCtrlKeyDown()) {
               this.setSelectionIndex(this.getNthWordFromPos(1, this.selectionEndIndex));
             } else {
-              this.setSelectionIndex(this.selectionEndIndex + 1);
+              this.moveSelectionIndexBy(1);
             }
           } else if (GuiScreen.isCtrlKeyDown()) {
             this.setCursorIndex(this.getNthWordFromCursor(1));
@@ -799,6 +799,19 @@ public class TextInputElement extends InputElement {
     this.disabledColour = disabledColour;
   }
 
+  public void moveSelectionIndexBy(int delta) {
+    int N = this.text.length();
+    int newIndex = MathHelper.clamp_int(this.selectionEndIndex + delta, 0, N);
+
+    // skip section signs and their formatting characters if we are not rendering them
+    if (!this.renderSectionCharacter && delta != 0 && newIndex > 0 && (this.text.charAt(newIndex - 1) == '§' || newIndex > 1 && this.text.charAt(newIndex - 2) == '§')) {
+      this.moveSelectionIndexBy(delta + (int)Math.signum(delta));
+      return;
+    }
+
+    this.setSelectionIndex(newIndex);
+  }
+
   public void setSelectionIndex(int newIndex) {
     int length = this.text.length();
     if (newIndex > length) {
@@ -887,7 +900,7 @@ public class TextInputElement extends InputElement {
     int newIndex = MathHelper.clamp_int(this.selectionEndIndex + delta, 0, N);
 
     // skip section signs and their formatting characters if we are not rendering them
-    if (!this.renderSectionCharacter && delta != 0 && newIndex > 0 && newIndex < N - 1 && (this.text.charAt(newIndex - 1) == '§' || newIndex > 1 && this.text.charAt(newIndex - 2) == '§')) {
+    if (!this.renderSectionCharacter && delta != 0 && newIndex > 0 && (this.text.charAt(newIndex - 1) == '§' || newIndex > 1 && this.text.charAt(newIndex - 2) == '§')) {
       this.moveCursorBy(delta + (int)Math.signum(delta));
       return;
     }
