@@ -328,8 +328,17 @@ public class TextInputElement extends InputElement {
         this.writeText("");
       } else {
         boolean backwards = offset < 0;
-        int start = backwards ? this.cursorIndex + offset : this.cursorIndex;
-        int end = backwards ? this.cursorIndex : this.cursorIndex + offset;
+
+        int start;
+        int end;
+        if (backwards) {
+          start = this.cursorIndex + offset - this.getFormattingLength(this.cursorIndex, -1);
+          end = this.cursorIndex - this.getFormattingLength(this.cursorIndex, -1);
+        } else {
+          start = this.cursorIndex + this.getFormattingLength(this.cursorIndex, 1);
+          end = this.cursorIndex + offset + this.getFormattingLength(this.cursorIndex, 1);
+        }
+
         String remainingText = "";
         if (start >= 0) {
           remainingText = this.text.substring(0, start);
@@ -805,7 +814,8 @@ public class TextInputElement extends InputElement {
     int newIndex = MathHelper.clamp_int(this.selectionEndIndex + delta, 0, N);
 
     // skip section signs and their formatting characters if we are not rendering them
-    int formattingLength = this.getFormattingLength(this.selectionEndIndex, delta);
+    boolean searchAfterGap = delta < 0 && this.getFormattingLength(this.selectionEndIndex, delta) == 0;
+    int formattingLength = this.getFormattingLength(this.selectionEndIndex + (searchAfterGap ? delta : 0), delta);
     this.setSelectionIndex(newIndex + (int)Math.signum(delta) * formattingLength);
   }
 
@@ -1063,7 +1073,8 @@ public class TextInputElement extends InputElement {
     int newIndex = MathHelper.clamp_int(this.selectionEndIndex + delta, 0, N);
 
     // skip section signs and their formatting characters if we are not rendering them
-    int formattingLength = this.getFormattingLength(this.selectionEndIndex, delta);
+    boolean searchAfterGap = delta < 0 && this.getFormattingLength(this.selectionEndIndex, delta) == 0;
+    int formattingLength = this.getFormattingLength(this.selectionEndIndex + (searchAfterGap ? delta : 0), delta);
     this.setCursorIndex(newIndex + (int)Math.signum(delta) * formattingLength);
   }
 
