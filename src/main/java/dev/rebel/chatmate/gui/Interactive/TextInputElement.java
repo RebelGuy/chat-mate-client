@@ -23,6 +23,7 @@ import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.util.Collections;
 import dev.rebel.chatmate.util.EnumHelpers;
 import dev.rebel.chatmate.util.TextHelpers;
+import dev.rebel.chatmate.util.TextHelpers.ExtractedFormatting;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -804,12 +805,8 @@ public class TextInputElement extends InputElement {
     int newIndex = MathHelper.clamp_int(this.selectionEndIndex + delta, 0, N);
 
     // skip section signs and their formatting characters if we are not rendering them
-    if (!this.renderSectionCharacter && delta != 0 && newIndex > 0 && (this.text.charAt(newIndex - 1) == '§' || newIndex > 1 && this.text.charAt(newIndex - 2) == '§')) {
-      this.moveSelectionIndexBy(delta + (int)Math.signum(delta));
-      return;
-    }
-
-    this.setSelectionIndex(newIndex);
+    int formattingLength = this.getFormattingLength(this.selectionEndIndex, delta);
+    this.setSelectionIndex(newIndex + (int)Math.signum(delta) * formattingLength);
   }
 
   public void setSelectionIndex(int newIndex) {
@@ -826,15 +823,15 @@ public class TextInputElement extends InputElement {
 
     if (this.textFormattingElement != null) {
       TextFormatStateBuilder builder = this.textFormattingElement.getStateBuilder();
-      builder.reset();
+      builder.reset(false);
 
       if (newIndex > 0) {
         // updating the state handles all formatting button states as a side effect! : -- )
-        TextHelpers.ExtractedFormatting formatting = TextHelpers.extractFormatting(this.text.substring(0, newIndex));
-        for (TextHelpers.ExtractedFormatting.Format format : formatting.extracted) {
-          @Nullable TextFormat textFormat = this.textFormattingElement.getTextFormatFromChar(format.formatChar);
+        ExtractedFormatting formatting = TextHelpers.extractFormatting(this.text.substring(0, newIndex));
+        for (ExtractedFormatting.Format format : formatting.extracted) {
+          @Nullable TextFormat textFormat = TextFormattingElement.getTextFormatFromChar(format.formatChar);
           if (textFormat != null) {
-            builder.withState(textFormat, TextFormatState.ACTIVE);
+            builder.withState(textFormat, TextFormatState.ACTIVE, false);
           }
         }
       }
@@ -866,14 +863,180 @@ public class TextInputElement extends InputElement {
     }
   }
 
+  // this was supposed to be simple... and clean... and elegant...
   private void onUpdateFormat(TextFormat format, TextFormatState state) {
-    int indexStart = Math.min(this.cursorIndex, this.selectionEndIndex);
-    int indexEnd = Math.max(this.cursorIndex, this.selectionEndIndex);
-
-    if (indexStart == indexEnd) {
-      // no text to update
+    if (this.textFormattingElement == null) {
       return;
     }
+
+    TextFormattingElement.FormatInfo formatInfo = TextFormattingElement.FORMAT_INFO.get(format);
+    boolean isColour = formatInfo.isColour();
+    if (isColour && state == TextFormatState.INACTIVE) {
+      // deactivating a colour doesn't make sense
+      return;
+    }
+
+    int indexBeforeFormatting = Math.min(this.cursorIndex, this.selectionEndIndex);
+    int indexAfterFormatting = indexBeforeFormatting + this.getFormattingLength(indexBeforeFormatting, 1);
+    int index = indexAfterFormatting;
+
+    if (format == TextFormat.RESET) {
+      // nuke all formatting
+      this.replaceAnyFormatsAfterPosition(indexBeforeFormatting, (char) 0, (char) 255, null);
+      this.text = this.text.substring(0, indexBeforeFormatting) + TextFormattingElement.FORMAT_INFO.get(TextFormat.RESET).print() + this.text.substring(indexBeforeFormatting);
+      return;
+
+    } else if (isColour) {
+      index = this.removeFormatsDirectlyBeforePosition(index, '0', 'f');
+
+      // replace all colours in the remainder of the string with the new colour
+      this.replaceAnyFormatsAfterPosition(index, '0', 'f', formatInfo.code);
+    } else {
+      // regardless of whether we want to add or remove a format, we want to remove any existing ones at this position.
+      index = this.removeFormatsDirectlyBeforePosition(index, formatInfo.code, formatInfo.code);
+
+      if (state == TextFormatState.INACTIVE) {
+        // remove any future occurrences of the format
+        this.replaceAnyFormatsAfterPosition(index, formatInfo.code, formatInfo.code, null);
+      }
+    }
+
+    if (state == TextFormatState.ACTIVE) {
+      // ensure the format is carried on for the entirety of the string
+      this.addFormatAfterResetsAfterPosition(index, formatInfo.code);
+    }
+
+    // get the current formatting at the cursor position
+    indexBeforeFormatting = Math.max(0, indexBeforeFormatting - (indexAfterFormatting - index));
+    ExtractedFormatting extractedFormatting = TextHelpers.extractFormatting(this.text.substring(0, indexBeforeFormatting));
+    TextFormatStateBuilder builder = new TextFormatStateBuilder(null, null, true);
+    for (ExtractedFormatting.Format f : extractedFormatting.extracted) {
+      @Nullable TextFormat textFormat = TextFormattingElement.getTextFormatFromChar(f.formatChar);
+      if (textFormat != null) {
+        builder.withState(textFormat, TextFormatState.ACTIVE, false);
+      }
+    }
+
+    String diffString = this.textFormattingElement.getStateBuilder().diffString(builder);
+    this.text = this.text.substring(0, index) + diffString + this.text.substring(index);
+
+    // now, move the cursor to AFTER the formatting at the current position so that the user's new formatting selection comes into effect when they type
+    int newIndex = index + this.getFormattingLength(index, 1);
+    if (this.cursorIndex < this.selectionEndIndex) {
+      this.cursorIndex = newIndex;
+    } else if (this.selectionEndIndex < this.cursorIndex) {
+      this.selectionEndIndex = newIndex;
+    } else {
+      this.cursorIndex = newIndex;
+      this.selectionEndIndex = newIndex;
+    }
+
+    this.cleanUpDuplicateFormatting();
+  }
+
+  /** Removes the specified format that occurs directly before the given position. */
+  private int removeFormatsDirectlyBeforePosition(int index, char minFormatCode, char maxFormatCode) {
+    int newIndex = index;
+    for (int i = index - 2; i >= 0; i -= 2) {
+      if (this.text.charAt(i) != FontEngine.CHAR_SECTION_SIGN) {
+        break;
+      }
+
+      char formatChar = this.text.charAt(i + 1);
+      if (formatChar >= minFormatCode && formatChar <= maxFormatCode) {
+        this.text = this.text.substring(0, i) + this.text.substring(i + 2);
+        newIndex -= 2;
+      }
+    }
+
+    return newIndex;
+  }
+
+  private void replaceAnyFormatsAfterPosition(int index, char minFormatCode, char maxFormatCode, @Nullable Character replacementCode) {
+    StringBuilder sb = new StringBuilder(this.text);
+    for (int i = index; i < sb.length(); i++) {
+      if (sb.charAt(i) != FontEngine.CHAR_SECTION_SIGN) {
+        continue;
+      }
+
+      char formatChar = sb.charAt(i + 1);
+      if (formatChar >= minFormatCode && formatChar <= maxFormatCode) {
+        if (replacementCode == null) {
+          sb.delete(i, i + 2);
+          i -= 2;
+        } else {
+          sb.setCharAt(i + 1, replacementCode);
+          i++;
+        }
+      }
+    }
+
+    this.text = sb.toString();
+  }
+
+  private void addFormatAfterResetsAfterPosition(int index, char formatCode) {
+    StringBuilder sb = new StringBuilder(this.text);
+    for (int i = index; i < sb.length(); i++) {
+      if (sb.charAt(i) != FontEngine.CHAR_SECTION_SIGN) {
+        continue;
+      }
+
+      char formatChar = sb.charAt(i + 1);
+      @Nullable TextFormat format = TextFormattingElement.getTextFormatFromChar(formatChar);
+      if (format == TextFormat.RESET) {
+        sb.insert(i + 2, FontEngine.SECTION_SIGN_STRING + formatCode);
+        i++;
+      }
+    }
+
+    this.text = sb.toString();
+  }
+
+  private void cleanUpDuplicateFormatting() {
+    TextFormatStateBuilder builder = new TextFormatStateBuilder(null, null, true);
+
+    for (int i = 0; i < this.text.length(); i++) {
+      if (this.text.charAt(i) != FontEngine.CHAR_SECTION_SIGN) {
+        continue;
+      }
+
+      i++;
+      char formatChar = this.text.charAt(i);
+      @Nullable TextFormat textFormat = TextFormattingElement.getTextFormatFromChar(formatChar);
+      if (textFormat != null) {
+        boolean madeChanges = builder.withState(textFormat, TextFormatState.ACTIVE, false);
+
+        if (!madeChanges) {
+          this.text = this.text.substring(0, i - 1) + this.text.substring(i + 1);
+          i -= 2;
+        }
+      }
+    }
+  }
+
+  /** Gets the number of consecutive characters, starting at the given index, that are formatting characters. */
+  private int getFormattingLength(int fromIndex, int direction) {
+    int count = 0;
+
+    if (direction >= 0) {
+      for (int i = fromIndex; i < this.text.length(); i += 2) {
+        if (this.text.charAt(i) != FontEngine.CHAR_SECTION_SIGN) {
+          return count;
+        } else {
+          count += 2;
+        }
+      }
+    } else {
+      for (int i = fromIndex - 2; i >= 0; i -= 2) {
+        if (this.text.charAt(i) != FontEngine.CHAR_SECTION_SIGN) {
+          return count;
+        } else {
+          count += 2;
+        }
+      }
+    }
+
+    return count;
   }
 
   /** Gets the text that fits into the text box. */
@@ -900,12 +1063,8 @@ public class TextInputElement extends InputElement {
     int newIndex = MathHelper.clamp_int(this.selectionEndIndex + delta, 0, N);
 
     // skip section signs and their formatting characters if we are not rendering them
-    if (!this.renderSectionCharacter && delta != 0 && newIndex > 0 && (this.text.charAt(newIndex - 1) == '§' || newIndex > 1 && this.text.charAt(newIndex - 2) == '§')) {
-      this.moveCursorBy(delta + (int)Math.signum(delta));
-      return;
-    }
-
-    this.setCursorIndex(newIndex);
+    int formattingLength = this.getFormattingLength(this.selectionEndIndex, delta);
+    this.setCursorIndex(newIndex + (int)Math.signum(delta) * formattingLength);
   }
 
   private void setCursorIndex(int newPosition) {

@@ -4,6 +4,7 @@ import dev.rebel.chatmate.Asset;
 import dev.rebel.chatmate.Asset.Texture;
 import dev.rebel.chatmate.events.models.KeyboardEventData;
 import dev.rebel.chatmate.events.models.KeyboardEventData.KeyModifier;
+import dev.rebel.chatmate.gui.FontEngine;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.IconButtonElement;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
@@ -12,17 +13,15 @@ import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
 import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.TriConsumer;
 import org.lwjgl.input.Keyboard;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 public class TextFormattingElement extends InlineElement {
-  private static final Map<TextFormat, FormatInfo> FORMAT_INFO;
+  public static final Map<TextFormat, FormatInfo> FORMAT_INFO;
 
   static {
     FORMAT_INFO = new HashMap<>();
@@ -70,29 +69,37 @@ public class TextFormattingElement extends InlineElement {
     }
 
     // importantly, this has to be done after initialising the elements
-    this.stateBuilder = new TextFormatStateBuilder(initialState, this::onUpdateState);
+    this.stateBuilder = new TextFormatStateBuilder(initialState, this::onUpdateState, true);
   }
 
-  private void onUpdateState(TextFormat format, TextFormatState state) {
+  private void onUpdateState(TextFormat format, TextFormatState state, boolean notifyListener) {
     this.elements.get(format).setButtonState(state);
-    this.onUpdate.accept(format, state);
+    if (!notifyListener) {
+      return;
+    }
+
+    try {
+      this.onUpdate.accept(format, state);
+    } catch (Exception e) {
+      super.context.logService.logError(this, "Unable to notify subscriber of state update", e);
+    }
   }
 
   private void onClick(TextFormat format) {
-    this.toggleFormat(format);
     super.context.onSetFocus((InputElement)super.parent);
+    this.toggleFormat(format);
   }
 
   private void toggleFormat(TextFormat format) {
     TextFormatState newState = this.stateBuilder.getState(format) == TextFormatState.INACTIVE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
-    this.stateBuilder.withState(format, newState);
+    this.stateBuilder.withState(format, newState, true);
   }
 
   public TextFormatStateBuilder getStateBuilder() {
     return this.stateBuilder;
   }
 
-  public @Nullable TextFormat getTextFormatFromChar(char c) {
+  public static @Nullable TextFormat getTextFormatFromChar(char c) {
     for (TextFormat format : TextFormat.values()) {
       FormatInfo info = FORMAT_INFO.get(format);
       if (info.code == c) {
@@ -101,6 +108,11 @@ public class TextFormattingElement extends InlineElement {
     }
 
     return null;
+  }
+
+  public static String getStringFromTextFormat(TextFormat format) {
+    FormatInfo info = FORMAT_INFO.get(format);
+    return "§" + info.code;
   }
 
   @Override
@@ -147,6 +159,10 @@ public class TextFormattingElement extends InlineElement {
     }
 
     public TextFormattingButton setButtonState(TextFormatState state) {
+      if (this.formatInfo == FORMAT_INFO.get(TextFormat.RESET)) {
+        return this;
+      }
+
       this.state = state;
 
       RectExtension defaultMargin = new RectExtension(screen(1));
@@ -193,30 +209,35 @@ public class TextFormattingElement extends InlineElement {
   }
 
   public static class TextFormatStateBuilder {
-    private final @Nullable BiConsumer<TextFormat, TextFormatState> onUpdate;
+    private final @Nullable TriConsumer<TextFormat, TextFormatState, Boolean> onUpdate;
+    private final boolean enforceWhite;
     private final Map<TextFormat, TextFormatState> state;
 
-    public TextFormatStateBuilder(Map<TextFormat, TextFormatState> initialState, @Nullable BiConsumer<TextFormat, TextFormatState> onUpdate) {
+    public TextFormatStateBuilder(@Nullable Map<TextFormat, TextFormatState> initialState, @Nullable TriConsumer<TextFormat, TextFormatState, Boolean> onUpdate, boolean enforceWhite) {
       this.onUpdate = onUpdate;
+      this.enforceWhite = enforceWhite;
 
       this.state = new HashMap<>();
       for (TextFormat format : TextFormat.values()) {
         this.state.put(format, TextFormatState.INACTIVE);
       }
 
-      this.reset();
+      this.reset(false);
 
-      for (TextFormat format : initialState.keySet()) {
-        this.withState(format, initialState.get(format));
+      if (initialState != null) {
+        for (TextFormat format : initialState.keySet()) {
+          this.withState(format, initialState.get(format), false);
+        }
       }
     }
 
-    public void withState(TextFormat format, TextFormatState newState) {
+    /** Returns true if changes were made to the state. */
+    public boolean withState(TextFormat format, TextFormatState newState, boolean notifyListener) {
       if (format == TextFormat.RESET) {
-        this.reset();
-        return;
+        return this.reset(notifyListener);
       }
 
+      boolean madeChange = false;
       if (FORMAT_INFO.get(format).isColour()) {
         if (newState == TextFormatState.ACTIVE) {
           // deactivate all other colours
@@ -225,23 +246,23 @@ public class TextFormattingElement extends InlineElement {
               continue;
             }
 
-            this.setStateUnsafe(f, TextFormatState.INACTIVE);
+            madeChange = this.setStateUnsafe(f, TextFormatState.INACTIVE, notifyListener);
           }
         } else {
           // deactivating colours directly is not supported
-          return;
+          return false;
         }
       }
 
-      this.setStateUnsafe(format, newState);
+      return this.setStateUnsafe(format, newState, notifyListener) || madeChange;
     }
 
     public TextFormatState getState(TextFormat format) {
       return this.state.get(format);
     }
 
-    public List<TextFormat> getActiveFormats() {
-      List<TextFormat> result = new ArrayList<>();
+    public Set<TextFormat> getActiveFormats() {
+      Set<TextFormat> result = new HashSet<>();
       for (TextFormat format : TextFormat.values()) {
         if (this.state.getOrDefault(format, TextFormatState.INACTIVE) == TextFormatState.ACTIVE) {
           result.add(format);
@@ -251,25 +272,76 @@ public class TextFormattingElement extends InlineElement {
       return result;
     }
 
-    public void reset() {
+    /** Only notifies listeners of the RESET state change, not any individual states that were reset as a side effect. */
+    public boolean reset(boolean notifyListener) {
+      boolean madeChanges = false;
       for (TextFormat format : TextFormat.values()) {
-        TextFormatState newState = format == TextFormat.WHITE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
-        this.setStateUnsafe(format, newState);
+        TextFormatState newState = this.enforceWhite && format == TextFormat.WHITE ? TextFormatState.ACTIVE : TextFormatState.INACTIVE;
+        boolean _madeChanges = this.setStateUnsafe(format, newState, false);
+        if (_madeChanges) {
+          madeChanges = true;
+        }
       }
+
+      if (notifyListener && this.onUpdate != null) {
+        this.onUpdate.accept(TextFormat.RESET, TextFormatState.ACTIVE, true);
+      }
+      return madeChanges;
+    }
+
+    /** Returns the string that should be added to text to get from the given formatting state to the current one. */
+    public String diffString(TextFormatStateBuilder fromState) {
+      // if a non-colour format exists in the first state, but not current state, we need to perform a complete reset
+      // since non-colour formats cannot be overwritten, unlike colours.
+      boolean requiresReset = false;
+      Set<TextFormat> initialFormats = fromState.getActiveFormats();
+      Set<TextFormat> currentFormats = this.getActiveFormats();
+      for (TextFormat initialFormat : initialFormats) {
+        if (!FORMAT_INFO.get(initialFormat).isColour() && !currentFormats.contains(initialFormat)) {
+          requiresReset = true;
+          initialFormats = new HashSet<>();
+          initialFormats.add(TextFormat.WHITE);
+          break;
+        }
+      }
+
+      StringBuilder result = new StringBuilder();
+      if (requiresReset) {
+        result.append(FORMAT_INFO.get(TextFormat.RESET).print());
+      }
+
+      for (TextFormat currentFormat : currentFormats) {
+        if (!initialFormats.contains(currentFormat)) {
+          // new format
+          result.append(FORMAT_INFO.get(currentFormat).print());
+        } else if (requiresReset && initialFormats.contains(currentFormat)) {
+          // in the case where we had to reset, ensure any initial formats are continued
+          result.append(FORMAT_INFO.get(currentFormat).print());
+        }
+      }
+
+      return result.toString();
     }
 
     /** Does not check the validity of the state. */
-    private void setStateUnsafe(TextFormat format, TextFormatState newState) {
+    private boolean setStateUnsafe(TextFormat format, TextFormatState newState, boolean notifyListener) {
+      TextFormatState oldState = this.state.get(format);
+      this.state.put(format, newState);
+
       // notify subscriber of a changed state
-      if (this.onUpdate != null && newState != this.state.get(format)) {
-        this.onUpdate.accept(format, newState);
+      if (newState != oldState) {
+        if (this.onUpdate != null) {
+          this.onUpdate.accept(format, newState, notifyListener);
+        }
+
+        return true;
       }
 
-      this.state.put(format, newState);
+      return false;
     }
   }
 
-  private static class FormatInfo {
+  public static class FormatInfo {
     public final char code;
     public final String tooltip;
     public final Colour colour;
@@ -290,6 +362,10 @@ public class TextFormattingElement extends InlineElement {
 
     public boolean isColour() {
       return this.code >= '0' && this.code <= 'f';
+    }
+
+    public String print() {
+      return FontEngine.SECTION_SIGN_STRING + this.code;
     }
   }
 
