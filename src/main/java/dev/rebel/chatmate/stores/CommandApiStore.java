@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+// works a bit differently to the other API store, that's why it doesn't implement the base class.
 public class CommandApiStore {
   private static final int MIN_PADDING_MS = 500;
 

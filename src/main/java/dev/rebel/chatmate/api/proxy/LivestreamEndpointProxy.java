@@ -13,7 +13,7 @@ public class LivestreamEndpointProxy extends EndpointProxy {
     super(logService, apiRequestService, config, basePath + "/livestream");
   }
 
-  public void getLivestreams(Consumer<GetLivestreamsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
-    this.makeRequestAsync(Method.GET, "/", GetLivestreamsResponse.class, callback, errorHandler, false);
+  public void getLivestreams(Consumer<GetLivestreamsResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
+    this.makeRequestAsync(Method.GET, "/", GetLivestreamsResponse.class, callback, errorHandler, isActiveRequest);
   }
 }

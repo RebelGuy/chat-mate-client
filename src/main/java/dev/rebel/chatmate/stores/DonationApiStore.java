@@ -37,7 +37,7 @@ public class DonationApiStore extends ApiStore<PublicDonation> {
 
     // retain the re-ordered object until the reference of the underlying data changes
     return this.memoiser.memoiseOne(
-        () -> Collections.reverse(Collections.orderBy(Collections.list(data), d -> d.time)),
+        () ->Collections.reverse(Collections.orderBy(Collections.list(data), d -> d.time)),
         data
     );
   }
