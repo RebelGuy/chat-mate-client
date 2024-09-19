@@ -35,9 +35,10 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.function.Supplier;
 
-import static dev.rebel.chatmate.util.Objects.ifNotNull;
+import static dev.rebel.chatmate.util.Objects.firstNonNull;
 
 // refer to mcmod.info for more settings.
 @Mod(modid = "chatmate", useMetadata = true, canBeDeactivated = true)
@@ -107,7 +108,7 @@ public class ChatMate {
     DonationApiStore donationApiStore = new DonationApiStore(donationEndpointProxy, config);
     RankApiStore rankApiStore = new RankApiStore(rankEndpointProxy, config);
     CommandApiStore commandApiStore = new CommandApiStore(chatEndpointProxy, config);
-    StreamerApiStore streamerApiStore = new StreamerApiStore(streamerEndpointProxy);
+    StreamerApiStore streamerApiStore = new StreamerApiStore(streamerEndpointProxy, config);
 
     String filterPath = "/assets/chatmate/filter.txt";
     FilterFileParseResult parsedFilterFile = FilterService.parseFilterFile(FileHelpers.readLines(filterPath));
@@ -292,7 +293,7 @@ public class ChatMate {
     );
     ClientCommandHandler.instance.registerCommand(chatMateCommand);
 
-    apiRequestService.setGetStreamers(() -> ifNotNull(streamerApiStore.getData(), d -> d.streamers));
+    apiRequestService.setGetStreamers(() -> firstNonNull(streamerApiStore.getData(), new ArrayList<>()));
 
     config.getChatMateEnabledEmitter().onChange(e -> {
       boolean enabled = e.getData();
@@ -330,7 +331,7 @@ public class ChatMate {
 
       }, streamerErr -> {
         logService.logError(this, "Unable to get streamer list during initialisation", streamerErr);
-      });
+      }, false);
     }
   }
 

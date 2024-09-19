@@ -67,7 +67,7 @@ public class DonationHudService implements DonationHudStore.IDonationHudStoreLis
 
     // if we already know about the donation, there is a very high chance (close to 100%) that the user created it
     // within the client just before. in that case, showing the notification is unnecessary.
-    if (Collections.any(this.donationApiStore.getDonations(), d -> Objects.equals(d.id, newDonation.id))) {
+    if (Collections.any(this.donationApiStore.getData(), d -> Objects.equals(d.id, newDonation.id))) {
       this.logService.logInfo(this, "Ignoring donation with id", newDonation.id, "because we already know about it.");
       return;
     }

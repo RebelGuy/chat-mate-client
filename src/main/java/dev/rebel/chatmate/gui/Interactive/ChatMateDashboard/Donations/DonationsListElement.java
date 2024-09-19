@@ -64,6 +64,8 @@ public class DonationsListElement extends ContainerElement {
     super(context, parent, LayoutMode.BLOCK);
     super.setSizingMode(SizingMode.FILL);
 
+    super.registerStore(context.donationApiStore, true);
+
     this.apiRequestService = apiRequestService;
     this.apiRequestService.onActive(this._onApiServiceActive);
 
@@ -121,12 +123,23 @@ public class DonationsListElement extends ContainerElement {
     super.addElement(this.errorLabel);
   }
 
-  private void onGetDonations(List<PublicDonation> donations) {
-    super.context.renderer.runSideEffect(() -> {
-      this.loadingSpinner.setVisible(false);
+  @Override
+  protected void onStoreUpdate() {
+    boolean isLoading = super.context.donationApiStore.isLoading();
+    @Nullable String error = super.context.donationApiStore.getError();
+    @Nullable List<PublicDonation> data = super.context.donationApiStore.getData();
+
+    this.loadingSpinner.setVisible(isLoading);
+
+    if (error != null) {
+      this.errorLabel.setText(error);
+      this.errorLabel.setVisible(true);
+      this.donationsTable.setVisible(false);
+    } else if (data != null) {
       this.donationsTable.setVisible(true);
-      this.donationsTable.setDonations(donations);
-    });
+      this.donationsTable.setDonations(data);
+      this.errorLabel.setVisible(false);
+    }
   }
 
   private void onApiServiceActive(Boolean isActive) {
@@ -152,8 +165,8 @@ public class DonationsListElement extends ContainerElement {
   }
 
   public void onShow() {
-    this.loadingSpinner.setVisible(true);
-    super.context.donationApiStore.loadDonations(this::onGetDonations, this::onError, true);
+    // refresh data
+    super.context.donationApiStore.loadData(null, null, true);
   }
 
   public void onHide() {

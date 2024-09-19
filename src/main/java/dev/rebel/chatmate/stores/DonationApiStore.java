@@ -6,101 +6,40 @@ import dev.rebel.chatmate.api.models.donation.DeleteDonationResponse.DeleteDonat
 import dev.rebel.chatmate.api.models.donation.LinkUserResponse.LinkUserResponseData;
 import dev.rebel.chatmate.api.models.donation.RefundDonationResponse.RefundDonationResponseData;
 import dev.rebel.chatmate.api.models.donation.UnlinkUserResponse.UnlinkUserResponseData;
-import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.api.proxy.DonationEndpointProxy;
-import dev.rebel.chatmate.api.proxy.EndpointProxy;
+import dev.rebel.chatmate.api.publicObjects.donation.PublicDonation;
 import dev.rebel.chatmate.config.Config;
-import dev.rebel.chatmate.events.models.ConfigEventOptions;
 import dev.rebel.chatmate.util.Collections;
+import dev.rebel.chatmate.util.Memoiser;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-public class DonationApiStore {
-  private final static long ERROR_TIMEOUT_MS = 10_000; // hardcoded for now - see CHAT-803
-
+public class DonationApiStore extends ApiStore<PublicDonation> {
   private final DonationEndpointProxy donationEndpointProxy;
-  private final Config config;
-
-  private @Nullable CopyOnWriteArrayList<PublicDonation> donations;
-  private @Nullable String getDonationsError;
-  private @Nullable Long getDonationsErrorExpiry;
-  private boolean loading;
+  private final Memoiser memoiser;
 
   public DonationApiStore(DonationEndpointProxy donationEndpointProxy, Config config) {
+    super(config, true);
+
     this.donationEndpointProxy = donationEndpointProxy;
-    this.config = config;
-
-    this.donations = null;
-    this.getDonationsError = null;
-    this.getDonationsErrorExpiry = null;
-    this.loading = false;
-
-    config.getLoginInfoEmitter().onChange(_info -> this.clear(), new ConfigEventOptions<>(info -> info.loginToken == null));
+    this.memoiser = new Memoiser();
   }
 
-  public void clear() {
-    this.donations = null;
-    this.getDonationsError = null;
-    this.getDonationsErrorExpiry = null;
-    this.loading = false;
-  }
-
-  /** Fetches donations from the server. */
-  public void loadDonations(Consumer<List<PublicDonation>> callback, @Nonnull Consumer<Throwable> errorHandler, boolean forceLoad) {
-    if (this.config.getLoginInfoEmitter().get().username == null || this.getError() != null && !forceLoad) {
-      return;
-    }
-
-    if (this.donations != null && !forceLoad) {
-      callback.accept(this.donations);
-      return;
-    } else if (this.loading) {
-      callback.accept(new ArrayList<>());
-      return;
-    }
-
-    this.loading = true;
-    this.donationEndpointProxy.getDonationsAsync(res -> {
-      this.donations = new CopyOnWriteArrayList<>(Collections.reverse(Collections.orderBy(Collections.list(res.donations), d -> d.time)));
-      this.getDonationsError = null;
-      this.getDonationsErrorExpiry = null;
-      this.loading = false;
-      callback.accept(this.donations);
-    }, err -> {
-      this.donations = null;
-      this.getDonationsError = EndpointProxy.getApiErrorMessage(err);
-      this.getDonationsErrorExpiry = new Date().getTime() + ERROR_TIMEOUT_MS;
-      this.loading = false;
-      errorHandler.accept(err);
-    }, forceLoad);
-  }
-
-  /** Gets loaded donations, sorted by time in ascending order. */
-  public @Nonnull List<PublicDonation> getDonations() {
-    if (this.donations == null) {
-      if (!this.loading) {
-        this.loadDonations(r -> {}, e -> {}, false);
-      }
-      return new ArrayList<>();
-    } else {
-      return this.donations;
-    }
-  }
-
-  public @Nullable String getError() {
-    if (this.getDonationsError == null) {
+  @Override
+  public @Nullable List<PublicDonation> getData() {
+    @Nullable List<PublicDonation> data = super.getData();
+    if (data == null) {
       return null;
     }
 
-    assert this.getDonationsErrorExpiry != null;
-    return new Date().getTime() < this.getDonationsErrorExpiry ? this.getDonationsError : null;
+    // retain the re-ordered object until the reference of the underlying data changes
+    return this.memoiser.memoiseOne(
+        () -> Collections.reverse(Collections.orderBy(Collections.list(data), d -> d.time)),
+        data
+    );
   }
 
   public void linkUser(int donationId, int userId, Consumer<LinkUserResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
@@ -108,18 +47,21 @@ public class DonationApiStore {
         donationId,
         userId,
         res -> {
-          this.updateDonation(res.updatedDonation);
+          super.updateOne(res.updatedDonation);
           callback.accept(res);
-        }, errorHandler);
+        },
+        errorHandler
+    );
   }
 
   public void unlinkUser(int donationId, Consumer<UnlinkUserResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
     this.donationEndpointProxy.unlinkUserAsync(
         donationId,
         res -> {
-          this.updateDonation(res.updatedDonation);
+          super.updateOne(res.updatedDonation);
           callback.accept(res);
-        }, errorHandler
+        },
+        errorHandler
     );
   }
 
@@ -127,9 +69,10 @@ public class DonationApiStore {
     this.donationEndpointProxy.refundDonation(
         donationId,
         res -> {
-          this.updateDonation(res.updatedDonation);
+          super.updateOne(res.updatedDonation);
           callback.accept(res);
-        }, errorHandler
+        },
+        errorHandler
     );
   }
 
@@ -137,13 +80,14 @@ public class DonationApiStore {
     this.donationEndpointProxy.deleteDonation(
         donationId,
         res -> {
-          if (this.donations != null) {
-            this.donations = new CopyOnWriteArrayList<>(
-                Collections.filter(Collections.list(this.donations), d -> !Objects.equals(d.id, donationId))
-            );
+          PublicDonation donation = Collections.first(super.getData(), d -> d.id == donationId);
+          if (donation != null) {
+            super.deleteOne(donation);
           }
+
           callback.accept(res);
-        }, errorHandler
+        },
+        errorHandler
     );
   }
 
@@ -151,25 +95,24 @@ public class DonationApiStore {
     this.donationEndpointProxy.createDonationAsync(
         request,
         res -> {
-          if (this.donations == null) {
-            this.donations = new CopyOnWriteArrayList<>(Collections.list(res.newDonation));
-          } else {
-            // add at the beginning -> newest donation
-            this.donations.add(0, res.newDonation);
-          }
+          super.addOne(res.newDonation);
           callback.accept(res);
-        }, errorHandler
+        },
+        errorHandler
     );
   }
 
-  private void updateDonation(PublicDonation updatedDonation) {
-    if (this.donations == null) {
-      this.donations = new CopyOnWriteArrayList<>(Collections.list(updatedDonation));
-    } else {
-      // copy the collection so the reference changes
-      this.donations = new CopyOnWriteArrayList<>(
-          Collections.replaceOne(Collections.list(this.donations), updatedDonation, d -> Objects.equals(d.id, updatedDonation.id))
-      );
-    }
+  @Override
+  protected void onFetchData(Consumer<List<PublicDonation>> onData, Consumer<Throwable> onError, boolean isActiveRequest) {
+    this.donationEndpointProxy.getDonationsAsync(
+        res -> onData.accept(Collections.list(res.donations)),
+        onError,
+        isActiveRequest
+    );
+  }
+
+  @Override
+  protected boolean onMatchItems(PublicDonation a, PublicDonation b) {
+    return Objects.equals(a.id, b.id);
   }
 }

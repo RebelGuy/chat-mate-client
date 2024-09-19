@@ -1,6 +1,7 @@
 package dev.rebel.chatmate.util;
 
 import dev.rebel.chatmate.api.ChatMateApiException;
+import dev.rebel.chatmate.api.publicObjects.streamer.PublicStreamerSummary;
 import dev.rebel.chatmate.config.Config;
 import dev.rebel.chatmate.api.HttpException;
 import dev.rebel.chatmate.config.Config.LoginInfo;
@@ -8,11 +9,11 @@ import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.services.LogService;
 import dev.rebel.chatmate.stores.StreamerApiStore;
-import dev.rebel.chatmate.stores.StreamerApiStore.StreamerState;
 
 import javax.annotation.Nullable;
 import java.net.ConnectException;
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -259,13 +260,13 @@ public class ApiPoller<D> {
   }
 
   private boolean isStreamer() {
-    @Nullable StreamerState data = this.streamerApiStore.getData();
+    @Nullable List<PublicStreamerSummary> data = this.streamerApiStore.getData();
     @Nullable String username = this.config.getLoginInfoEmitter().get().username;
     if (data == null || username == null) {
       return false;
     }
 
-    return Collections.any(data.streamers, streamer -> java.util.Objects.equals(streamer.username, username));
+    return Collections.any(data, streamer -> java.util.Objects.equals(streamer.username.toLowerCase(), username.toLowerCase()));
   }
 
   public enum PollType { CONSTANT_INTERVAL, CONSTANT_PADDING }
