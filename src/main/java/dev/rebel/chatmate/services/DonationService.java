@@ -40,7 +40,7 @@ public class DonationService {
   // now is non-trivial.
   public boolean shouldShowDonationEffect(int userId) {
     List<PublicDonation> allDonations = this.donationApiStore.getData();
-    List<PublicAggregateLivestream> livestreams = this.livestreamApiStore.getLivestreams();
+    List<PublicAggregateLivestream> livestreams = this.livestreamApiStore.getData();
 
     // memoised so we don't do this every frame for every user in chat
     long showEffectUntil = this.memoiser.memoise(String.valueOf(userId), () -> {
