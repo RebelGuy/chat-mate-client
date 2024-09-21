@@ -39,8 +39,8 @@ public class DonationService {
   // the duration is used up only during livestreams, and are additive, so calculating whether an effect should be shown right
   // now is non-trivial.
   public boolean shouldShowDonationEffect(int userId) {
-    List<PublicDonation> allDonations = this.donationApiStore.getDonations();
-    List<PublicAggregateLivestream> livestreams = this.livestreamApiStore.getLivestreams();
+    List<PublicDonation> allDonations = this.donationApiStore.getData();
+    List<PublicAggregateLivestream> livestreams = this.livestreamApiStore.getData();
 
     // memoised so we don't do this every frame for every user in chat
     long showEffectUntil = this.memoiser.memoise(String.valueOf(userId), () -> {
@@ -132,7 +132,7 @@ public class DonationService {
 
   private void onNewDonation(Event<DonationEventData> in) {
     // check whether we already know about this donation (this can happen if we manually created the donation)
-    if (Collections.any(this.donationApiStore.getDonations(), d -> Objects.equals(d.id, in.getData().donation.id))) {
+    if (Collections.any(this.donationApiStore.getData(), d -> Objects.equals(d.id, in.getData().donation.id))) {
       return;
     }
 

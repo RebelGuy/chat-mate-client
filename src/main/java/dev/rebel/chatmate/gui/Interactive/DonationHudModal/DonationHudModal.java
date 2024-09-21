@@ -34,6 +34,7 @@ public class DonationHudModal extends ModalElement {
     super.setTitle("Create Donation Element");
     super.setSubmitText("Create");
     super.setCloseText("Cancel");
+    super.setAutoScrollBody(true);
 
     this.container = new BlockElement(context, this);
     super.setBody(this.container);

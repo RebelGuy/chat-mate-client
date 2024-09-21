@@ -36,6 +36,7 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
                              ISeparableElementFactory separableMainElementFactory,
                              Config.StatefulEmitter<Config.SeparableHudElement> settings,
                              Config.StatefulEmitter<Map<String, HudElementTransform>> transformEmitter,
+                             Config.StatefulEmitter<Boolean> onlyShowIndicatorsWhenLiveEmitter,
                              HudElementTransform defaultTransform,
                              String persistName) {
     super(context, parent);
@@ -71,6 +72,9 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
 
     settings.onChange(this::onChangeStatusIndicatorConfig);
     this.onChangeStatusIndicatorConfig(new Event<>(settings.get()));
+
+    onlyShowIndicatorsWhenLiveEmitter.onChange(this::onChangeOnlyShowIndicatorsWhenLive);
+    this.onChangeOnlyShowIndicatorsWhenLive(new Event<>(onlyShowIndicatorsWhenLiveEmitter.get()));
 
     super.setDefaultPosition(defaultTransform.getPosition(), Anchor.TOP_LEFT);
     super.setDefaultScale(defaultTransform.scale);
@@ -118,6 +122,13 @@ public class SeparableHudElement extends SimpleHudElementWrapper<ContainerElemen
   private void onChangeStatusIndicatorConfig(Event<Config.SeparableHudElement> event) {
     Config.SeparableHudElement data = event.getData();
     this.updateVisibility(data.enabled, data.separatePlatforms);
+  }
+
+  private void onChangeOnlyShowIndicatorsWhenLive(Event<Boolean> event) {
+    boolean onlyShowWhenLive = event.getData();
+    boolean allowInteractions = this.isLive() || !onlyShowWhenLive;
+    super.setCanDrag(allowInteractions);
+    super.setCanScale(allowInteractions);
   }
 
   private void updateVisibility(boolean indicatorEnabled, boolean separatePlatforms) {

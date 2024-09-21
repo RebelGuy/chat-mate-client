@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-/** Acts as a container for the child relement. The scroll bar is added to *this* element, not the children. If you need to add any padding or similar, you must wrap this into another container first. */
+/** Acts as a container for the child element. The scroll bar is added to *this* element, not the children. If you need to add any padding or similar, you must wrap this into another container first. */
 public class ScrollingElement extends SingleElement { // use a single element because we have to implement a special layout algorithm, so no point in using the ContainerElement.
   private final static long ANIMATION_DURATION = 300;
   private final static Function<Float, Float> EASING_FUNCTION = frac -> 1 - (float)Math.pow(1 - frac, 5);

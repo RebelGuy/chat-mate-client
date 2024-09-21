@@ -34,6 +34,6 @@ public class DashboardStore {
   }
 
   public enum SettingsPage {
-    GENERAL, HUD, CHAT, DONATION, DEBUG
+    GENERAL, HUD, CHAT, DONATION, NOTIFICATIONS, DEBUG
   }
 }

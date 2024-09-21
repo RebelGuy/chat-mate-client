@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class Memoiser {
+  private final static String MEMOISE_ONE_KEY = "__MEMOISE_ONE_KEY__";
+
   Map<String, MemoisedResult> memoised = new HashMap<>();
 
   /** Memoise the key-value pair (where the value is returned by `fn`) against the given `args`. */
@@ -20,6 +22,11 @@ public class Memoiser {
       this.memoised.put(key, new MemoisedResult(input, output));
       return output;
     }
+  }
+
+  /** Memoises the function call for the given args. */
+  public <Output> Output memoiseOne(Supplier<Output> fn, Object... args) {
+    return this.memoise(MEMOISE_ONE_KEY, fn, args);
   }
 
   public void clear() {

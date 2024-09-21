@@ -61,14 +61,14 @@ public class DonationServiceTests {
     this.now = 5 * hour;
     when(this.mockDateTimeService.now()).thenReturn(this.now);
 
-    when(this.mockLivestreamApiStore.getLivestreams()).thenReturn(Collections.list(this.livestream1, this.livestream2, this.livestream3));
+    when(this.mockLivestreamApiStore.getData()).thenReturn(Collections.list(this.livestream1, this.livestream2, this.livestream3));
     when(this.mockRankApiStore.getUserRanksAtTime(eq(1), anyLong())).thenReturn(createRanks(RankName.DONATOR));
     when(this.mockRankApiStore.getCurrentUserRanks(1)).thenReturn(createRanks(RankName.DONATOR));
   }
 
   @Test
   public void shouldShowDonationEffect_ReturnsFalse_IfNoDonations() {
-    when(mockDonationApiStore.getDonations()).thenReturn(new ArrayList<>());
+    when(mockDonationApiStore.getData()).thenReturn(new ArrayList<>());
 
     boolean result = this.donationService.shouldShowDonationEffect(this.userId);
 
@@ -77,7 +77,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsFalse_IfSingleDonationTooLongAgo() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
        createDonation(10f, this.livestream3.startTime) // effect should run up to 10 minutes before now
     ));
 
@@ -88,7 +88,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsFalse_IfDoubleDonationTooLongAgo() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
        createDonation(5f, this.livestream3.startTime),
        createDonation(5f, this.livestream3.startTime) // effect should run up to 10 minutes before now
     ));
@@ -100,7 +100,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsTrue_IfSingleDonationRecent() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(15f, this.livestream3.startTime)
     ));
 
@@ -111,7 +111,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsTrue_IfDoubleDonationRecent() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(10f, this.livestream3.startTime),
         createDonation(10f, this.livestream3.startTime)
     ));
@@ -123,7 +123,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsFalse_IfSingleDonationRecentButNotDonatorRank() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(15f, this.livestream3.startTime)
     ));
     when(mockRankApiStore.getCurrentUserRanks(1)).thenReturn(createRanks(RankName.FAMOUS));
@@ -135,7 +135,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsTrue_IfBigDonationBetweenLivestreams() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(100f, this.livestream1.endTime + 10) // enough to overshoot
     ));
 
@@ -146,7 +146,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsTrue_IfTwoBigDonationsBetweenLivestreams() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(15f, this.livestream1.endTime + 10), // not enough by themselves
         createDonation(15f, this.livestream1.endTime + 15)
     ));
@@ -158,7 +158,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsFalse_IfSmallDonationBetweenLivestreams() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(10f, this.livestream1.endTime + 10) // not enough to overshoot
     ));
 
@@ -169,7 +169,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsFalse_IfDonationsDontOverlapAndTooSmall() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(15f, this.livestream1.startTime),
         createDonation(5f, this.livestream3.startTime)
     ));
@@ -181,7 +181,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_ReturnsFalse_IfSmallDonationsOverlap() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(10f, this.livestream1.startTime),
         createDonation(10f, this.livestream1.startTime),
         createDonation(10f, this.livestream1.startTime),
@@ -195,7 +195,7 @@ public class DonationServiceTests {
 
   @Test
   public void shouldShowDonationEffect_AutomaticallyStopsShowing() {
-    when(mockDonationApiStore.getDonations()).thenReturn(Collections.list(
+    when(mockDonationApiStore.getData()).thenReturn(Collections.list(
         createDonation(15f, this.livestream3.startTime)
     ));
 

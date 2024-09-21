@@ -1,9 +1,9 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
+package dev.rebel.chatmate.gui.Interactive.ChatMateHud.TextHud;
 
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.HudElement;
 import dev.rebel.chatmate.gui.Interactive.IElement;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
 import dev.rebel.chatmate.gui.Interactive.LabelElement;
-import dev.rebel.chatmate.gui.Interactive.Layout;
 import dev.rebel.chatmate.gui.models.Dim;
 import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;

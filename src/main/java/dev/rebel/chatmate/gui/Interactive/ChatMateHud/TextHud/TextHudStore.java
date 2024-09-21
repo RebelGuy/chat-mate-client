@@ -1,5 +1,6 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
+package dev.rebel.chatmate.gui.Interactive.ChatMateHud.TextHud;
 
+import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudStore;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen;
 
 import java.util.ArrayList;

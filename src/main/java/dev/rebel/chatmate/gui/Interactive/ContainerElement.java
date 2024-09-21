@@ -63,7 +63,11 @@ public abstract class ContainerElement extends ElementBase {
   }
 
   public ContainerElement removeElement(IElement element) {
-    this.children.remove(element);
+    boolean removed = this.children.remove(element);
+    if (!removed) {
+      return this;
+    }
+
     this.childrenRelBoxes.remove(element);
     this.onInvalidateSize();
     return this;

@@ -26,6 +26,13 @@ public class Asset {
   public static Texture GUI_VERIFICATION_ICON_WHITE_SMALL = new Texture(32, 32, "textures/gui/verification_icon_white_small.png"); // use this when recolouring the icon
   public static Texture GUI_SECTION_ICON = new Texture(128, 128, "textures/gui/section_icon.png");
 
+  public static Texture LETTER_B = new Texture(16, 16, "textures/gui/letters/b.png");
+  public static Texture LETTER_I = new Texture(16, 16, "textures/gui/letters/i.png");
+  public static Texture LETTER_O = new Texture(16, 16, "textures/gui/letters/o.png");
+  public static Texture LETTER_S = new Texture(16, 16, "textures/gui/letters/s.png");
+  public static Texture LETTER_U = new Texture(16, 16, "textures/gui/letters/u.png");
+  public static Texture LETTER_X = new Texture(16, 16, "textures/gui/letters/x.png");
+
   public static Texture LOGO_YOUTUBE = new Texture(320, 320, "textures/logo_youtube.png");
   public static Texture LOGO_TWITCH = new Texture(320, 320, "textures/logo_twitch.png");
   public static Texture STAR = new Texture(64, 64, "textures/star.png");

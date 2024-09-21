@@ -70,7 +70,7 @@ public class DonationListElement extends ContainerElement {
     this.memoiser.memoise("setDonationElements", () -> {
       super.context.renderer.runSideEffect(() -> {
         long startTime = this.startTime.get();
-        List<PublicDonation> donations = Collections.filter(super.context.donationApiStore.getDonations(), d -> d.time >= startTime && d.refundedAt == null);
+        List<PublicDonation> donations = Collections.filter(super.context.donationApiStore.getData(), d -> d.time >= startTime && d.refundedAt == null);
         donations = donationSorter.apply(donations);
         donations = donations.subList(0, Math.min(donations.size(), this.count));
 
@@ -83,7 +83,7 @@ public class DonationListElement extends ContainerElement {
       });
 
       return null;
-    }, super.context.donationApiStore.getDonations(), this.startTime.get());
+    }, super.context.donationApiStore.getData(), this.startTime.get());
   }
 
   @Override
