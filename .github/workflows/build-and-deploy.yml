@@ -41,7 +41,7 @@ jobs:
         run: ./gradlew test
 
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: built-jar
           path: ./build/libs/*.jar
@@ -59,7 +59,7 @@ jobs:
           fetch-depth: 0
 
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: built-jar
 
