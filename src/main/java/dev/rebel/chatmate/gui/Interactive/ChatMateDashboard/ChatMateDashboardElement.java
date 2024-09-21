@@ -11,6 +11,7 @@ import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Debug.DebugSectionEl
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Donations.DonationsSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.General.GeneralSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Hud.HudSectionElement;
+import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.Notifications.NotificationsSectionElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SidebarElement.PageOptions;
 import dev.rebel.chatmate.gui.Interactive.ChatMateHud.ChatMateHudService;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
@@ -44,6 +45,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     add(new Tuple2<>(SettingsPage.HUD, new PageOptions("HUD", true)));
     add(new Tuple2<>(SettingsPage.CHAT, new PageOptions("Chat", true)));
     add(new Tuple2<>(SettingsPage.DONATION, new PageOptions("Donations", true)));
+    add(new Tuple2<>(SettingsPage.NOTIFICATIONS, new PageOptions("Notifications", false)));
     add(new Tuple2<>(SettingsPage.DEBUG, new PageOptions("Debug", false)));
   }};
 
@@ -58,6 +60,7 @@ public class ChatMateDashboardElement extends ContainerElement {
   private final HudSectionElement hudSection;
   private final ChatSectionElement chatSection;
   private final DonationsSectionElement donationSection;
+  private final NotificationsSectionElement notificationsSection;
   private final DebugSectionElement debugSection;
 
   private final SidebarElement sidebar;
@@ -95,6 +98,7 @@ public class ChatMateDashboardElement extends ContainerElement {
     this.hudSection = new HudSectionElement(context, this, castOrNull(HudRoute.class, route), config, this.chatMateHudService);
     this.chatSection = new ChatSectionElement(context, this, castOrNull(ChatRoute.class, route), config);
     this.donationSection = new DonationsSectionElement(context, this, castOrNull(DonationRoute.class, route), statusService, apiRequestService, userEndpointProxy, messageService, donationEndpointProxy);
+    this.notificationsSection = new NotificationsSectionElement(context, this, castOrNull(NotificationsRoute.class, route));
     this.debugSection = new DebugSectionElement(context, this, castOrNull(DebugRoute.class, route), config, context.urlService, dataFolder, chatMateWebsocketClient);
 
     this.sidebar = new SidebarElement(context, this, this.store, pageNames)
@@ -127,6 +131,9 @@ public class ChatMateDashboardElement extends ContainerElement {
         break;
       case DONATION:
         newElement = this.donationSection;
+        break;
+      case NOTIFICATIONS:
+        newElement = this.notificationsSection;
         break;
       case DEBUG:
         newElement = this.debugSection;

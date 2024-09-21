@@ -9,11 +9,12 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 public abstract class ApiStore<TData> {
-  private final static long ERROR_TIMEOUT_MS = 10_000; // hardcoded for now - see CHAT-803
+  private final static long ERROR_TIMEOUT_MS = 120_000;
   public static final Long INITIAL_COUNTER = 0L;
 
   private final Config config;
@@ -22,6 +23,7 @@ public abstract class ApiStore<TData> {
   private @Nullable CopyOnWriteArrayList<TData> data;
   private @Nullable Throwable error;
   private @Nullable Long errorExpiry;
+  private @Nullable String dismissedError;
   private boolean loading;
   private long updateCounter;
 
@@ -32,6 +34,7 @@ public abstract class ApiStore<TData> {
     this.data = null;
     this.error = null;
     this.errorExpiry = null;
+    this.dismissedError = null;
     this.loading = false;
     this.updateCounter = INITIAL_COUNTER;
 
@@ -42,6 +45,7 @@ public abstract class ApiStore<TData> {
     this.data = null;
     this.error = null;
     this.errorExpiry = null;
+    this.dismissedError = null;
     this.loading = false;
     this.updateCounter++;
   }
@@ -59,12 +63,30 @@ public abstract class ApiStore<TData> {
   }
 
   public @Nullable String getError() {
+    return this.getError(false);
+  }
+
+  public @Nullable String getError(boolean ignoreDismissed) {
     if (this.error == null) {
+      this.dismissedError = null;
       return null;
     }
 
     assert this.errorExpiry != null;
-    return new Date().getTime() < this.errorExpiry ? EndpointProxy.getApiErrorMessage(this.error) : null;
+    @Nullable String error = new Date().getTime() < this.errorExpiry ? EndpointProxy.getApiErrorMessage(this.error) : null;
+
+    if (!Objects.equals(error, this.dismissedError)) {
+      if (this.dismissedError != null) {
+        this.updateCounter++;
+      }
+      this.dismissedError = null;
+      return error;
+    } else if (ignoreDismissed) {
+      // the error is dismissed
+      return null;
+    } else {
+      return error;
+    }
   }
 
   public long getUpdateCounter() {
@@ -77,6 +99,11 @@ public abstract class ApiStore<TData> {
 
   public void retry() {
     this.loadData(null, null, true);
+  }
+
+  public void dismissError() {
+    this.dismissedError = this.getError();
+    this.updateCounter++;
   }
 
   /** By default, the data won't be reloaded if there is an active error unless `forceLoad` is true. */

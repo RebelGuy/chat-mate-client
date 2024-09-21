@@ -5,8 +5,8 @@ import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.events.models.MouseEventData;
 import dev.rebel.chatmate.events.models.MouseEventData.MouseButtonData.MouseButton;
-import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.DashboardStore.SettingsPage;
+import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.Events.InteractiveEvent;
 import dev.rebel.chatmate.gui.Interactive.HorizontalDivider.FillMode;
 import dev.rebel.chatmate.gui.Interactive.InteractiveScreen.InteractiveContext;
@@ -14,17 +14,20 @@ import dev.rebel.chatmate.gui.Interactive.LabelElement.TextOverflow;
 import dev.rebel.chatmate.gui.Interactive.Layout.HorizontalAlignment;
 import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.SizingMode;
+import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.RequireStreamerElement.RequireStreamerOptions;
 import dev.rebel.chatmate.gui.StateManagement.AnimatedBool;
-import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.gui.models.Dim;
+import dev.rebel.chatmate.gui.models.DimPoint;
 import dev.rebel.chatmate.gui.models.DimRect;
-import dev.rebel.chatmate.gui.style.Font;
+import dev.rebel.chatmate.gui.style.Colour;
 import dev.rebel.chatmate.services.CursorService.CursorType;
 import scala.Tuple2;
 
-import java.net.URI;
+import javax.annotation.Nullable;
 import java.util.List;
+
+import static dev.rebel.chatmate.gui.Interactive.RendererHelpers.drawRect;
 
 public class SidebarElement extends ContainerElement {
   private final DashboardStore store;
@@ -53,9 +56,9 @@ public class SidebarElement extends ContainerElement {
                     .setScale(1.0f / 12)
                     .setPadding(new RectExtension(gui(2), ZERO, ZERO, ZERO))
                     .setSizingMode(SizingMode.MINIMISE)
-                    .setVerticalAlignment(Layout.VerticalAlignment.TOP)
+                    .setVerticalAlignment(VerticalAlignment.TOP)
                 )
-            .setVerticalAlignment(Layout.VerticalAlignment.BOTTOM)
+            .setVerticalAlignment(VerticalAlignment.BOTTOM)
             .setSizingMode(SizingMode.FILL)
     );
 
@@ -76,6 +79,7 @@ public class SidebarElement extends ContainerElement {
 
     private final LabelElement label;
     private final HorizontalDivider horizontalDivider;
+    private @Nullable IElement exclamationLabel;
 
     private final EventCallback<Boolean> _onChangeDebugModeEnabled = this::onChangeDebugModeEnabled;
 
@@ -101,6 +105,7 @@ public class SidebarElement extends ContainerElement {
           .setMode(FillMode.PARENT_CONTENT)
           .setHorizontalAlignment(HorizontalAlignment.LEFT)
           .cast();
+      this.exclamationLabel = null;
 
       super.addElement(this.label);
       super.addElement(this.horizontalDivider);
@@ -110,6 +115,27 @@ public class SidebarElement extends ContainerElement {
       if (page == SettingsPage.DEBUG) {
         context.config.getDebugModeEnabledEmitter().onChange(this._onChangeDebugModeEnabled, this, true);
         super.addDisposer(() -> super.context.config.getDebugModeEnabledEmitter().off(this));
+      } else if (page == SettingsPage.NOTIFICATIONS) {
+        super.registerAllStores(true);
+      }
+    }
+
+    @Override
+    protected void onStoreUpdate() {
+      if (this.page != SettingsPage.NOTIFICATIONS) {
+        return;
+      }
+
+      boolean hasErrors = super.context.livestreamApiStore.getError(true) != null ||
+          super.context.donationApiStore.getError(true) != null ||
+          super.context.streamerApiStore.getError(true) != null;
+
+      if (!hasErrors) {
+        super.removeElement(this.exclamationLabel);
+        this.exclamationLabel = null;
+      } else if (this.exclamationLabel == null) {
+        this.exclamationLabel = new ExclamationLabel(super.context, this);
+        super.addElement(this.exclamationLabel);
       }
     }
 
@@ -162,7 +188,7 @@ public class SidebarElement extends ContainerElement {
         Colour colour = Colour.lerp(Colour.GREY50.withAlpha(0), Colour.GREY50.withAlpha(0.4f), hoveringFrac);
         Dim cornerRadius = screen(2);
 
-        RendererHelpers.drawRect(0, rect, colour, null, null, cornerRadius);
+        drawRect(0, rect, colour, null, null, cornerRadius);
       }
 
       super.renderElement();
@@ -176,6 +202,49 @@ public class SidebarElement extends ContainerElement {
     public PageOptions(String name, boolean requiredStreamer) {
       this.name = name;
       this.requiredStreamer = requiredStreamer;
+    }
+  }
+
+  private static class ExclamationLabel extends WrapperElement {
+    public ExclamationLabel(InteractiveContext context, IElement parent) {
+      super(context, parent);
+      super.setLayoutGroup(Layout.LayoutGroup.CHILDREN);
+      super.setSizingMode(SizingMode.MINIMISE);
+
+      LabelElement labelElement = new LabelElement(context, this)
+          .setText("!")
+          .setFontScale(0.5f)
+          .setHorizontalAlignment(HorizontalAlignment.CENTRE)
+          .setVerticalAlignment(VerticalAlignment.MIDDLE)
+          .setPadding(RectExtension.fromLeft(gui(0.5f)))
+          .setMargin(new RectExtension(gui(0.5f)))
+          .cast();
+      this.setContent(labelElement);
+    }
+
+    @Override
+    public void setBox(DimRect box) {
+      // on first render, we may not yet know where the parent is - force one more pass
+      @Nullable DimRect parentBox = super.parent.getBox();
+      if (parentBox == null) {
+        super.setBox(box);
+        super.onInvalidateSize();
+        return;
+      }
+
+      // we decide where we want to be placed - and it's centred in the top right corner of the parent
+      Dim maxDim = Dim.max(box.getSize().getX(), box.getSize().getY());
+      DimPoint size = new DimPoint(maxDim, maxDim);
+      box = new DimRect(parentBox.getTopRight().minus(new DimPoint(maxDim, ZERO)), size);
+      super.setBox(box);
+    }
+
+    @Override
+    protected void renderElement() {
+      // draw circular box
+      drawRect(getEffectiveZIndex(), super.getBox(), Colour.RED, null, null, super.getBox().getWidth().over(2));
+
+      super.renderElement();
     }
   }
 }

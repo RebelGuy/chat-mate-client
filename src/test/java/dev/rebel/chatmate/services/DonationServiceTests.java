@@ -61,7 +61,7 @@ public class DonationServiceTests {
     this.now = 5 * hour;
     when(this.mockDateTimeService.now()).thenReturn(this.now);
 
-    when(this.mockLivestreamApiStore.getLivestreams()).thenReturn(Collections.list(this.livestream1, this.livestream2, this.livestream3));
+    when(this.mockLivestreamApiStore.getData()).thenReturn(Collections.list(this.livestream1, this.livestream2, this.livestream3));
     when(this.mockRankApiStore.getUserRanksAtTime(eq(1), anyLong())).thenReturn(createRanks(RankName.DONATOR));
     when(this.mockRankApiStore.getCurrentUserRanks(1)).thenReturn(createRanks(RankName.DONATOR));
   }

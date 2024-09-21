@@ -325,6 +325,12 @@ public abstract class ElementBase implements IElement {
     this.registeredStores.put(store, fireInitialUpdate ? ApiStore.INITIAL_COUNTER - 1 : ApiStore.INITIAL_COUNTER);
   }
 
+  protected void registerAllStores(boolean fireInitialUpdate) {
+    this.registerStore(this.context.donationApiStore, fireInitialUpdate);
+    this.registerStore(this.context.streamerApiStore, fireInitialUpdate);
+    this.registerStore(this.context.livestreamApiStore, fireInitialUpdate);
+  }
+
   /** Called when any of the registered stores' state updates. This will ALWAYS be called as a side effect. */
   protected void onStoreUpdate() {}
 
