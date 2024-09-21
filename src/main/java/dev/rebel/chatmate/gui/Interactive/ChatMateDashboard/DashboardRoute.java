@@ -43,6 +43,12 @@ public abstract class DashboardRoute {
     }
   }
 
+  public abstract static class NotificationsRoute extends DashboardRoute {
+    public NotificationsRoute() {
+      super(SettingsPage.NOTIFICATIONS);
+    }
+  }
+
   public abstract static class DebugRoute extends DashboardRoute {
     public DebugRoute() {
       super(SettingsPage.DEBUG);

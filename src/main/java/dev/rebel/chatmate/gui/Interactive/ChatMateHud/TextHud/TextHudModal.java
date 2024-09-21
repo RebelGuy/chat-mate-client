@@ -1,4 +1,4 @@
-package dev.rebel.chatmate.gui.Interactive.ChatMateHud;
+package dev.rebel.chatmate.gui.Interactive.ChatMateHud.TextHud;
 
 import dev.rebel.chatmate.gui.Interactive.*;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.IconButtonElement;
@@ -26,6 +26,8 @@ public class TextHudModal extends ModalElement {
 
   public TextHudModal(InteractiveContext context, InteractiveScreen parent, TextHudStore textHudStore) {
     super(context, parent);
+    super.setAutoScrollBody(true);
+
     this.textHudStore = textHudStore;
 
     this.noElementsLabel = new LabelElement(context, this)
@@ -138,7 +140,6 @@ public class TextHudModal extends ModalElement {
           .setPlaceholder("Add text")
           .setTextUnsafe(this.element.getText())
           .onTextChange(this::onEditedTextChanged)
-          .setRenderSectionCharacter(true)
           .setCursorStateRestorationEnabled(true) // retain the cursor state when clicking on the section character button
           .setMinWidth(gui(50))
           .setVerticalAlignment(VerticalAlignment.MIDDLE)
@@ -162,8 +163,8 @@ public class TextHudModal extends ModalElement {
           .cast();
       IconButtonElement sectionIcon = new IconButtonElement(context, this)
           .setImage(GUI_SECTION_ICON)
-          .setTooltip("Insert section character")
-          .setOnClick(this::onInsertSectionIcon)
+          .setTooltip("Toggle formatting tools")
+          .setOnClick(this::onToggleFormattingTools)
           .setMaxContentWidth(iconWidth)
           .setMargin(RectExtension.fromLeft(buttonMargin))
           .cast();
@@ -207,11 +208,11 @@ public class TextHudModal extends ModalElement {
       this.onDelete.accept(this);
     }
 
-    private void onInsertSectionIcon() {
+    private void onToggleFormattingTools() {
       // bring back the focus to the input element
       super.context.onSetFocus(this.textInputElement);
 
-      this.textInputElement.writeText("§");
+      this.textInputElement.enableFormattingTools(!this.textInputElement.getFormattingToolsEnabled());
     }
 
     private void onEdit() {

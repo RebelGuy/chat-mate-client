@@ -41,8 +41,8 @@ public class StreamerEndpointProxy extends EndpointProxy {
     this.makeRequestAsync(Method.PATCH, "/livestream", request, SetActiveLivestreamResponse.class, callback, errorHandler);
   }
 
-  public void getStreamersAsync(Consumer<GetStreamersResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {
-    this.makeRequestAsync(Method.GET, "/", GetStreamersResponse.class, callback, errorHandler, false);
+  public void getStreamersAsync(Consumer<GetStreamersResponseData> callback, @Nullable Consumer<Throwable> errorHandler, boolean isActiveRequest) {
+    this.makeRequestAsync(Method.GET, "/", GetStreamersResponse.class, callback, errorHandler, isActiveRequest);
   }
 
   public void getPrimaryChannelsAsync(Consumer<GetPrimaryChannelsResponseData> callback, @Nullable Consumer<Throwable> errorHandler) {

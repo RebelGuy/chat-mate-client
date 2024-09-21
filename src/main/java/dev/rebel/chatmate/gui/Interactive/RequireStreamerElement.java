@@ -1,14 +1,15 @@
 package dev.rebel.chatmate.gui.Interactive;
 
+import dev.rebel.chatmate.api.publicObjects.streamer.PublicStreamerSummary;
 import dev.rebel.chatmate.config.Config.LoginInfo;
 import dev.rebel.chatmate.events.Event;
 import dev.rebel.chatmate.events.EventHandler.EventCallback;
 import dev.rebel.chatmate.gui.Interactive.ButtonElement.TextButtonElement;
 import dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements;
-import dev.rebel.chatmate.stores.StreamerApiStore.StreamerState;
 import dev.rebel.chatmate.util.Collections;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Objects;
 
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
@@ -88,13 +89,13 @@ public class RequireStreamerElement extends BlockElement {
   }
 
   private boolean isStreamer() {
-    @Nullable StreamerState data = super.context.streamerApiStore.getData();
-    if (data == null) {
+    @Nullable List<PublicStreamerSummary> streamers = super.context.streamerApiStore.getData();
+    if (streamers == null) {
       return false;
     }
 
     @Nullable String username = super.context.config.getLoginInfoEmitter().get().username;
-    return Collections.any(data.streamers, streamer -> Objects.equals(streamer.username, username));
+    return Collections.any(streamers, streamer -> Objects.equals(streamer.username, username));
   }
 
   private void updateElements() {
