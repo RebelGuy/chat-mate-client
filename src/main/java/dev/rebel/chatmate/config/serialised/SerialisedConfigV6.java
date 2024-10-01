@@ -174,19 +174,21 @@ public class SerialisedConfigV6 extends SerialisedConfigVersions.Version {
 
   public static class SerialisedLoginInfo {
     public final @Nullable String username;
+    public final @Nullable String displayName;
     public final @Nullable String loginToken;
 
-    public SerialisedLoginInfo(@Nullable String username, @Nullable String loginToken) {
+    public SerialisedLoginInfo(@Nullable String username, @Nullable String displayName, @Nullable String loginToken) {
       this.username = username;
+      this.displayName = displayName;
       this.loginToken = loginToken;
     }
 
     public SerialisedLoginInfo(Config.LoginInfo loginInfo) {
-      this(loginInfo.username, loginInfo.loginToken);
+      this(loginInfo.username, loginInfo.displayName, loginInfo.loginToken);
     }
 
     public Config.LoginInfo deserialise() {
-      return new Config.LoginInfo(this.username, this.loginToken);
+      return new Config.LoginInfo(this.username, this.displayName, this.loginToken);
     }
   }
 }

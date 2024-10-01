@@ -54,7 +54,7 @@ public class DonationListElement extends ContainerElement {
   }
 
   private LabelElement donationToElement(PublicDonation donation, int index) {
-    String name = donation.linkedUser != null ? donation.linkedUser.channel.displayName : donation.name;
+    String name = donation.linkedUser != null ? donation.linkedUser.getDisplayName() : donation.name;
     return new LabelElement(super.context, this)
         .setText(String.format("%d: %s by %s", index + 1, donation.formattedAmount, name))
         .setFont(new Font().withShadow(new Shadow(context.dimFactory)))

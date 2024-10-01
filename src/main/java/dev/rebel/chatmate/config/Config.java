@@ -219,7 +219,7 @@ public class Config extends EventServiceBase<ConfigType> {
     this.loginInfo = new StatefulEmitter<>(
         ConfigType.LOGIN_INFO,
         LoginInfo.class,
-        data == null ? new LoginInfo(null, null) : data.loginInfo.deserialise(),
+        data == null ? new LoginInfo(null, null, null) : data.loginInfo.deserialise(),
         this::onUpdate
     );
     this.chatMentionFilter = new StatefulEmitter<>(
@@ -434,11 +434,17 @@ public class Config extends EventServiceBase<ConfigType> {
 
   public static class LoginInfo {
     public final @Nullable String username;
+    public final @Nullable String displayName;
     public final @Nullable String loginToken;
 
-    public LoginInfo(@Nullable String username, @Nullable String loginToken) {
+    public LoginInfo(@Nullable String username, @Nullable String displayName, @Nullable String loginToken) {
       this.username = username;
+      this.displayName = displayName;
       this.loginToken = loginToken;
+    }
+
+    public @Nullable String getDisplayName() {
+      return this.displayName != null ? this.displayName : this.username;
     }
   }
 

@@ -345,7 +345,7 @@ public class DonationsListElement extends ContainerElement {
         }
 
         // when we are editing this donation, just fallback to the default name in all cases for simplicity (it might be overwritten by the text box)
-        String user = userToShow == null || this.editingDonations.containsKey(donation) ? donation.name : userToShow.channel.displayName;
+        String user = userToShow == null || this.editingDonations.containsKey(donation) ? donation.name : userToShow.getDisplayName();
         userNameElement = new LabelElement(super.context, this)
             .setText(user)
             .setFontScale(0.75f)

@@ -32,7 +32,7 @@ import java.util.stream.IntStream;
 
 import static dev.rebel.chatmate.gui.chat.Styles.*;
 import static dev.rebel.chatmate.util.ChatHelpers.*;
-import static dev.rebel.chatmate.util.EnumHelpers.mapEnum;
+import static dev.rebel.chatmate.util.Objects.firstNonNull;
 import static dev.rebel.chatmate.util.Objects.firstOrNull;
 
 public class MessageService {
@@ -138,7 +138,7 @@ public class MessageService {
 
     List<Tuple2<PrecisionLayout, IChatComponent>> list = new ArrayList<>();
     list.add(new Tuple2<>(rankLayout, styledText(rankText, deEmphasise ? INFO_MSG_STYLE.get() : GOOD_MSG_STYLE.get())));
-    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory), entry.user.channel.displayName, true, !deEmphasise, false, false)));
+    list.add(new Tuple2<>(nameLayout, this.getUserComponent(entry.user, Font.fromChatStyle(deEmphasise ? INFO_MSG_STYLE.get() : VIEWER_NAME_STYLE.get(), this.dimFactory), entry.user.getDisplayName(), true, !deEmphasise, false, false)));
     list.add(new Tuple2<>(levelStartLayout, styledText(levelStart, deEmphasise ? INFO_MSG_STYLE.get() : getLevelStyle(entry.user.levelInfo.level))));
     list.add(new Tuple2<>(barStartLayout, styledText(barStart, INFO_MSG_STYLE.get())));
     list.add(new Tuple2<>(filledBarLayout, styledText(filledBar, INFO_MSG_STYLE.get())));
@@ -151,7 +151,7 @@ public class MessageService {
   public IChatComponent getChannelSearchResultMessage(Dim messageWidth, PublicUser user, @Nullable PublicChannel channel, boolean deEmphasise) {
     // if there is no registered user, we know that this is the only channel attached to the user and thus we are returning the main message including all details
     boolean isMainMessage = channel == null || user.registeredUser == null;
-    String displayName = channel == null ? user.registeredUser.displayName : channel.displayName;
+    String displayName = channel == null ? firstNonNull(user.registeredUser.displayName, user.registeredUser.username) : channel.displayName;
     Dim left = this.dimFactory.fromGui(4);
 
     List<Tuple2<PrecisionLayout, IChatComponent>> layouts = new ArrayList<>();
@@ -268,7 +268,7 @@ public class MessageService {
     list.add(new ChatComponentText(" "));
 
     // hide the punishment indicator
-    list.add(this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), user.channel.displayName, false, true, false, false));
+    list.add(this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), user.getDisplayName(), false, true, false, false));
     list.add(styledText(" has been ", INFO_MSG_STYLE.get()));
     list.add(new PlatformRankChatComponent(rankName, isAdded, platformRanks).setChatStyle(HIGHLIGHT_MSG_STYLE.get()));
     list.add(styledText(".", INFO_MSG_STYLE.get()));
@@ -311,7 +311,7 @@ public class MessageService {
         "Level " + (newLevel + 1) + " is within reach!",
         "Congratulations!",
         styledText("Say 123 if you respect ", INFO_MSG_STYLE.get()).appendSibling(this.getUserComponent(user)).appendSibling(styledText(".", INFO_MSG_STYLE.get())),
-        styledText("Subscribe to ", INFO_MSG_STYLE.get()).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.channel.displayName.endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE.get()))
+        styledText("Subscribe to ", INFO_MSG_STYLE.get()).appendSibling(this.getUserComponent(user)).appendSibling(styledText((user.getDisplayName().endsWith("s") ? "'" : "'s") + " YouTube channel for daily let's play videos!", INFO_MSG_STYLE.get()))
       );
   }
 
@@ -321,7 +321,7 @@ public class MessageService {
 
   /** Uses the default channel name if no display name is provided. */
   public IChatComponent getUserComponent(PublicUser user, @Nullable String displayName) {
-    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), firstOrNull(displayName, user.channel.displayName), true, true, false, false);
+    return this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), firstOrNull(displayName, user.getDisplayName()), true, true, false, false);
   }
 
   public IChatComponent getUserComponent(PublicUser user, Font font, String displayName, boolean showPunishmentPrefix, boolean useEffects, boolean hideVerificationBadge, boolean hideNewUserIcon) {

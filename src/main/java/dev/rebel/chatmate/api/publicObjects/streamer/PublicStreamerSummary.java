@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 
 public class PublicStreamerSummary {
   public String username;
+  public @Nullable String displayName;
   public @Nullable PublicLivestream currentYoutubeLivestream;
   public @Nullable PublicLivestream currentTwitchLivestream;
   public @Nullable PublicChannel youtubeChannel;

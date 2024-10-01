@@ -87,7 +87,7 @@ public class ChatMentionElement extends BlockElement implements IEditableListAda
       return "";
     }
 
-    @Nullable String username = super.context.config.getLoginInfoEmitter().get().username;
+    @Nullable String username = super.context.config.getLoginInfoEmitter().get().getDisplayName();
     if (username == null) {
       return "";
     }

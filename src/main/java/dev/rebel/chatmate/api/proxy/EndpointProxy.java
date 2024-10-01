@@ -89,7 +89,7 @@ public class EndpointProxy {
 
         } catch (Exception e) {
           if (Objects.ifClass(ChatMateApiException.class, e, ex -> ex.apiResponseError.errorCode == 401)) {
-            this.config.getLoginInfoEmitter().set(new Config.LoginInfo(null, null));
+            this.config.getLoginInfoEmitter().set(new Config.LoginInfo(null, null, null));
           }
 
           backoff.onError(e);

@@ -13,6 +13,8 @@ import dev.rebel.chatmate.gui.Interactive.Layout.RectExtension;
 import dev.rebel.chatmate.gui.Interactive.Layout.VerticalAlignment;
 import dev.rebel.chatmate.gui.Interactive.TextInputElement.InputType;
 
+import javax.annotation.Nullable;
+
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.ERROR_LABEL;
 import static dev.rebel.chatmate.gui.Interactive.ChatMateDashboard.SharedElements.SCALE;
 import static dev.rebel.chatmate.util.TextHelpers.isNullOrEmpty;
@@ -102,7 +104,7 @@ public class LoginElement extends BlockElement {
     this.passwordInput.setVisible(isLoggedOut);
     this.loginButton.setVisible(isLoggedOut);
     this.loggedInLabel
-        .setText(String.format("Hi, %s!", context.config.getLoginInfoEmitter().get().username))
+        .setText(String.format("Hi, %s!", context.config.getLoginInfoEmitter().get().getDisplayName()))
         .setVisible(!isLoggedOut);
     this.logoutButton.setVisible(!isLoggedOut);
   }
@@ -125,7 +127,7 @@ public class LoginElement extends BlockElement {
     LoginRequest request = new LoginRequest(this.usernameInput.getText(), this.passwordInput.getText());
     this.accountEndpointProxy.loginAsync(
         request,
-        r -> super.context.renderer.runSideEffect(() -> { this.onLoginResponse(request.username, r.loginToken); this.onRequestEnd(); }),
+        r -> super.context.renderer.runSideEffect(() -> { this.onLoginResponse(request.username, r.displayName, r.loginToken); this.onRequestEnd(); }),
         e -> super.context.renderer.runSideEffect(() -> { this.onResponseError(e); this.onRequestEnd(); })
     );
   }
@@ -139,12 +141,12 @@ public class LoginElement extends BlockElement {
     );
   }
 
-  private void onLoginResponse(String username, String loginToken) {
-    super.context.config.getLoginInfoEmitter().set(new LoginInfo(username, loginToken));
+  private void onLoginResponse(String username, @Nullable String displayName, String loginToken) {
+    super.context.config.getLoginInfoEmitter().set(new LoginInfo(username, displayName, loginToken));
   }
 
   private void onLogout() {
-    super.context.config.getLoginInfoEmitter().set(new LoginInfo(null, null));
+    super.context.config.getLoginInfoEmitter().set(new LoginInfo(null, null, null));
 
     if (this.usernameInput.isInitialised()) {
       this.usernameInput.setText("");

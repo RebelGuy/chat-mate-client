@@ -26,7 +26,7 @@ public class v5v6 extends Migration<SerialisedConfigV5, SerialisedConfigV6> {
         data.lastGetChatResponse,
         data.lastGetChatMateEventsResponse,
         Collections.map(data.hudTransforms, SerialisedConfigV6.SerialisedHudElementTransform::new),
-        new SerialisedConfigV6.SerialisedLoginInfo(null, null),
+        new SerialisedConfigV6.SerialisedLoginInfo(null, null, null),
         new ArrayList<>()
     );
   }

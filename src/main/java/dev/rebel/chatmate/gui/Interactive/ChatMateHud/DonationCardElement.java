@@ -53,7 +53,7 @@ public class DonationCardElement extends ContainerElement {
     );
 
     Font titleFont = new Font().withBold(true);
-    String titleName = this.donation.linkedUser != null ? this.donation.linkedUser.channel.displayName : this.donation.name;
+    String titleName = this.donation.linkedUser != null ? this.donation.linkedUser.getDisplayName() : this.donation.name;
     boolean showVerificationBadge = this.donation.linkedUser != null && this.donation.linkedUser.registeredUser != null;
     String titleRemaining = String.format("has donated %s!", this.donation.formattedAmount);
 

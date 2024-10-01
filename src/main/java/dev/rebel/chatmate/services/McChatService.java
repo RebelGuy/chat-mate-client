@@ -107,7 +107,7 @@ public class McChatService {
 
     PublicUserRank[] activePunishments = item.author.getActivePunishments();
     if (activePunishments.length > 0) {
-      String name = item.author.channel.displayName;
+      String name = item.author.getDisplayName();
       String punishments = String.join(",", Collections.map(Collections.list(activePunishments), p -> p.rank.name.toString()));
       this.logService.logDebug(this, String.format("Ignoring chat message from user '%s' because of the following active punishments: %s", name, punishments));
       return;
@@ -134,7 +134,7 @@ public class McChatService {
       if (greyOut) {
         viewerNameFont = viewerNameFont.withColour(Colour.GREY33);
       }
-      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.channel.displayName, true, true, false, false);
+      IChatComponent player = this.messageService.getUserComponent(item.author, viewerNameFont, item.author.getDisplayName(), true, true, false, false);
 
       McChatResult mcChatResult = this.streamChatToMcChat(item, this.fontEngine, greyOut);
       IChatComponent joinedMessage = joinComponents("", mcChatResult.chatComponents);
@@ -209,7 +209,7 @@ public class McChatService {
       this.minecraftProxyService.printChatMessage("New viewer", message);
 
     } catch (Exception e) {
-      this.logService.logError(this, String.format("Could not print new viewer message for '%s'", data.newViewer.user.channel.displayName), e);
+      this.logService.logError(this, String.format("Could not print new viewer message for '%s'", data.newViewer.user.getDisplayName()), e);
     }
   }
 
@@ -267,7 +267,7 @@ public class McChatService {
       this.minecraftProxyService.printChatMessage("Rank updated", message);
 
     } catch (Exception e) {
-      this.logService.logError(this, String.format("Could not print rank updated message for '%s'", data.user.channel.displayName));
+      this.logService.logError(this, String.format("Could not print rank updated message for '%s'", data.user.getDisplayName()));
     }
   }
 

@@ -343,10 +343,10 @@ public class ChatMate {
 
     // check whether the login token is still valid - if it isn't, we set it to null
     this.accountEndpointProxy.authenticateAsync(
-        r -> this.config.getLoginInfoEmitter().set(new Config.LoginInfo(r.username, loginToken)),
+        r -> this.config.getLoginInfoEmitter().set(new Config.LoginInfo(r.username, r.displayName, loginToken)),
         e -> {
           if (Objects.ifClass(ChatMateApiException.class, e, ex -> ex.apiResponseError.errorCode == 401)) {
-            this.config.getLoginInfoEmitter().set(new Config.LoginInfo(null, null));
+            this.config.getLoginInfoEmitter().set(new Config.LoginInfo(null, null, null));
           }
         }
     );
