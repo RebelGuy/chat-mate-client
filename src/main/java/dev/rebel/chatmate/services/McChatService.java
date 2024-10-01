@@ -263,7 +263,7 @@ public class McChatService {
     RankUpdatedEventData data = event.getData();
 
     try {
-      IChatComponent message = this.messageService.getRankUpdatedMessage(data.rankName, data.isAdded, data.user, data.platformRanks);
+      IChatComponent message = this.messageService.getRankUpdatedMessage(data.rankName, data.isAdded, data.user, data.appliedByUser, data.platformRanks);
       this.minecraftProxyService.printChatMessage("Rank updated", message);
 
     } catch (Exception e) {

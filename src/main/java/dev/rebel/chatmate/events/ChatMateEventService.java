@@ -149,7 +149,7 @@ public class ChatMateEventService extends EventServiceBase<ChatMateEventType> {
       for (EventHandler<RankUpdatedEventData, ?> handler : this.getListeners(eventType, RankUpdatedEventData.class)) {
         PublicRankUpdateData data = event.rankUpdateData;
         assert data != null;
-        RankUpdatedEventData eventData = new RankUpdatedEventData(data.rankName, data.isAdded, data.user, Collections.list(data.platformRanks));
+        RankUpdatedEventData eventData = new RankUpdatedEventData(data.rankName, data.isAdded, data.appliedBy, data.user, Collections.list(data.platformRanks));
         this.safeDispatch(eventType, handler, new Event<>(eventData));
       }
 

@@ -262,7 +262,7 @@ public class MessageService {
     return joinComponents(" ", list);
   }
 
-  public IChatComponent getRankUpdatedMessage(RankName rankName, boolean isAdded, PublicUser user, List<PublicPlatformRank> platformRanks) {
+  public IChatComponent getRankUpdatedMessage(RankName rankName, boolean isAdded, PublicUser user, @Nullable PublicUser appliedByUser, List<PublicPlatformRank> platformRanks) {
     List<IChatComponent> list = new ArrayList<>();
     list.add(INFO_PREFIX);
     list.add(new ChatComponentText(" "));
@@ -271,6 +271,10 @@ public class MessageService {
     list.add(this.getUserComponent(user, VIEWER_NAME_FONT.create(this.dimFactory), user.getDisplayName(), false, true, false, false));
     list.add(styledText(" has been ", INFO_MSG_STYLE.get()));
     list.add(new PlatformRankChatComponent(rankName, isAdded, platformRanks).setChatStyle(HIGHLIGHT_MSG_STYLE.get()));
+    if (appliedByUser != null) {
+      list.add(styledText(" by ", INFO_MSG_STYLE.get()));
+      list.add(this.getUserComponent(appliedByUser, VIEWER_NAME_FONT.create(this.dimFactory), appliedByUser.getDisplayName(), false, true, false, true));
+    }
     list.add(styledText(".", INFO_MSG_STYLE.get()));
 
     return joinComponents("", list);
