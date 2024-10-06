@@ -6,7 +6,7 @@ plugins {
 
 version = "1.34.0"
 group = "dev.rebel"
-archivesBaseName = "ChatMate"
+archivesBaseName = "1.8.9"
 
 targetCompatibility = 1.8
 compileJava.options.encoding = 'UTF-8'
@@ -17,7 +17,7 @@ def loadProperties() {
     def environment = hasProperty('env') ? env : 'local'
     println "Building for environment " + environment
 
-    def configFile = file('config.groovy')
+    def configFile = file('../config.groovy')
     def config = new ConfigSlurper(environment).parse(configFile.toURL())
 
     def numCommits = ""
