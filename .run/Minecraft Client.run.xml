@@ -4,7 +4,7 @@
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="GradleStart" />
     <module name="ChatMate.main" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/1.8.9/run" />
     <RunnerSettings RunnerId="Run" />
     <ConfigurationWrapper RunnerId="Run" />
     <method v="2">

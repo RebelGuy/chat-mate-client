@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="1.21.1" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH" value="21" />
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
+    <option name="MAIN_CLASS_NAME" value="net.minecraftforge.bootstrap.ForgeBootstrap" />
+    <module name="1.21.1.main" />
+    <option name="PROGRAM_PARAMETERS" value="--launchTarget forge_userdev_client --version MOD_DEV --assetIndex 17 --assetsDir $PROJECT_DIR$/../../../../" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/1.21.1" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

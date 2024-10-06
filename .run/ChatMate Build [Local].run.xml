@@ -2,7 +2,7 @@
   <configuration default="false" name="ChatMate Build [Local]" type="GradleRunConfiguration" factoryName="Gradle">
     <ExternalSystemSettings>
       <option name="executionName" />
-      <option name="externalProjectPath" value="$PROJECT_DIR$" />
+      <option name="externalProjectPath" value="$PROJECT_DIR$/1.8.9" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="-Penv=local -x test" />
       <option name="taskDescriptions">
