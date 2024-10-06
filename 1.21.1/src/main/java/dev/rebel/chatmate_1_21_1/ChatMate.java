@@ -1,115 +1,98 @@
 package dev.rebel.chatmate_1_21_1;
 
 import com.mojang.logging.LogUtils;
+import dev.rebel.chatmate_1_21_1.api.publicObjects.chat.PublicChatItem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.MapColor;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 import org.slf4j.Logger;
+import com.google.gson.GsonBuilder;
+
+import javax.annotation.Nullable;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.StringJoiner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(ChatMate.MODID)
 public class ChatMate
 {
+    public String serverUrl = "http://chat-mate-prod.azurewebsites.net";
+    public @Nullable Long lastTimestamp = null;
+
     // Define mod id in a common place for everything to reference
     public static final String MODID = "chatmate";
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
     // Create a Deferred Register to hold Blocks which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
-    // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
-    // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
-
-    // Creates a new Block with the id "examplemod:example_block", combining the namespace and path
-    public static final RegistryObject<Block> EXAMPLE_BLOCK = BLOCKS.register("example_block", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE)));
-    // Creates a new BlockItem with the id "examplemod:example_block", combining the namespace and path
-    public static final RegistryObject<Item> EXAMPLE_BLOCK_ITEM = ITEMS.register("example_block", () -> new BlockItem(EXAMPLE_BLOCK.get(), new Item.Properties()));
-
-    // Creates a new food item with the id "examplemod:example_id", nutrition 1 and saturation 2
-    public static final RegistryObject<Item> EXAMPLE_ITEM = ITEMS.register("example_item", () -> new Item(new Item.Properties().food(new FoodProperties.Builder()
-            .alwaysEdible().nutrition(1).saturationModifier(2f).build())));
-
-    // Creates a creative tab with the id "examplemod:example_tab" for the example item, that is placed after the combat tab
-    public static final RegistryObject<CreativeModeTab> EXAMPLE_TAB = CREATIVE_MODE_TABS.register("example_tab", () -> CreativeModeTab.builder()
-            .withTabsBefore(CreativeModeTabs.COMBAT)
-            .icon(() -> EXAMPLE_ITEM.get().getDefaultInstance())
-            .displayItems((parameters, output) -> {
-                output.accept(EXAMPLE_ITEM.get()); // Add the example item to the tab. For your own tabs, this method is preferred over the event
-            }).build());
 
     public ChatMate(FMLJavaModLoadingContext context)
     {
-        IEventBus modEventBus = context.getModEventBus();
-
-        // Register the commonSetup method for modloading
-        modEventBus.addListener(this::commonSetup);
-
-        // Register the Deferred Register to the mod event bus so blocks get registered
-        BLOCKS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so items get registered
-        ITEMS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so tabs get registered
-        CREATIVE_MODE_TABS.register(modEventBus);
-
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
-        // Register the item to a creative tab
-        modEventBus.addListener(this::addCreative);
-
         // Register our mod's ForgeConfigSpec so that Forge can create and load the config file for us
         context.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+        this.onLoad();
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event)
+    public void onLoad()
     {
-        // Some common setup code
-        LOGGER.info("HELLO FROM COMMON SETUP");
-
-        if (Config.logDirtBlock)
-            LOGGER.info("DIRT BLOCK >> {}", ForgeRegistries.BLOCKS.getKey(Blocks.DIRT));
-
-        LOGGER.info(Config.magicNumberIntroduction + Config.magicNumber);
-
-        Config.items.forEach((item) -> LOGGER.info("ITEM >> {}", item.toString()));
+        new Timer().scheduleAtFixedRate(new TaskWrapper(this::printNextChatItems), 1000L, 1000L);
     }
 
-    // Add the example block item to the building blocks tab
-    private void addCreative(BuildCreativeModeTabContentsEvent event)
-    {
-        if (event.getTabKey() == CreativeModeTabs.BUILDING_BLOCKS)
-            event.accept(EXAMPLE_BLOCK_ITEM);
-    }
+    public void printNextChatItems() {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            String since = this.lastTimestamp == null ? "0" : this.lastTimestamp.toString();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + String.format("/api/chat?since=%s&limit=10", since)))
+                .header("X-Streamer", "rebel_guy")
+                .build();
 
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event)
-    {
-        // Do something when the server starts
-        LOGGER.info("HELLO from server starting");
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() == 200) {
+                String responseBody = response.body();
+                System.out.println("Response Body:");
+                System.out.println(responseBody);
+
+                GetChatResponse parsedResponse = new GsonBuilder()
+                    .serializeNulls()
+                    .create()
+                    .fromJson(responseBody, GetChatResponse.class);
+
+                Gui gui = Minecraft.getInstance().gui;
+                if (gui == null) {
+                    return;
+                }
+
+                for (PublicChatItem item : parsedResponse.data.chat) {
+                    if (item.messageParts[0].textData != null) {
+                        gui.getChat().addMessage(Component.literal(item.messageParts[0].textData.text));
+                    }
+                }
+
+                this.lastTimestamp = parsedResponse.data.reusableTimestamp;
+
+            } else {
+                System.out.println("Request failed with status code: " + response.statusCode());
+            }
+
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
@@ -124,4 +107,67 @@ public class ChatMate
             LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
         }
     }
+
+    public class GetChatResponse extends ApiResponseBase<GetChatResponse.GetChatResponseData> {
+        public static class GetChatResponseData {
+            public Long reusableTimestamp;
+            public PublicChatItem[] chat;
+        }
+    }
+
+    public abstract class ApiResponseBase<Data> {
+        /* The timestamp at which the response was generated. */
+        public Long timestamp;
+
+        /* Whether the request was process correctly. */
+        public Boolean success;
+
+        public Data data;
+
+        public ApiResponseError error;
+
+        /**
+         * Ensures that the base structure of the response follows the expectations.
+         */
+        public final void assertIntegrity() throws Exception {
+            StringJoiner joiner = new StringJoiner(" ");
+            if (this.timestamp == null) joiner.add("The response object's `timestamp` property is null.");
+            if (this.success == null) joiner.add("The response object's `success` property is null.");
+            if (this.success && this.data == null)
+                joiner.add("The response object's `data` property is null, but `success` is true.");
+            if (!this.success) {
+                if (this.error == null) {
+                    joiner.add("The response object's `data` property is null, but `success` is true.");
+                } else {
+                    if (this.error.errorCode == null)
+                        joiner.add("The response object's `error!.errorCode` property is null.");
+                    if (this.error.errorType == null)
+                        joiner.add("The response object's `error!.errorType` property is null.");
+                }
+            }
+
+            if (joiner.length() > 0) {
+                throw new Exception(joiner.toString());
+            }
+        }
+
+        public static class ApiResponseError {
+            public Integer errorCode;
+            public String errorType;
+            public String message;
+        }
+    }
+
+    public static class TaskWrapper extends TimerTask {
+    private final Runnable runnable;
+
+    public TaskWrapper(Runnable runnable) {
+        this.runnable = runnable;
+    }
+
+    public void run() {
+        this.runnable.run();
+    }
+}
+
 }

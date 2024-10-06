@@ -29,3 +29,6 @@ run
 Thumbs.db
 logs/
 lib/
+saves/
+usercache.json
+run
