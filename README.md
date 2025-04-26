@@ -90,6 +90,9 @@ recorded within the `Sampler` tab.
 List of unicode emojis that can be printed directly in chat: https://archive.ph/dhIN8
 
 # Change Log
+## v1.35 - The Improvement Update [26/04/2024]
+- Punishment events now show who issued the punishment, if known
+
 ## v1.34 - The Cleanup Update v3 [21/09/2024]
 - Added a colour selector to HUD text elements
   - Clicking on a format button will insert the corresponding formatting into the text
