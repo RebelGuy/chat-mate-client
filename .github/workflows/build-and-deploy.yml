@@ -27,7 +27,7 @@ jobs:
         with:
           java-version: '12'
           distribution: 'adopt'
-          cache: 'gradle'
+          cache: none
 
       - name: Add execution permissions to the Gradle wrapper
         run: chmod +x ./gradlew
