@@ -23,11 +23,11 @@ jobs:
           fetch-depth: 0
 
       - name: Set up JDK 12
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v4
         with:
           java-version: '12'
           distribution: 'adopt'
-          cache: none
+          cache: 'gradle'
 
       - name: Add execution permissions to the Gradle wrapper
         run: chmod +x ./gradlew
